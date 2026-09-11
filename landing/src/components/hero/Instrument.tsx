@@ -172,7 +172,7 @@ export function Instrument() {
         {/* Rim tick and threshold label. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute flex -translate-y-1/2 items-center gap-2 font-mono text-[11px] text-ink-muted"
+          className="pointer-events-none absolute flex -translate-y-1/2 items-center gap-2 font-mono text-[11px] text-ink-muted max-md:hidden"
           style={{
             right: `${(1 - (GEOMETRY.strickleRestRight - GEOMETRY.strickleWidth)) * 100}%`,
             top: `${GEOMETRY.rim * 100}%`,

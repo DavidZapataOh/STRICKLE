@@ -1,11 +1,13 @@
-import { Instrument } from "@/components/hero/Instrument";
+import { Hero } from "@/components/hero/Hero";
+import { SiteHeader } from "@/components/site/SiteHeader";
 
 export default function Home() {
   return (
-    <main className="flex flex-1 items-center justify-center p-8">
-      <div className="w-full max-w-[560px]">
-        <Instrument />
-      </div>
-    </main>
+    <>
+      <SiteHeader />
+      <main className="flex flex-1 flex-col">
+        <Hero />
+      </main>
+    </>
   );
 }
