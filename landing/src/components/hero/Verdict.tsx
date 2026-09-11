@@ -20,9 +20,9 @@ export function Verdict({ phase, elapsedMs }: { phase: Phase; elapsedMs: number 
         className={`absolute inset-0 flex items-center gap-2 font-mono text-[13px] text-ink-muted transition-opacity duration-[400ms] ${
           compliant ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
-        aria-hidden={compliant}
+        aria-hidden="true"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-ink">
           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
           <path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
