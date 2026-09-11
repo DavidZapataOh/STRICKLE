@@ -91,10 +91,13 @@ function pickSpouts(random: () => number): Spout[] {
     const x = GEOMETRY.spoutMinX + random() * (GEOMETRY.spoutMaxX - GEOMETRY.spoutMinX);
     if (xs.every((o) => Math.abs(o - x) >= GEOMETRY.spoutMinGap)) xs.push(x);
   }
-  while (xs.length < count) {
-    // Fallback: evenly spaced.
-    const k = xs.length;
-    xs.push(GEOMETRY.spoutMinX + ((k + 0.5) / count) * (GEOMETRY.spoutMaxX - GEOMETRY.spoutMinX));
+  if (xs.length < count) {
+    // Rejection sampling stalled: discard the partial picks and fall back to
+    // evenly spaced positions for all `count` spouts so the min-gap invariant holds.
+    xs.length = 0;
+    for (let k = 0; k < count; k++) {
+      xs.push(GEOMETRY.spoutMinX + ((k + 0.5) / count) * (GEOMETRY.spoutMaxX - GEOMETRY.spoutMinX));
+    }
   }
   xs.sort((a, b) => a - b);
   return xs.map((x, i) => ({ x, opensAt: i * TIMING.spoutStagger, open: false }));
@@ -196,6 +199,53 @@ function setPhase(state: SimState, phase: Phase): void {
   state.phaseElapsed = 0;
 }
 
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function easeIn(t: number): number {
+  return t * t;
+}
+
+function clamp01(t: number): number {
+  return t < 0 ? 0 : t > 1 ? 1 : t;
+}
+
+/** Push excess into swept grains flying right and up, capped by the grain budget. */
+function spawnSwept(state: SimState, x: number, volume: number): void {
+  const r = state.random;
+  const n = Math.min(Math.round(volume / GRAIN_VOLUME), GEOMETRY.maxGrains - state.grains.length);
+  for (let k = 0; k < n; k++) {
+    state.grains.push({
+      x,
+      y: GEOMETRY.rim - 0.01,
+      vx: 0.35 + r() * 0.25,
+      vy: -(0.25 + r() * 0.2),
+      swept: true,
+      life: TIMING.sweptLife,
+    });
+  }
+}
+
+/** The strickle's right edge has reached `right`: level every column behind it. */
+function levelBehind(state: SimState, right: number): void {
+  for (let i = 0; i < GEOMETRY.columns; i++) {
+    const cx = columnX(i);
+    if (cx >= right) break;
+    const h = state.columns[i];
+    if (h > 1) {
+      const excess = h - 1;
+      state.columns[i] = 1;
+      state.carried += excess;
+      spawnSwept(state, cx, excess * 0.5);
+    } else if (h < 1 && state.carried > 0) {
+      const fill = Math.min(state.carried, 1 - h);
+      state.columns[i] = h + fill;
+      state.carried -= fill;
+    }
+  }
+}
+
 function substep(state: SimState, dtMs: number): void {
   const dtSec = dtMs / 1000;
   state.phaseElapsed += dtMs;
@@ -232,15 +282,45 @@ function substep(state: SimState, dtMs: number): void {
       break;
     }
     case "sweeping": {
-      // Task 4
+      state.cycleElapsed += dtMs;
+      const t = clamp01(state.phaseElapsed / TIMING.sweeping);
+      state.strickleX = 0.08 + (GEOMETRY.strickleRestRight - 0.08) * easeInOut(t);
+      levelBehind(state, state.strickleX);
+      integrateGrains(state, dtSec, dtMs);
+      if (t >= 1) {
+        state.columns.fill(1); // exactly levelled, spec §5.2
+        state.carried = 0;
+        state.strickleX = GEOMETRY.strickleRestRight;
+        setPhase(state, "verdict");
+      }
       break;
     }
     case "verdict": {
-      // Task 4
+      integrateGrains(state, dtSec, dtMs); // lets swept grains finish falling
+      if (state.phaseElapsed >= TIMING.verdict) {
+        state.drainFrom.set(state.columns);
+        setPhase(state, "draining");
+      }
       break;
     }
     case "draining": {
-      // Task 4
+      const t = clamp01(state.phaseElapsed / TIMING.draining);
+      const k = 1 - easeIn(t);
+      for (let i = 0; i < GEOMETRY.columns; i++) state.columns[i] = state.drainFrom[i] * k;
+      state.strickleX = GEOMETRY.strickleRestRight + 1.0 * easeIn(t);
+      integrateGrains(state, dtSec, dtMs);
+      if (t >= 1) {
+        const seed = nextSeed(state.seed);
+        state.seed = seed;
+        state.random = createRng(seed);
+        state.columns.fill(0);
+        state.grains = [];
+        state.spouts = pickSpouts(state.random);
+        state.strickleX = GEOMETRY.strickleRestRight - GEOMETRY.strickleWidth;
+        state.carried = 0;
+        state.cycleElapsed = 0;
+        setPhase(state, "pouring");
+      }
       break;
     }
   }
@@ -258,3 +338,12 @@ export function step(state: SimState, dtMs: number): void {
 
 // Re-exported so Task 4 can derive the next cycle's seed without importing rng directly.
 export { nextSeed };
+
+/** Index of the spout under (x, y), or null. The hit band is y in [0.14, rim]. Spec §5.3. */
+export function spoutAt(state: SimState, x: number, y: number, toleranceX: number): number | null {
+  if (y < 0.14 || y > GEOMETRY.rim) return null;
+  for (let i = 0; i < state.spouts.length; i++) {
+    if (Math.abs(state.spouts[i].x - x) <= toleranceX) return i;
+  }
+  return null;
+}
