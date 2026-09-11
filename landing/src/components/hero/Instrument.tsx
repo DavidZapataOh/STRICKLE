@@ -89,9 +89,13 @@ export function Instrument() {
       step(sim, dt);
       render();
       if (sim.phase !== lastPhase || now - lastUi >= UI_TICK_MS) {
+        const phaseChanged = sim.phase !== lastPhase;
         lastPhase = sim.phase;
         lastUi = now;
         setUi(snapshot(sim));
+        if (phaseChanged && sim.phase === "pouring") {
+          setHovered(null);
+        }
       }
     };
     const start = () => {
@@ -169,25 +173,37 @@ export function Instrument() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute flex -translate-y-1/2 items-center gap-2 font-mono text-[11px] text-ink-muted"
-          style={{ right: `${(1 - GEOMETRY.bowlLeft) * 100}%`, top: `${GEOMETRY.rim * 100}%` }}
+          style={{
+            right: `${(1 - (GEOMETRY.strickleRestRight - GEOMETRY.strickleWidth)) * 100}%`,
+            top: `${GEOMETRY.rim * 100}%`,
+          }}
         >
           <span className="whitespace-nowrap">16 % · threshold</span>
           <span className="block h-px w-2 bg-ink-muted" />
         </div>
 
-        {/* Supplier labels on hover. */}
-        {ui.spouts.map((x, i) => (
+        {/* Supplier label on hover. */}
+        {hovered !== null && ui.spouts[hovered] !== undefined && (
           <div
-            key={i}
             aria-hidden="true"
-            className={`pointer-events-none absolute whitespace-nowrap rounded-[4px] border border-edge bg-panel px-2 py-1 font-mono text-[11px] text-ink transition-opacity duration-150 ${
-              hovered === i ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ left: `calc(${x * 100}% + 12px)`, top: `${GEOMETRY.spoutY * 100}%`, transform: "translateY(-100%)" }}
+            className="pointer-events-none absolute whitespace-nowrap rounded-[4px] border border-edge bg-panel px-2 py-1 font-mono text-[11px] text-ink"
+            style={
+              ui.spouts[hovered] > 0.5
+                ? {
+                    right: `calc(${(1 - ui.spouts[hovered]) * 100}% + 12px)`,
+                    top: `${GEOMETRY.spoutY * 100}%`,
+                    transform: "translateY(-100%)",
+                  }
+                : {
+                    left: `calc(${ui.spouts[hovered] * 100}% + 12px)`,
+                    top: `${GEOMETRY.spoutY * 100}%`,
+                    transform: "translateY(-100%)",
+                  }
+            }
           >
-            Supplier {String(i + 1).padStart(2, "0")} · signed · not disclosed
+            Supplier {String(hovered + 1).padStart(2, "0")} · signed · not disclosed
           </div>
-        ))}
+        )}
       </div>
 
       <Verdict phase={mounted ? ui.phase : "verdict"} elapsedMs={ui.elapsedMs} />

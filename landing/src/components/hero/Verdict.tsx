@@ -14,7 +14,7 @@ export function isCompliant(phase: Phase): boolean {
 export function Verdict({ phase, elapsedMs }: { phase: Phase; elapsedMs: number }) {
   const compliant = isCompliant(phase);
   return (
-    <div aria-live="polite" className="relative min-h-[76px]">
+    <div aria-live="polite" className="relative">
       {/* Proving */}
       <div
         className={`absolute inset-0 flex items-center gap-2 font-mono text-[13px] text-ink-muted transition-opacity duration-[400ms] ${
@@ -31,7 +31,7 @@ export function Verdict({ phase, elapsedMs }: { phase: Phase; elapsedMs: number 
 
       {/* Compliant */}
       <div
-        className={`absolute inset-0 flex items-start gap-3 rounded-[4px] border border-ok bg-ok-bg px-4 py-3 transition-opacity duration-[400ms] ${
+        className={`relative flex items-start gap-3 rounded-[4px] border border-ok bg-ok-bg px-4 py-3 transition-opacity duration-[400ms] ${
           compliant ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden={!compliant}
