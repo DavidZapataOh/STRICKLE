@@ -61,10 +61,14 @@ export const TIMING = {
 
 // Physics constants, normalized units per second.
 const GRAVITY = 3.0;
-const EMIT_INTERVAL = 16; // ms between grains per open spout
-const GRAIN_VOLUME = 0.14; // column-height units added per absorbed grain
-const SLOPE_MAX = 0.015; // max height difference between neighbours after relaxation
-const RELAX_PASSES = 2;
+const EMIT_INTERVAL = 8; // ms between grains per open spout
+const GRAIN_VOLUME = 0.045; // column-height units added per absorbed grain, spread over 3 columns in absorb()
+// Tuned (with EMIT_INTERVAL, GRAIN_VOLUME and RELAX_PASSES above) so a heap under a
+// spout can't out-race relax(): measured over seeds 1..200, the max column height
+// during pouring/settling stays below the spout-mouth height (1.28) with margin, and
+// pouring still finishes well inside the 8 s budget. See sim.test.ts "heap height".
+const SLOPE_MAX = 0.0002; // max height difference between neighbours after relaxation
+const RELAX_PASSES = 60;
 const SUBSTEP = 1000 / 60;
 
 const BOWL_WIDTH = GEOMETRY.bowlRight - GEOMETRY.bowlLeft;
@@ -128,8 +132,24 @@ export function createSim(seed: number, opts: { reducedMotion?: boolean } = {}):
   return state;
 }
 
+/**
+ * Spread a grain's volume over its landing column and its two neighbours
+ * (50 / 25 / 25) instead of dumping it all in one column, so a heap under a
+ * spout can't spike past the spout mouths faster than relax() can level it.
+ * Clamped at the array ends: a missing neighbour's share goes to the centre
+ * column instead, so no volume is lost.
+ */
 function absorb(state: SimState, x: number): void {
-  state.columns[columnIndex(x)] += GRAIN_VOLUME;
+  const columns = state.columns;
+  const n = columns.length;
+  const i = columnIndex(x);
+  const side = GRAIN_VOLUME * 0.25;
+  let center = GRAIN_VOLUME * 0.5;
+  if (i - 1 >= 0) columns[i - 1] += side;
+  else center += side;
+  if (i + 1 <= n - 1) columns[i + 1] += side;
+  else center += side;
+  columns[i] += center;
 }
 
 /** Angle of repose: move mass from taller to shorter neighbours until slopes are gentle. */
@@ -237,6 +257,8 @@ function levelBehind(state: SimState, right: number): void {
       const excess = h - 1;
       state.columns[i] = 1;
       state.carried += excess;
+      // Only half the swept excess is rendered as flying grains, deliberately,
+      // to keep the sweep visually light; the full excess still feeds `carried`.
       spawnSwept(state, cx, excess * 0.5);
     } else if (h < 1 && state.carried > 0) {
       const fill = Math.min(state.carried, 1 - h);
@@ -335,9 +357,6 @@ export function step(state: SimState, dtMs: number): void {
     remaining -= h;
   }
 }
-
-// Re-exported so Task 4 can derive the next cycle's seed without importing rng directly.
-export { nextSeed };
 
 /** Index of the spout under (x, y), or null. The hit band is y in [0.14, rim]. Spec §5.3. */
 export function spoutAt(state: SimState, x: number, y: number, toleranceX: number): number | null {

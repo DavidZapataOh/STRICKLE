@@ -165,6 +165,31 @@ describe("spoutAt", () => {
   });
 });
 
+describe("heap height", () => {
+  // 200 full pours simulated end-to-end is CPU-heavy (relax() runs RELAX_PASSES times per
+  // 16 ms substep); the physics itself is well inside the 8 s pouring budget, this timeout
+  // is only headroom for the test harness.
+  it(
+    "never reaches the spout mouths while pouring (seeds 1..200)",
+    () => {
+      const mouth = (GEOMETRY.bottom - GEOMETRY.spoutY) / (GEOMETRY.bottom - GEOMETRY.rim); // 1.28
+      for (let seed = 1; seed <= 200; seed++) {
+        const s = createSim(seed);
+        let peak = 0;
+        let t = 0;
+        while (t < 9000 && (s.phase === "pouring" || s.phase === "settling")) {
+          step(s, 16);
+          t += 16;
+          for (let i = 0; i < s.columns.length; i++) if (s.columns[i] > peak) peak = s.columns[i];
+        }
+        expect(s.phase).not.toBe("pouring");
+        expect(peak).toBeLessThan(mouth);
+      }
+    },
+    20000,
+  );
+});
+
 describe("pickSpouts fallback", () => {
   it("keeps the minimum gap when random placement stalls, for every seed", () => {
     // Brute-force check: pickSpouts's rejection-sampling loop can stall for some
