@@ -43,12 +43,15 @@ export function Hero() {
         </div>
       </div>
 
-      <footer className="flex h-14 items-center justify-between gap-6 border-t border-edge px-[clamp(24px,4vw,64px)] font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted tabular-nums max-md:px-[22px]">
-        <ul className="flex min-w-0 items-center gap-3 overflow-hidden whitespace-nowrap">
+      <footer className="flex min-h-14 flex-wrap gap-y-2 py-3 items-center justify-between gap-6 border-t border-edge px-[clamp(24px,4vw,64px)] font-mono text-[12px] uppercase tracking-[0.08em] text-ink-muted tabular-nums max-md:px-[22px]">
+        <ul className="flex min-w-0 items-center gap-3">
           {RAIL.map((item, i) => (
-            <li key={item} className={`flex items-center gap-3 ${i > 0 ? "max-md:hidden" : ""}`}>
+            <li
+              key={item}
+              className={`flex items-center gap-3 ${i === 1 ? "max-md:hidden" : ""} ${i === 2 ? "max-xl:hidden" : ""}`}
+            >
               {i > 0 && <span aria-hidden="true">·</span>}
-              <span>{item}</span>
+              <span className="whitespace-nowrap">{item}</span>
             </li>
           ))}
         </ul>
