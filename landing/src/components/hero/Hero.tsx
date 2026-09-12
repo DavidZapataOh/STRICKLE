@@ -39,8 +39,8 @@ export function Hero() {
               >
                 Read the technical memo
               </a>
-              <a href="#code" className="font-body text-[15px] font-medium text-ink hover:text-accent-text">
-                See the code →
+              <a href="#how" className="font-body text-[15px] font-medium text-ink hover:text-accent-text">
+                See how it works →
               </a>
             </div>
             <p className="reveal reveal-delay-3 mt-5 flex items-center gap-2 font-body text-[13.5px] text-ink-muted hero-verdict">

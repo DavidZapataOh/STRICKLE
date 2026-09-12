@@ -17,10 +17,10 @@ export function SiteHeader() {
         ))}
       </nav>
       <a
-        href="#code"
+        href="#memo"
         className="inline-flex h-10 items-center rounded-[4px] border border-ink/40 px-4 font-body text-[14px] font-medium text-ink hover:border-ink"
       >
-        See the code
+        Read the memo
       </a>
     </header>
   );

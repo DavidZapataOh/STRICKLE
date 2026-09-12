@@ -3,20 +3,22 @@ import * as content from "./landing";
 
 const all = JSON.stringify(content);
 
-describe("landing copy", () => {
+/** Words that speak to a judge or a developer, not to the buyer. */
+const JARGON = /blockchain|zero-knowledge|\bzk\b|on[- ]chain|ledger|consensus|circuit|witness|prover|nullifier|merkle|hash|cryptograph|smart contract|compact\b/i;
+
+describe("landing copy speaks to the buyer", () => {
   it("never says anonymity, score or claim-as-noun", () => {
     expect(all.toLowerCase()).not.toMatch(/anonymous|anonymity|\bscore\b|\bclaims?\b/);
   });
 
-  it("says blockchain only in the questions and zero-knowledge only once", () => {
-    const outside = JSON.stringify({ ...content, questions: undefined, SECTIONS: undefined }).toLowerCase();
-    expect(outside).not.toContain("blockchain");
-    expect((JSON.stringify({ ...content, SECTIONS: undefined }).match(/zero-knowledge/gi) ?? []).length).toBe(1);
+  it("names no mechanism anywhere the buyer reads", () => {
+    const buyerFacing = JSON.stringify({ ...content, SECTIONS: undefined, footer: undefined });
+    expect(buyerFacing).not.toMatch(JARGON);
   });
 
-  it("keeps the mechanism out of every section title", () => {
-    const titles = content.SECTIONS.map((s) => s.title).join(" ");
-    expect(titles).not.toMatch(/midnight|blockchain|zero-knowledge/i);
+  it("keeps Midnight to the footer line and the passport screen's own footer", () => {
+    const rest = JSON.stringify({ ...content, SECTIONS: undefined, footer: undefined, bench: { ...content.bench, passport: undefined } });
+    expect(rest).not.toMatch(/midnight/i);
   });
 
   it("gives every section a unique anchor the nav can reach", () => {
@@ -30,15 +32,20 @@ describe("landing copy", () => {
     for (const k of content.law.clocks) expect(k.ref).toMatch(/^Art\./);
   });
 
-  it("writes the absence of data out in the passport and seals the supplier mark", () => {
+  it("writes the absence of data out in the passport and keeps suppliers confidential in the marks", () => {
     const values = content.bench.passport.rows.map(([, v]) => v);
     expect(values.filter((v) => v === "not disclosed").length).toBeGreaterThanOrEqual(2);
     expect(content.marks.items[0].glyph).toBe("sealed");
+    expect(content.marks.items[0].meaning).toMatch(/confidential/i);
   });
 
   it("reserves the verdict word for the control mark", () => {
     const verdictMarks = content.marks.items.filter((m) => m.verdict);
     expect(verdictMarks).toHaveLength(1);
     expect(verdictMarks[0].name).toBe("Compliant");
+  });
+
+  it("answers the buyer's first fear first", () => {
+    expect(content.questions.items[0].q).toMatch(/platform/i);
   });
 });
