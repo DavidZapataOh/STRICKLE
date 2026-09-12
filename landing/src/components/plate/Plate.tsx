@@ -42,9 +42,9 @@ export function Engraved({
   size?: "xl" | "lg" | "md";
 }) {
   const sizes = {
-    xl: "text-[clamp(44px,9vw,64px)] md:text-[clamp(56px,5.6vw,88px)]",
-    lg: "text-[clamp(34px,7.5vw,48px)] md:text-[clamp(40px,3.8vw,60px)]",
-    md: "text-[clamp(22px,4.5vw,28px)] md:text-[clamp(24px,2.1vw,32px)]",
+    xl: "text-display-1",
+    lg: "text-display-2",
+    md: "text-title",
   };
   return (
     <Tag className={`font-display font-extrabold leading-[0.98] tracking-[-0.02em] [text-wrap:balance] ${sizes[size]} ${className}`}>

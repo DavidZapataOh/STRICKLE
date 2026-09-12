@@ -10,7 +10,7 @@ export function SiteHeader() {
           <a
             key={item.label}
             href={item.href}
-            className="font-body text-[14px] font-medium text-ink hover:text-accent-text"
+            className="font-body text-small font-medium text-ink hover:text-accent-text"
           >
             {item.label}
           </a>
@@ -18,7 +18,7 @@ export function SiteHeader() {
       </nav>
       <a
         href="#memo"
-        className="header-chip inline-flex h-10 items-center rounded-[6px] px-4 font-body text-[14px] font-medium text-ink"
+        className="header-chip inline-flex h-10 items-center rounded-[6px] px-4 font-body text-small font-medium text-ink"
       >
         Read the memo
       </a>

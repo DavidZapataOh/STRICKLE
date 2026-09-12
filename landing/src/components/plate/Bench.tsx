@@ -32,7 +32,7 @@ export function Bench() {
           </div>
           <RegulatorPortal />
         </div>
-        <p className="mt-8 max-w-[70ch] font-body text-[13px] leading-relaxed text-steel-300">{c.disclosure}</p>
+        <p className="mt-8 max-w-[70ch] font-body text-caption leading-relaxed text-steel-300">{c.disclosure}</p>
       </div>
     </Plate>
   );

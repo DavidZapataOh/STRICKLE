@@ -50,11 +50,11 @@ export function Console() {
   return (
     <div ref={ref} className="tool flex h-full flex-col">
       <header className="tool-head">
-        <span className="engraved whitespace-nowrap font-display text-[13px] font-bold">{c.label}</span>
-        <span className="truncate font-body text-[12px] text-steel-300">{c.model}</span>
+        <span className="engraved whitespace-nowrap font-display text-caption font-bold">{c.label}</span>
+        <span className="truncate font-body text-micro text-steel-300">{c.model}</span>
       </header>
 
-      <ul className="flex flex-col gap-1.5 px-4 pt-4 font-body text-[12.5px] tabular-nums text-steel-100">
+      <ul className="flex flex-col gap-1.5 px-4 pt-4 font-body text-micro tabular-nums text-steel-100">
         {c.lots.map((lot, i) => (
           <li key={i} className="grid grid-cols-[22px_1fr_auto_auto] items-center gap-3">
             <span className="text-steel-400">{String(i + 1).padStart(2, "0")}</span>
@@ -69,12 +69,12 @@ export function Console() {
       <div className="mt-5 flex items-center justify-between gap-4 px-4">
         <span
           aria-hidden="true"
-          className="chip pointer-events-none inline-flex h-9 items-center px-4 font-body text-[13px] font-medium"
+          className="chip pointer-events-none inline-flex h-9 items-center px-4 font-body text-caption font-medium"
           style={{ color: "var(--brass-ink)", background: "linear-gradient(180deg, var(--brass-hi), var(--brass))" }}
         >
           {c.button}
         </span>
-        <span className="font-body text-[12.5px] tabular-nums text-steel-300">{done ? c.accepted : `${c.proving} · ${clockAt(ms)}`}</span>
+        <span className="font-body text-micro tabular-nums text-steel-300">{done ? c.accepted : `${c.proving} · ${clockAt(ms)}`}</span>
       </div>
 
       <div className="mt-3 px-4">
@@ -85,10 +85,10 @@ export function Console() {
 
       <div className={`verdict-plate mx-4 mt-4 flex items-center gap-2 ${done ? "is-struck" : ""}`} aria-hidden={!done}>
         <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-current" />
-        <span className="font-display text-[14px] font-bold">{c.done}</span>
+        <span className="font-display text-small font-bold">{c.done}</span>
       </div>
 
-      <p className="mt-auto px-4 pb-4 pt-4 font-body text-[12.5px] text-steel-300">{c.note}</p>
+      <p className="mt-auto px-4 pb-4 pt-4 font-body text-micro text-steel-300">{c.note}</p>
     </div>
   );
 }

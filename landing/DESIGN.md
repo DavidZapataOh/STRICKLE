@@ -36,32 +36,32 @@ colors:
 typography:
   display:
     fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
-    fontSize: "clamp(44px, 9vw, 64px) / md: clamp(56px, 5.6vw, 88px)"
+    fontSize: "clamp(34px, 3.8vw, 60px)"
     fontWeight: 800
     lineHeight: 0.98
     letterSpacing: "-0.02em"
   headline:
     fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
-    fontSize: "clamp(34px, 7.5vw, 48px) / md: clamp(40px, 3.8vw, 60px)"
+    fontSize: "clamp(34px, 3.8vw, 60px)"
     fontWeight: 800
     lineHeight: 0.98
     letterSpacing: "-0.02em"
   title:
     fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
-    fontSize: "clamp(22px, 4.5vw, 28px) / md: clamp(24px, 2.1vw, 32px)"
+    fontSize: "clamp(22px, 2.1vw, 32px)"
     fontWeight: 800
     lineHeight: 0.98
     letterSpacing: "-0.02em"
   numeral:
     fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
-    fontSize: "clamp(40px, 4.6vw, 66px)"
+    fontSize: "clamp(34px, 3.8vw, 60px)"
     fontWeight: 800
     lineHeight: 1
     letterSpacing: "-0.03em"
     fontFeature: "tabular-nums"
   subtitle:
     fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
-    fontSize: "clamp(18px, 2.2vw, 24px)"
+    fontSize: "clamp(18px, 1.8vw, 24px)"
     fontWeight: 700
     lineHeight: 1.375
   body:
@@ -103,7 +103,7 @@ rounded:
   round: "999px"
 spacing:
   gutter-mobile: "22px"
-  gutter: "clamp(24px, 4vw, 72px)"
+  gutter: "clamp(24px, 4.5vw, 64px)"
   header: "68px"
   plate-y: "clamp(72px, 10vw, 128px)"
   plate-y-brass: "clamp(64px, 9vw, 120px)"
@@ -249,11 +249,12 @@ Tonal brushed steel from near-white to near-black, one matte brass, one amber la
 **Character:** A heavy slab that reads as struck metal, set tight (leading 0.98, tracking -0.02em) and always in weight 800 for headings and numerals, against a plain, patient grotesk for the reading. Hierarchy is carried by size, never by case, colour or a kicker.
 
 ### Hierarchy
-- **Display** (800, `clamp(44px,9vw,64px)` → md `clamp(56px,5.6vw,88px)`, 0.98): the brass nameplate heading only ("Read the mark.").
-- **Headline** (800, `clamp(34px,7.5vw,48px)` → md `clamp(40px,3.8vw,60px)`, 0.98): every other plate heading; one per plate.
-- **Title** (800, `clamp(22px,4.5vw,28px)` → md `clamp(24px,2.1vw,32px)`, 0.98): sub-headings inside a plate (clocks board title, the three limits, "See the code.").
-- **Numeral** (800, `clamp(40px,4.6vw,66px)`, tabular, -0.03em): struck numerals inside cartouches; law references use the same weight at `clamp(38px,8vw,52px)` → md `clamp(48px,4.6vw,72px)`; assay state names at `clamp(22px,2.4vw,30px)`; portal value 30px.
-- **Subtitle** (700, `clamp(18px,2.2vw,24px)`, 1.375): quoted law clauses, mark names (`clamp(18px,2vw,22px)`), FAQ questions (`clamp(17px,1.6vw,20px)`), the brass nameplate's closing line (`clamp(20px,2.4vw,28px)`).
+- **Display 1** (800, `--text-display-1` = `clamp(40px,4.6vw,66px)`, 0.98): the hero H1 only.
+- **Display 2** (800, `--text-display-2` = `clamp(34px,3.8vw,60px)`, 0.98): every plate heading, one per plate; also the law references (Annex XIII, Art. 49(2), Art. 52(2)) and the struck numerals inside cartouches.
+- **Title** (800, `--text-title` = `clamp(22px,2.1vw,32px)`, 0.98): sub-headings inside a plate (clocks board title, the three limits, "For your technical reviewers."), the assay state names, the portal value.
+- **Quote** (700, `--text-quote` = `clamp(18px,1.8vw,24px)`, 1.375): quoted law clauses, the brass nameplate's closing line, the clocks board dates.
+- **Subtitle** (700, `--text-subtitle` = 20px): mark names, FAQ questions, register labels, the passport verdict word.
+- **Lead 17 · Body 16 · Control 15 · Small 14 · Caption 13 · Micro 12** (`--text-lead` … `--text-micro`): intro paragraphs; reading copy; buttons and links; nav, meanings, footer links, secondary labels; rail, notes, tool text; data rows, article refs, screen chrome. The certificate paper prop keeps its own reduced scale (18/11/10/9.5) as a miniature document.
 - **Body** (400, 16px → md 17px, 1.625, max 52–58ch): reading paragraphs.
 - **Body small** (400, 15px, 1.375–1.625, max 54–56ch): state descriptions, register notes, link lists.
 - **Caption** (400, 13px / 12.5px / 12px): tool copy, disclosures, media captions, statuses.
@@ -268,7 +269,7 @@ Tonal brushed steel from near-white to near-black, one matte brass, one amber la
 
 ## Layout
 
-One column of full-bleed plates, each a `<section>` with an inner container of max 1320px and gutters `clamp(24px,4vw,72px)` (22px below 768px). Vertical rhythm inside a plate: padding `clamp(72px,10vw,128px)` top and bottom (the brass nameplate `clamp(64px,9vw,120px)`), heading to content `clamp(36px,5vw,64px)` (law and marks `clamp(40px,6vw,72–80px)`), passage to passage `clamp(48px,7vw,96px)`. Sections scroll to 68px below the top, the header's height.
+One column of full-bleed plates, each a `<section>` with an inner container of max 1440px and gutters `clamp(24px,4.5vw,64px)` (22px below 768px), shared by header, hero, plates and footer. Vertical rhythm inside a plate: padding `clamp(72px,10vw,128px)` top and bottom (the brass nameplate `clamp(64px,9vw,120px)`), heading to content `clamp(36px,5vw,64px)` (law and marks `clamp(40px,6vw,72–80px)`), passage to passage `clamp(48px,7vw,96px)`. Sections scroll to 68px below the top, the header's height.
 
 Plates split into asymmetric two-column grids at 768px: 7/5 (law intro, register), 5/7 (law clauses, assay states beside a 16:10 frame at 1024px), 4/8 (limits, questions), 3/9 (clocks board), 1/1 (certificate). The bench goes 1 → 2 → `1.15fr 0.9fr 1fr` at 768 / 1280px. The marks row is 2 → 3 → 5 columns at 640 / 1024px with the fifth mark spanning two on the smallest grid. Reading measure is enforced with `max-w-[52–58ch]`. The clocks board reflows its five-column row into a three-area grid (lamp · date · status / what / ref) below 768px.
 

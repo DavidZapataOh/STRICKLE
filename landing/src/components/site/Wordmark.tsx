@@ -6,7 +6,7 @@ export function Wordmark({ className = "text-ink" }: { className?: string }) {
         <rect x="10.5" y="14" width="27" height="25.5" rx="2" stroke="currentColor" strokeWidth="3.5" />
         <rect x="15" y="19" width="18" height="16" fill="currentColor" opacity=".22" />
       </svg>
-      <span className="font-display text-[17px] font-extrabold uppercase tracking-[0.06em]">STRICKLE</span>
+      <span className="font-display text-lead font-extrabold uppercase tracking-[0.06em]">STRICKLE</span>
     </a>
   );
 }

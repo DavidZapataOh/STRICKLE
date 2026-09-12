@@ -20,7 +20,7 @@ export function Law() {
     <Plate id={c.id} inner="py-[clamp(72px,10vw,128px)]">
       <div className="grid gap-6 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-end">
         <Engraved size="lg">{c.title}</Engraved>
-        <p className="font-body text-[16px] leading-relaxed text-steel-700 md:text-[17px]">{c.intro}</p>
+        <p className="font-body text-lead leading-relaxed text-steel-700">{c.intro}</p>
       </div>
 
       <ol className="mt-[clamp(40px,6vw,72px)]">
@@ -28,18 +28,18 @@ export function Law() {
           <li key={cl.ref} className="grid gap-x-10 gap-y-3 py-9 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:py-12">
             <hr className="score col-span-full m-0 -mt-9 mb-6 md:-mt-12 md:mb-8" />
             <div>
-              <p className="engraved font-display text-[clamp(38px,8vw,52px)] font-extrabold leading-none tracking-[-0.02em] md:text-[clamp(48px,4.6vw,72px)]">
+              <p className="engraved font-display text-display-2 font-extrabold leading-none tracking-[-0.02em]">
                 {cl.ref}
               </p>
-              {cl.sub && <p className="mt-2 font-body text-[14px] text-steel-600">{cl.sub}</p>}
+              {cl.sub && <p className="mt-2 font-body text-small text-steel-600">{cl.sub}</p>}
             </div>
             <div className="md:pt-2">
-              <blockquote className="font-display text-[clamp(18px,2.2vw,24px)] font-bold leading-snug text-steel-900 [text-wrap:pretty]">
+              <blockquote className="font-display text-quote font-bold leading-snug text-steel-900 [text-wrap:pretty]">
                 <span aria-hidden="true">“</span>
                 {cl.quote}
                 <span aria-hidden="true">”</span>
               </blockquote>
-              <p className="mt-4 max-w-[52ch] font-body text-[16px] leading-relaxed text-steel-600">{cl.reading}</p>
+              <p className="mt-4 max-w-[52ch] font-body text-body leading-relaxed text-steel-600">{cl.reading}</p>
             </div>
           </li>
         ))}
@@ -57,12 +57,12 @@ export function Law() {
             {c.clocks.map((k, r) => (
               <li key={k.when} className={`board-row ${k.delayed ? "is-delayed" : ""}`}>
                 <span aria-hidden="true" className={`lamp ${k.delayed ? "lamp-on" : ""}`} />
-                <span className="font-display text-[clamp(18px,2vw,24px)] font-extrabold leading-none tabular-nums">
+                <span className="font-display text-quote font-extrabold leading-none tabular-nums">
                   <Flaps text={k.when} row={r} />
                 </span>
-                <span className="font-body text-[15px] leading-snug text-steel-100">{k.what}</span>
-                <span className="font-mono text-[12px] text-steel-300">{k.ref}</span>
-                <span className={`font-body text-[13px] ${k.delayed ? "flap-text" : "text-steel-300"}`}>{k.status}</span>
+                <span className="font-body text-small leading-snug text-steel-100">{k.what}</span>
+                <span className="font-mono text-micro text-steel-300">{k.ref}</span>
+                <span className={`font-body text-caption ${k.delayed ? "flap-text" : "text-steel-300"}`}>{k.status}</span>
               </li>
             ))}
           </ol>

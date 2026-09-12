@@ -74,6 +74,18 @@
   --color-steel-600: var(--steel-600);
   --color-steel-700: var(--steel-700);
   --color-steel-900: var(--steel-900);
+  /* Type ramp: one scale for the whole page. */
+  --text-display-1: clamp(40px, 4.6vw, 66px);
+  --text-display-2: clamp(34px, 3.8vw, 60px);
+  --text-title: clamp(22px, 2.1vw, 32px);
+  --text-quote: clamp(18px, 1.8vw, 24px);
+  --text-subtitle: 20px;
+  --text-lead: 17px;
+  --text-body: 16px;
+  --text-control: 15px;
+  --text-small: 14px;
+  --text-caption: 13px;
+  --text-micro: 12px;
   --font-display: var(--font-bitter), Georgia, "Times New Roman", serif;
   --font-body: var(--font-plex-sans), "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;

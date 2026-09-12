@@ -44,11 +44,11 @@ export function Certificate() {
 
         <div className="order-1 md:order-2">
           <Engraved size="lg">{c.title}</Engraved>
-          <p className="mt-5 max-w-[52ch] font-body text-[16px] leading-relaxed text-steel-700 md:text-[17px]">{c.body}</p>
+          <p className="mt-5 max-w-[52ch] font-body text-lead leading-relaxed text-steel-700">{c.body}</p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <a
               href={c.cta.href}
-              className="inline-flex h-12 items-center rounded-[6px] px-5 font-body text-[15px] font-medium text-[var(--steel-50)]"
+              className="inline-flex h-12 items-center rounded-[6px] px-5 font-body text-control font-medium text-[var(--steel-50)]"
               style={{
                 background: "linear-gradient(180deg, #2a2f37, #171a1f)",
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 0 rgba(255,255,255,0.5), 0 10px 20px -14px rgba(0,0,0,0.6)",
@@ -56,7 +56,7 @@ export function Certificate() {
             >
               {c.cta.label}
             </a>
-            <span className="font-body text-[13px] text-steel-600">{c.cta.note}</span>
+            <span className="font-body text-caption text-steel-600">{c.cta.note}</span>
           </div>
 
           <div id={c.code.id} className="mt-12 scroll-mt-[68px]">
@@ -64,17 +64,17 @@ export function Certificate() {
             <Engraved as="h3" size="md">
               {c.code.title}
             </Engraved>
-            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-2 font-body text-[15px]">
+            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-2 font-body text-control">
               {c.code.links.map((l) => (
                 <li key={l.label} className="flex items-baseline gap-2">
                   <a href={l.href} aria-disabled="true" className="text-steel-900 underline decoration-steel-300 underline-offset-[6px]">
                     {l.label}
                   </a>
-                  <span className="font-body text-[12px] text-steel-600">{l.status}</span>
+                  <span className="font-body text-micro text-steel-600">{l.status}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 font-mono text-[12px] text-steel-600">{c.code.address}</p>
+            <p className="mt-3 font-mono text-micro text-steel-600">{c.code.address}</p>
           </div>
         </div>
       </div>

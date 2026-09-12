@@ -14,7 +14,7 @@ export function Limits() {
               <Engraved as="h3" size="md">
                 {it.title}
               </Engraved>
-              <p className="mt-3 max-w-[58ch] font-body text-[16px] leading-relaxed text-steel-600 md:text-[17px]">{it.body}</p>
+              <p className="mt-3 max-w-[58ch] font-body text-body leading-relaxed text-steel-600">{it.body}</p>
             </li>
           ))}
         </ol>

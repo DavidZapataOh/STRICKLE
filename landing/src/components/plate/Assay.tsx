@@ -65,17 +65,17 @@ export function Assay() {
                 className="state"
                 style={{ ["--dwell" as string]: `${c.dwellMs}ms` }}
               >
-                <span className="block font-display text-[clamp(22px,2.4vw,30px)] font-extrabold leading-none tracking-[-0.02em]">
+                <span className="block font-display text-title font-extrabold leading-none tracking-[-0.02em]">
                   {st.label}
                 </span>
-                <span className={`mt-2 block font-body text-[15px] leading-snug ${k === i ? "text-steel-900" : "text-steel-600"}`}>{st.title}</span>
+                <span className={`mt-2 block font-body text-body leading-snug ${k === i ? "text-steel-900" : "text-steel-600"}`}>{st.title}</span>
                 <span
-                  className={`mt-3 block max-w-[54ch] font-body text-[15px] leading-relaxed text-steel-600 transition-[opacity,max-height] duration-300 ${
+                  className={`mt-3 block max-w-[54ch] font-body text-body leading-relaxed text-steel-600 transition-[opacity,max-height] duration-300 ${
                     k === i ? "max-h-40 opacity-100" : "max-h-0 overflow-hidden opacity-0"
                   }`}
                 >
                   {st.body}
-                  <span className="mt-2 block font-body text-[13px] text-steel-900">{st.visible}</span>
+                  <span className="mt-2 block font-body text-caption text-steel-900">{st.visible}</span>
                 </span>
                 <span aria-hidden="true" className="state-bar">
                   <i />
@@ -115,7 +115,7 @@ export function Assay() {
                 ),
               )}
             </div>
-            <p className="mt-3 font-body text-[13px] text-steel-600">{s.media.alt}</p>
+            <p className="mt-3 font-body text-caption text-steel-600">{s.media.alt}</p>
           </div>
         </div>
       </div>

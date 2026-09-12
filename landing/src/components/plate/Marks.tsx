@@ -16,7 +16,7 @@ function Glyph({ mark }: { mark: Mark }) {
     case "numerals":
     case "lot":
       return (
-        <span className="struck-ink font-display text-[clamp(40px,4.6vw,66px)] font-extrabold leading-none tabular-nums tracking-[-0.03em]">
+        <span className="struck-ink font-display text-display-2 font-extrabold leading-none tabular-nums tracking-[-0.03em]">
           {mark.value}
         </span>
       );
@@ -42,7 +42,7 @@ function Glyph({ mark }: { mark: Mark }) {
 export function Marks() {
   return (
     <Plate id={c.id} tone="brass" inner="py-[clamp(64px,9vw,120px)]">
-      <Engraved size="xl">{c.title}</Engraved>
+      <Engraved size="lg">{c.title}</Engraved>
 
       <Strike as="ol" threshold={0.35} className="mt-[clamp(40px,6vw,80px)] grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8">
         {c.items.map((m, i) => (
@@ -51,21 +51,21 @@ export function Marks() {
               <Glyph mark={m} />
             </div>
             <p
-              className={`engraved mt-6 font-display text-[clamp(18px,2vw,22px)] font-bold leading-tight ${
+              className={`engraved mt-6 font-display text-subtitle font-bold leading-tight ${
                 m.verdict ? "verdict-word flex items-center gap-2" : ""
               }`}
             >
               {m.verdict && <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full bg-current" />}
               {m.name}
             </p>
-            <p className="muted mt-1.5 max-w-[22ch] font-body text-[14px] leading-snug">{m.meaning}</p>
+            <p className="muted mt-1.5 max-w-[22ch] font-body text-small leading-snug">{m.meaning}</p>
           </li>
         ))}
       </Strike>
 
       <div className="mt-[clamp(48px,7vw,96px)] grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <p className="engraved font-display text-[clamp(20px,2.4vw,28px)] font-bold leading-snug [text-wrap:pretty]">{c.lines[0]}</p>
-        <p className="font-body text-[16px] leading-relaxed md:text-[17px] md:pt-1">{c.lines[1]}</p>
+        <p className="engraved font-display text-quote font-bold leading-snug [text-wrap:pretty]">{c.lines[0]}</p>
+        <p className="font-body text-lead leading-relaxed md:pt-1">{c.lines[1]}</p>
       </div>
     </Plate>
   );
