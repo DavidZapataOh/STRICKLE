@@ -3,7 +3,7 @@ import { Wordmark } from "./Wordmark";
 
 export function SiteHeader() {
   return (
-    <header className="flex h-[68px] items-center justify-between px-[clamp(24px,4vw,64px)] max-md:px-[22px]">
+    <header className="mx-auto flex h-[68px] w-full max-w-[1320px] items-center justify-between px-[clamp(24px,4vw,72px)] max-md:px-[22px]">
       <Wordmark />
       <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
         {NAV.map((item) => (
