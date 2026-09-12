@@ -1,6 +1,6 @@
 # Landing de STRICKLE · Secciones bajo el hero
 
-**Fecha:** 12 de septiembre de 2026 · **Estado:** estructura aprobada por David en chat
+**Fecha:** 12 de septiembre de 2026 · **Estado:** estructura aprobada por David en chat; **la ejecución visual descrita en §3–§4 fue sustituida el mismo día** por el mundo «The Hallmark» construido con la skill Impeccable (ver `landing/PRODUCT.md`, `landing/DESIGN.md` y el contrato de dirección en `landing/.impeccable/surfaces/`). El orden de secciones y el copy se conservan en espíritu; los componentes viven ahora en `landing/src/components/plate/`.
 **Alcance:** todo lo que va debajo del hero de vídeo en `landing/` (Next 16, Tailwind v4). El hero queda como está (`HeroScene`, `PassportCard`, `timeline.ts`).
 **Documentos madre:** `~/templo/midnight/BRANDING.md` (§4.4, §5.4–5.7, §6), `~/templo/midnight/PUBLICO.md` (Parte 3 y 4), `~/templo/midnight/PROYECTO.md` (§1, §4, §5.4, §7, §8), `~/templo/midnight/research-audience-strickle.md` (§0, §1.3–1.5, §4, §5.5).
 

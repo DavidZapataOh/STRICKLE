@@ -1,11 +1,12 @@
 import { Hero } from "@/components/hero/Hero";
-import { Closing } from "@/components/sections/Closing";
-import { Faq } from "@/components/sections/Faq";
-import { HowItWorks } from "@/components/sections/HowItWorks";
-import { Ledger } from "@/components/sections/Ledger";
-import { Limits } from "@/components/sections/Limits";
-import { Regulation } from "@/components/sections/Regulation";
-import { Surfaces } from "@/components/sections/Surfaces";
+import { Assay } from "@/components/plate/Assay";
+import { Bench } from "@/components/plate/Bench";
+import { Certificate } from "@/components/plate/Certificate";
+import { Law } from "@/components/plate/Law";
+import { Limits } from "@/components/plate/Limits";
+import { Marks } from "@/components/plate/Marks";
+import { Questions } from "@/components/plate/Questions";
+import { Register } from "@/components/plate/Register";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
 export default function Home() {
@@ -13,13 +14,14 @@ export default function Home() {
     <>
       <main className="flex flex-1 flex-col">
         <Hero />
-        <Regulation />
-        <HowItWorks />
-        <Surfaces />
-        <Ledger />
+        <Marks />
+        <Law />
+        <Assay />
+        <Bench />
+        <Register />
         <Limits />
-        <Faq />
-        <Closing />
+        <Questions />
+        <Certificate />
       </main>
       <SiteFooter />
     </>

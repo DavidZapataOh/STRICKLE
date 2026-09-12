@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-12T13:00:00Z",
+  "title": "Design System: STRICKLE landing",
+  "extensions": {
+    "colorMeta": {
+      "brass": { "role": "primary", "displayName": "Brass", "canonical": "#a9842f", "tonalRamp": ["#221a09", "#3d2f0c", "#7a5a14", "#8f6c1f", "#a9842f", "#c9a24d", "#dcbf7a", "#f1e2bd"] },
+      "brass-hi": { "role": "primary", "displayName": "Brass Highlight", "canonical": "#c9a24d" },
+      "brass-lo": { "role": "primary", "displayName": "Brass Shadow", "canonical": "#7a5a14" },
+      "brass-ink": { "role": "primary", "displayName": "Brass Ink", "canonical": "#221a09" },
+      "strickle-brass": { "role": "primary", "displayName": "Strickle Brass (incumbent hero)", "canonical": "#ab842b" },
+      "amber": { "role": "secondary", "displayName": "Amber Lamp", "canonical": "#e0a100" },
+      "verdict": { "role": "tertiary", "displayName": "Verdict Green", "canonical": "#1b6b44" },
+      "verdict-dark": { "role": "tertiary", "displayName": "Verdict Green (dark)", "canonical": "#7fd1a0" },
+      "bad": { "role": "tertiary", "displayName": "Non-compliant Red (reserved, unused on this route)", "canonical": "#a6291f" },
+      "steel-plate": { "role": "neutral", "displayName": "Plate Steel", "canonical": "#dcdfe4", "tonalRamp": ["#101216", "#171a1f", "#1b1e23", "#2a2f37", "#4a525c", "#7c8794", "#aeb5bf", "#c7ccd4", "#d9dde3", "#e6e9ee"] },
+      "steel-900": { "role": "neutral", "displayName": "Steel Ink", "canonical": "#171a1f" },
+      "steel-800": { "role": "neutral", "displayName": "Oxidised Steel (dark passage)", "canonical": "#1b1e23" },
+      "steel-600": { "role": "neutral", "displayName": "Muted Steel", "canonical": "#4a525c" },
+      "steel-50": { "role": "neutral", "displayName": "Steel Light (text on dark)", "canonical": "#e6e9ee" },
+      "engraved-ink": { "role": "neutral", "displayName": "Engraved Ink", "canonical": "#23272d" },
+      "paper": { "role": "neutral", "displayName": "Certificate Paper", "canonical": "#fbfaf7" },
+      "bronze": { "role": "neutral", "displayName": "Bronze (certificate ink, focus ring)", "canonical": "#7a5a14" },
+      "zinc-ground": { "role": "neutral", "displayName": "Zinc Ground (incumbent hero)", "canonical": "#eef0f3" },
+      "ink-muted": { "role": "neutral", "displayName": "Ink Muted (incumbent hero)", "canonical": "#5b6470" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The brass nameplate heading only." },
+      "headline": { "displayName": "Headline", "purpose": "One engraved heading per plate." },
+      "title": { "displayName": "Title", "purpose": "Sub-headings inside a plate." },
+      "numeral": { "displayName": "Struck Numeral", "purpose": "Numerals inside cartouches, law references, assay state names." },
+      "subtitle": { "displayName": "Subtitle", "purpose": "Quoted clauses, mark names, FAQ questions." },
+      "body": { "displayName": "Body", "purpose": "Reading paragraphs, 52-58ch." },
+      "body-small": { "displayName": "Body Small", "purpose": "State descriptions, notes, link lists." },
+      "caption": { "displayName": "Caption", "purpose": "Tool copy, disclosures, media captions." },
+      "label": { "displayName": "Engraved Label", "purpose": "Tool headers and footer column titles in Bitter 700 at 13px; never uppercase." },
+      "mono": { "displayName": "Mono", "purpose": "References, hashes, ledger keys and values." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "STRICKLE in Bitter 800 uppercase with the measure-and-strickle glyph." }
+    },
+    "shadows": [
+      { "name": "engrave-light", "value": "text-shadow: 0 1px 0 rgba(255,255,255,0.55), 0 -1px 0 rgba(0,0,0,0.3), 0 -1px 2px rgba(0,0,0,0.12)", "purpose": "Engraved text on light steel." },
+      { "name": "engrave-brass", "value": "text-shadow: 0 1px 0 rgba(255,240,200,0.4), 0 -1px 0 rgba(40,25,0,0.5), 0 -1px 2px rgba(40,25,0,0.2)", "purpose": "Engraved text on the brass plate." },
+      { "name": "engrave-dark", "value": "text-shadow: 0 -1px 0 rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.1)", "purpose": "Engraved text on dark plates, tools and the board." },
+      { "name": "struck-ink", "value": "text-shadow: 0 2px 0 rgba(255,255,255,0.4), 0 1px 0 rgba(255,255,255,0.25), 0 -1px 1px rgba(0,0,0,0.45), 0 -2px 3px rgba(0,0,0,0.25)", "purpose": "Numerals and glyphs sunk inside a cartouche." },
+      { "name": "deboss", "value": "inset 7px 9px 16px rgba(0,0,0,0.42), inset 2px 3px 4px rgba(0,0,0,0.3), inset -4px -5px 10px rgba(255,255,255,0.3), inset -1px -2px 2px rgba(255,255,255,0.45), 0 1px 0 rgba(255,255,255,0.55), 0 -1px 0 rgba(0,0,0,0.12)", "purpose": "A struck cartouche on light or brass plate." },
+      { "name": "deboss-dark", "value": "inset 7px 9px 16px rgba(0,0,0,0.8), inset 2px 3px 4px rgba(0,0,0,0.6), inset -3px -4px 8px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.06)", "purpose": "A struck cartouche on a dark plate." },
+      { "name": "deboss-tab", "value": "inset 5px 7px 14px rgba(0,0,0,0.3), inset 1px 2px 3px rgba(0,0,0,0.22), inset -3px -4px 8px rgba(255,255,255,0.35), 0 1px 0 rgba(255,255,255,0.5)", "purpose": "The selected assay state." },
+      { "name": "deboss-small", "value": "inset 2px 3px 5px rgba(0,0,0,0.32), inset -1px -2px 2px rgba(255,255,255,0.45), 0 1px 0 rgba(255,255,255,0.5)", "purpose": "The 22px question mark square." },
+      { "name": "seam-light", "value": "inset 0 1px 0 rgba(255,255,255,0.7), inset 0 3px 0 rgba(255,255,255,0.25), inset 0 4px 0 rgba(0,0,0,0.22), inset 0 10px 10px -6px rgba(0,0,0,0.22)", "purpose": "Top edge of a plate that follows another." },
+      { "name": "seam-dark", "value": "inset 0 1px 0 rgba(255,255,255,0.22), inset 0 3px 0 rgba(0,0,0,0.6), inset 0 12px 14px -8px rgba(0,0,0,0.7)", "purpose": "Seam when either neighbour is a dark plate." },
+      { "name": "score", "value": "height: 2px; background: linear-gradient(180deg, rgba(0,0,0,0.22), rgba(255,255,255,0.55))", "purpose": "Hairline rule scored into light steel; brass rgba(40,25,0,0.45)->rgba(255,240,200,0.4); dark rgba(0,0,0,0.7)->rgba(255,255,255,0.08)." },
+      { "name": "ledger-edge", "value": "inset 0 -1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.16)", "purpose": "Register rows struck straight into the steel." },
+      { "name": "tool-rest", "value": "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(0,0,0,0.5), 0 30px 50px -36px rgba(0,0,0,0.9)", "purpose": "An object resting on the dark bench; the only cast shadow family." },
+      { "name": "board-rest", "value": "inset 0 0 0 1px rgba(255,255,255,0.06), 0 30px 50px -40px rgba(0,0,0,0.7)", "purpose": "The clocks board." },
+      { "name": "frame-well", "value": "inset 0 0 0 1px rgba(0,0,0,0.35), inset 0 2px 6px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.5)", "purpose": "Media well." },
+      { "name": "certificate-rest", "value": "0 30px 50px -30px rgba(23,26,31,0.55), 0 2px 0 rgba(255,255,255,0.6)", "purpose": "The paper certificate lying on steel." },
+      { "name": "cta-plate", "value": "inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 0 rgba(255,255,255,0.5), 0 10px 20px -14px rgba(0,0,0,0.6)", "purpose": "The memo CTA." },
+      { "name": "sheen-steel", "value": "background-image: radial-gradient(140% 55% at 22% -10%, rgba(255,255,255,0.55), rgba(255,255,255,0) 60%), linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.08) 100%), url(/media/plate/brush.png); background-size: auto, auto, 512px 512px; background-blend-mode: screen, normal, soft-light", "purpose": "Brushed light steel over #dcdfe4." },
+      { "name": "sheen-brass", "value": "background-image: radial-gradient(140% 55% at 22% -10%, rgba(255,240,200,0.45), rgba(255,240,200,0) 60%), linear-gradient(180deg, rgba(255,244,214,0.14) 0%, rgba(0,0,0,0) 45%, rgba(40,25,0,0.16) 100%), url(/media/plate/brush.png); background-size: auto, auto, 512px 512px; background-blend-mode: soft-light, normal, soft-light", "purpose": "Matte brass over var(--brass)." },
+      { "name": "sheen-dark", "value": "background-image: radial-gradient(120% 50% at 25% -10%, rgba(255,255,255,0.07), rgba(255,255,255,0) 60%), linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.18) 100%), url(/media/plate/brush-fine.png); background-size: auto, auto, 512px 512px; background-blend-mode: screen, normal, soft-light", "purpose": "Oxidised steel over var(--steel-800)." }
+    ],
+    "motion": [
+      { "name": "ease-strike", "value": "cubic-bezier(0.2, 0.9, 0.2, 1)", "purpose": "The settle of every strike (headings, cartouches, verdict plate)." },
+      { "name": "ease-flap", "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "Character flap on the clocks board." },
+      { "name": "ease-hero", "value": "cubic-bezier(0.2, 0.7, 0.2, 1)", "purpose": "Incumbent hero reveal and passport card; not used on the plate." },
+      { "name": "strike-heading", "value": "transform 320ms ease-strike from scale(1.02); text-shadow 320ms ease-out", "purpose": "Engraved heading entering the viewport." },
+      { "name": "strike-cartouche", "value": "transform 260ms ease-strike from scale(1.05), box-shadow/background 320ms ease-out, delay calc(var(--i) * 120ms)", "purpose": "Marks struck one by one." },
+      { "name": "strike-verdict", "value": "opacity 260ms ease-out, transform 260ms ease-strike from scale(1.04)", "purpose": "Verdict plate landing after the proving bar." },
+      { "name": "flap-cascade", "value": "380ms ease-flap forwards, rotateX(-90deg)/0.2 -> rotateX(12deg) at 60% -> 0; delay calc(var(--i) * 28ms + var(--r) * 140ms)", "purpose": "Clocks board characters, once." },
+      { "name": "assay-dwell", "value": "6000ms per state; hairline fill scaleX(0 -> 1) linear over the dwell; paused on hover/focus; advances only in view", "purpose": "One object in four recoverable states." },
+      { "name": "frame-fade", "value": "opacity 500ms ease-out", "purpose": "Assay media cross-fade." },
+      { "name": "state-tab", "value": "background-color, box-shadow 200ms ease-out", "purpose": "Assay tab selection." },
+      { "name": "chip", "value": "box-shadow, background-color, color 160ms ease-out", "purpose": "Portal chips." },
+      { "name": "proving-bar", "value": "transform 120ms linear per frame; PROVE_MS 14000, HOLD_MS 6000, CYCLE 20000; loops while in view", "purpose": "Console proving bar ending in the struck verdict." },
+      { "name": "q-mark", "value": "transform 200ms ease (plus -> minus)", "purpose": "Details toggle." },
+      { "name": "strike-observer", "value": "IntersectionObserver threshold 0.18 (plate) / 0.3 (default) / 0.35 (marks) / 0.5 (board), rootMargin 0 0 -8% 0, once", "purpose": "When the strike fires." },
+      { "name": "reduced-motion", "value": "all strike transitions none; cartouche transform none; flap animation none; assay bar scaleX(1); progress transition none; console shows 100% and the verdict", "purpose": "Everything already struck and still." },
+      { "name": "hero-reveal", "value": "750ms ease-hero, opacity 0->1, translateY(18px->0), stagger 80/160/240ms", "purpose": "Incumbent hero entrance." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "mobile-max", "value": "767px" },
+      { "name": "container", "value": "1320px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Engraved Heading",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "One heading per plate, struck in on entry; add .ds-struck to play the settle.",
+      "html": "<h2 class=\"ds-engraved-h ds-struck\"><span class=\"ds-strike-h\">The law asks for both.</span></h2>",
+      "css": ".ds-engraved-h { margin: 0; font-family: var(--font-bitter), Georgia, serif; font-weight: 800; font-size: clamp(34px, 7.5vw, 60px); line-height: 0.98; letter-spacing: -0.02em; color: #23272d; text-wrap: balance; } .ds-strike-h { display: inline-block; transform: scale(1.02); transform-origin: left center; text-shadow: none; transition: transform 320ms cubic-bezier(0.2, 0.9, 0.2, 1), text-shadow 320ms ease-out; } .ds-struck .ds-strike-h { transform: scale(1); text-shadow: 0 1px 0 rgba(255,255,255,0.55), 0 -1px 0 rgba(0,0,0,0.3), 0 -1px 2px rgba(0,0,0,0.12); }"
+    },
+    {
+      "name": "Cartouche (octagon, struck numeral)",
+      "kind": "custom",
+      "refersTo": "cartouche",
+      "description": "A hallmark shape debossed into the plate; the numeral sinks with it.",
+      "html": "<div class=\"ds-struck\"><div class=\"ds-cartouche\"><span class=\"ds-struck-ink\">≥16</span></div></div>",
+      "css": ".ds-cartouche { position: relative; isolation: isolate; display: grid; place-items: center; width: 196px; aspect-ratio: 1; color: var(--brass-ink); background: color-mix(in srgb, currentColor 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent); clip-path: polygon(14% 0, 86% 0, 100% 18%, 100% 82%, 86% 100%, 14% 100%, 0 82%, 0 18%); transform: scale(1.05); transition: transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1), box-shadow 320ms ease-out, background-color 320ms ease-out; } .ds-struck .ds-cartouche { transform: scale(1); background: color-mix(in srgb, currentColor 16%, transparent); box-shadow: inset 7px 9px 16px rgba(0,0,0,0.42), inset 2px 3px 4px rgba(0,0,0,0.3), inset -4px -5px 10px rgba(255,255,255,0.3), inset -1px -2px 2px rgba(255,255,255,0.45); } .ds-struck-ink { font-family: var(--font-bitter), Georgia, serif; font-weight: 800; font-size: clamp(40px, 4.6vw, 66px); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: color-mix(in srgb, currentColor 84%, black); text-shadow: 0 2px 0 rgba(255,255,255,0.4), 0 1px 0 rgba(255,255,255,0.25), 0 -1px 1px rgba(0,0,0,0.45), 0 -2px 3px rgba(0,0,0,0.25); }"
+    },
+    {
+      "name": "Memo CTA",
+      "kind": "button",
+      "refersTo": "button-primary-plate",
+      "description": "The one primary action on the plate: take the certificate.",
+      "html": "<a class=\"ds-cta-plate\" href=\"#\">Download the memo (PDF)</a>",
+      "css": ".ds-cta-plate { display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border-radius: 6px; font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 15px; font-weight: 500; color: var(--steel-50); text-decoration: none; background: linear-gradient(180deg, #2a2f37, #171a1f); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 0 rgba(255,255,255,0.5), 0 10px 20px -14px rgba(0,0,0,0.6); } .ds-cta-plate:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }"
+    },
+    {
+      "name": "Hero Primary Button (incumbent)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The pinned hero's CTA; 4px radius, solid ink on zinc.",
+      "html": "<a class=\"ds-btn-hero\" href=\"#\">Read the technical memo</a>",
+      "css": ".ds-btn-hero { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 4px; background: var(--ink, #171a1f); color: var(--ground, #eef0f3); font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 15px; font-weight: 500; text-decoration: none; } .ds-btn-hero:focus-visible { outline: 2px solid var(--focus, #7a5a14); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button (header)",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Header 'See the code'; border darkens on hover.",
+      "html": "<a class=\"ds-btn-outline\" href=\"#\">See the code</a>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--ink, #171a1f) 40%, transparent); color: var(--ink, #171a1f); font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; } .ds-btn-outline:hover { border-color: var(--ink, #171a1f); } .ds-btn-outline:focus-visible { outline: 2px solid var(--focus, #7a5a14); outline-offset: 2px; }"
+    },
+    {
+      "name": "Chip (portal tab)",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Field selector on the dark bench; selected state is brass.",
+      "html": "<div class=\"ds-bench\"><button class=\"ds-chip\" role=\"tab\" aria-selected=\"true\">recycledCobalt</button> <button class=\"ds-chip\" role=\"tab\" aria-selected=\"false\">lotCount</button></div>",
+      "css": ".ds-bench { display: inline-flex; gap: 6px; padding: 16px; background: linear-gradient(180deg, #24282e, #1f2328); border-radius: 8px; } .ds-chip { border: 0; border-radius: 6px; padding: 7px 10px; font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 12.5px; color: var(--steel-100); background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); cursor: pointer; transition: box-shadow 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; } .ds-chip:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); } .ds-chip[aria-selected=\"true\"] { color: var(--brass-ink); background: linear-gradient(180deg, var(--brass-hi), var(--brass)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.35); } .ds-chip:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }"
+    },
+    {
+      "name": "Assay State Tab",
+      "kind": "nav",
+      "refersTo": "state-tab",
+      "description": "One of four recoverable states; selected tab is pressed in and its hairline fills brass over the dwell.",
+      "html": "<button class=\"ds-state\" role=\"tab\" aria-selected=\"true\" style=\"--dwell: 6000ms\"><span class=\"ds-state-label\">Sample</span><span class=\"ds-state-title\">The supplier signs a lot.</span><span class=\"ds-state-bar\"><i></i></span></button>",
+      "css": ".ds-state { position: relative; display: block; width: 320px; text-align: left; padding: 16px 18px 16px 20px; border-radius: 6px; border: 0; color: var(--steel-900); background: transparent; cursor: pointer; transition: background-color 200ms ease-out, box-shadow 200ms ease-out; } .ds-state:hover { background: color-mix(in srgb, currentColor 5%, transparent); } .ds-state[aria-selected=\"true\"] { background: color-mix(in srgb, currentColor 12%, transparent); box-shadow: inset 5px 7px 14px rgba(0,0,0,0.3), inset 1px 2px 3px rgba(0,0,0,0.22), inset -3px -4px 8px rgba(255,255,255,0.35), 0 1px 0 rgba(255,255,255,0.5); } .ds-state:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; } .ds-state-label { display: block; font-family: var(--font-bitter), Georgia, serif; font-weight: 800; font-size: clamp(22px, 2.4vw, 30px); line-height: 1; letter-spacing: -0.02em; } .ds-state-title { display: block; margin-top: 8px; font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 15px; line-height: 1.375; } .ds-state-bar { position: absolute; left: 20px; right: 18px; bottom: 8px; height: 2px; background: color-mix(in srgb, currentColor 18%, transparent); overflow: hidden; } .ds-state-bar > i { display: block; height: 100%; width: 100%; background: var(--brass); transform-origin: left center; transform: scaleX(0); } .ds-state[aria-selected=\"true\"] .ds-state-bar > i { animation: ds-fill var(--dwell, 6000ms) linear forwards; } @keyframes ds-fill { to { transform: scaleX(1); } }"
+    },
+    {
+      "name": "Proving Bar and Verdict Plate",
+      "kind": "custom",
+      "refersTo": "verdict-plate",
+      "description": "Brass bar fills over 14s, then the verdict strikes in with word and dot.",
+      "html": "<div class=\"ds-tool\"><div class=\"ds-progress\" role=\"progressbar\" aria-valuenow=\"100\"><i style=\"transform: scaleX(1)\"></i></div><div class=\"ds-verdict ds-is-struck\"><span class=\"ds-dot\"></span><span class=\"ds-verdict-word\">Compliant · Reg. (EU) 2023/1542</span></div></div>",
+      "css": ".ds-tool { width: 320px; padding: 16px; border-radius: 8px; background: linear-gradient(180deg, #24282e, #1f2328); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(0,0,0,0.5), 0 30px 50px -36px rgba(0,0,0,0.9); } .ds-progress { height: 8px; border-radius: 4px; background: #121417; box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.05); overflow: hidden; } .ds-progress > i { display: block; width: 100%; height: 100%; background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo)); transform-origin: left center; transition: transform 120ms linear; } .ds-verdict { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding: 10px 12px; border-radius: 6px; color: var(--verdict-dark); background: rgba(127,209,160,0.06); box-shadow: inset 0 0 0 1px rgba(127,209,160,0.35), inset 2px 3px 6px rgba(0,0,0,0.5); transform: scale(1.04); opacity: 0; transition: opacity 260ms ease-out, transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1); } .ds-verdict.ds-is-struck { opacity: 1; transform: scale(1); } .ds-dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; } .ds-verdict-word { font-family: var(--font-bitter), Georgia, serif; font-weight: 700; font-size: 14px; }"
+    },
+    {
+      "name": "Clocks Board Row",
+      "kind": "card",
+      "refersTo": "board",
+      "description": "Ruled dark board; the delayed row lights its amber lamp.",
+      "html": "<ol class=\"ds-board\"><li class=\"ds-board-row\"><span class=\"ds-lamp\"></span><span class=\"ds-when\">18 Feb 2027</span><span class=\"ds-what\">Battery passport mandatory</span><span class=\"ds-ref\">Art. 77</span><span class=\"ds-status\">on time</span></li><li class=\"ds-board-row ds-is-delayed\"><span class=\"ds-lamp ds-lamp-on\"></span><span class=\"ds-when\">Q4 2026</span><span class=\"ds-what\">Access-rights implementing act</span><span class=\"ds-ref\">Art. 77(6)</span><span class=\"ds-status\">delayed</span></li></ol>",
+      "css": ".ds-board { list-style: none; margin: 0; padding: 0; width: 560px; border-radius: 8px; overflow: hidden; background: var(--steel-900); color: var(--steel-50); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 30px 50px -40px rgba(0,0,0,0.7); } .ds-board-row { display: grid; grid-template-columns: 14px minmax(120px, 0.9fr) minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); } .ds-board-row:first-child { border-top: 0; } .ds-lamp { width: 8px; height: 8px; border-radius: 999px; background: var(--steel-600); box-shadow: inset 0 1px 1px rgba(0,0,0,0.5); } .ds-lamp-on { background: var(--amber); box-shadow: 0 0 0 3px rgba(224,161,0,0.16), inset 0 -1px 1px rgba(0,0,0,0.35); } .ds-when { font-family: var(--font-bitter), Georgia, serif; font-weight: 800; font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-is-delayed .ds-when, .ds-is-delayed .ds-status { color: var(--amber); } .ds-what { font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 15px; line-height: 1.375; color: var(--steel-100); } .ds-ref { font-family: var(--font-plex-mono), Menlo, monospace; font-size: 12px; color: var(--steel-300); } .ds-status { font-family: var(--font-plex-sans), Arial, sans-serif; font-size: 13px; color: var(--steel-300); }"
+    },
+    {
+      "name": "Register Row (hatch)",
+      "kind": "custom",
+      "refersTo": "mono",
+      "description": "A ledger line struck into the steel; a sealed value is hatched, never a lock.",
+      "html": "<dl class=\"ds-ledger\"><div class=\"ds-ledger-row\"><dt>recycledCobaltShare</dt><dd class=\"ds-engraved-val\">≥ 16 %</dd></div><div class=\"ds-ledger-row\"><dt>supplier</dt><dd><span class=\"ds-hatch\"></span></dd></div></dl>",
+      "css": ".ds-ledger { margin: 0; width: 420px; font-family: var(--font-plex-mono), Menlo, monospace; font-size: 15px; color: var(--steel-900); } .ds-ledger-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.16); } .ds-ledger-row:first-of-type { box-shadow: inset 0 1px 0 rgba(0,0,0,0.16), inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.16); } .ds-ledger dt { color: var(--steel-600); } .ds-ledger dd { margin: 0; } .ds-engraved-val { font-weight: 500; font-variant-numeric: tabular-nums; color: #23272d; text-shadow: 0 1px 0 rgba(255,255,255,0.55), 0 -1px 0 rgba(0,0,0,0.3), 0 -1px 2px rgba(0,0,0,0.12); } .ds-hatch { display: inline-block; width: 80px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(135deg, currentColor 0 1px, transparent 1px 5px); opacity: 0.55; }"
+    },
+    {
+      "name": "Wordmark",
+      "kind": "nav",
+      "refersTo": "wordmark",
+      "description": "STRICKLE with the measure-and-strickle glyph; the one uppercase, tracked setting in the system.",
+      "html": "<a class=\"ds-wordmark\" href=\"#\" aria-label=\"STRICKLE, home\"><svg viewBox=\"0 0 48 48\" width=\"28\" height=\"28\" fill=\"none\" aria-hidden=\"true\"><path d=\"M4 14H44\" stroke=\"currentColor\" stroke-width=\"3.5\" stroke-linecap=\"round\"/><rect x=\"10.5\" y=\"14\" width=\"27\" height=\"25.5\" rx=\"2\" stroke=\"currentColor\" stroke-width=\"3.5\"/><rect x=\"15\" y=\"19\" width=\"18\" height=\"16\" fill=\"currentColor\" opacity=\".22\"/></svg><span>STRICKLE</span></a>",
+      "css": ".ds-wordmark { display: inline-flex; align-items: center; gap: 12px; color: var(--steel-900); text-decoration: none; } .ds-wordmark span { font-family: var(--font-bitter), Georgia, serif; font-weight: 800; font-size: 17px; text-transform: uppercase; letter-spacing: 0.06em; } .ds-wordmark:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Hallmark",
+    "overview": "A hallmark certifies that metal meets a legal fineness without saying which mine it came from. Below the pinned hero, the whole landing is one continuous sheet of brushed light steel with a single full-bleed brass nameplate for the five marks and one oxidised-steel passage for the bench. Nothing sits on the plate; everything that matters is struck into it. Headings are engraved (light edge below, dark edge above), marks are debossed cartouches, rules are scored hairlines, and section boundaries are seams where one sheet meets the next rather than boxes or cards.\n\nThe world is dense with metal and sparse with ornament. Hierarchy is carried by size alone: Bitter 800 at four scales, IBM Plex Sans for reading, IBM Plex Mono only for hashes, ledgers and references. There are no eyebrows, no icon tiles, no glass, no card grids. Colour is almost entirely tonal steel; brass is a material (one plate, the proving bar, the selected chip, the seal) rather than an accent sprinkled on text; amber lights exactly one lamp; green appears only with the word \"Compliant\" and a dot.\n\nThe incumbent hero above the plate is a separate, user-pinned surface (limestone video, zinc ground, steel ink, 4px radii, a translucent passport card) and the plate system coexists with it: same fonts, same steel, same brass family, same verdict green. The site header and hero keep their own tokens from globals.css; the plate never restyles them.",
+    "keyCharacteristics": [
+      "One continuous plate: sections are seams (inset highlight-then-shadow), never bordered containers.",
+      "Struck, not placed: deboss shadows, engraved text-shadows and a 1.02–1.05 → 1 settle are the single motion grammar.",
+      "Size-only hierarchy in Bitter 800; no kickers, no tracked uppercase labels in the plate world.",
+      "Brass as material: matte #a9842f body with #c9a24d highlight and #7a5a14 shadow, always in the same three-stop gradient or as a whole plate.",
+      "Green and red exist only as a verdict, always with word and shape; amber only on the delayed clock.",
+      "Reduced motion shows everything already struck and still."
+    ],
+    "rules": [
+      { "name": "The Struck Verdict Rule", "body": "Green appears only as \"Compliant\" (or red as \"Non-compliant\"), always as word plus dot, with the regulation cited beneath. Never as a status colour, tick, badge or background wash on its own.", "section": "colors" },
+      { "name": "The One Lamp Rule", "body": "Amber is one 8px lamp plus the date beside it, on the delayed clock only.", "section": "colors" },
+      { "name": "The Brass Is Material Rule", "body": "Brass is never a text accent on steel. It is a plate, a bar, a selected chip, a seal, the selection highlight; always modelled hi → body → lo.", "section": "colors" },
+      { "name": "The No Blue Rule", "body": "No blue anywhere on the site; it would make STRICKLE read as a TÜV or Midnight sub-brand (PRODUCT.md standing constraint).", "section": "colors" },
+      { "name": "The Size-Only Rule", "body": "In the plate world, hierarchy is size and weight in one face. No eyebrows, no uppercase tracked labels, no coloured lead-ins above a heading.", "section": "typography" },
+      { "name": "The One Heading Per Plate Rule", "body": "Each plate carries exactly one Headline (or the single Display); everything below it steps down through Title, Subtitle and Body.", "section": "typography" },
+      { "name": "The Mono For Hashes Rule", "body": "Mono is reserved for references, identifiers, hashes and ledger values; never for headings, labels or prose.", "section": "typography" },
+      { "name": "The Pressed-In Rule", "body": "Depth goes into the plate. The only cast shadows belong to objects that physically rest on the dark bench (tools, phone, board, certificate) and to the memo CTA.", "section": "elevation" },
+      { "name": "The Two-Edge Rule", "body": "Every engraved element has a light edge below and a dark edge above on light metal, and the reverse on dark. One edge alone is a drop shadow and is not this world.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do build every new section as a Plate with one engraved heading and a seam; let the plate tone (steel / brass / dark) be the only container.",
+      "Do strike anything that enters: heading 320ms, cartouche 260ms + 120ms stagger, ease cubic-bezier(0.2, 0.9, 0.2, 1), from an already-visible flat state.",
+      "Do write absences out (\"Suppliers and quantities not disclosed\") and draw sealed values as hatch, 8px tall at 0.55 alpha.",
+      "Do keep brass modelled (hi → body → lo) and give it a whole object: a plate, a bar, a chip, a seal.",
+      "Do keep reading copy at 16–17px Plex Sans, 1.625 leading, 52–58ch, in steel-700 or steel-600.",
+      "Do honour prefers-reduced-motion with the struck-and-still state, never a blank one."
+    ],
+    "donts": [
+      "Don't use blue anywhere, or green/red outside the \"Compliant\" / \"Non-compliant\" word-and-dot pair.",
+      "Don't add eyebrows, kickers or tracked uppercase labels above headings in the plate world; the hero's own small rail is the incumbent surface, not a licence.",
+      "Don't put cards, icon tiles, glass panels, locks, shields, globes, node graphs or floating dashboards on the plate.",
+      "Don't cast drop shadows from things on light steel; only objects on the dark bench (and the memo CTA) may pool a shadow beneath them.",
+      "Don't light more than the one delayed clock with amber, or add motion outside the four grammars (strike, flap cascade, assay dwell, proving bar).",
+      "Don't set headings in any weight but Bitter 800, or use mono outside references, hashes and ledger values."
+    ]
+  }
+}

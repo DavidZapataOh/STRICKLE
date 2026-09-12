@@ -1,0 +1,466 @@
+/* ---------------------------------------------------------------------------
+   The Hallmark · the plate below the hero
+   One continuous sheet of brushed steel, one brass nameplate, one passage of
+   oxidised steel. Everything that matters is struck into the metal.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --steel-50: #e6e9ee;
+  --steel-100: #d9dde3;
+  --steel-200: #c7ccd4;
+  --steel-300: #aeb5bf;
+  --steel-400: #7c8794;
+  --steel-600: #4a525c;
+  --steel-700: #2a2f37;
+  --steel-800: #1b1e23;
+  --steel-900: #171a1f;
+  --steel-950: #101216;
+
+  --brass: #a9842f;
+  --brass-hi: #c9a24d;
+  --brass-lo: #7a5a14;
+  --brass-ink: #221a09;
+
+  --amber: #e0a100;
+  --verdict: #1b6b44;
+  --verdict-dark: #7fd1a0;
+
+  --paper: #fbfaf7;
+  --bronze: #7a5a14;
+}
+
+/* Browser surfaces carry the world too. */
+::selection { background: var(--brass); color: #fff; }
+html { scrollbar-color: var(--steel-400) var(--steel-100); caret-color: var(--brass); }
+
+/* ---- Plates ---- */
+
+.plate {
+  position: relative;
+  color: var(--steel-900);
+  background-color: #dcdfe4;
+  background-image:
+    radial-gradient(140% 55% at 22% -10%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.08) 100%),
+    url("/media/plate/brush.png");
+  background-size: auto, auto, 512px 512px;
+  background-blend-mode: screen, normal, soft-light;
+}
+.plate-brass {
+  color: var(--brass-ink);
+  background-color: var(--brass);
+  background-image:
+    radial-gradient(140% 55% at 22% -10%, rgba(255, 240, 200, 0.45), rgba(255, 240, 200, 0) 60%),
+    linear-gradient(180deg, rgba(255, 244, 214, 0.14) 0%, rgba(0, 0, 0, 0) 45%, rgba(40, 25, 0, 0.16) 100%),
+    url("/media/plate/brush.png");
+  background-size: auto, auto, 512px 512px;
+  background-blend-mode: soft-light, normal, soft-light;
+}
+.plate-dark {
+  color: var(--steel-50);
+  background-color: var(--steel-800);
+  background-image:
+    radial-gradient(120% 50% at 25% -10%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.18) 100%),
+    url("/media/plate/brush-fine.png");
+  background-size: auto, auto, 512px 512px;
+  background-blend-mode: screen, normal, soft-light;
+}
+/* Seam between plates: a light edge, then a shadow, like two sheets meeting. */
+.plate + .plate,
+.plate-seam {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 3px 0 rgba(255, 255, 255, 0.25),
+    inset 0 4px 0 rgba(0, 0, 0, 0.22),
+    inset 0 10px 10px -6px rgba(0, 0, 0, 0.22);
+}
+.plate-dark + .plate, .plate + .plate-dark, .plate-dark + .plate-dark {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 3px 0 rgba(0, 0, 0, 0.6),
+    inset 0 12px 14px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* Grain comes from the brushed rasters in public/media/plate; no pseudo-element overlay. */
+
+/* ---- Engraving ---- */
+
+.engraved {
+  color: #23272d;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55), 0 -1px 0 rgba(0, 0, 0, 0.3), 0 -1px 2px rgba(0, 0, 0, 0.12);
+}
+.plate-brass .engraved {
+  color: #2a2009;
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4), 0 -1px 0 rgba(40, 25, 0, 0.5), 0 -1px 2px rgba(40, 25, 0, 0.2);
+}
+.plate-dark .engraved,
+.tool .engraved,
+.board .engraved {
+  color: var(--steel-50);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.muted { color: var(--steel-600); }
+.plate-brass .muted { color: color-mix(in srgb, var(--brass-ink) 90%, var(--brass)); }
+.plate-dark .muted { color: var(--steel-300); }
+
+/* Hairline rule scored into the plate. */
+.score {
+  height: 2px;
+  border: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(255, 255, 255, 0.55));
+}
+.plate-brass .score { background: linear-gradient(180deg, rgba(40, 25, 0, 0.45), rgba(255, 240, 200, 0.4)); }
+.plate-dark .score { background: linear-gradient(180deg, rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.08)); }
+
+/* ---- The strike ----
+   Elements start visible and flat; entering the viewport strikes them: a short
+   settle from 1.04 to 1 while the deboss shadow deepens. One grammar, reused. */
+
+.strike-h {
+  display: inline-block;
+  transform: scale(1.02);
+  transform-origin: left center;
+  transition: transform 320ms cubic-bezier(0.2, 0.9, 0.2, 1), text-shadow 320ms ease-out;
+  text-shadow: none;
+}
+.struck .strike-h { transform: scale(1); }
+.struck .strike-h.engraved {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55), 0 -1px 0 rgba(0, 0, 0, 0.3), 0 -1px 2px rgba(0, 0, 0, 0.12);
+}
+.plate-brass .struck .strike-h.engraved {
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4), 0 -1px 0 rgba(40, 25, 0, 0.5), 0 -1px 2px rgba(40, 25, 0, 0.2);
+}
+.plate-dark .struck .strike-h.engraved {
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Cartouche: a mark struck into the plate. --i staggers the strike. */
+.cartouche {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent);
+  transform: scale(1.05);
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1) calc(var(--i, 0) * 120ms),
+    box-shadow 320ms ease-out calc(var(--i, 0) * 120ms),
+    background-color 320ms ease-out calc(var(--i, 0) * 120ms);
+}
+.struck .cartouche {
+  transform: scale(1);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  box-shadow:
+    inset 7px 9px 16px rgba(0, 0, 0, 0.42),
+    inset 2px 3px 4px rgba(0, 0, 0, 0.3),
+    inset -4px -5px 10px rgba(255, 255, 255, 0.3),
+    inset -1px -2px 2px rgba(255, 255, 255, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.55),
+    0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+.plate-dark .struck .cartouche {
+  box-shadow:
+    inset 7px 9px 16px rgba(0, 0, 0, 0.8),
+    inset 2px 3px 4px rgba(0, 0, 0, 0.6),
+    inset -3px -4px 8px rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.cartouche-oval { border-radius: 50% / 46%; }
+.cartouche-round { border-radius: 999px; }
+.cartouche-soft { border-radius: 18px; }
+.cartouche-octagon {
+  background: transparent;
+  box-shadow: none;
+}
+.cartouche-octagon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(14% 0, 86% 0, 100% 18%, 100% 82%, 86% 100%, 14% 100%, 0 82%, 0 18%);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent);
+  transition: box-shadow 320ms ease-out calc(var(--i, 0) * 120ms), background-color 320ms ease-out calc(var(--i, 0) * 120ms);
+}
+.struck .cartouche-octagon { background: transparent; box-shadow: none; }
+.struck .cartouche-octagon::before {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  box-shadow:
+    inset 7px 9px 16px rgba(0, 0, 0, 0.42),
+    inset 2px 3px 4px rgba(0, 0, 0, 0.3),
+    inset -4px -5px 10px rgba(255, 255, 255, 0.3),
+    inset -1px -2px 2px rgba(255, 255, 255, 0.45);
+}
+.cartouche-octagon > * { position: relative; }
+
+/* Numerals and glyphs inside a mark sink into the metal. */
+.struck-ink {
+  color: color-mix(in srgb, currentColor 84%, black);
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.4), 0 1px 0 rgba(255, 255, 255, 0.25), 0 -1px 1px rgba(0, 0, 0, 0.45), 0 -2px 3px rgba(0, 0, 0, 0.25);
+}
+.plate-dark .struck-ink { color: var(--steel-50); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8); }
+
+/* Sealed value: hatched, never a lock. */
+.hatch {
+  display: inline-block;
+  height: 8px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(135deg, currentColor 0 1px, transparent 1px 5px);
+  opacity: 0.55;
+}
+.hatch-fill {
+  height: auto;
+  background: repeating-linear-gradient(135deg, currentColor 0 2px, transparent 2px 7px);
+  opacity: 0.6;
+}
+
+/* ---- Clocks board (ruled, cascading) ---- */
+
+.board {
+  background: var(--steel-900);
+  color: var(--steel-50);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 30px 50px -40px rgba(0, 0, 0, 0.7);
+}
+.board-row {
+  display: grid;
+  grid-template-columns: 14px minmax(150px, 0.9fr) minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.board-row:first-child { border-top: 0; }
+.lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--steel-600);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+.lamp-on {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(224, 161, 0, 0.16), inset 0 -1px 1px rgba(0, 0, 0, 0.35);
+}
+.board-row.is-delayed .flap-text { color: var(--amber); }
+.flap-text { white-space: nowrap; }
+@media (max-width: 767px) {
+  .board-row {
+    grid-template-columns: 14px minmax(0, 1fr) auto;
+    grid-template-areas: "lamp when status" ". what what" ". ref ref";
+    row-gap: 4px;
+    column-gap: 14px;
+  }
+  .board-row > :nth-child(1) { grid-area: lamp; }
+  .board-row > :nth-child(2) { grid-area: when; }
+  .board-row > :nth-child(3) { grid-area: what; }
+  .board-row > :nth-child(4) { grid-area: ref; }
+  .board-row > :nth-child(5) { grid-area: status; text-align: right; }
+}
+.flap {
+  display: inline-block;
+  transform-origin: 50% 0;
+  transform: rotateX(0deg);
+}
+.struck .flap {
+  animation: flap 380ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 28ms + var(--r, 0) * 140ms);
+}
+@keyframes flap {
+  0% { transform: rotateX(-90deg); opacity: 0.2; }
+  60% { transform: rotateX(12deg); opacity: 1; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* ---- Assay states (tabs struck into the plate) ---- */
+
+.state {
+  position: relative;
+  text-align: left;
+  padding: 16px 18px 16px 20px;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.state:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
+.state[aria-selected="true"] {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  box-shadow: inset 5px 7px 14px rgba(0, 0, 0, 0.3), inset 1px 2px 3px rgba(0, 0, 0, 0.22), inset -3px -4px 8px rgba(255, 255, 255, 0.35), 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.state-bar {
+  position: absolute;
+  left: 20px;
+  right: 18px;
+  bottom: 8px;
+  height: 2px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  overflow: hidden;
+}
+.state-bar > i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--brass);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.state[aria-selected="true"] .state-bar > i { animation: fill var(--dwell, 6000ms) linear forwards; }
+.assay.paused .state-bar > i { animation-play-state: paused; }
+@keyframes fill { to { transform: scaleX(1); } }
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--steel-900);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.frame > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.frame-fade { transition: opacity 500ms ease-out; }
+
+/* ---- Bench (dark passage) tools ---- */
+
+.tool {
+  position: relative;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #24282e, #1f2328);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 30px 50px -36px rgba(0, 0, 0, 0.9);
+}
+.tool-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background: #121417;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.progress > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo));
+  transform-origin: left center;
+  transition: transform 120ms linear;
+}
+.verdict-plate {
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--verdict-dark);
+  background: rgba(127, 209, 160, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(127, 209, 160, 0.35), inset 2px 3px 6px rgba(0, 0, 0, 0.5);
+  transform: scale(1.04);
+  opacity: 0;
+  transition: opacity 260ms ease-out, transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.verdict-plate.is-struck { opacity: 1; transform: scale(1); }
+.plate .verdict-word { color: var(--verdict); }
+.plate-brass .verdict-word { color: #0f4a2c; }
+.plate-dark .verdict-word { color: var(--verdict-dark); }
+
+.phone {
+  border-radius: 28px;
+  padding: 10px;
+  background: linear-gradient(180deg, #2a2f36, #1c2025);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 30px 50px -36px rgba(0, 0, 0, 0.9);
+}
+.phone-screen { border-radius: 20px; overflow: hidden; background: var(--paper); color: var(--steel-900); }
+
+.chip {
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--steel-100);
+  background: transparent;
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: box-shadow 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out;
+}
+.chip:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+.chip[aria-selected="true"] {
+  color: var(--brass-ink);
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Questions ---- */
+.q summary::-webkit-details-marker { display: none; }
+.q summary { list-style: none; }
+.q-mark {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  box-shadow: inset 2px 3px 5px rgba(0, 0, 0, 0.32), inset -1px -2px 2px rgba(255, 255, 255, 0.45), 0 1px 0 rgba(255, 255, 255, 0.5);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.q-mark::before, .q-mark::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  width: 10px;
+  height: 2px;
+  background: currentColor;
+  transition: transform 200ms ease;
+}
+.q-mark::after { transform: rotate(90deg); }
+.q[open] .q-mark::after { transform: rotate(0deg); }
+
+/* ---- Certificate ---- */
+.certificate {
+  position: relative;
+  background: var(--paper);
+  color: var(--bronze);
+  border-top: 3px double var(--bronze);
+  border-bottom: 3px double var(--bronze);
+  box-shadow: 0 30px 50px -30px rgba(23, 26, 31, 0.55), 0 2px 0 rgba(255, 255, 255, 0.6);
+}
+.seal {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 55%, var(--brass-lo));
+  box-shadow: inset 0 0 0 3px rgba(255, 240, 200, 0.35), inset 0 0 0 4px var(--brass-lo), 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Reduced motion: everything already struck and still ---- */
+@media (prefers-reduced-motion: reduce) {
+  .strike-h, .cartouche, .verdict-plate, .frame-fade, .state, .chip { transition: none !important; }
+  .cartouche { transform: none; }
+  .struck .flap, .flap { animation: none !important; }
+  .state[aria-selected="true"] .state-bar > i { animation: none; transform: scaleX(1); }
+  .progress > i { transition: none; }
+}
+
+/* ---- Register rows struck straight into the steel ---- */
+.ledger-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.ledger-row:first-of-type { box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.16), inset 0 2px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.16); }
