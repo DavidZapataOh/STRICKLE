@@ -24,7 +24,7 @@ export function Plate({
 }) {
   return (
     <Strike as="section" id={id} threshold={0.18} className={`${TONE[tone]} scroll-mt-[68px] ${className}`}>
-      <div className={`relative mx-auto w-full max-w-[1320px] px-[clamp(24px,4vw,72px)] max-md:px-[22px] ${inner}`}>{children}</div>
+      <div className={`relative mx-auto w-full max-w-[1440px] px-[clamp(24px,4.5vw,64px)] max-md:px-[22px] ${inner}`}>{children}</div>
     </Strike>
   );
 }
