@@ -1,9 +1,9 @@
 import { Wordmark } from "./Wordmark";
 
 const NAV = [
-  { label: "Product", href: "#" },
-  { label: "Proof", href: "#" },
-  { label: "Docs", href: "#" },
+  { label: "Passport", href: "#passport" },
+  { label: "Regulation", href: "#regulation" },
+  { label: "Memo", href: "#memo" },
 ];
 
 export function SiteHeader() {
@@ -15,17 +15,17 @@ export function SiteHeader() {
           <a
             key={item.label}
             href={item.href}
-            className="font-body text-[15px] font-medium text-ink hover:text-accent-text"
+            className="font-body text-[14px] font-medium text-ink hover:text-accent-text"
           >
             {item.label}
           </a>
         ))}
       </nav>
       <a
-        href="#"
-        className="inline-flex h-11 items-center rounded-[4px] bg-ink px-5 font-body text-[15px] font-medium text-ground"
+        href="#code"
+        className="inline-flex h-10 items-center rounded-[4px] border border-ink/40 px-4 font-body text-[14px] font-medium text-ink hover:border-ink"
       >
-        Open the console
+        See the code
       </a>
     </header>
   );
