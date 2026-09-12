@@ -1,10 +1,5 @@
+import { NAV } from "@/content/landing";
 import { Wordmark } from "./Wordmark";
-
-const NAV = [
-  { label: "Passport", href: "#passport" },
-  { label: "Regulation", href: "#regulation" },
-  { label: "Memo", href: "#memo" },
-];
 
 export function SiteHeader() {
   return (

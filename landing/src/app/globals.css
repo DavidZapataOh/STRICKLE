@@ -166,6 +166,148 @@ body {
   .passport, .passport-row { transition: none; }
 }
 
+
+/* ---- Sections under the hero ---- */
+
+/* Scroll reveal: children with .rise fade up once the group is on screen. */
+.reveal-group .rise {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 750ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 750ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal-group.in .rise { opacity: 1; transform: none; }
+.rise-1 { transition-delay: 80ms; }
+.rise-2 { transition-delay: 160ms; }
+.rise-3 { transition-delay: 240ms; }
+.rise-4 { transition-delay: 320ms; }
+
+/* The one dark section (BRANDING §4.4.3): tokens swapped locally. */
+.section-dark {
+  --ground: #101216;
+  --panel: var(--strickle-steel);
+  --edge: #2a2f37;
+  --ink: var(--strickle-zinc);
+  --ink-muted: #a3aab4;
+  --accent: var(--strickle-brass-light);
+  --accent-text: var(--strickle-brass-light);
+  --focus: var(--strickle-brass-light);
+  --ok: #7fd1a0;
+  --ok-bg: #1b2a21;
+  background: var(--ground);
+  color: var(--ink);
+}
+/* The square at dusk, when the photograph exists; the veil keeps the panels legible. */
+.surfaces-bg {
+  background-image: url("/media/square-night.jpg");
+  background-size: cover;
+  background-position: 68% 50%;
+  opacity: 0.6;
+}
+.surfaces-veil {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ground) 92%, transparent) 0%, color-mix(in srgb, var(--ground) 55%, transparent) 35%, color-mix(in srgb, var(--ground) 55%, transparent) 70%, color-mix(in srgb, var(--ground) 96%, transparent) 100%);
+}
+
+.surface {
+  min-height: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--edge);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Sealed value: hatched, never a lock. */
+.hatch {
+  display: inline-block;
+  height: 8px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(135deg, var(--strickle-silver) 0 1px, transparent 1px 5px);
+  opacity: 0.75;
+}
+
+/* Brass progress bar: the only Brass in the console. */
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--edge) 80%, transparent);
+  overflow: hidden;
+}
+.progress > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 120ms linear;
+}
+
+/* Phone frame for the consumer passport. */
+.phone {
+  border-radius: 26px;
+  border: 1px solid var(--edge);
+  padding: 8px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.phone > div:first-child { border-radius: 18px 18px 0 0; }
+.phone > div:last-child { border-radius: 0 0 18px 18px; }
+
+/* Dotted leader between key and value in the ledger. */
+.leader {
+  flex: 1;
+  border-bottom: 1px dotted var(--edge);
+  transform: translateY(-4px);
+}
+
+/* Certificate-style double rule (BRANDING §5.5). */
+.double-rule { border-top: 3px double var(--edge); }
+
+/* FAQ disclosure: plus that turns into a minus. */
+.faq summary::-webkit-details-marker { display: none; }
+.faq-mark {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  align-self: center;
+}
+.faq-mark::before, .faq-mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 0;
+  width: 14px;
+  height: 1.5px;
+  background: currentColor;
+  transform: translateY(-50%);
+  transition: transform 200ms ease;
+}
+.faq-mark::after { transform: translateY(-50%) rotate(90deg); }
+.faq[open] .faq-mark::after { transform: translateY(-50%) rotate(0deg); }
+
+/* Memo cover fallback: Bronze on white, double rule, one seal. */
+.memo-paper {
+  position: relative;
+  background: #ffffff;
+  border-top: 3px double currentColor;
+  border-bottom: 3px double currentColor;
+  box-shadow: 0 24px 40px -28px rgba(23, 26, 31, 0.45);
+}
+.memo-seal {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1.5px solid var(--strickle-brass);
+  box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 5px var(--strickle-brass);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-group .rise { opacity: 1; transform: none; transition: none; }
+  .progress > i { transition: none; }
+}
+
 /* Fixed verdict under the CTAs: drop it on short desktop viewports so the label never touches it. */
 @media (min-width: 768px) and (max-height: 860px) {
   .hero-verdict { display: none; }
