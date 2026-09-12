@@ -18,7 +18,7 @@ export function SiteHeader() {
       </nav>
       <a
         href="#memo"
-        className="inline-flex h-10 items-center rounded-[4px] border border-ink/40 px-4 font-body text-[14px] font-medium text-ink hover:border-ink"
+        className="header-chip inline-flex h-10 items-center rounded-[6px] px-4 font-body text-[14px] font-medium text-ink"
       >
         Read the memo
       </a>

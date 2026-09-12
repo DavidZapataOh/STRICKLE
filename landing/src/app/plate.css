@@ -464,3 +464,14 @@ html { scrollbar-color: var(--steel-400) var(--steel-100); caret-color: var(--br
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.16);
 }
 .ledger-row:first-of-type { box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.16), inset 0 2px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.16); }
+
+/* Header action: a small struck plate over the hero. */
+.header-chip {
+  background: rgba(220, 223, 228, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(23, 26, 31, 0.22), inset 2px 3px 6px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 160ms ease-out, background-color 160ms ease-out;
+}
+.header-chip:hover {
+  background: rgba(220, 223, 228, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(23, 26, 31, 0.4), inset 2px 3px 6px rgba(0, 0, 0, 0.14);
+}

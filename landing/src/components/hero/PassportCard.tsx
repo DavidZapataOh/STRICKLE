@@ -26,18 +26,18 @@ export function PassportCard({
       <div className="passport-row flex items-center justify-between gap-4" style={{ transitionDelay: on ? "120ms" : "0ms" }}>
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="passport-seal" />
-          <span className="font-display text-[14px] font-bold leading-none text-ink">{piece.name}</span>
+          <span className="engraved font-display text-[14px] font-bold leading-none">{piece.name}</span>
         </span>
-        <span className="whitespace-nowrap font-mono text-[10.5px] text-ink-muted">{piece.regulation}</span>
+        <span className="whitespace-nowrap font-body text-[11px] text-ink-muted">{piece.regulation}</span>
       </div>
 
       <div className="passport-row mt-2 flex items-baseline justify-between gap-3" style={{ transitionDelay: on ? "260ms" : "0ms" }}>
         <span className="flex items-baseline gap-1.5 whitespace-nowrap">
           <span className="font-body text-[12.5px] text-ink-muted">{piece.disclosed.label}</span>
-          <span className="font-display text-[17px] font-extrabold leading-none tabular-nums text-ink">
+          <span className="engraved font-display text-[17px] font-extrabold leading-none tabular-nums">
             {piece.disclosed.value}
           </span>
-          <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">· {piece.disclosed.minimum}</span>
+          <span className="font-body text-[11.5px] text-ink-muted">· {piece.disclosed.minimum}</span>
         </span>
         <span className="flex items-center gap-1.5 whitespace-nowrap">
           <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-ok" />
@@ -53,7 +53,7 @@ export function PassportCard({
             <span className="sr-only">not disclosed</span>
           </li>
         ))}
-        <li className="ml-auto font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">sealed</li>
+        <li className="ml-auto font-body text-[11px] text-ink-muted">not disclosed</li>
       </ul>
     </article>
   );

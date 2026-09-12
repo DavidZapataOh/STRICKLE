@@ -9,10 +9,10 @@
  */
 
 export const NAV = [
-  { label: "What the passport shows", href: "#marks" },
-  { label: "The regulation", href: "#regulation" },
+  { label: "Passport", href: "#marks" },
+  { label: "Regulation", href: "#regulation" },
   { label: "How it works", href: "#how" },
-  { label: "The screens", href: "#passport" },
+  { label: "Screens", href: "#passport" },
   { label: "Memo", href: "#memo" },
 ] as const;
 
