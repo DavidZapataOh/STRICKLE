@@ -12,6 +12,7 @@
     "landing"
   ],
   "scripts": {
+    "lint": "biome ci .",
     "compact": "npm run compact -w @strickle/contract",
     "setup": "npm run setup -w @strickle/cli",
     "test:e2e": "npm run test:e2e -w @strickle/cli",
