@@ -2,8 +2,13 @@
   "name": "STRICKLE",
   "build": { "dockerfile": "Dockerfile", "context": ".." },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": { "version": "24.14.0" }
+    "ghcr.io/devcontainers/features/node:1": { "version": "24.14.0" },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": { "moby": false }
   },
+  "mounts": [
+    "source=strickle-midnight-cache,target=/home/node/.cache/midnight,type=volume"
+  ],
+  "hostRequirements": { "cpus": 4, "memory": "8gb", "storage": "32gb" },
   "updateContentCommand": "npm ci",
   "postCreateCommand": "sudo chown node \"$HOME/.cache/midnight\" && npm run check:toolchain && npm run check:env",
   "waitFor": "postCreateCommand",
