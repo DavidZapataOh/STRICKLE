@@ -11,8 +11,13 @@
     "compact": "npm run compact -w @strickle/contract",
     "setup": "npm run setup -w @strickle/cli",
     "test:e2e": "npm run test:e2e -w @strickle/cli",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "vitest run --dir scripts && npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.5",
+    "typescript": "6.0.3",
+    "vitest": "3.2.7"
   }
 }
