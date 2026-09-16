@@ -15,7 +15,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "vitest run --dir scripts && npm run test --workspaces --if-present",
     "check:toolchain": "node scripts/check-toolchain.ts",
-    "devnet:up": "docker compose -f strickle-cli/docker-compose.yml up -d --wait && npm run devnet:status",
+    "devnet:up": "mkdir -p \"$HOME/.cache/midnight/zk-params\" && docker compose -f strickle-cli/docker-compose.yml up -d --wait && npm run devnet:status",
     "devnet:status": "node scripts/devnet-status.ts",
     "devnet:down": "docker compose -f strickle-cli/docker-compose.yml down"
   },
