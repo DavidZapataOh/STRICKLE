@@ -27,6 +27,13 @@ Vendoring a copy of the default ruleset — with that one line edited out — is
 the only way to keep every default detection rule while re-scanning
 lockfiles.
 
+## Run it from the repository root
+
+`[extend] path` is resolved against the working directory, not against the
+config file. `gitleaks ... -c .gitleaks.toml` from the root works; the same
+command from a subdirectory fails with `failed to load extended config`. The
+pre-commit hook and the `scan` workflow both run from the root.
+
 ## Updating
 
 When the pinned `gitleaks` version changes, re-fetch
