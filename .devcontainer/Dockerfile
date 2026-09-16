@@ -1,5 +1,7 @@
 FROM mcr.microsoft.com/devcontainers/typescript-node:24-trixie
 
+ENV PATH="/home/node/.local/bin:${PATH}"
+
 RUN apt-get update && apt-get install -y --no-install-recommends unzip xz-utils \
   && rm -rf /var/lib/apt/lists/*
 

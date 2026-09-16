@@ -15,10 +15,12 @@ echo "${SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c --strict
 tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
 rm /tmp/gitleaks.tar.gz
 
+# Pins the Compact CLI tool itself (its own release tags), not the compiler
+# version in .compact-version: the two move independently.
 su node -c '
   set -euo pipefail
   export COMPACT_NO_MODIFY_PATH=1
-  curl --proto "=https" --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+  curl --proto "=https" --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/download/compact-v0.5.2/compact-installer.sh | sh
   "$HOME/.local/bin/compact" update "$(cat /workspace/.compact-version)"
 '
 echo 'export PATH="$HOME/.local/bin:$PATH"' > /etc/profile.d/compact.sh

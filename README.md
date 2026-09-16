@@ -50,11 +50,14 @@ Everything on the left can be checked by anyone. Everything on the right stays o
 - Docker, for the local network
 - The Compact CLI with compiler 0.31.1 (pinned in `.compact-version`)
 
+This repository also ships a dev container that installs the toolchain above and runs the local network inside itself, so an editor with dev-container support (or the `devcontainers` CLI) needs only Docker. The prerequisites above are for running on the host directly.
+
 ## Run it locally
 
 ```bash
 npm ci                    # install
 npm run check:toolchain   # every pinned version matches, prints "toolchain ok"
+npm run check:env         # environment variables that are set are valid, prints "env ok"
 npm run devnet:up         # local undeployed network: node, indexer, proof server
 npm run setup             # compile the contract and deploy it locally
 npm run test:e2e          # read the deployed contract back from the chain

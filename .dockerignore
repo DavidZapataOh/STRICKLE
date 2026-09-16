@@ -1,0 +1,8 @@
+# keeps the devcontainer build context small; the Dockerfile only needs .compact-version and install-tools.sh
+.git
+node_modules
+**/node_modules
+landing/.next
+contract/src/managed
+.superpowers
+dist
