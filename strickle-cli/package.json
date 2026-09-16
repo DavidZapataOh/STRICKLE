@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "compile": "npm run compact -w @strickle/contract",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "setup": "tsx src/setup.ts",
     "deploy": "tsx src/deploy.ts",
     "cli": "tsx src/cli.ts",
