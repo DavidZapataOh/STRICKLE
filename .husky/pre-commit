@@ -1,1 +1,2 @@
 npx biome check --staged --no-errors-on-unmatched .
+gitleaks git --staged . --no-banner --redact -v
