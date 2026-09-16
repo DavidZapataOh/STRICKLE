@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "./plate.css";
 
-/* Tokens: BRANDING.md §6, copied literally. */
+/* Tokens: see DESIGN.md. */
 :root {
   --strickle-steel: #171a1f;
   --strickle-brass: #ab842b;

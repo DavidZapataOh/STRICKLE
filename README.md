@@ -95,4 +95,4 @@ Two rules the check enforces: never run `compact update` without a version, and 
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Copyright 2026 David Zapata. Licensed under Apache-2.0; see [LICENSE](LICENSE).

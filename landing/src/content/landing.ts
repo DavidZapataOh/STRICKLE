@@ -3,7 +3,7 @@
  * Written for the primary visitor: the person at a battery or EV maker who must
  * show a recycled-content share to a notified body without handing over the
  * bill of materials. Their words, not ours: supplier, delivery, audit, passport.
- * Voice (BRANDING §5.4): short declaratives; "confidential", never "anonymous";
+ * Voice: short declaratives; "confidential", never "anonymous";
  * "result" or "verdict", never "score"; the absence of data is written out.
  * The mechanism is never named on this page; the memo and the code carry it.
  */

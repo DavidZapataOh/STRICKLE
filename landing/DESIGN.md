@@ -23,7 +23,7 @@ colors:
   verdict: "#1b6b44"
   verdict-dark: "#7fd1a0"
   paper: "#fbfaf7"
-  # Incumbent hero and chrome (src/app/globals.css :root, BRANDING.md §6)
+  # Incumbent hero and chrome (src/app/globals.css :root)
   zinc-ground: "#eef0f3"
   panel: "#ffffff"
   edge: "#d3d8df"
