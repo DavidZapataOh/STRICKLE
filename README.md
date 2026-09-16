@@ -66,11 +66,11 @@ Checks:
 ```bash
 npm run lint       # Biome, the only linter
 npm run typecheck
-npm test           # 66 tests
+npm test           # 87 tests
 npm run build
 ```
 
-Measured on an Apple Silicon laptop, median of three runs: clean install 7.6 s, toolchain check 0.9 s, local network up 13 s, compile and deploy 37 s, read-back 4 s, lint 0.2 s, typecheck 1.9 s, tests 1.4 s, build 4.6 s from an empty `.next` cache.
+Measured on an Apple Silicon laptop from a clean clone: clean install 9.8 s, toolchain check 2.0 s, local network up 18.0 s, compile and deploy 37.8 s, read-back 3.5 s, lint 2.1 s, typecheck 9.7 s, tests 3.5 s, build 7.3 s from an empty `.next` cache.
 
 ## Toolchain
 
