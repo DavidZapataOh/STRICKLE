@@ -5,7 +5,7 @@ name: strickle-devnet
 
 services:
   node:
-    image: midnightntwrk/midnight-node:1.0.0
+    image: midnightntwrk/midnight-node:1.0.2
     container_name: strickle-node
     ports:
       - "9944:9944"
@@ -38,7 +38,7 @@ services:
     # so no real Blockfrost credential is needed for zero-config local dev.
     # Do NOT bump to 4.3.4/4.4.0: those tags are pre-alpha integration builds
     # for the future ledger-9/node-2 line, not stable releases.
-    image: midnightntwrk/indexer-standalone:4.3.3
+    image: midnightntwrk/indexer-standalone:4.3.3-hotfix
     container_name: strickle-indexer
     # The node healthcheck above guarantees block 1 exists before this
     # container starts (see comment there). restart: on-failure is kept as a
