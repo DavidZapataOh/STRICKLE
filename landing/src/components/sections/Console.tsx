@@ -7,6 +7,12 @@ import { clockAt, isDone, progressAt } from "./progress";
 
 const c = bench.console;
 
+const lots = c.lots.map((lot, index) => ({
+  ...lot,
+  id: `lot-${index}`,
+  n: String(index + 1).padStart(2, "0"),
+}));
+
 /** Manufacturer console: eight sealed lots, Certify, a brass proving bar, the verdict struck. */
 export function Console() {
   const ref = useRef<HTMLDivElement>(null);
@@ -57,9 +63,9 @@ export function Console() {
       </header>
 
       <ul className="flex flex-col gap-1.5 px-4 pt-4 font-body text-micro tabular-nums text-steel-100">
-        {c.lots.map((lot, i) => (
-          <li key={i} className="grid grid-cols-[22px_1fr_auto_auto] items-center gap-3">
-            <span className="text-steel-400">{String(i + 1).padStart(2, "0")}</span>
+        {lots.map((lot) => (
+          <li key={lot.id} className="grid grid-cols-[22px_1fr_auto_auto] items-center gap-3">
+            <span className="text-steel-400">{lot.n}</span>
             <span aria-hidden="true" className="hatch" style={{ width: `${lot.supplier}%` }} />
             <span className="sr-only">supplier sealed</span>
             <span className="text-steel-300">{lot.total}</span>

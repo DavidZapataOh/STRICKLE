@@ -146,7 +146,9 @@ describe("probe", () => {
 
   it("reports a closed port", async () => {
     const url = await serve(() => ({ status: 200, body: "{}" }));
-    servers.splice(0).forEach((server) => server.close());
+    servers.splice(0).forEach((server) => {
+      server.close();
+    });
     const result = await probe("indexer", `${url}/ready`);
     expect(result.status).toBeUndefined();
     expect(result.error).toBe("TypeError");
@@ -177,7 +179,9 @@ describe("readGenesis", () => {
 
   it("reads nothing from a closed port", async () => {
     const url = await serve(() => ({ status: 200, body: "{}" }));
-    servers.splice(0).forEach((server) => server.close());
+    servers.splice(0).forEach((server) => {
+      server.close();
+    });
     expect(await readGenesis(url)).toBeUndefined();
   });
 });

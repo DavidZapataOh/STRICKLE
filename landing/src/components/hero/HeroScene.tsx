@@ -88,7 +88,7 @@ export function HeroScene({
   // Play only while on screen.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || reduced) return;
+    if (!mounted || !video || reduced) return;
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) video.play().catch(() => {});
@@ -103,7 +103,7 @@ export function HeroScene({
   // Sync the passport with the video clock.
   useEffect(() => {
     const video = videoRef.current as VideoWithFrameCallback | null;
-    if (!video || reduced) return;
+    if (!mounted || !video || reduced) return;
     let handle = 0;
     let last: Piece["id"] | null = null;
     const useVfc = typeof video.requestVideoFrameCallback === "function";

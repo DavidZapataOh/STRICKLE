@@ -25,7 +25,7 @@ export function Assay() {
 
   useEffect(() => {
     if (reduced || paused || !inView) return;
-    const t = window.setTimeout(() => setI((n) => (n + 1) % c.states.length), c.dwellMs);
+    const t = window.setTimeout(() => setI((i + 1) % c.states.length), c.dwellMs);
     return () => window.clearTimeout(t);
   }, [i, paused, inView, reduced]);
 
@@ -41,8 +41,9 @@ export function Assay() {
 
   return (
     <Plate id={c.id} inner="py-[clamp(72px,10vw,128px)]">
-      <div
+      <section
         ref={rootRef}
+        aria-label={c.title}
         className={`assay ${paused ? "paused" : ""}`}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
@@ -133,7 +134,7 @@ export function Assay() {
             <p className="mt-3 font-body text-caption text-steel-600">{s.media.alt}</p>
           </div>
         </div>
-      </div>
+      </section>
     </Plate>
   );
 }

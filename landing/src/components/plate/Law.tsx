@@ -3,16 +3,18 @@ import { law as c } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
 function Flaps({ text, row }: { text: string; row: number }) {
+  const cells = Array.from(text, (ch, index) => ({ id: `${row}:${index}`, index, ch }));
+
   return (
-    <span className="flap-text inline-flex whitespace-nowrap" aria-label={text}>
-      {Array.from(text).map((ch, i) => (
+    <span className="flap-text inline-flex whitespace-nowrap" role="img" aria-label={text}>
+      {cells.map((cell) => (
         <span
-          key={i}
+          key={cell.id}
           aria-hidden="true"
           className="flap"
-          style={{ ["--i" as string]: i, ["--r" as string]: row }}
+          style={{ ["--i" as string]: cell.index, ["--r" as string]: row }}
         >
-          {ch === " " ? " " : ch}
+          {cell.ch === " " ? " " : cell.ch}
         </span>
       ))}
     </span>
