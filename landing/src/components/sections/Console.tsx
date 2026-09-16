@@ -50,7 +50,9 @@ export function Console() {
   return (
     <div ref={ref} className="tool flex h-full flex-col">
       <header className="tool-head">
-        <span className="engraved whitespace-nowrap font-display text-caption font-bold">{c.label}</span>
+        <span className="engraved whitespace-nowrap font-display text-caption font-bold">
+          {c.label}
+        </span>
         <span className="truncate font-body text-micro text-steel-300">{c.model}</span>
       </header>
 
@@ -70,20 +72,34 @@ export function Console() {
         <span
           aria-hidden="true"
           className="chip pointer-events-none inline-flex h-9 items-center px-4 font-body text-caption font-medium"
-          style={{ color: "var(--brass-ink)", background: "linear-gradient(180deg, var(--brass-hi), var(--brass))" }}
+          style={{
+            color: "var(--brass-ink)",
+            background: "linear-gradient(180deg, var(--brass-hi), var(--brass))",
+          }}
         >
           {c.button}
         </span>
-        <span className="font-body text-micro tabular-nums text-steel-300">{done ? c.accepted : `${c.proving} · ${clockAt(ms)}`}</span>
+        <span className="font-body text-micro tabular-nums text-steel-300">
+          {done ? c.accepted : `${c.proving} · ${clockAt(ms)}`}
+        </span>
       </div>
 
       <div className="mt-3 px-4">
-        <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+        <div
+          className="progress"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(pct)}
+        >
           <i style={{ transform: `scaleX(${pct / 100})` }} />
         </div>
       </div>
 
-      <div className={`verdict-plate mx-4 mt-4 flex items-center gap-2 ${done ? "is-struck" : ""}`} aria-hidden={!done}>
+      <div
+        className={`verdict-plate mx-4 mt-4 flex items-center gap-2 ${done ? "is-struck" : ""}`}
+        aria-hidden={!done}
+      >
         <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-current" />
         <span className="font-display text-small font-bold">{c.done}</span>
       </div>

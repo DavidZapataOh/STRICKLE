@@ -23,8 +23,17 @@ export function Plate({
   children: React.ReactNode;
 }) {
   return (
-    <Strike as="section" id={id} threshold={0.18} className={`${TONE[tone]} scroll-mt-[68px] ${className}`}>
-      <div className={`relative mx-auto w-full max-w-[1440px] px-[clamp(24px,4.5vw,64px)] max-md:px-[22px] ${inner}`}>{children}</div>
+    <Strike
+      as="section"
+      id={id}
+      threshold={0.18}
+      className={`${TONE[tone]} scroll-mt-[68px] ${className}`}
+    >
+      <div
+        className={`relative mx-auto w-full max-w-[1440px] px-[clamp(24px,4.5vw,64px)] max-md:px-[22px] ${inner}`}
+      >
+        {children}
+      </div>
     </Strike>
   );
 }
@@ -47,7 +56,9 @@ export function Engraved({
     md: "text-title",
   };
   return (
-    <Tag className={`font-display font-extrabold leading-[0.98] tracking-[-0.02em] [text-wrap:balance] ${sizes[size]} ${className}`}>
+    <Tag
+      className={`font-display font-extrabold leading-[0.98] tracking-[-0.02em] [text-wrap:balance] ${sizes[size]} ${className}`}
+    >
       <span className="strike-h engraved">{children}</span>
     </Tag>
   );

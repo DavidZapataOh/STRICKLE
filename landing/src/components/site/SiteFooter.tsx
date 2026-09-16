@@ -7,7 +7,9 @@ export function SiteFooter() {
       <div className="relative mx-auto grid w-full max-w-[1440px] gap-10 px-[clamp(24px,4.5vw,64px)] py-14 max-md:px-[22px] md:grid-cols-[1.3fr_1fr_1fr]">
         <div className="text-steel-50">
           <Wordmark className="text-steel-50" />
-          <p className="mt-5 max-w-[40ch] font-body text-caption leading-relaxed text-steel-300">{c.quote}</p>
+          <p className="mt-5 max-w-[40ch] font-body text-caption leading-relaxed text-steel-300">
+            {c.quote}
+          </p>
         </div>
         <nav aria-label="Sections">
           <p className="engraved font-display text-caption font-bold">On this plate</p>
@@ -23,7 +25,10 @@ export function SiteFooter() {
         </nav>
         <div className="flex flex-col justify-between gap-6">
           <p className="engraved flex items-center gap-2 font-display text-caption font-bold text-steel-50">
-            <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--brass-hi)]" />
+            <span
+              aria-hidden="true"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--brass-hi)]"
+            />
             {c.built}
           </p>
           <p className="font-body text-caption text-steel-300">{c.copyright}</p>

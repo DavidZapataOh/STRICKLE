@@ -2,7 +2,11 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { HeroScene } from "./HeroScene";
 import { PassportSlot } from "./PassportSlot";
 
-const RAIL = ["Regulation (EU) 2023/1542", "Art. 49(2) · supplier names and quantities", "Art. 52(2) · business confidentiality"];
+const RAIL = [
+  "Regulation (EU) 2023/1542",
+  "Art. 49(2) · supplier names and quantities",
+  "Art. 52(2) · business confidentiality",
+];
 const RAIL_RIGHT = "Battery passport mandatory 18 Feb 2027";
 
 export function Hero() {
@@ -22,8 +26,8 @@ export function Hero() {
               <em className="font-bold">Keep the recipe.</em>
             </h1>
             <p className="reveal reveal-delay-2 mt-5 max-w-[480px] font-body text-lead leading-normal text-ink">
-              One verdict a notified body can check: the recycled-content minimum is met.
-              Suppliers, quantities and prices never leave your device.
+              One verdict a notified body can check: the recycled-content minimum is met. Suppliers,
+              quantities and prices never leave your device.
             </p>
             <div className="reveal reveal-delay-3 mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
               <a
@@ -32,7 +36,10 @@ export function Hero() {
               >
                 Read the technical memo
               </a>
-              <a href="#how" className="font-body text-control font-medium text-ink hover:text-accent-text">
+              <a
+                href="#how"
+                className="font-body text-control font-medium text-ink hover:text-accent-text"
+              >
                 See how it works →
               </a>
             </div>
@@ -58,7 +65,9 @@ export function Hero() {
               </li>
             ))}
           </ul>
-          <span className="shrink-0 whitespace-nowrap font-medium text-ink max-lg:hidden">{RAIL_RIGHT}</span>
+          <span className="shrink-0 whitespace-nowrap font-medium text-ink max-lg:hidden">
+            {RAIL_RIGHT}
+          </span>
         </footer>
       </HeroScene>
     </section>

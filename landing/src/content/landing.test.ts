@@ -4,7 +4,8 @@ import * as content from "./landing";
 const all = JSON.stringify(content);
 
 /** Words that speak to a judge or a developer, not to the buyer. */
-const JARGON = /blockchain|zero-knowledge|\bzk\b|on[- ]chain|ledger|consensus|circuit|witness|prover|nullifier|merkle|hash|cryptograph|smart contract|compact\b/i;
+const JARGON =
+  /blockchain|zero-knowledge|\bzk\b|on[- ]chain|ledger|consensus|circuit|witness|prover|nullifier|merkle|hash|cryptograph|smart contract|compact\b/i;
 
 describe("landing copy speaks to the buyer", () => {
   it("never says anonymity, score or claim-as-noun", () => {
@@ -17,7 +18,12 @@ describe("landing copy speaks to the buyer", () => {
   });
 
   it("keeps Midnight to the footer line and the passport screen's own footer", () => {
-    const rest = JSON.stringify({ ...content, SECTIONS: undefined, footer: undefined, bench: { ...content.bench, passport: undefined } });
+    const rest = JSON.stringify({
+      ...content,
+      SECTIONS: undefined,
+      footer: undefined,
+      bench: { ...content.bench, passport: undefined },
+    });
     expect(rest).not.toMatch(/midnight/i);
   });
 

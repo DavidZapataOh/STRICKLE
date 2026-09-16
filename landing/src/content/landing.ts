@@ -30,11 +30,44 @@ export const marks = {
   id: "marks",
   title: "Everything the passport shows.",
   items: [
-    { id: "sponsor", shape: "oval", glyph: "sealed", name: "Suppliers", meaning: "Kept confidential. Never published." },
-    { id: "fineness", shape: "octagon", glyph: "numerals", value: "≥16", name: "Recycled cobalt", meaning: "Meets the 16 % legal minimum." },
-    { id: "assay", shape: "soft", glyph: "cupel", name: "Checked", meaning: "On your own systems. Nothing uploaded." },
-    { id: "lots", shape: "soft", glyph: "lot", value: "8", name: "Deliveries", meaning: "Eight counted, each only once." },
-    { id: "control", shape: "round", glyph: "control", name: "Compliant", meaning: "Reg. (EU) 2023/1542", verdict: true },
+    {
+      id: "sponsor",
+      shape: "oval",
+      glyph: "sealed",
+      name: "Suppliers",
+      meaning: "Kept confidential. Never published.",
+    },
+    {
+      id: "fineness",
+      shape: "octagon",
+      glyph: "numerals",
+      value: "≥16",
+      name: "Recycled cobalt",
+      meaning: "Meets the 16 % legal minimum.",
+    },
+    {
+      id: "assay",
+      shape: "soft",
+      glyph: "cupel",
+      name: "Checked",
+      meaning: "On your own systems. Nothing uploaded.",
+    },
+    {
+      id: "lots",
+      shape: "soft",
+      glyph: "lot",
+      value: "8",
+      name: "Deliveries",
+      meaning: "Eight counted, each only once.",
+    },
+    {
+      id: "control",
+      shape: "round",
+      glyph: "control",
+      name: "Compliant",
+      meaning: "Reg. (EU) 2023/1542",
+      verdict: true,
+    },
   ] satisfies Mark[],
   lines: [
     "A hallmark says the metal meets the standard. It never says which mine it came from.",
@@ -51,13 +84,15 @@ export const law = {
     {
       ref: "Annex XIII",
       sub: "point 1(e)",
-      quote: "recycled content information as contained in the documentation referred to in Article 8(1)",
+      quote:
+        "recycled content information as contained in the documentation referred to in Article 8(1)",
       reading: "Public. Anyone who scans the QR sees the share, competitors included.",
     },
     {
       ref: "Art. 49(2)",
       sub: "points (b) and (d)",
-      quote: "the name and address of the supplier […] the quantities of the raw material present in the battery placed on the market",
+      quote:
+        "the name and address of the supplier […] the quantities of the raw material present in the battery placed on the market",
       reading: "The evidence behind that share names every supplier and every quantity.",
     },
     {
@@ -69,10 +104,34 @@ export const law = {
   ],
   boardTitle: "Four dates.",
   clocks: [
-    { when: "18 Feb 2027", what: "Battery passport becomes mandatory", ref: "Art. 77(1)", status: "unchanged", delayed: false },
-    { when: "Q4 2026", what: "Rules on who may read the passport", ref: "Art. 77(9)", status: "delayed", delayed: true },
-    { when: "2028", what: "Recycled-content declaration due", ref: "Art. 8(1)", status: "moves with the delegated act", delayed: false },
-    { when: "18 Aug 2031", what: "Minimums become binding · 16 % Co · 85 % Pb · 6 % Li · 6 % Ni", ref: "Art. 8(2)", status: "unchanged", delayed: false },
+    {
+      when: "18 Feb 2027",
+      what: "Battery passport becomes mandatory",
+      ref: "Art. 77(1)",
+      status: "unchanged",
+      delayed: false,
+    },
+    {
+      when: "Q4 2026",
+      what: "Rules on who may read the passport",
+      ref: "Art. 77(9)",
+      status: "delayed",
+      delayed: true,
+    },
+    {
+      when: "2028",
+      what: "Recycled-content declaration due",
+      ref: "Art. 8(1)",
+      status: "moves with the delegated act",
+      delayed: false,
+    },
+    {
+      when: "18 Aug 2031",
+      what: "Minimums become binding · 16 % Co · 85 % Pb · 6 % Li · 6 % Ni",
+      ref: "Art. 8(2)",
+      status: "unchanged",
+      delayed: false,
+    },
   ],
 };
 
@@ -96,7 +155,11 @@ export const assay = {
       title: "Your supplier signs each delivery.",
       body: "Total mass and recycled mass for that lot, signed with a key registered under the scheme. Nothing else leaves their side.",
       visible: "Visible to others: nothing.",
-      media: { kind: "video", src: "/media/steps/01-supplier.mp4", alt: "Battery pack sliding out from under the car" },
+      media: {
+        kind: "video",
+        src: "/media/steps/01-supplier.mp4",
+        alt: "Battery pack sliding out from under the car",
+      },
     },
     {
       key: "assay",
@@ -104,7 +167,11 @@ export const assay = {
       title: "You run the check on your own systems.",
       body: "The eight signed deliveries are summed and compared with the legal minimum. Suppliers, quantities and prices never leave your device.",
       visible: "Visible to others: nothing.",
-      media: { kind: "video", src: "/media/steps/02-manufacturer.mp4", alt: "Front bumper floating off the car and returning" },
+      media: {
+        kind: "video",
+        src: "/media/steps/02-manufacturer.mp4",
+        alt: "Front bumper floating off the car and returning",
+      },
     },
     {
       key: "strike",
@@ -112,7 +179,11 @@ export const assay = {
       title: "The passport shows one result.",
       body: "Compliant, with the regulation and the minimum it was checked against. Never the share itself, never the records behind it.",
       visible: "Visible to anyone: model · material · minimum · Compliant.",
-      media: { kind: "image", src: "/media/steps/03-verdict.jpg", alt: "The car whole on the square" },
+      media: {
+        kind: "image",
+        src: "/media/steps/03-verdict.jpg",
+        alt: "The car whole on the square",
+      },
     },
     {
       key: "register",
@@ -120,7 +191,11 @@ export const assay = {
       title: "The notified body re-checks it, and can ask for one field.",
       body: "The result can be verified independently, without trusting us or any platform. If the body needs more, it requests one field at a time. Everything else stays sealed.",
       visible: "Visible to the body: only the field it asked for.",
-      media: { kind: "image", src: "/media/steps/04-verifier.jpg", alt: "Detail of the car's charge port" },
+      media: {
+        kind: "image",
+        src: "/media/steps/04-verifier.jpg",
+        alt: "Detail of the car's charge port",
+      },
     },
   ] satisfies AssayState[],
 };
@@ -128,7 +203,8 @@ export const assay = {
 export const bench = {
   id: "passport",
   title: "Three screens. Three roles.",
-  disclosure: "Example data. BX-27 is a fictional model; the figures illustrate the screens, not a real certification.",
+  disclosure:
+    "Example data. BX-27 is a fictional model; the figures illustrate the screens, not a real certification.",
   console: {
     label: "Your console",
     model: "BX-27 · cobalt · min. 16 %",
@@ -257,9 +333,19 @@ export const certificate = {
   title: "Take the memo to your committee.",
   body: "Eight to twelve pages for your committee and your notified body: what the regulation asks, how the check works, what an auditor sees, what it does not protect, and how it was tested.",
   paperTitle: "Technical memorandum",
-  toc: ["1 · What the regulation asks", "2 · How the check works", "3 · What the auditor sees", "4 · What it does not protect", "5 · How it was tested"],
+  toc: [
+    "1 · What the regulation asks",
+    "2 · How the check works",
+    "3 · What the auditor sees",
+    "4 · What it does not protect",
+    "5 · How it was tested",
+  ],
   paperFoot: "Suppliers and quantities not disclosed",
-  cta: { label: "Download the memo (PDF)", href: "#memo", note: "In preparation. This link will carry the file." },
+  cta: {
+    label: "Download the memo (PDF)",
+    href: "#memo",
+    note: "In preparation. This link will carry the file.",
+  },
   code: {
     id: "code",
     title: "For your technical reviewers.",
@@ -273,10 +359,20 @@ export const certificate = {
 };
 
 export const footer = {
-  quote: "“with due regard for business confidentiality and other competitive concerns” · Art. 52(2)",
+  quote:
+    "“with due regard for business confidentiality and other competitive concerns” · Art. 52(2)",
   built: "Built on Midnight",
   copyright: "© 2026 STRICKLE",
 };
 
 /** Sections in page order, for tests and the footer. */
-export const SECTIONS = [marks, law, assay, bench, register, limits, questions, certificate] as const;
+export const SECTIONS = [
+  marks,
+  law,
+  assay,
+  bench,
+  register,
+  limits,
+  questions,
+  certificate,
+] as const;

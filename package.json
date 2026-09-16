@@ -6,7 +6,11 @@
   "engines": {
     "node": ">=24.11.1"
   },
-  "workspaces": ["contract", "strickle-cli", "landing"],
+  "workspaces": [
+    "contract",
+    "strickle-cli",
+    "landing"
+  ],
   "scripts": {
     "compact": "npm run compact -w @strickle/contract",
     "setup": "npm run setup -w @strickle/cli",
@@ -21,6 +25,7 @@
     "devnet:reset": "npm run devnet:down && rm -rf strickle-cli/.midnight-state.json strickle-cli/.midnight-wallet-state strickle-cli/midnight-level-db"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.13",
     "@types/node": "24.13.5",
     "typescript": "6.0.3",
     "vitest": "3.2.7"

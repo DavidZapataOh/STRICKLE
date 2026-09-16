@@ -1,12 +1,17 @@
-import { law as c } from "@/content/landing";
 import { Strike } from "@/components/reveal/Strike";
+import { law as c } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
 function Flaps({ text, row }: { text: string; row: number }) {
   return (
     <span className="flap-text inline-flex whitespace-nowrap" aria-label={text}>
       {Array.from(text).map((ch, i) => (
-        <span key={i} aria-hidden="true" className="flap" style={{ ["--i" as string]: i, ["--r" as string]: row }}>
+        <span
+          key={i}
+          aria-hidden="true"
+          className="flap"
+          style={{ ["--i" as string]: i, ["--r" as string]: row }}
+        >
           {ch === " " ? " " : ch}
         </span>
       ))}
@@ -25,7 +30,10 @@ export function Law() {
 
       <ol className="mt-[clamp(40px,6vw,72px)]">
         {c.clauses.map((cl) => (
-          <li key={cl.ref} className="grid gap-x-10 gap-y-3 py-9 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:py-12">
+          <li
+            key={cl.ref}
+            className="grid gap-x-10 gap-y-3 py-9 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:py-12"
+          >
             <hr className="score col-span-full m-0 -mt-9 mb-6 md:-mt-12 md:mb-8" />
             <div>
               <p className="engraved font-display text-display-2 font-extrabold leading-none tracking-[-0.02em]">
@@ -39,7 +47,9 @@ export function Law() {
                 {cl.quote}
                 <span aria-hidden="true">”</span>
               </blockquote>
-              <p className="mt-4 max-w-[52ch] font-body text-body leading-relaxed text-steel-600">{cl.reading}</p>
+              <p className="mt-4 max-w-[52ch] font-body text-body leading-relaxed text-steel-600">
+                {cl.reading}
+              </p>
             </div>
           </li>
         ))}
@@ -62,7 +72,11 @@ export function Law() {
                 </span>
                 <span className="font-body text-small leading-snug text-steel-100">{k.what}</span>
                 <span className="font-mono text-micro text-steel-300">{k.ref}</span>
-                <span className={`font-body text-caption ${k.delayed ? "flap-text" : "text-steel-300"}`}>{k.status}</span>
+                <span
+                  className={`font-body text-caption ${k.delayed ? "flap-text" : "text-steel-300"}`}
+                >
+                  {k.status}
+                </span>
               </li>
             ))}
           </ol>

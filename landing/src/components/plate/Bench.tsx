@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { bench as c } from "@/content/landing";
 import { Console } from "@/components/sections/Console";
 import { PassportPhone } from "@/components/sections/PassportPhone";
 import { RegulatorPortal } from "@/components/sections/RegulatorPortal";
+import { bench as c } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
 /** The dark passage: three real screens on the assayer's bench. */
@@ -19,7 +19,8 @@ export function Bench() {
             backgroundImage: "url(/media/square-night.jpg)",
             backgroundSize: "cover",
             backgroundPosition: "68% 50%",
-            maskImage: "linear-gradient(180deg, transparent 0%, black 22%, black 78%, transparent 100%)",
+            maskImage:
+              "linear-gradient(180deg, transparent 0%, black 22%, black 78%, transparent 100%)",
           }}
         />
       )}
@@ -32,7 +33,9 @@ export function Bench() {
           </div>
           <RegulatorPortal />
         </div>
-        <p className="mt-8 max-w-[70ch] font-body text-caption leading-relaxed text-steel-300">{c.disclosure}</p>
+        <p className="mt-8 max-w-[70ch] font-body text-caption leading-relaxed text-steel-300">
+          {c.disclosure}
+        </p>
       </div>
     </Plate>
   );

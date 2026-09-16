@@ -2,7 +2,15 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { PassportCard } from "./PassportCard";
-import { activePiece, coverBox, FRAME_ASPECT, PIECES, toScreen, type Box, type Piece } from "./timeline";
+import {
+  activePiece,
+  type Box,
+  coverBox,
+  FRAME_ASPECT,
+  PIECES,
+  type Piece,
+  toScreen,
+} from "./timeline";
 
 const VIDEO_SRC = "/media/hero-loop.mp4";
 const POSTER_SRC = "/media/hero-poster.jpg";
@@ -38,7 +46,13 @@ function labelStyle(piece: Piece, box: Box): React.CSSProperties {
  * and, on md+, a passport label pinned next to whichever piece is floating.
  * Static content (header, copy, rail) comes in as children above the video.
  */
-export function HeroScene({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function HeroScene({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [box, setBox] = useState<Box | null>(null);
@@ -139,7 +153,10 @@ export function HeroScene({ children, className = "" }: { children: React.ReactN
 
         {/* Passport labels pinned next to the pieces (md+). */}
         {box && (
-          <div className="pointer-events-none absolute inset-0 z-20 hidden md:block" aria-live="polite">
+          <div
+            className="pointer-events-none absolute inset-0 z-20 hidden md:block"
+            aria-live="polite"
+          >
             {PIECES.map((piece) => (
               <PassportCard
                 key={piece.id}

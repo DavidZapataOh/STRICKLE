@@ -4,26 +4,30 @@
  * Reconnects to the deployed contract, reads its ledger state, and exits 0
  * on success. Used by `npm run test:e2e` and by the project's CI workflows.
  */
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { WebSocket } from 'ws';
-
-import { findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { resolveNetwork, getOrCreateWallet, formatWalletBackupNotice, getDeployment } from '../src/network';
-import { createWallet, persistWalletState } from '../src/wallet';
-import { CompiledContract } from '@midnight-ntwrk/midnight-js-protocol/compact-js';
-import { contractName, zkConfigPath } from '@strickle/contract';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { pathToFileURL } from "node:url";
+import { findDeployedContract } from "@midnight-ntwrk/midnight-js-contracts";
+import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
+import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
+import { levelPrivateStateProvider } from "@midnight-ntwrk/midnight-js-level-private-state-provider";
+import { NodeZkConfigProvider } from "@midnight-ntwrk/midnight-js-node-zk-config-provider";
+import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-js";
+import { contractName, zkConfigPath } from "@strickle/contract";
+import { WebSocket } from "ws";
+import {
+  formatWalletBackupNotice,
+  getDeployment,
+  getOrCreateWallet,
+  resolveNetwork,
+} from "../src/network";
+import { createWallet, persistWalletState } from "../src/wallet";
 
 // @ts-expect-error wallet sync requires WebSocket
 globalThis.WebSocket = WebSocket;
 
 // Must match the privateStateId used at deploy time (witness-free → empty state).
-const PRIVATE_STATE_ID = 'helloWorldPrivateState';
+const PRIVATE_STATE_ID = "helloWorldPrivateState";
 
 // ─── Network configuration ─────────────────────────────────────────────────────
 
@@ -41,7 +45,7 @@ function fail(msg: string): never {
 }
 
 function isHexAddress(s: unknown): s is string {
-  return typeof s === 'string' && /^[0-9a-fA-F]+$/.test(s) && s.length >= 32;
+  return typeof s === "string" && /^[0-9a-fA-F]+$/.test(s) && s.length >= 32;
 }
 
 async function main() {
@@ -56,8 +60,8 @@ async function main() {
   }
 
   // 2. Build wallet and providers
-  const contractPath = path.join(zkConfigPath, 'contract', 'index.js');
-  if (!fs.existsSync(contractPath)) fail('Compiled contract missing — run `npm run compile`.');
+  const contractPath = path.join(zkConfigPath, "contract", "index.js");
+  if (!fs.existsSync(contractPath)) fail("Compiled contract missing — run `npm run compile`.");
   const HelloWorld = await import(pathToFileURL(contractPath).href);
   const compiledContract = CompiledContract.make(contractName, HelloWorld.Contract).pipe(
     CompiledContract.withVacantWitnesses,
@@ -76,20 +80,20 @@ async function main() {
     getCoinPublicKey: () => walletCtx.shieldedSecretKeys.coinPublicKey,
     getEncryptionPublicKey: () => walletCtx.shieldedSecretKeys.encryptionPublicKey,
     async balanceTx() {
-      throw new Error('e2e-check is read-only and should not balance transactions');
+      throw new Error("e2e-check is read-only and should not balance transactions");
     },
     submitTx() {
-      throw new Error('e2e-check is read-only and should not submit transactions');
+      throw new Error("e2e-check is read-only and should not submit transactions");
     },
   } as any;
 
   const providers = {
     privateStateProvider: levelPrivateStateProvider({
-      privateStateStoreName: 'hello-world-state',
+      privateStateStoreName: "hello-world-state",
       accountId: walletCtx.unshieldedKeystore.getBech32Address().toString(),
       // SDK requires ≥16 chars. e2e-check is read-only so we don't expose
       // the env-var override here — match the deploy script's local-devnet default.
-      privateStoragePasswordProvider: () => 'Local-Devnet-Development-Placeholder-1',
+      privateStoragePasswordProvider: () => "Local-Devnet-Development-Placeholder-1",
     }),
     publicDataProvider: indexerPublicDataProvider(networkConfig.indexer, networkConfig.indexerWS),
     zkConfigProvider,

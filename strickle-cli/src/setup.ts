@@ -1,13 +1,13 @@
 // Orchestrator for `npm run setup`. Replaces the prior package.json chain
 // `docker compose up -d --wait && npm run compile && npm run deploy` so
 // we can branch on --network and forward it to deploy.
-import { spawnSync } from 'node:child_process';
-import { resolveNetwork, setActiveNetwork, parseNetworkFlag } from './network';
+import { spawnSync } from "node:child_process";
+import { parseNetworkFlag, resolveNetwork, setActiveNetwork } from "./network";
 
 function run(cmd: string, args: string[]): void {
-  const r = spawnSync(cmd, args, { stdio: 'inherit', shell: false });
+  const r = spawnSync(cmd, args, { stdio: "inherit", shell: false });
   if (r.status !== 0) {
-    process.stderr.write(`\nCommand failed: ${cmd} ${args.join(' ')}\n`);
+    process.stderr.write(`\nCommand failed: ${cmd} ${args.join(" ")}\n`);
     process.exit(r.status ?? 1);
   }
 }
@@ -21,14 +21,14 @@ async function main(): Promise<void> {
   process.stdout.write(`\n→ Setting up strickle on network: ${network}\n\n`);
 
   // 1. Bring up only the services this network needs.
-  run('docker', ['compose', 'up', '-d', '--wait', ...config.composeServices]);
+  run("docker", ["compose", "up", "-d", "--wait", ...config.composeServices]);
 
   // 2. Compile the contract (network-agnostic).
-  run('npm', ['run', 'compile']);
+  run("npm", ["run", "compile"]);
 
   // 3. Deploy. Forward --network so deploy.ts sees the same network.
-  const deployArgs = network === 'undeployed' ? [] : ['--', '--network', network];
-  run('npm', ['run', 'deploy', ...deployArgs]);
+  const deployArgs = network === "undeployed" ? [] : ["--", "--network", network];
+  run("npm", ["run", "deploy", ...deployArgs]);
 }
 
 main().catch((e) => {

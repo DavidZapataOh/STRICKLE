@@ -14,7 +14,12 @@ export function PassportSlot({ className = "" }: { className?: string }) {
   return (
     <div className={`grid md:hidden ${className}`} aria-live="polite">
       {PIECES.map((piece) => (
-        <PassportCard key={piece.id} piece={piece} on={current?.id === piece.id} className="[grid-area:1/1]" />
+        <PassportCard
+          key={piece.id}
+          piece={piece}
+          on={current?.id === piece.id}
+          className="[grid-area:1/1]"
+        />
       ))}
     </div>
   );

@@ -1,5 +1,5 @@
-import { marks as c, type Mark } from "@/content/landing";
 import { Strike } from "@/components/reveal/Strike";
+import { marks as c, type Mark } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
 const SHAPE: Record<Mark["shape"], string> = {
@@ -12,7 +12,12 @@ const SHAPE: Record<Mark["shape"], string> = {
 function Glyph({ mark }: { mark: Mark }) {
   switch (mark.glyph) {
     case "sealed":
-      return <span aria-hidden="true" className="hatch hatch-fill block aspect-[1.55] w-[62%] rounded-[3px]" />;
+      return (
+        <span
+          aria-hidden="true"
+          className="hatch hatch-fill block aspect-[1.55] w-[62%] rounded-[3px]"
+        />
+      );
     case "numerals":
     case "lot":
       return (
@@ -22,16 +27,43 @@ function Glyph({ mark }: { mark: Mark }) {
       );
     case "cupel":
       return (
-        <svg viewBox="0 0 48 48" width="52%" height="52%" fill="none" aria-hidden="true" className="struck-ink">
-          <path d="M8 16h32l-5 18H13L8 16Z" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
+        <svg
+          viewBox="0 0 48 48"
+          width="52%"
+          height="52%"
+          fill="none"
+          aria-hidden="true"
+          className="struck-ink"
+        >
+          <path
+            d="M8 16h32l-5 18H13L8 16Z"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinejoin="round"
+          />
           <path d="M4 40h40" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
         </svg>
       );
     case "control":
       return (
-        <svg viewBox="0 0 48 48" width="52%" height="52%" fill="none" aria-hidden="true" className="struck-ink">
+        <svg
+          viewBox="0 0 48 48"
+          width="52%"
+          height="52%"
+          fill="none"
+          aria-hidden="true"
+          className="struck-ink"
+        >
           <path d="M4 14H44" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-          <rect x="10.5" y="14" width="27" height="25.5" rx="2" stroke="currentColor" strokeWidth="4" />
+          <rect
+            x="10.5"
+            y="14"
+            width="27"
+            height="25.5"
+            rx="2"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
           <rect x="15" y="19" width="18" height="16" fill="currentColor" opacity=".25" />
         </svg>
       );
@@ -44,9 +76,17 @@ export function Marks() {
     <Plate id={c.id} tone="brass" inner="py-[clamp(64px,9vw,120px)]">
       <Engraved size="lg">{c.title}</Engraved>
 
-      <Strike as="ol" threshold={0.35} className="mt-[clamp(40px,6vw,80px)] grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8">
+      <Strike
+        as="ol"
+        threshold={0.35}
+        className="mt-[clamp(40px,6vw,80px)] grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8"
+      >
         {c.items.map((m, i) => (
-          <li key={m.id} className={`flex flex-col items-center text-center ${i === c.items.length - 1 ? "col-span-2 sm:col-span-1" : ""}`} style={{ ["--i" as string]: i }}>
+          <li
+            key={m.id}
+            className={`flex flex-col items-center text-center ${i === c.items.length - 1 ? "col-span-2 sm:col-span-1" : ""}`}
+            style={{ ["--i" as string]: i }}
+          >
             <div className={`cartouche ${SHAPE[m.shape]} aspect-square w-[min(100%,196px)]`}>
               <Glyph mark={m} />
             </div>
@@ -55,16 +95,25 @@ export function Marks() {
                 m.verdict ? "verdict-word flex items-center gap-2" : ""
               }`}
             >
-              {m.verdict && <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full bg-current" />}
+              {m.verdict && (
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-2.5 w-2.5 rounded-full bg-current"
+                />
+              )}
               {m.name}
             </p>
-            <p className="muted mt-1.5 max-w-[22ch] font-body text-small leading-snug">{m.meaning}</p>
+            <p className="muted mt-1.5 max-w-[22ch] font-body text-small leading-snug">
+              {m.meaning}
+            </p>
           </li>
         ))}
       </Strike>
 
       <div className="mt-[clamp(48px,7vw,96px)] grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <p className="engraved font-display text-quote font-bold leading-snug [text-wrap:pretty]">{c.lines[0]}</p>
+        <p className="engraved font-display text-quote font-bold leading-snug [text-wrap:pretty]">
+          {c.lines[0]}
+        </p>
         <p className="font-body text-lead leading-relaxed md:pt-1">{c.lines[1]}</p>
       </div>
     </Plate>

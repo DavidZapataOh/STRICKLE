@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { assay as c } from "@/content/landing";
 import { useReducedMotion } from "@/components/reveal/useReducedMotion";
+import { assay as c } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
 /** One object in four recoverable states: sample, assay, strike, register. */
@@ -52,7 +52,11 @@ export function Assay() {
         <Engraved size="lg">{c.title}</Engraved>
 
         <div className="mt-[clamp(36px,5vw,64px)] grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-          <div role="tablist" aria-label="Assay states" className="order-2 flex flex-col gap-1 lg:order-1">
+          <div
+            role="tablist"
+            aria-label="Assay states"
+            className="order-2 flex flex-col gap-1 lg:order-1"
+          >
             {c.states.map((st, k) => (
               <button
                 key={st.key}
@@ -68,14 +72,20 @@ export function Assay() {
                 <span className="block font-display text-title font-extrabold leading-none tracking-[-0.02em]">
                   {st.label}
                 </span>
-                <span className={`mt-2 block font-body text-body leading-snug ${k === i ? "text-steel-900" : "text-steel-600"}`}>{st.title}</span>
+                <span
+                  className={`mt-2 block font-body text-body leading-snug ${k === i ? "text-steel-900" : "text-steel-600"}`}
+                >
+                  {st.title}
+                </span>
                 <span
                   className={`mt-3 block max-w-[54ch] font-body text-body leading-relaxed text-steel-600 transition-[opacity,max-height] duration-300 ${
                     k === i ? "max-h-40 opacity-100" : "max-h-0 overflow-hidden opacity-0"
                   }`}
                 >
                   {st.body}
-                  <span className="mt-2 block font-body text-caption text-steel-900">{st.visible}</span>
+                  <span className="mt-2 block font-body text-caption text-steel-900">
+                    {st.visible}
+                  </span>
                 </span>
                 <span aria-hidden="true" className="state-bar">
                   <i />
@@ -85,7 +95,12 @@ export function Assay() {
           </div>
 
           <div className="order-1 lg:order-2">
-            <div className="frame aspect-[16/10]" role="tabpanel" id={`assay-panel-${s.key}`} aria-labelledby={`assay-tab-${s.key}`}>
+            <div
+              className="frame aspect-[16/10]"
+              role="tabpanel"
+              id={`assay-panel-${s.key}`}
+              aria-labelledby={`assay-tab-${s.key}`}
+            >
               {c.states.map((st, k) =>
                 st.media.kind === "video" ? (
                   <video

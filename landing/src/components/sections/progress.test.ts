@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockAt, CYCLE_MS, isDone, progressAt, PROVE_MS } from "./progress";
+import { CYCLE_MS, clockAt, isDone, PROVE_MS, progressAt } from "./progress";
 
 describe("console demo clock", () => {
   it("starts at zero and reaches 100 at the end of proving", () => {

@@ -10,10 +10,14 @@ export function Questions() {
           {c.items.map((it, i) => (
             <details key={it.q} className="q group" name="faq" open={i === 0}>
               <summary className="flex cursor-pointer items-center justify-between gap-6 py-5">
-                <span className="engraved font-display text-subtitle font-bold leading-snug">{it.q}</span>
+                <span className="engraved font-display text-subtitle font-bold leading-snug">
+                  {it.q}
+                </span>
                 <span aria-hidden="true" className="q-mark" />
               </summary>
-              <p className="max-w-[58ch] pb-6 font-body text-body leading-relaxed text-steel-600">{it.a}</p>
+              <p className="max-w-[58ch] pb-6 font-body text-body leading-relaxed text-steel-600">
+                {it.a}
+              </p>
               <hr className="score m-0" />
             </details>
           ))}

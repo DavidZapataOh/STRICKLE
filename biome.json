@@ -1,0 +1,24 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true, "defaultBranch": "main" },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "scripts/**",
+      "contract/src/**",
+      "strickle-cli/src/**",
+      "strickle-cli/scripts/**",
+      "landing/src/**",
+      "!**/node_modules",
+      "!contract/src/managed",
+      "!**/.next",
+      "!**/dist",
+      "!**/coverage",
+      "!**/*.compact"
+    ]
+  },
+  "formatter": { "enabled": true, "useEditorconfig": true, "lineWidth": 100 },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "linter": { "enabled": true, "rules": { "preset": "recommended" } }
+}
