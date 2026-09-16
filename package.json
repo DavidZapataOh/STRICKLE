@@ -1,0 +1,10 @@
+{
+  "name": "strickle",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.11.1"
+  },
+  "workspaces": ["landing"]
+}

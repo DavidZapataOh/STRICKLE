@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.next/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+managed/
+
+.midnight-state.json
+.midnight-wallet-state/
+midnight-level-db/
+
+.DS_Store
+*.log
