@@ -83,6 +83,8 @@ Pinned exactly, never with ranges. `npm run check:toolchain` fails if any of the
 | `@midnight-ntwrk/midnight-js-*` | 4.1.1 |
 | `@midnight-ntwrk/wallet-sdk` | 1.2.0 |
 | Proof server | 8.1.0 |
+| Midnight node | 1.0.2 |
+| Indexer | 4.3.3-hotfix |
 | Node | 24.14.0 |
 
 Two rules the check enforces: never run `compact update` without a version, and never add `@midnight-ntwrk/compact-js` as a direct dependency.

@@ -33,12 +33,6 @@ jobs:
         id: compiler
         run: echo "version=$(cat .compact-version)" >> "$GITHUB_OUTPUT"
 
-      - name: Cache the Compact toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.compact
-          key: compact-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.version }}
-
       - uses: midnightntwrk/setup-compact-action@836895c8fffbbea6bd986af2b17e8941ff29d1f8 # v1
         with:
           compact-version: ${{ steps.compiler.outputs.version }}

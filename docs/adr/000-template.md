@@ -1,6 +1,8 @@
 ---
 status: proposed
 date: YYYY-MM-DD
+supersedes:
+superseded-by:
 ---
 
 # 000. Title in one line
@@ -26,3 +28,7 @@ Option A, because …
 ### Confirmation
 
 The command that proves the decision holds.
+
+## Superseding
+
+An accepted ADR is never edited. A later decision gets its own file, fills `supersedes:` with this one's number, and this one's `superseded-by:` is filled in and its status set to `superseded`.

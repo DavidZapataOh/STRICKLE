@@ -9,7 +9,7 @@ date: 2026-09-15
 
 Midnight's components move together: a compiler, a runtime package, a set of SDK packages, and three Docker images that have to agree with the network they talk to. The support matrix is the only place where that agreement is written down.
 
-Drift is silent. The GitHub action that installs the compiler runs `compact update <version> || true`, so a failed pin leaves the previous compiler in place and the build carries on. The generated contract calls `checkRuntimeVersion('0.16.0')` at load time, so a runtime mismatch surfaces as a runtime error, far from its cause. The current compiler release, 0.34.0, targets a newer ledger and rejects our `pragma language_version 0.23;` outright. npm already serves TypeScript 7 as `latest`, which our lint toolchain does not accept.
+Drift is silent. The GitHub action that installs the compiler runs `compact update <version> || true`, so a failed pin leaves the previous compiler in place and the build carries on. The generated contract calls `checkRuntimeVersion('0.16.0')` at load time, so a runtime mismatch surfaces as a runtime error, far from its cause. The current compiler release, 0.34.0, targets a newer ledger and rejects our `pragma language_version 0.23;` outright. npm already serves TypeScript 7 as `latest`, which our type-check toolchain does not accept.
 
 ## Considered options
 
@@ -21,9 +21,9 @@ Drift is silent. The GitHub action that installs the compiler runs `compact upda
 
 Exact versions everywhere, enforced by one check.
 
-Versions live in the files the ecosystem already reads: `.compact-version` (0.31.1), `.nvmrc` (24.14.0), each `package.json`, and the devnet compose file. Only what has no home of its own goes into `toolchain.json`: the SDK (`4.1.1`) and wallet (`1.2.0`) versions, the three image tags (proof server `8.1.0`, node `1.0.2`, indexer `4.3.3-hotfix`), and the genesis hash of the local chain. The language and runtime versions are never written down: they are read from the installed compiler and compared with what the packages declare.
+Versions live in the files the ecosystem already reads: `.compact-version` (0.31.1), `.nvmrc` (24.14.0), each `package.json`, and the devnet compose file. Only what has no home of its own goes into `toolchain.json`: the SDK (`4.1.1`) and wallet (`1.2.0`) versions, the three image tags (proof server `8.1.0`, node `1.0.2`, indexer `4.3.3-hotfix`), and the genesis hash of the local chain. The language and runtime versions get no entry of their own: they are read from the installed compiler and compared with what the files declare.
 
-`npm run check:toolchain` is the single enforcement point. It is a pure function with negative tests on every message, wrapped in a thin command, and it runs before a push, in CI right after the compiler is installed, and in the submission preflight.
+`npm run check:toolchain` is the single enforcement point. It is a pure function with negative tests on every message, wrapped in a thin command, and it runs before a push, and in CI right after the compiler is installed.
 
 ### Consequences
 

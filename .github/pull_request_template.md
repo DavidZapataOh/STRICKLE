@@ -9,6 +9,7 @@
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
+- [ ] `npm run build`
 - [ ] A contract or witness change was compiled and executed, not only reviewed
 
 ## Measurement

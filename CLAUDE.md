@@ -10,7 +10,7 @@ Confidential product passport on Midnight: a manufacturer proves that a product 
 | `strickle-cli` | Local network, wallet and deployment scripts, and the devnet `docker-compose.yml`. |
 | `landing` | The marketing site (Next.js). |
 
-One `package-lock.json`, at the root. Root `scripts/` holds the repository's own checks, written in TypeScript and run by Node without a transpiler. A workspace is added by the change that first needs it, never empty.
+One `package-lock.json`, at the root. Root `scripts/` holds the repository's own checks, written in TypeScript and run by Node without a transpiler. A workspace is added by the change that first needs it, never empty. The simplest structure that matches the official Midnight examples wins; a layer the code does not yet need is not added in advance.
 
 ## Toolchain
 
@@ -26,11 +26,11 @@ Exact versions everywhere. The only range in the repository is `engines.node` (`
 | Proof server · node · indexer | 8.1.0 · 1.0.2 · 4.3.3-hotfix | `toolchain.json` and the compose file |
 | Node | 24.14.0 | `.nvmrc` |
 
-The language and runtime versions are read from the installed compiler, never written down twice. `.npmrc` keeps installs exact (`save-exact`) and refuses the wrong Node (`engine-strict`).
+The language and runtime versions have no second home in `toolchain.json`: they are read from the installed compiler and compared with what the files above declare. `.npmrc` keeps installs exact (`save-exact`) and refuses the wrong Node (`engine-strict`).
 
 Three rules: never run `compact update` without a version; never add `@midnight-ntwrk/compact-js` as a direct dependency, it comes nested under `midnight-js-protocol`; develop against the local `undeployed` network.
 
-Follow the official Midnight way: the documentation first, then the official example repositories. Where they disagree, the documentation wins, and a claim is worth what a running compiler or node says about it.
+Follow the official Midnight way: the documentation first, then the official example repositories. Where the documentation disagrees with a blog post, the documentation wins. Where an example repository disagrees with the documentation, settle it by running the compiler or a node — a claim is worth what they say about it.
 
 **`npm run check:toolchain` must stay green.** It is what catches a compiler swapped underneath the build: the action that installs it succeeds as long as *some* compiler is present, so only this check notices it is the wrong one.
 
@@ -45,7 +45,7 @@ Follow the official Midnight way: the documentation first, then the official exa
 | `npm run test:e2e` | Reads the deployed contract back from the chain. |
 | `npm run lint` · `typecheck` · `test` · `build` | Biome, types, tests, build. |
 
-CI and the git hooks call these by name. Never `npx biome`, `npx tsc` or `npx vitest` directly.
+CI and the git hooks call these by name. Never `npx biome`, `npx tsc` or `npx vitest` directly, with one exception: the pre-commit hook checks only the staged files, which no script above expresses.
 
 ## Code
 
@@ -77,7 +77,7 @@ Subject: `type(scope): summary`. Scope is optional and lowercase.
 
 The summary starts in lowercase and does not end with a period. The subject is at most 72 characters. A `Merge …` subject is exempt.
 
-This documents `scripts/commit-message.ts`, which enforces it on every commit; the checker is the source of truth. The hooks run the formatter on what is staged, this convention on the message, and the toolchain check, lint, types and tests before a push.
+This documents `scripts/commit-message.ts`, which enforces it on every commit; the checker is the source of truth. The hooks check the formatting of what is staged, this convention on the message, and the toolchain check, lint, types and tests before a push.
 
 Pull requests carry tests and, when they touch cost or performance, a measured number.
 
