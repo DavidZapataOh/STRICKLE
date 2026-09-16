@@ -1,6 +1,7 @@
 # Local Midnight devnet for strickle
 # LOCAL DEVELOPMENT ONLY — do not expose these ports to a public network.
-# Tear down with: docker compose down -v
+# Tear down with: npm run devnet:down (or npm run devnet:reset to also
+# clear state left over from a previous chain)
 name: strickle-devnet
 
 services:

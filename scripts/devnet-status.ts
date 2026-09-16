@@ -1,9 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { NETWORK_CONFIGS } from '../strickle-cli/src/network.ts';
 import { parseComposePs, probe, readGenesis, summarizeStatus } from './devnet.ts';
 
-const { compose, devnetGenesis } = JSON.parse(readFileSync('toolchain.json', 'utf8')) as {
+const rootDir = fileURLToPath(new URL('..', import.meta.url));
+
+const { compose, devnetGenesis } = JSON.parse(readFileSync(`${rootDir}toolchain.json`, 'utf8')) as {
   compose: string;
   devnetGenesis: string;
 };
@@ -11,9 +14,18 @@ const { compose, devnetGenesis } = JSON.parse(readFileSync('toolchain.json', 'ut
 const config = NETWORK_CONFIGS.undeployed;
 const rpcUrl = config.node.replace(/^ws/, 'http');
 
-const containers = parseComposePs(
-  execFileSync('docker', ['compose', '-f', compose, 'ps', '-a', '--format', 'json'], { encoding: 'utf8' }),
-);
+function dockerComposePs(composeFile: string): string {
+  try {
+    return execFileSync('docker', ['compose', '-f', composeFile, 'ps', '-a', '--format', 'json'], {
+      encoding: 'utf8',
+    });
+  } catch {
+    console.error('docker is not installed or not working');
+    process.exit(1);
+  }
+}
+
+const containers = parseComposePs(dockerComposePs(`${rootDir}${compose}`));
 
 const probes = await Promise.all([
   probe('indexer', `${new URL(config.indexer).origin}/ready`),
