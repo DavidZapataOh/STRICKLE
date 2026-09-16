@@ -6,5 +6,5 @@
   "engines": {
     "node": ">=24.11.1"
   },
-  "workspaces": ["contract", "landing"]
+  "workspaces": ["contract", "strickle-cli", "landing"]
 }
