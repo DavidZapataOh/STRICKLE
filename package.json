@@ -14,7 +14,10 @@
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "vitest run --dir scripts && npm run test --workspaces --if-present",
-    "check:toolchain": "node scripts/check-toolchain.ts"
+    "check:toolchain": "node scripts/check-toolchain.ts",
+    "devnet:up": "docker compose -f strickle-cli/docker-compose.yml up -d --wait && npm run devnet:status",
+    "devnet:status": "node scripts/devnet-status.ts",
+    "devnet:down": "docker compose -f strickle-cli/docker-compose.yml down"
   },
   "devDependencies": {
     "@types/node": "24.13.5",

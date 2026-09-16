@@ -8,5 +8,6 @@
     "midnightntwrk/midnight-node": "1.0.2",
     "midnightntwrk/indexer-standalone": "4.3.3-hotfix",
     "midnightntwrk/proof-server": "8.1.0"
-  }
+  },
+  "devnetGenesis": "0x1e8776a7164dd378443771ef2d726be4f71aa771b464f57cfbf656bac819ce69"
 }
