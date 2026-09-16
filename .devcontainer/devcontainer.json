@@ -1,0 +1,13 @@
+{
+  "name": "STRICKLE",
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24.14.0" }
+  },
+  "updateContentCommand": "npm ci",
+  "postCreateCommand": "sudo chown node \"$HOME/.cache/midnight\" && npm run check:toolchain && npm run check:env",
+  "waitFor": "postCreateCommand",
+  "customizations": {
+    "vscode": { "extensions": ["biomejs.biome", "EditorConfig.EditorConfig"] }
+  }
+}
