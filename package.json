@@ -17,7 +17,8 @@
     "check:toolchain": "node scripts/check-toolchain.ts",
     "devnet:up": "mkdir -p \"$HOME/.cache/midnight/zk-params\" && docker compose -f strickle-cli/docker-compose.yml up -d --wait && npm run devnet:status",
     "devnet:status": "node scripts/devnet-status.ts",
-    "devnet:down": "docker compose -f strickle-cli/docker-compose.yml down"
+    "devnet:down": "docker compose -f strickle-cli/docker-compose.yml down",
+    "devnet:reset": "npm run devnet:down && rm -rf strickle-cli/.midnight-state.json strickle-cli/.midnight-wallet-state strickle-cli/midnight-level-db"
   },
   "devDependencies": {
     "@types/node": "24.13.5",
