@@ -1,0 +1,5 @@
+set -e
+npm run check:toolchain
+npm run lint
+npm run typecheck
+npm test

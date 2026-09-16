@@ -23,11 +23,13 @@
     "devnet:up": "mkdir -p \"$HOME/.cache/midnight/zk-params\" && docker compose -f strickle-cli/docker-compose.yml up -d --wait; npm run devnet:status",
     "devnet:status": "node scripts/devnet-status.ts",
     "devnet:down": "docker compose -f strickle-cli/docker-compose.yml down",
-    "devnet:reset": "npm run devnet:down && rm -rf strickle-cli/.midnight-state.json strickle-cli/.midnight-wallet-state strickle-cli/midnight-level-db"
+    "devnet:reset": "npm run devnet:down && rm -rf strickle-cli/.midnight-state.json strickle-cli/.midnight-wallet-state strickle-cli/midnight-level-db",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
     "@types/node": "24.13.5",
+    "husky": "9.1.7",
     "typescript": "6.0.3",
     "vitest": "3.2.7"
   }
