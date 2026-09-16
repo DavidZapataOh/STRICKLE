@@ -32,22 +32,33 @@ export function checkEnv(env: Record<string, string | undefined>): string[] {
       errors.push(`${name} is "${value}", expected a URL`);
       continue;
     }
+    const authority = value.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^/?#]*)/);
+    if (!authority || authority[1] === "") {
+      errors.push(`${name} is "${value}", expected a URL`);
+      continue;
+    }
     if (!schemes.includes(parsed.protocol)) {
       errors.push(`${name} uses ${parsed.protocol}, expected ${schemes.join(" or ")}`);
     }
   }
 
   const timeout = env.MIDNIGHT_FAUCET_TIMEOUT_MS;
-  if (timeout && !(Number(timeout) > 0)) {
+  if (timeout && !(Number(timeout) > 0 && Number.isFinite(Number(timeout)))) {
     errors.push(
       `MIDNIGHT_FAUCET_TIMEOUT_MS is "${timeout}", expected a positive number of milliseconds`,
     );
   }
 
-  const password = env.PRIVATE_STATE_PASSWORD;
+  const password = env.PRIVATE_STATE_PASSWORD?.trim();
   if (password && password.length < PASSWORD_MINIMUM) {
     errors.push(
       `PRIVATE_STATE_PASSWORD is ${password.length} characters, the minimum is ${PASSWORD_MINIMUM}`,
+    );
+  }
+
+  if (env.MIDNIGHT_WALLET_SEED && env.MIDNIGHT_WALLET_MNEMONIC) {
+    errors.push(
+      "MIDNIGHT_WALLET_SEED and MIDNIGHT_WALLET_MNEMONIC are both set, expected only one",
     );
   }
 

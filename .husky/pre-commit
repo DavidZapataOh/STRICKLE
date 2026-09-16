@@ -1,2 +1,2 @@
 npx biome check --staged --no-errors-on-unmatched .
-gitleaks git --staged . --no-banner --redact -v
+gitleaks git --staged . -c .gitleaks.toml --no-banner --redact -v

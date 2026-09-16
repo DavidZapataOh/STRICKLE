@@ -39,6 +39,7 @@ Follow the official Midnight way: the documentation first, then the official exa
 | Command | What it does |
 |---|---|
 | `npm run check:toolchain` | Every pinned version matches. Prints `toolchain ok`, or one violation per line. |
+| `npm run check:env` | Checks the environment variables that are set. Prints `env ok`, or one violation per line. |
 | `npm run compact` | Compiles the contract with the pinned compiler. |
 | `npm run compile -w @strickle/cli` | The same compile, invoked by `setup.ts` and named in the error messages of `cli.ts`, `deploy.ts` and `e2e-check.ts`. Not a duplicate: deleting it breaks `npm run setup`. |
 | `npm run devnet:up` / `status` / `down` / `reset` | The local network. `reset` also drops state left over from a previous chain. |

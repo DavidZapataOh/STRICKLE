@@ -1,5 +1,6 @@
 set -e
 npm run check:toolchain
+npm run check:env
 npm run lint
 npm run typecheck
 npm test

@@ -36,4 +36,4 @@ jobs:
           sudo tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
 
       - name: Scan the whole history
-        run: gitleaks git . --no-banner --redact --exit-code 1
+        run: gitleaks git . -c .gitleaks.toml --no-banner --redact -v --exit-code 1
