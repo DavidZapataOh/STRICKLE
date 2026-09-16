@@ -6,5 +6,13 @@
   "engines": {
     "node": ">=24.11.1"
   },
-  "workspaces": ["contract", "strickle-cli", "landing"]
+  "workspaces": ["contract", "strickle-cli", "landing"],
+  "scripts": {
+    "compact": "npm run compact -w @strickle/contract",
+    "setup": "npm run setup -w @strickle/cli",
+    "test:e2e": "npm run test:e2e -w @strickle/cli",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
 }
