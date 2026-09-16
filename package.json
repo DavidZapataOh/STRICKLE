@@ -6,5 +6,5 @@
   "engines": {
     "node": ">=24.11.1"
   },
-  "workspaces": ["landing"]
+  "workspaces": ["contract", "landing"]
 }
