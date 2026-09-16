@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { certificate as c } from "@/content/landing";
 import { Engraved, Plate } from "./Plate";
 
-/** The assay certificate: the memo for the committee, and the code for the judge. */
+/** The assay certificate: the memo for the committee, and the code for the verifier. */
 export function Certificate() {
   const photo = existsSync(join(process.cwd(), "public", "media", "memo.jpg"));
   return (

@@ -238,7 +238,7 @@ Tonal brushed steel from near-white to near-black, one matte brass, one amber la
 **The Struck Verdict Rule.** Green appears only as "Compliant" (or red as "Non-compliant"), always as word plus dot, with the regulation cited beneath. Never as a status colour, tick, badge or background wash on its own.
 **The One Lamp Rule.** Amber is one 8px lamp plus the date beside it, on the delayed clock only.
 **The Brass Is Material Rule.** Brass is never a text accent on steel. It is a plate, a bar, a selected chip, a seal, the selection highlight; always modelled hi → body → lo.
-**The No Blue Rule.** No blue anywhere on the site; it would make STRICKLE read as a TÜV or Midnight sub-brand (PRODUCT.md standing constraint).
+**The No Blue Rule.** No blue anywhere on the site; it would make STRICKLE read as a TÜV or Midnight sub-brand.
 
 ## Typography
 

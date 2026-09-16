@@ -3,7 +3,7 @@ import * as content from "./landing";
 
 const all = JSON.stringify(content);
 
-/** Words that speak to a judge or a developer, not to the buyer. */
+/** Words that speak to a developer, not to the buyer. */
 const JARGON =
   /blockchain|zero-knowledge|\bzk\b|on[- ]chain|ledger|consensus|circuit|witness|prover|nullifier|merkle|hash|cryptograph|smart contract|compact\b/i;
 
