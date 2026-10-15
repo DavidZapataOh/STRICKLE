@@ -5,5 +5,6 @@
   "heartbeatAddress": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
   "gasLimit": "900000",
   "rpcUrl": "https://rpc.testnet.arc.io",
-  "stateAddress": "0xc8224D78e864476258785646a93a6884967b3973"
+  "stateAddress": "0xc8224D78e864476258785646a93a6884967b3973",
+  "executorAddress": "0x62a31CAFaeff7CEc4944dc4DeDa5b88e34aBCd19"
 }

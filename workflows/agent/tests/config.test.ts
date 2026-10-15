@@ -8,6 +8,7 @@ const valid = {
   factoryAddress: "0x00000000000000000000000000000000000000aa",
   heartbeatAddress: "0x00000000000000000000000000000000000000bb",
   stateAddress: "0x00000000000000000000000000000000000000cc",
+  executorAddress: "0x00000000000000000000000000000000000000dd",
   rpcUrl: "https://rpc.testnet.arc.io",
   gasLimit: "300000",
 };
@@ -19,6 +20,10 @@ describe("configSchema", () => {
 
   it.each(["factoryAddress", "heartbeatAddress"])("rejects a malformed %s", (key) => {
     expect(() => configSchema.parse({ ...valid, [key]: "0x123" })).toThrow();
+  });
+
+  it("rejects a malformed executor address", () => {
+    expect(() => configSchema.parse({ ...valid, executorAddress: "0x1" })).toThrow();
   });
 
   it("rejects a gas limit that is not a number string", () => {
