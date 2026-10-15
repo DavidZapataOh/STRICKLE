@@ -136,6 +136,8 @@ jobs:
           key: toolchain-${{ hashFiles('toolchain.json') }}
       - run: npm run toolchain:install
       - run: npm run circuits:test
+      - run: npm run circuits:compile
+      - run: npm run test:circuits -w @strickle/pool
       - run: npm run pool:vectors
       - name: Generated files are up to date
         run: git diff --exit-code -- packages/pool/vectors circuits contracts/src/pool/PoolZeros.sol

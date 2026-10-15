@@ -1,4 +1,4 @@
-use crate::constants::DOM_POLICY;
+use crate::constants::{DOM_POLICY, DOM_TEMPLATE};
 use poseidon::poseidon2::Poseidon2;
 
 pub struct Policy {
@@ -9,6 +9,7 @@ pub struct Policy {
     pub agent_cap: u64,
     pub agent_actions: u8,
     pub release_delay: u32,
+    pub template_root: Field,
 }
 
 impl Policy {
@@ -23,8 +24,13 @@ impl Policy {
                 self.agent_cap as Field,
                 self.agent_actions as Field,
                 self.release_delay as Field,
+                self.template_root,
             ],
-            8,
+            9,
         )
     }
+}
+
+pub fn template_leaf(box_id: u8, policy: Field) -> Field {
+    Poseidon2::hash([DOM_TEMPLATE, box_id as Field, policy], 3)
 }
