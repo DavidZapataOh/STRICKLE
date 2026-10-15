@@ -5,13 +5,13 @@ import { authHash, nullifierKey, ownerPk } from "@strickle/pool/keys";
 import { buildShieldInputs, buildSpendInputs } from "@strickle/pool/witness";
 import { createHash } from "node:crypto";
 
-export const SECRET = 424242424242424242424242424242n;
+export const OWNER_SK = 424242424242424242424242424242n;
 export const TOKEN = "service-test-token-0123456789abcdef";
 export const TOKEN_HASH = createHash("sha256").update(TOKEN).digest("hex");
 
 export const note = (overrides: Partial<Note> = {}): Note => ({
   amount: 1_000_000n,
-  ownerPk: ownerPk(SECRET),
+  ownerPk: ownerPk(OWNER_SK),
   policy: policyHash(FREE_POLICY),
   label: 0n,
   box: "operating",
@@ -32,9 +32,9 @@ export function spendWitness() {
     tree,
     inputs: [{ note: input, policy: FREE_POLICY, leafIndex: index }, null],
     outputs: [{ note: note({ amount: 600_000n, box: "salary" }) }, { note: note({ amount: 400_000n, box: "profit" }) }],
-    signer: { kind: "user", sk: SECRET },
+    signer: { kind: "user", sk: OWNER_SK },
     now: 1_800_000_000n,
   });
 }
 
-export const keys = { auth: authHash(SECRET), nk: nullifierKey(SECRET) };
+export const keys = { auth: authHash(OWNER_SK), nk: nullifierKey(OWNER_SK) };

@@ -1,6 +1,6 @@
 {
   "singleThreadProveMs": 5000,
-  "multiThreadProveMs": 2500,
+  "multiThreadProveMs": 4000,
   "warmTotalMs": 8000,
   "coldTotalMs": 15000
 }

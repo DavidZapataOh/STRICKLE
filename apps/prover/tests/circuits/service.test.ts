@@ -4,10 +4,10 @@ import { createProver, encodeRequest, type Prover } from "@strickle/prover";
 import { proveRemote } from "@strickle/prover/client";
 import { nodeCircuitLoader } from "@strickle/prover/node";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createService, type Service } from "../src/server.ts";
-import { TOKEN, TOKEN_HASH, SECRET, shieldWitness, spendWitness } from "./helpers.ts";
+import { createService, type Service } from "../../src/server.ts";
+import { TOKEN, TOKEN_HASH, OWNER_SK, shieldWitness, spendWitness } from "../helpers.ts";
 
-const circuitsDir = new URL("../../../circuits/target/", import.meta.url);
+const circuitsDir = new URL("../../../../circuits/target/", import.meta.url);
 const real = createProver({ loadCircuit: nodeCircuitLoader(circuitsDir), backend: { threads: 1 } });
 
 let service: Service;
@@ -138,7 +138,7 @@ describe("prover service: nothing leaks", () => {
       process.stderr.write = originalErr;
     }
     const everything = [...lines, ...stdout, ...stderr].join("\n");
-    const forms = [marker.toString(), `0x${marker.toString(16)}`, marker.toString(16).padStart(64, "0"), SECRET.toString(), TOKEN];
+    const forms = [marker.toString(), `0x${marker.toString(16)}`, marker.toString(16).padStart(64, "0"), OWNER_SK.toString(), TOKEN];
     for (const form of forms) expect(everything).not.toContain(form);
     expect([readdirSync(tmpdir()).sort(), readdirSync(process.cwd()).sort()]).toEqual(before);
     expect(lines.length).toBeGreaterThan(0);
