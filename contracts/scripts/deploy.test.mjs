@@ -160,3 +160,19 @@ test("verification goes through the hosted Blockscout API when a key is set, and
   assert.deepEqual(verifierEndpoint("testnet", 5042002, "key"), { url: "https://api.blockscout.com/5042002/api/", keyArgs: ["--verifier-api-key", "key"] });
   assert.deepEqual(verifierEndpoint("testnet", 5042002, undefined), { url: "https://explorer.testnet.arc.io/api/", keyArgs: [] });
 });
+
+test("records the agent heartbeat deployment", () => {
+  const dir = mkdtempSync(join(tmpdir(), "deploy-"));
+  const runFile = join(dir, "run.json");
+  const manifestFile = join(dir, "arc-testnet.json");
+  writeFileSync(
+    runFile,
+    JSON.stringify({
+      transactions: [{ transactionType: "CREATE2", contractName: "AgentHeartbeat", contractAddress: "0x00000000000000000000000000000000000000aa", hash: "0x01" }],
+      receipts: [{ transactionHash: "0x01", blockNumber: "0x10" }],
+    }),
+  );
+  const manifest = recordDeployment({ runFile, manifestFile, chainId: 5042002 });
+  assert.equal(manifest.contracts.AgentHeartbeat.blockNumber, 16);
+  assert.equal(manifest.contracts.AgentHeartbeat.create2, true);
+});
