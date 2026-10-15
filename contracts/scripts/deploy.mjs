@@ -18,6 +18,19 @@ export function contractPath(name, outDir = join(contractsDir, "out")) {
   throw new Error(`no build artifact found for ${name}; run arc-forge build`);
 }
 
+export function libraryArgs(name, manifest, outDir = join(contractsDir, "out")) {
+  const source = contractPath(name, outDir).split(":")[0];
+  const artifact = JSON.parse(readFileSync(join(outDir, basename(source), `${name}.json`), "utf8"));
+  const links = artifact.bytecode?.linkReferences ?? {};
+  return Object.entries(links).flatMap(([file, libraries]) =>
+    Object.keys(libraries).flatMap((library) => {
+      const entry = manifest.contracts[library];
+      if (!entry) throw new Error(`${library} is not in the manifest; deploy it before ${name}`);
+      return ["--libraries", `${file}:${library}:${entry.address}`];
+    }),
+  );
+}
+
 export function recordDeployment({ runFile, manifestFile, chainId }) {
   const run = JSON.parse(readFileSync(runFile, "utf8"));
   const manifest = existsSync(manifestFile)
@@ -80,6 +93,9 @@ export function deploy({
           `${networks[network].explorerUrl}/api/`,
           "--retries",
           String(verifyRetries),
+          "--delay",
+          "15",
+          ...libraryArgs(contractName, manifest),
         ],
         { cwd: contractsDir, stdio: "inherit" },
       );
