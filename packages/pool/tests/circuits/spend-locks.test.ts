@@ -1,9 +1,13 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { FLAG_RELEASED } from "../../src/constants.ts";
+import { DOMAIN, FLAG_RELEASED } from "../../src/constants.ts";
+import { deliveryKey, encryptDelivery, packDelivery } from "../../src/delivery.ts";
+import { toHex32 } from "../../src/field.ts";
+import { hash } from "../../src/poseidon.ts";
 import { closeProver, executeCircuit } from "../../src/prove.ts";
+import type { Note } from "../../src/note.ts";
 import { FREE_POLICY, type Policy, policyHash } from "../../src/policy.ts";
 import { type SpendSpec, buildSpendInputs } from "../../src/witness.ts";
-import { NOW, World, baseSpend, makeNote } from "./fixture.ts";
+import { NOW, World, baseSpend, makeNote, user } from "./fixture.ts";
 
 afterAll(closeProver);
 
@@ -125,5 +129,89 @@ describe("release delay for policy and flag changes", () => {
     });
     await expect(run(reissue(NOW))).resolves.toBeDefined();
     await expect(run(reissue(NOW - 1n))).rejects.toThrow();
+  });
+});
+
+describe("loosening a policy cannot be undone faster than the old delay", () => {
+  const strict: Policy = { ...FREE_POLICY, restricted: true, floor: 1_000_000n, releaseDelay: 172_800 };
+
+  it("rejects shortening the lock of a freshly loosened note with the looser policy's own delay", async () => {
+    const world = new World();
+    const input = world.add(makeNote({ box: "taxes", policy: policyHash(strict) }, strict), strict);
+    const loosen: SpendSpec = {
+      ...baseSpend(world, input),
+      outputs: [
+        { note: makeNote({ box: "taxes", amount: input.note.amount, policy: policyHash(FREE_POLICY), lockUntil: NOW + 2n * DAY }) },
+        { note: makeNote({ amount: 0n, ownerPk: 5n }) },
+      ],
+    };
+    const first = buildSpendInputs(loosen);
+    await expect(executeCircuit("spend", first.inputs)).resolves.toBeDefined();
+
+    const loosened = world.add(first.outputNotes[0] as Note, FREE_POLICY);
+    const shorten: SpendSpec = {
+      ...baseSpend(world, loosened),
+      now: NOW + 1n,
+      outputs: [
+        { note: makeNote({ box: "taxes", amount: loosened.note.amount, policy: policyHash(FREE_POLICY), lockUntil: NOW + 2n }) },
+        { note: makeNote({ amount: 0n, ownerPk: 5n }) },
+      ],
+    };
+    await expect(run(shorten)).rejects.toThrow();
+  });
+
+  it("still lets the owner wait out the old delay and then move freely", async () => {
+    const world = new World();
+    const input = world.add(makeNote({ box: "taxes", policy: policyHash(strict) }, strict), strict);
+    const first = buildSpendInputs({
+      ...baseSpend(world, input),
+      outputs: [
+        { note: makeNote({ box: "taxes", amount: input.note.amount, policy: policyHash(FREE_POLICY), lockUntil: NOW + 2n * DAY }) },
+        { note: makeNote({ amount: 0n, ownerPk: 5n }) },
+      ],
+    });
+    const loosened = world.add(first.outputNotes[0] as Note, FREE_POLICY);
+    await expect(run({ ...baseSpend(world, loosened), now: NOW + 2n * DAY })).resolves.toBeDefined();
+  });
+
+  it("makes a reissue wait for the inherited delay even when the current policy has none", async () => {
+    const world = new World();
+    const inherited = world.add(makeNote({ box: "payroll", delayFloor: 172_800 }));
+    const reissue = (lockUntil: bigint): SpendSpec => ({
+      ...baseSpend(world, inherited),
+      outputs: [
+        { note: makeNote({ box: "payroll", amount: inherited.note.amount, flags: FLAG_RELEASED, lockUntil }) },
+        { note: makeNote({ amount: 0n, ownerPk: 5n }) },
+      ],
+    });
+    await expect(run(reissue(NOW))).rejects.toThrow();
+    await expect(run(reissue(NOW + 2n * DAY))).resolves.toBeDefined();
+  });
+
+  it("refuses an output that lowers the inherited delay, even with a consistent commitment and delivery", async () => {
+    const world = new World();
+    const input = world.add(makeNote({ box: "taxes", policy: policyHash(strict) }, strict), strict);
+    const built = buildSpendInputs({
+      ...baseSpend(world, input),
+      outputs: [
+        { note: makeNote({ box: "taxes", amount: input.note.amount, policy: input.note.policy, lockUntil: NOW + 5n * DAY }) },
+        { note: makeNote({ amount: 0n, ownerPk: 5n }) },
+      ],
+    });
+    await expect(executeCircuit("spend", built.inputs)).resolves.toBeDefined();
+
+    const outputs = built.inputs.outputs as { note: Record<string, string | number> }[];
+    const note: Record<string, string | number> = { ...(outputs[0] as { note: Record<string, string | number> }).note, delay_floor: 0 };
+    const meta = BigInt(note.box_id as number) + BigInt(note.asset as number) * 2n ** 8n + BigInt(note.flags as number) * 2n ** 16n + BigInt(note.lock_until as string) * 2n ** 32n;
+    const commitment = hash([DOMAIN.NOTE, BigInt(note.amount as string), BigInt(note.owner_pk as string), BigInt(note.policy as string), BigInt(note.label as string), meta, BigInt(note.salt as string)]);
+    const key = deliveryKey(user.nk, built.publicInputs[1] as bigint, 0);
+    const enc = encryptDelivery(packDelivery({ amount: BigInt(note.amount as string), flags: 0, lockUntil: BigInt(note.lock_until as string), delayFloor: 0 }), key);
+    const forged = {
+      ...built.inputs,
+      outputs: [{ ...outputs[0], note }, outputs[1]],
+      commitments: [toHex32(commitment), (built.inputs.commitments as string[])[1] as string],
+      enc: [toHex32(enc), (built.inputs.enc as string[])[1] as string],
+    };
+    await expect(executeCircuit("spend", forged as never)).rejects.toThrow();
   });
 });

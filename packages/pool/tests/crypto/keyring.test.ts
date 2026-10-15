@@ -7,7 +7,7 @@ import { decodeAccountantPayload } from "../../src/crypto/wire.ts";
 import type { Note } from "../../src/note.ts";
 import { FREE_POLICY } from "../../src/policy.ts";
 
-const note = (salt: bigint): Note => ({ amount: 10n, ownerPk: 1n, policy: 2n, label: 3n, box: "salary", asset: "USDC", flags: 0, lockUntil: 0n, salt });
+const note = (salt: bigint): Note => ({ amount: 10n, ownerPk: 1n, policy: 2n, label: 3n, box: "salary", asset: "USDC", flags: 0, lockUntil: 0n, delayFloor: 0, salt });
 const sealWith = (ring: ViewKeyRing, salt: bigint) => sealEnvelope([{ note: note(salt), policy: FREE_POLICY, viewers: ring.viewers() }, null]);
 
 describe("view key ring", () => {

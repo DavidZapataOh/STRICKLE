@@ -18,15 +18,14 @@ const note: Note = {
   box: "payroll",
   asset: "EURC",
   flags: 1,
-  lockUntil: 1_900_000_000n,
-  salt: 444n,
+  lockUntil: 1_900_000_000n, delayFloor: 172_800, salt: 444n,
 };
 const policy: Policy = { floor: 5n, allowlistRoot: 6n, restricted: true, agentKeyHash: 7n, agentCap: 8n, agentActions: 9, releaseDelay: 10, templateRoot: 11n };
 
 describe("payload layouts", () => {
-  it("round-trips the owner payload in 265 bytes", () => {
+  it("round-trips the owner payload in 269 bytes", () => {
     const bytes = encodeOwnerPayload({ note, policy });
-    expect(bytes).toHaveLength(265);
+    expect(bytes).toHaveLength(269);
     expect(decodeOwnerPayload(bytes)).toEqual({ note, policy });
   });
 

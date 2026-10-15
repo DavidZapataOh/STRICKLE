@@ -15,6 +15,7 @@ const note = (amount: bigint, salt: bigint): Note => ({
   asset: "USDC",
   flags: 0,
   lockUntil: 1_900_000_000n,
+  delayFloor: 0,
   salt,
 });
 
@@ -50,6 +51,22 @@ describe("envelope", () => {
       const authorityBytes = openSection(envelope, index as 0 | 1, "authority", as(authority));
       expect(decodeAuthorityPayload(authorityBytes as Uint8Array)).toEqual({ amount: expected.amount, asset: "USDC", label: 333n });
     }
+  });
+
+  it("binds each section's wrap key to its tier, so a viewer listed twice cannot be replayed as another tier", () => {
+    const shared = generateViewKey();
+    const envelope = sealEnvelope([
+      { note: first, policy: FREE_POLICY, viewers: [{ tier: "owner", publicKey: shared.publicKey }, { tier: "accountant", publicKey: shared.publicKey }] },
+      null,
+    ]);
+    expect(openSection(envelope, 0, "owner", as(shared))).toBeDefined();
+    expect(openSection(envelope, 0, "accountant", as(shared))).toBeDefined();
+    const bytes = hexToBytes(envelope);
+    const ownerLength = 1 + 4 + 48 + 2 + 269 + 16;
+    const accountantTier = 35 + ownerLength;
+    expect(bytes[accountantTier]).toBe(2);
+    bytes[accountantTier] = 3;
+    expect(openSection(bytesToHex(bytes), 0, "authority", as(shared))).toBeUndefined();
   });
 
   it("keeps the tiers apart: the accountant and the authority see no secrets", () => {

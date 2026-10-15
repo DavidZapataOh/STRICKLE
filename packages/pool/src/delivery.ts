@@ -11,20 +11,22 @@ export interface Delivery {
   amount: bigint;
   flags: number;
   lockUntil: bigint;
+  delayFloor: number;
 }
 
-export function packDelivery({ amount, flags, lockUntil }: Delivery): bigint {
+export function packDelivery({ amount, flags, lockUntil, delayFloor }: Delivery): bigint {
   assertUint(amount, 64, "amount");
   assertUint(lockUntil, 64, "lockUntil");
+  assertUint(BigInt(delayFloor), 32, "delayFloor");
   if (!Number.isInteger(flags) || flags < 0 || flags > 1) throw new RangeError("flags must be 0 or 1");
-  return amount + (BigInt(flags) << 64n) + (lockUntil << 72n);
+  return amount + (BigInt(flags) << 64n) + (lockUntil << 72n) + (BigInt(delayFloor) << 136n);
 }
 
 export function unpackDelivery(m: bigint): Delivery | undefined {
-  if (m < 0n || m >= 1n << 136n) return undefined;
+  if (m < 0n || m >= 1n << 168n) return undefined;
   const flags = (m >> 64n) & 0xffn;
   if (flags > 1n) return undefined;
-  return { amount: m & ((1n << 64n) - 1n), flags: Number(flags), lockUntil: m >> 72n };
+  return { amount: m & ((1n << 64n) - 1n), flags: Number(flags), lockUntil: (m >> 72n) & ((1n << 64n) - 1n), delayFloor: Number(m >> 136n) };
 }
 
 export const encryptDelivery = (m: bigint, key: bigint): bigint => (m + deliveryPad(key)) % FIELD_MODULUS;

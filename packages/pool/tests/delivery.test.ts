@@ -22,28 +22,30 @@ describe("delivery", () => {
     expect(deliveryKey(5n, 6n, 0)).not.toBe(deliveryKey(4n, 6n, 0));
   });
 
-  it("packs amount, flags and lock into one value below 2^136 and unpacks it", () => {
+  it("packs amount, flags, lock and delay floor into one value below 2^168 and unpacks it", () => {
     fc.assert(
       fc.property(fc.bigInt({ min: 0n, max: 2n ** 64n - 1n }), fc.integer({ min: 0, max: 1 }), fc.bigInt({ min: 0n, max: 2n ** 64n - 1n }), (amount, flags, lockUntil) => {
-        const m = packDelivery({ amount, flags, lockUntil });
-        expect(m < 2n ** 136n).toBe(true);
-        expect(unpackDelivery(m)).toEqual({ amount, flags, lockUntil });
+        const delayFloor = Number(amount % 2n ** 32n);
+        const m = packDelivery({ amount, flags, lockUntil, delayFloor });
+        expect(m < 2n ** 168n).toBe(true);
+        expect(unpackDelivery(m)).toEqual({ amount, flags, lockUntil, delayFloor });
       }),
       { numRuns: 100 },
     );
-    expect(() => packDelivery({ amount: 2n ** 64n, flags: 0, lockUntil: 0n })).toThrow(RangeError);
-    expect(() => packDelivery({ amount: 1n, flags: 2, lockUntil: 0n })).toThrow(RangeError);
+    expect(() => packDelivery({ amount: 2n ** 64n, flags: 0, lockUntil: 0n, delayFloor: 0 })).toThrow(RangeError);
+    expect(() => packDelivery({ amount: 1n, flags: 2, lockUntil: 0n, delayFloor: 0 })).toThrow(RangeError);
+    expect(() => packDelivery({ amount: 1n, flags: 0, lockUntil: 0n, delayFloor: 2 ** 32 })).toThrow(RangeError);
   });
 
   it("rejects a decrypted value that is not a packed delivery", () => {
-    expect(unpackDelivery(2n ** 136n)).toBeUndefined();
+    expect(unpackDelivery(2n ** 168n)).toBeUndefined();
     expect(unpackDelivery(FIELD_MODULUS - 1n)).toBeUndefined();
   });
 
   it("encrypts and decrypts with the pad, and a wrong key reveals nothing usable", () => {
     fc.assert(
       fc.property(field, field, (rawKey, other) => {
-        const m = packDelivery({ amount: 123n, flags: 1, lockUntil: 456n });
+        const m = packDelivery({ amount: 123n, flags: 1, lockUntil: 456n, delayFloor: 7 });
         const enc = encryptDelivery(m, rawKey);
         expect(decryptDelivery(enc, rawKey)).toBe(m);
         if (other !== rawKey) expect(unpackDelivery(decryptDelivery(enc, other))).toBeUndefined();

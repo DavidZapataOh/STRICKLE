@@ -26,6 +26,10 @@ struct OutputNote {
     template_path: [Field; TEMPLATE_DEPTH],
 }
 
+fn max_u64(a: u64, b: u64) -> u64 {
+    if a > b { a } else { b }
+}
+
 fn min_u64(a: u64, b: u64) -> u64 {
     if a < b { a } else { b }
 }
@@ -124,15 +128,19 @@ fn main(
     assert(total_in == total_out + (public_amount as u128), "value is not conserved");
 
     // --- rules: locks and release ---
+    // The delay that binds a note is the longest one ever applied to its lineage: its own policy's or the floor it inherited.
     let mut any_locked = false;
     let mut required_lock: u64 = 0;
+    let mut binding_delay: u64 = 0;
     for i in 0..2 {
         let input = inputs[i];
+        let own_delay = max_u64(input.policy.release_delay as u64, input.note.delay_floor as u64);
         let locked = !input.dummy & (now < input.note.lock_until);
-        let shortened = min_u64(input.note.lock_until, now + (input.policy.release_delay as u64));
+        let shortened = min_u64(input.note.lock_until, now + own_delay);
         let required = if is_agent { input.note.lock_until } else { shortened };
         any_locked = any_locked | locked;
         required_lock = if locked & (required > required_lock) { required } else { required_lock };
+        binding_delay = if !input.dummy & (own_delay > binding_delay) { own_delay } else { binding_delay };
     }
     let value_leaves = (public_amount != 0) | any_move | any_send;
     assert(!any_locked | !value_leaves, "a locked note cannot leave its box");
@@ -143,8 +151,10 @@ fn main(
         assert(!(any_locked & active) | (keeps_box & (out.lock_until >= required_lock)), "re-lock is too short");
         let changes_shape = !((out.policy == base_note.policy) & (out.flags == base_note.flags));
         let reissue = active & keeps_box & changes_shape;
-        let waited = out.lock_until >= now + (base_policy.release_delay as u64);
+        let waited = out.lock_until >= now + binding_delay;
         assert(!reissue | (!is_agent & waited), "changing a policy needs the release delay");
+        let kept = active & (out.owner_pk == base_note.owner_pk);
+        assert(!kept | ((out.delay_floor as u64) >= binding_delay), "the release delay of a note can only grow");
     }
     // --- rules: floor and recipients ---
     let released = (base_note.flags & 1) == 1;
@@ -170,6 +180,10 @@ fn main(
         let leaf = template_leaf(out.box_id, out.policy);
         let template_ok = compute_root(leaf, outputs[j].template_index, outputs[j].template_path) == base_policy.template_root;
         assert(!(is_agent & moves_j) | template_ok, "destination is not an approved template");
+        assert(!(is_agent & moves_j) | (out.flags == 0), "the agent cannot hand over a released note");
+        let agent_lock_bound = if any_locked { required_lock } else { now };
+        let self_active = (out.amount != 0) & (out.owner_pk == base_note.owner_pk);
+        assert(!(is_agent & self_active) | (out.lock_until <= agent_lock_bound), "the agent cannot lock a note");
     }
     // --- rules: labels and association ---
     let label0 = inputs[0].note.label;
@@ -194,9 +208,8 @@ fn main(
         let out = outputs[j].note;
         let is_self = (out.amount != 0) & (out.owner_pk == base_note.owner_pk);
         let key = delivery_key(owner_nk, nullifiers[0], j as u8);
-        let expected = pack_delivery(out.amount, out.flags, out.lock_until) + delivery_pad(key);
+        let expected = pack_delivery(out.amount, out.flags, out.lock_until, out.delay_floor) + delivery_pad(key);
         assert(!is_self | (out.salt == delivery_salt(key)), "a self output must use the derived salt");
         assert(!is_self | (enc[j] == expected), "wrong delivery ciphertext");
-        assert(is_self | (enc[j] == 0), "only self outputs carry a delivery ciphertext");
     }
 }

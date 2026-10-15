@@ -22,8 +22,7 @@ export function makeNote(overrides: Partial<Note> = {}, policy: Policy = FREE_PO
     box: "operating",
     asset: "USDC",
     flags: 0,
-    lockUntil: 0n,
-    salt: freshSalt(),
+    lockUntil: 0n, delayFloor: 0, salt: freshSalt(),
     ...overrides,
   };
 }

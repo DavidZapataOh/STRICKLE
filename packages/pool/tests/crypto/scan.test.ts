@@ -5,7 +5,7 @@ import { openOwnerNote } from "../../src/crypto/scan.ts";
 import { type Note, noteCommitment } from "../../src/note.ts";
 import { FREE_POLICY, policyHash } from "../../src/policy.ts";
 
-const note: Note = { amount: 77n, ownerPk: 5n, policy: policyHash(FREE_POLICY), label: 0n, box: "profit", asset: "USDC", flags: 0, lockUntil: 0n, salt: 99n };
+const note: Note = { amount: 77n, ownerPk: 5n, policy: policyHash(FREE_POLICY), label: 0n, box: "profit", asset: "USDC", flags: 0, lockUntil: 0n, delayFloor: 0, salt: 99n };
 
 describe("owner scan", () => {
   it("opens an envelope whose plaintext matches the on-chain commitment", () => {

@@ -6,7 +6,7 @@ import { decodeAuthorityPayload } from "../../src/crypto/wire.ts";
 import type { Note } from "../../src/note.ts";
 import { FREE_POLICY } from "../../src/policy.ts";
 
-const note: Note = { amount: 42n, ownerPk: 1n, policy: 2n, label: 3n, box: "taxes", asset: "USDC", flags: 0, lockUntil: 0n, salt: 4n };
+const note: Note = { amount: 42n, ownerPk: 1n, policy: 2n, label: 3n, box: "taxes", asset: "USDC", flags: 0, lockUntil: 0n, delayFloor: 0, salt: 4n };
 
 function setup(threshold: number, shares: number) {
   const deal = dealAuthority(threshold, shares);

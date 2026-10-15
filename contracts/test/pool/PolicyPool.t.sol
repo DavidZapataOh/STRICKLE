@@ -267,4 +267,31 @@ contract PolicyPoolTest is Test {
         pool.shield(1, 1_000e6 + 1, 1, "", "");
         vm.stopPrank();
     }
+
+    function test_AGuardianPauseLapsesOnItsOwnButAnOwnerPauseDoesNot() public {
+        vm.prank(guardian);
+        pool.pause();
+        assertTrue(pool.paused());
+        vm.warp(block.timestamp + 3 days - 1);
+        assertTrue(pool.paused());
+        vm.warp(block.timestamp + 1);
+        assertFalse(pool.paused());
+
+        vm.prank(owner);
+        pool.pause();
+        vm.warp(block.timestamp + 365 days);
+        assertTrue(pool.paused());
+    }
+
+    function test_AGuardianCannotShortenAnOwnerPause() public {
+        vm.prank(owner);
+        pool.pause();
+        vm.prank(guardian);
+        pool.pause();
+        vm.warp(block.timestamp + 30 days);
+        assertTrue(pool.paused());
+        vm.prank(owner);
+        pool.unpause();
+        assertFalse(pool.paused());
+    }
 }

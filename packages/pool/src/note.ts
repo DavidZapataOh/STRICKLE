@@ -12,12 +12,15 @@ export interface Note {
   asset: Asset;
   flags: number;
   lockUntil: bigint;
+  /** Longest release delay ever applied to this note's lineage; it can only grow along owner-kept outputs. */
+  delayFloor: number;
   salt: bigint;
 }
 
 export function assertNote(note: Note): void {
   assertUint(note.amount, 64, "amount");
   assertUint(note.lockUntil, 64, "lockUntil");
+  assertUint(BigInt(note.delayFloor), 32, "delayFloor");
   assertField(note.ownerPk, "ownerPk");
   assertField(note.policy, "policy");
   assertField(note.label, "label");
@@ -25,21 +28,23 @@ export function assertNote(note: Note): void {
   if (note.flags !== 0 && note.flags !== FLAG_RELEASED) throw new RangeError(`flags must be 0 or ${FLAG_RELEASED}`);
 }
 
-export function packMeta(note: Pick<Note, "box" | "asset" | "flags" | "lockUntil">): bigint {
+export function packMeta(note: Pick<Note, "box" | "asset" | "flags" | "lockUntil" | "delayFloor">): bigint {
   return (
     BigInt(boxId(note.box)) +
     BigInt(ASSET_ID[note.asset]) * 2n ** 8n +
     BigInt(note.flags) * 2n ** 16n +
-    note.lockUntil * 2n ** 32n
+    note.lockUntil * 2n ** 32n +
+    BigInt(note.delayFloor) * 2n ** 96n
   );
 }
 
-export function unpackMeta(meta: bigint): Pick<Note, "box" | "asset" | "flags" | "lockUntil"> {
+export function unpackMeta(meta: bigint): Pick<Note, "box" | "asset" | "flags" | "lockUntil" | "delayFloor"> {
   return {
     box: boxFromId(Number(meta & 0xffn)),
     asset: assetFromId(Number((meta >> 8n) & 0xffn)),
     flags: Number((meta >> 16n) & 0xffffn),
-    lockUntil: meta >> 32n,
+    lockUntil: (meta >> 32n) & (2n ** 64n - 1n),
+    delayFloor: Number(meta >> 96n),
   };
 }
 

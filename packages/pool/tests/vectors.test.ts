@@ -70,6 +70,7 @@ describe("generated vectors", () => {
         asset: n.asset === 1 ? "USDC" : "EURC",
         flags: n.flags,
         lockUntil: BigInt(n.lockUntil),
+        delayFloor: n.delayFloor,
         salt: big(n.salt),
       };
       expect(packMeta(note)).toBe(big(n.meta));
@@ -81,7 +82,7 @@ describe("generated vectors", () => {
       expect(key).toBe(big(d.key));
       expect(deliverySalt(key)).toBe(big(d.salt));
       expect(deliveryPad(key)).toBe(big(d.pad));
-      const packed = packDelivery({ amount: BigInt(d.amount), flags: d.flags, lockUntil: BigInt(d.lockUntil) });
+      const packed = packDelivery({ amount: BigInt(d.amount), flags: d.flags, lockUntil: BigInt(d.lockUntil), delayFloor: d.delayFloor });
       expect(packed).toBe(big(d.packed));
       expect(encryptDelivery(packed, key)).toBe(big(d.enc));
     }

@@ -3,7 +3,7 @@ import { ASSET_ID, assetFromId, boxFromId, boxId } from "../constants.ts";
 import type { Note } from "../note.ts";
 import type { Policy } from "../policy.ts";
 
-export const OWNER_PAYLOAD = 265;
+export const OWNER_PAYLOAD = 269;
 export const ACCOUNTANT_PAYLOAD = 51;
 export const AUTHORITY_PAYLOAD = 41;
 
@@ -51,6 +51,7 @@ export function encodeOwnerPayload({ note, policy }: { note: Note; policy: Polic
   w.uint(ASSET_ID[note.asset], 1);
   w.uint(note.flags, 1);
   w.uint(note.lockUntil, 8);
+  w.uint(note.delayFloor, 4);
   w.uint(note.salt, 32);
   w.uint(policy.floor, 8);
   w.uint(policy.allowlistRoot, 32);
@@ -75,6 +76,7 @@ export function decodeOwnerPayload(bytes: Uint8Array): { note: Note; policy: Pol
     asset: assetFromId(Number(r.uint(1))),
     flags: Number(r.uint(1)),
     lockUntil: r.uint(8),
+    delayFloor: Number(r.uint(4)),
     salt: r.uint(32),
   };
   const policy: Policy = {
