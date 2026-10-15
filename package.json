@@ -1,0 +1,18 @@
+{
+  "name": "strickle",
+  "private": true,
+  "engines": { "node": ">=24" },
+  "workspaces": ["apps/*", "packages/*", "workflows/*"],
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && node --test \"scripts/*.test.mjs\"",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "eslint": "^9",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
+  }
+}

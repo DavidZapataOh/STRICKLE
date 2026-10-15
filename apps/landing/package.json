@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:copy": "node scripts/word-budget.mjs"
+    "test:copy": "node scripts/word-budget.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "npm run test:copy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -20,7 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
