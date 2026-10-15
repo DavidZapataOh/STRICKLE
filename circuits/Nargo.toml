@@ -1,0 +1,2 @@
+[workspace]
+members = ["pool_lib"]
