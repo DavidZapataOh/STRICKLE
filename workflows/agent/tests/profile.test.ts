@@ -75,7 +75,7 @@ describe("the extended profile", () => {
   };
 
   it("round-trips through canonical bytes", () => {
-    expect(decodeProfile(encodeProfile(full))).toEqual(full);
+    expect(decodeProfile(encodeProfile(profileSchema.parse(full)))).toEqual(profileSchema.parse(full));
   });
 
   it("decodes a profile written before these fields existed, failing closed", () => {
