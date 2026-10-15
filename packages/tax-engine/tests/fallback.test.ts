@@ -3,8 +3,9 @@ import { fallbackReserve, loadRules, parseLocal, settleFallback } from "../src/i
 
 const rule = loadRules(new URL("../rules", import.meta.url).pathname).find((r) => r.id === "fallback-effective-rate")!;
 const m = parseLocal;
-const reserve = (lastYearIncome: string, lastYearTax: string, yearToDate: string) =>
+const full = (lastYearIncome: string, lastYearTax: string, yearToDate: string) =>
   fallbackReserve(rule, { lastYearIncome: m(lastYearIncome), lastYearTax: m(lastYearTax), yearToDate: m(yearToDate) });
+const reserve = (lastYearIncome: string, lastYearTax: string, yearToDate: string) => full(lastYearIncome, lastYearTax, yearToDate).amount;
 
 describe("fallbackReserve", () => {
   it("is last year's effective rate times year-to-date income times 1.08", () => {
@@ -17,8 +18,13 @@ describe("fallbackReserve", () => {
     expect(reserve("100000", "10000", "0")).toBe(0n);
     expect(reserve("100000", "0", "50000")).toBe(0n);
   });
-  it("rejects a zero prior-year income, which defines no rate", () => {
-    expect(() => reserve("0", "0", "100")).toThrow(RangeError);
+  it("uses a flat 30% of year-to-date income when there is no prior-year income, without the 1.08 buffer", () => {
+    expect(full("0", "0", "1000")).toEqual({ amount: m("300.00"), basis: "first-year-flat" });
+    expect(full("0", "0", "0.01")).toEqual({ amount: m("0.01"), basis: "first-year-flat" });
+    expect(full("0", "0", "0")).toEqual({ amount: 0n, basis: "first-year-flat" });
+  });
+  it("reports the effective-rate basis when there is history", () => {
+    expect(full("100000", "10000", "50000").basis).toBe("effective-rate");
   });
   it("rejects negative amounts and a rule of another kind", () => {
     expect(() => fallbackReserve(rule, { lastYearIncome: 1n, lastYearTax: -1n, yearToDate: 0n })).toThrow(RangeError);

@@ -6,10 +6,10 @@ const RATE_SCALE = 8;
 
 /**
  * 5th percentile of the horizon return of a local-per-USD rate series, as the fall (in whole basis points,
- * rounded up) the local currency's rate suffers when it appreciates; zero if it never did.
+ * rounded up) the local currency's rate suffers when it appreciates, never below `floorBps`.
  * `horizon` counts observations, not calendar days.
  */
-export function adverseMoveBps(series: readonly number[], horizon: number, quantile = 0.05): number {
+export function adverseMoveBps(series: readonly number[], horizon: number, quantile = 0.05, floorBps = 0): number {
   if (!Number.isInteger(horizon) || horizon < 1) throw new RangeError("horizon must be a positive integer");
   if (series.some((rate) => !(rate > 0))) throw new RangeError("rates must be positive");
   const samples = series.length - horizon;
@@ -18,7 +18,7 @@ export function adverseMoveBps(series: readonly number[], horizon: number, quant
   for (let t = 0; t < samples; t++) returns.push(series[t + horizon]! / series[t]!);
   returns.sort((a, b) => a - b);
   const worst = returns[Math.max(0, Math.ceil(quantile * returns.length) - 1)]!;
-  return Math.max(0, Math.ceil((1 - worst) * 10_000));
+  return Math.max(floorBps, Math.ceil((1 - worst) * 10_000));
 }
 
 function parseRate(text: string): bigint {
@@ -77,11 +77,13 @@ export function planReserve(args: {
   spot: string;
   series: readonly number[];
   tranches: number;
+  /** Minimum cushion for currencies whose history understates the risk. */
+  floorBps?: number;
 }): ReservePlan {
   const { due, credit } = applyWithholdings(args.liability, args.withheld);
   const dueDate = nextBusinessDay(args.calendars, args.country, args.nominalDue);
   const horizon = Math.max(1, Math.ceil((daysBetween(args.today, dueDate) * 5) / 7));
-  const adverseBps = due === 0n ? 0 : adverseMoveBps(args.series, horizon);
+  const adverseBps = due === 0n ? 0 : adverseMoveBps(args.series, horizon, 0.05, args.floorBps ?? 0);
   const reserve = fxReserve({ liability: due, spot: args.spot, adverseBps });
   return { due, credit, dueDate, adverseBps, reserve, schedule: conversionSchedule({ today: args.today, dueDate, reserve, tranches: args.tranches }) };
 }

@@ -1,6 +1,6 @@
 import { daysBetween, type PlainDate } from "@strickle/core";
 import { isCurrent, type TaxRule, type Verification } from "./rule.ts";
-import { FALLBACK_KIND, fallbackReserve } from "./kinds/fallback.ts";
+import { FALLBACK_KIND, fallbackReserve, type FallbackReserve } from "./kinds/fallback.ts";
 import { FLAT_RATE_KIND, estimateFlatRate, type FlatRateInput } from "./kinds/flat-rate.ts";
 import { MEI_KIND, estimateMei, type MeiInput } from "./kinds/mei.ts";
 import { MONOTRIBUTO_KIND, estimateMonotributo, type MonotributoInput } from "./kinds/monotributo.ts";
@@ -35,7 +35,7 @@ interface Common {
   verification: Verification;
 }
 
-export type Reserve = (Common & { origin: "rule"; regime: string }) | (Common & { origin: "fallback"; reason: FallbackReason });
+export type Reserve = (Common & { origin: "rule"; regime: string }) | (Common & { origin: "fallback"; reason: FallbackReason; basis: FallbackReserve["basis"] });
 
 type Amount = { amount: bigint } | "out-of-regime";
 
@@ -89,8 +89,8 @@ export function reserveFor(rules: readonly TaxRule[], request: ReserveRequest): 
 
   const fallback = rules.find((entry) => entry.kind === FALLBACK_KIND);
   if (!fallback) throw new Error("no fallback rule loaded");
-  const amount = fallbackReserve(fallback, { lastYearIncome: request.lastYear.income, lastYearTax: request.lastYear.tax, yearToDate: request.yearToDate });
-  return { origin: "fallback", country: request.country, amount, ruleId: fallback.id, reason, source: fallback.source, verification: fallback.verification };
+  const { amount, basis } = fallbackReserve(fallback, { lastYearIncome: request.lastYear.income, lastYearTax: request.lastYear.tax, yearToDate: request.yearToDate });
+  return { origin: "fallback", country: request.country, amount, ruleId: fallback.id, reason, basis, source: fallback.source, verification: fallback.verification };
 }
 
 /** Countries with a current rule, and countries whose rules have all expired (these are on the fallback). */

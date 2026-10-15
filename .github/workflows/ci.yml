@@ -77,6 +77,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:integration -w @strickle/arc
+      - run: npm run test:live -w @strickle/tax-engine
 
   db:
     runs-on: ubuntu-latest
