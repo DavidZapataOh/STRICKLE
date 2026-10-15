@@ -342,4 +342,27 @@ contract AgentExecutorTest is Test {
         assertEq(executor.delegated(0, 10).length, 0);
         assertEq(executor.delegated(5, 1).length, 0);
     }
+
+    function test_decodesTheSalaryAndTickReportsTheWorkflowEncodes() public view {
+        (uint8 salaryAction, bytes memory salaryArgs_) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/salary-report.hex"))), (uint8, bytes)
+        );
+        assertEq(salaryAction, executor.PAY_SALARY());
+        (address v, uint8 asset, address p, uint256 amount, uint256 seen, uint64 next,) =
+            abi.decode(salaryArgs_, (address, uint8, address, uint256, uint256, uint64, bytes));
+        assertEq(v, address(uint160(0xa1)));
+        assertEq(p, address(uint160(0xb2)));
+        assertEq(asset, USDC);
+        assertEq(amount, 1_000_000);
+        assertEq(seen, 1_000_000);
+        assertEq(next, 2);
+
+        (uint8 tickAction, bytes memory tickArgs) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/tick-report.hex"))), (uint8, bytes)
+        );
+        assertEq(tickAction, executor.TICK());
+        (address tv, uint64 tnext,) = abi.decode(tickArgs, (address, uint64, bytes));
+        assertEq(tv, address(uint160(0xa1)));
+        assertEq(tnext, 3);
+    }
 }
