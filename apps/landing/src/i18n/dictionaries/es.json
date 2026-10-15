@@ -1,0 +1,167 @@
+{
+  "meta": {
+    "title": "Strickle — Cobras irregular, vives regular.",
+    "description": "Strickle nivela cada pago en tus cajitas y te paga el mismo sueldo, el mismo día."
+  },
+  "nav": {
+    "how": "Cómo funciona",
+    "boxes": "Cajitas",
+    "salary": "Sueldo",
+    "security": "Seguridad",
+    "cta": "Abrir la app",
+    "language": "Idioma"
+  },
+  "hero": {
+    "line1": "Cobras irregular.",
+    "line2": "Vives regular.",
+    "support1": "Cada pago, al ras.",
+    "support2": "El mismo sueldo, el mismo día.",
+    "cta": "Abrir la app",
+    "secondary": "Ver cómo funciona",
+    "boxes": {
+      "taxes": "Impuestos",
+      "operating": "Operación",
+      "emergency": "Emergencia",
+      "salary": "Sueldo",
+      "profit": "Ganancia"
+    },
+    "chip": "Sueldo · 1 nov · ",
+    "sample": "Cifras de ejemplo"
+  },
+  "sequence": {
+    "act": "Acto {n} de 4",
+    "acts": [
+      {
+        "title": "Cobras de forma desigual.",
+        "body": "Seis meses, seis montos. Julio no pagó nada."
+      },
+      {
+        "title": "Strickle lo nivela.",
+        "body": "Cada pago se corta en la línea de tu sueldo."
+      },
+      {
+        "title": "El excedente, guardado.",
+        "body": "Primero los impuestos. El resto va a tu colchón."
+      },
+      {
+        "title": "Cobras el día 1.",
+        "body": "El colchón llena cada mes corto. Mismo monto."
+      }
+    ],
+    "taxes": "Impuestos",
+    "cushion": "Colchón",
+    "payday": "día 1",
+    "sample": "Cifras de ejemplo",
+    "empty": "Sin pago",
+    "summary": "Ejemplo: {months}. Impuestos apartados: {taxes}. Colchón restante tras los meses cortos: {cushion}. Sueldo: {salary} cada mes.",
+    "goto": "Ir al acto {n}",
+    "next": "Siguiente acto",
+    "tryIt": "Prueba tu monto"
+  },
+  "simulator": {
+    "title": "Prueba tu monto.",
+    "support": "Mira cómo se nivela un pago.",
+    "income": "Tu pago",
+    "country": "País",
+    "other": "Otro país",
+    "goal": "Sueldo mensual",
+    "custom": "Otro",
+    "cta": "Nivelarlo",
+    "receipt": "Strickle · recibo",
+    "taxes": "Impuestos",
+    "cushion": "Colchón",
+    "salary": "Sueldo",
+    "profit": "Ganancia",
+    "taxRule": "{rate}% estimado para {country}",
+    "cushionRule": "15% hasta 14 días",
+    "salaryRule": "pagado el día 1",
+    "pendingRule": "{amount} pendiente",
+    "profitRule": "lo que sobra",
+    "note": "Estimaciones, no asesoría fiscal.",
+    "why": "Por qué",
+    "whyTaxes": "Se aparta primero, a la tasa estimada de tu país.",
+    "whyCushion": "Se guarda hasta cubrir 14 días de sueldo.",
+    "whySalary": "Se paga cuando impuestos y colchón están cubiertos.",
+    "whyProfit": "Lo que queda después de tu sueldo.",
+    "change": "Cambiar regla",
+    "live": "{taxes} a Impuestos, {cushion} a Colchón, {salary} a Sueldo, {profit} a Ganancia."
+  },
+  "bento": {
+    "title": "Tus reglas, cumplidas.",
+    "cert": {
+      "title": "Certificado de sueldo",
+      "body": "Demuestra ingresos sin revelar clientes.",
+      "doc": "Certificado de ingresos",
+      "verified": "Verificado",
+      "issued": "Emitido",
+      "country": "País",
+      "claim": "Ingreso mensual",
+      "months": "6 meses",
+      "proof": "Prueba"
+    },
+    "pause": {
+      "title": "Pausa cuando quieras",
+      "body": "Tú tienes el control.",
+      "pause": "Pausar Strickle",
+      "resume": "Reanudar Strickle",
+      "paused": "En pausa. Nada se mueve.",
+      "autonomy": "Autonomía",
+      "levels": [
+        "Sugerir",
+        "Preguntar",
+        "Automático"
+      ]
+    },
+    "receipt": {
+      "title": "Un recibo por todo",
+      "body": "Cada movimiento muestra su regla.",
+      "line": "Moví {amount} al Colchón",
+      "rule": "regla: 14 días",
+      "undo": "Deshacer",
+      "undone": "Deshecho · volvió a Sueldo"
+    },
+    "taxes": {
+      "title": "Impuestos por país",
+      "body": "Estimados y apartados.",
+      "due": "Vence 30 abr",
+      "reserved": "reservados",
+      "warn": "Estimación, no asesoría fiscal."
+    },
+    "private": {
+      "title": "Cajitas privadas",
+      "body": "Solo tú ves los saldos.",
+      "rows": [
+        "Impuestos",
+        "Colchón",
+        "Metas"
+      ],
+      "reveal": "Pasa el cursor para verlos"
+    },
+    "mirror": {
+      "title": "Modo espejo",
+      "body": "Tu dinero se queda en tu banco.",
+      "bank": "Tu banco",
+      "plan": "Plan de Strickle",
+      "plans": "Planea"
+    },
+    "guarantee": {
+      "title": "Si nos equivocamos, pagamos.",
+      "body": "Cargos por nuestro cálculo, hasta US$500 al año.",
+      "cap": "Por persona, por año",
+      "fund": "Fondo público en cadena"
+    }
+  },
+  "close": {
+    "line1": "Mismo día,",
+    "line2": "mismo monto.",
+    "cta": "Abrir la app",
+    "verify": "Verificar un certificado",
+    "links": {
+      "app": "App",
+      "verify": "Verificar",
+      "docs": "Docs"
+    },
+    "legal": "Strickle no es un banco. USDC es emitido por Circle. Las cifras de impuestos son estimaciones, no asesoría.",
+    "built": "Construido sobre Arc"
+  }
+}

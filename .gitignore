@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# builds and caches
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets
+.env*
+!.env.example
+*.pem
+
+# tooling and OS
+.vercel
+.DS_Store
+Thumbs.db
+*.log
+.playwright-mcp/

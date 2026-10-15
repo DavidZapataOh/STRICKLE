@@ -1,0 +1,167 @@
+{
+  "meta": {
+    "title": "Strickle — Irregular income. Regular life.",
+    "description": "Strickle levels every payment into your boxes and pays you the same salary, the same day."
+  },
+  "nav": {
+    "how": "How it works",
+    "boxes": "Boxes",
+    "salary": "Salary",
+    "security": "Security",
+    "cta": "Open the app",
+    "language": "Language"
+  },
+  "hero": {
+    "line1": "Irregular income.",
+    "line2": "Regular life.",
+    "support1": "Every payment, struck level.",
+    "support2": "The same salary, the same day.",
+    "cta": "Open the app",
+    "secondary": "See how it works",
+    "boxes": {
+      "taxes": "Taxes",
+      "operating": "Operating",
+      "emergency": "Emergency",
+      "salary": "Salary",
+      "profit": "Profit"
+    },
+    "chip": "Salary · Nov 1 · ",
+    "sample": "Example figures"
+  },
+  "sequence": {
+    "act": "Act {n} of 4",
+    "acts": [
+      {
+        "title": "Income arrives uneven.",
+        "body": "Six months, six amounts. July paid nothing."
+      },
+      {
+        "title": "Strickle levels it.",
+        "body": "Every payment is struck at your salary line."
+      },
+      {
+        "title": "The excess, put away.",
+        "body": "Taxes first. The rest goes to your cushion."
+      },
+      {
+        "title": "Paid on the 1st.",
+        "body": "The cushion fills every short month. Same amount."
+      }
+    ],
+    "taxes": "Taxes",
+    "cushion": "Cushion",
+    "payday": "1st",
+    "sample": "Example figures",
+    "empty": "No payment",
+    "summary": "Example: {months}. Taxes set aside: {taxes}. Cushion left after the short months: {cushion}. Salary: {salary} every month.",
+    "goto": "Go to act {n}",
+    "next": "Next act",
+    "tryIt": "Try your amount"
+  },
+  "simulator": {
+    "title": "Try your amount.",
+    "support": "See how one payment gets leveled.",
+    "income": "Your payment",
+    "country": "Country",
+    "other": "Other country",
+    "goal": "Monthly salary goal",
+    "custom": "Custom",
+    "cta": "Level it",
+    "receipt": "Strickle · receipt",
+    "taxes": "Taxes",
+    "cushion": "Cushion",
+    "salary": "Salary",
+    "profit": "Profit",
+    "taxRule": "{rate}% estimate for {country}",
+    "cushionRule": "15% until 14 days",
+    "salaryRule": "paid on the 1st",
+    "pendingRule": "{amount} pending",
+    "profitRule": "the rest",
+    "note": "Estimates, not tax advice.",
+    "why": "Why",
+    "whyTaxes": "Reserved first, at your country's estimated rate.",
+    "whyCushion": "Kept until it covers 14 days of salary.",
+    "whySalary": "Paid once taxes and cushion are covered.",
+    "whyProfit": "Whatever is left after your salary.",
+    "change": "Change rule",
+    "live": "{taxes} to Taxes, {cushion} to Cushion, {salary} to Salary, {profit} to Profit."
+  },
+  "bento": {
+    "title": "Your rules, carried out.",
+    "cert": {
+      "title": "Salary certificate",
+      "body": "Prove income, keep clients private.",
+      "doc": "Income certificate",
+      "verified": "Verified",
+      "issued": "Issued",
+      "country": "Country",
+      "claim": "Monthly income",
+      "months": "6 months",
+      "proof": "Proof"
+    },
+    "pause": {
+      "title": "Pause anytime",
+      "body": "You stay in control.",
+      "pause": "Pause Strickle",
+      "resume": "Resume Strickle",
+      "paused": "Paused. Nothing moves.",
+      "autonomy": "Autonomy",
+      "levels": [
+        "Suggest",
+        "Ask first",
+        "Automatic"
+      ]
+    },
+    "receipt": {
+      "title": "A receipt for everything",
+      "body": "Each move shows its rule.",
+      "line": "Moved {amount} to Cushion",
+      "rule": "rule: 14 days",
+      "undo": "Undo",
+      "undone": "Undone · back in Salary"
+    },
+    "taxes": {
+      "title": "Taxes, by country",
+      "body": "Estimated and set aside.",
+      "due": "Due Apr 30",
+      "reserved": "reserved",
+      "warn": "Estimate, not tax advice."
+    },
+    "private": {
+      "title": "Private boxes",
+      "body": "Only you see balances.",
+      "rows": [
+        "Taxes",
+        "Cushion",
+        "Goals"
+      ],
+      "reveal": "Hover to reveal as you"
+    },
+    "mirror": {
+      "title": "Mirror mode",
+      "body": "Your money stays in your bank.",
+      "bank": "Your bank",
+      "plan": "Strickle plan",
+      "plans": "Plans"
+    },
+    "guarantee": {
+      "title": "If we get it wrong, we pay.",
+      "body": "Fees from our math, up to US$500 a year.",
+      "cap": "Per person, per year",
+      "fund": "Public on-chain fund"
+    }
+  },
+  "close": {
+    "line1": "Same day,",
+    "line2": "same amount.",
+    "cta": "Open the app",
+    "verify": "Verify a certificate",
+    "links": {
+      "app": "App",
+      "verify": "Verify",
+      "docs": "Docs"
+    },
+    "legal": "Strickle is not a bank. USDC is issued by Circle. Tax figures are estimates, not advice.",
+    "built": "Built on Arc"
+  }
+}

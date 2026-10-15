@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+:root {
+  --night: #22141a;
+  --blush: #fbf3ef;
+  --hibiscus: #a3214f;
+  --hibiscus-deep: #861a41;
+  --hibiscus-light: #e2779b;
+  --marigold: #e9a23b;
+  --calyx: #2e6a4f;
+  --calyx-tint: #e7eee8;
+  --clay: #6e4a3e;
+  --ember: #9a3412;
+  --amber: #b45309;
+  --husk: #f3e5dd;
+  --line: #eadbd2;
+  --card: #fdf8f5;
+  /* one design unit = 1px at a 1536px-wide desktop frame */
+  --u: min(calc(100vw / 1536), 1.3px);
+  /* phones and tablets: one unit = 1px on a 390px-wide frame, capped for tablets */
+  --mobile-u: min(calc(100vw / 390), 1.5px);
+
+  /* responsive system: real type sizes with legible floors, a capped page width,
+     and drawings that scale with their own container (see .drawing) */
+  --page-max: 1424px;
+  --gutter: clamp(16px, 4.2vw, 56px);
+  --section-y: clamp(64px, 3rem + 5vw, 144px);
+  --fs-mega: clamp(3.25rem, 0.9rem + 9.6vw, 10.75rem);
+  --fs-display: clamp(2.5rem, 1.2rem + 4.9vw, 6.125rem);
+  --fs-h2: clamp(2.125rem, 0.75rem + 5.2vw, 5.75rem);
+  --fs-h3: clamp(1.25rem, 1.08rem + 0.6vw, 1.625rem);
+  --fs-lead: clamp(1.125rem, 0.94rem + 0.78vw, 1.875rem);
+  --fs-body: clamp(1rem, 0.95rem + 0.22vw, 1.1875rem);
+  --fs-small: clamp(0.875rem, 0.84rem + 0.14vw, 1rem);
+  --fs-micro: 0.8125rem;
+}
+
+@theme inline {
+  --color-night: var(--night);
+  --color-blush: var(--blush);
+  --color-hibiscus: var(--hibiscus);
+  --color-hibiscus-deep: var(--hibiscus-deep);
+  --color-hibiscus-light: var(--hibiscus-light);
+  --color-marigold: var(--marigold);
+  --color-calyx: var(--calyx);
+  --color-calyx-tint: var(--calyx-tint);
+  --color-clay: var(--clay);
+  --color-ember: var(--ember);
+  --color-amber: var(--amber);
+  --color-husk: var(--husk);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  overflow-x: clip;
+  background: var(--blush);
+  color: var(--night);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  overflow-x: clip;
+  background: var(--blush);
+  color: var(--night);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--hibiscus);
+  color: var(--blush);
+}
+
+:focus-visible {
+  outline: 2px solid var(--hibiscus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+html {
+  scrollbar-color: color-mix(in oklab, var(--night) 35%, transparent) var(--blush);
+}
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--page-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* a drawing: an authored composition of --dw x --dh units that scales with its container.
+   Inside it, var(--u) is one drawing unit, so u()/at() keep working. */
+.drawing {
+  container-type: inline-size;
+  width: 100%;
+}
+.drawing > .canvas {
+  --u: calc(100cqw / var(--dw));
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--dw) / var(--dh);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* the strike line sweeping under a fresh receipt */
+@keyframes strike {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.strike-sweep {
+  transform-origin: 0 50%;
+  animation: strike 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes settle {
+  from { opacity: 0.35; transform: translateY(calc(var(--u) * 6)); }
+  to { opacity: 1; transform: none; }
+}
+.settle {
+  animation: settle 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .strike-sweep, .settle { animation: none; }
+}
