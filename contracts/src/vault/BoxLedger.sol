@@ -131,20 +131,7 @@ abstract contract BoxLedger {
     }
 
     function withdraw(uint8 asset, uint8 box, uint256 amount, address to) external onlyOwner nonReentrant {
-        _checkBox(box);
-        if (amount == 0) revert ZeroAmount();
-        if (amount > boxBalance[asset][box]) revert InsufficientBox();
-        Rule memory rule = rules[box];
-        if (block.timestamp < rule.lockedUntil) revert HardLocked();
-        if (
-            rule.alwaysDelayed || (rule.restricted && !isApproved(box, to))
-                || boxBalance[asset][box] - amount < rule.floor
-        ) {
-            revert WaitRequired();
-        }
-        _debit(asset, box, amount);
-        _send(asset, to, amount);
-        emit Withdrawn(asset, box, to, amount, boxBalance[asset][box]);
+        _ownerPay(asset, box, amount, to, false);
     }
 
     function requestWithdrawal(uint8 asset, uint8 box, uint256 amount, address to)
@@ -152,18 +139,7 @@ abstract contract BoxLedger {
         onlyOwner
         returns (uint256 id)
     {
-        _checkBox(box);
-        if (amount == 0) revert ZeroAmount();
-        if (amount > boxBalance[asset][box]) revert InsufficientBox();
-        Rule memory rule = rules[box];
-        if (block.timestamp < rule.lockedUntil) revert HardLocked();
-        _token(asset);
-        boxBalance[asset][box] -= amount;
-        id = nextRequestId++;
-        uint64 executeAfter = uint64(block.timestamp) + rule.delay;
-        requests[id] =
-            Request({to: to, asset: asset, box: box, amount: uint128(amount), executeAfter: executeAfter, open: true});
-        emit WithdrawalRequested(id, asset, box, to, amount, executeAfter);
+        return _request(asset, box, amount, to);
     }
 
     function executeWithdrawal(uint256 id) external onlyOwner nonReentrant {
@@ -260,6 +236,44 @@ abstract contract BoxLedger {
             held[asset] += amounts[i];
             emit Allocated(asset, boxes[i], amounts[i], boxBalance[asset][boxes[i]]);
         }
+    }
+
+    /// @dev The owner's path out: immediate when the box's rule allows it; otherwise it reverts, or opens a request when `orRequest`.
+    function _ownerPay(uint8 asset, uint8 box, uint256 amount, address to, bool orRequest)
+        internal
+        returns (uint256 id)
+    {
+        _checkBox(box);
+        if (amount == 0) revert ZeroAmount();
+        if (amount > boxBalance[asset][box]) revert InsufficientBox();
+        Rule memory rule = rules[box];
+        if (block.timestamp < rule.lockedUntil) revert HardLocked();
+        if (
+            rule.alwaysDelayed || (rule.restricted && !isApproved(box, to))
+                || boxBalance[asset][box] - amount < rule.floor
+        ) {
+            if (!orRequest) revert WaitRequired();
+            return _request(asset, box, amount, to);
+        }
+        _debit(asset, box, amount);
+        _send(asset, to, amount);
+        emit Withdrawn(asset, box, to, amount, boxBalance[asset][box]);
+        return type(uint256).max;
+    }
+
+    function _request(uint8 asset, uint8 box, uint256 amount, address to) internal returns (uint256 id) {
+        _checkBox(box);
+        if (amount == 0) revert ZeroAmount();
+        if (amount > boxBalance[asset][box]) revert InsufficientBox();
+        Rule memory rule = rules[box];
+        if (block.timestamp < rule.lockedUntil) revert HardLocked();
+        _token(asset);
+        boxBalance[asset][box] -= amount;
+        id = nextRequestId++;
+        uint64 executeAfter = uint64(block.timestamp) + rule.delay;
+        requests[id] =
+            Request({to: to, asset: asset, box: box, amount: uint128(amount), executeAfter: executeAfter, open: true});
+        emit WithdrawalRequested(id, asset, box, to, amount, executeAfter);
     }
 
     function _debit(uint8 asset, uint8 box, uint256 amount) internal {
