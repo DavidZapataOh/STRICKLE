@@ -34,6 +34,21 @@ export const poolAbi = [
             "internalType": "contract IHonkVerifier"
           },
           {
+            "name": "screening",
+            "type": "address",
+            "internalType": "contract IScreening"
+          },
+          {
+            "name": "association",
+            "type": "address",
+            "internalType": "contract IAssociation"
+          },
+          {
+            "name": "elevatedCapBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
             "name": "owner",
             "type": "address",
             "internalType": "address"
@@ -132,19 +147,13 @@ export const poolAbi = [
   },
   {
     "type": "function",
-    "name": "approvedAssociationRoot",
-    "inputs": [
-      {
-        "name": "root",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "name": "association",
+    "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "address",
+        "internalType": "contract IAssociation"
       }
     ],
     "stateMutability": "view"
@@ -182,6 +191,19 @@ export const poolAbi = [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "elevatedCapBps",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
       }
     ],
     "stateMutability": "view"
@@ -321,21 +343,16 @@ export const poolAbi = [
   },
   {
     "type": "function",
-    "name": "setAssociationRoot",
-    "inputs": [
+    "name": "screening",
+    "inputs": [],
+    "outputs": [
       {
-        "name": "root",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "approved",
-        "type": "bool",
-        "internalType": "bool"
+        "name": "",
+        "type": "address",
+        "internalType": "contract IScreening"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -588,25 +605,6 @@ export const poolAbi = [
   },
   {
     "type": "event",
-    "name": "AssociationRootSet",
-    "inputs": [
-      {
-        "name": "root",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "approved",
-        "type": "bool",
-        "indexed": false,
-        "internalType": "bool"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "CapsLowered",
     "inputs": [
       {
@@ -837,6 +835,11 @@ export const poolAbi = [
   },
   {
     "type": "error",
+    "name": "Blocked",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "CapsCanOnlyDecrease",
     "inputs": []
   },
@@ -890,6 +893,11 @@ export const poolAbi = [
   {
     "type": "error",
     "name": "NotOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotScreened",
     "inputs": []
   },
   {

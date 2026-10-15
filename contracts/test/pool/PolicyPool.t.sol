@@ -6,7 +6,9 @@ import {ShieldVerifier} from "../../src/pool/verifiers/ShieldVerifier.sol";
 import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
 import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
+import {AssociationRegistry, IAssociation} from "../../src/pool/AssociationRegistry.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
+import {IScreening, ScreeningRegistry} from "../../src/pool/ScreeningRegistry.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
 
 contract PolicyPoolHarness is PolicyPool {
@@ -15,10 +17,16 @@ contract PolicyPoolHarness is PolicyPool {
     function setTotalShielded(uint8 asset, uint256 value) external {
         totalShielded[asset] = value;
     }
+
+    function setShieldedBy(uint8 asset, address user, uint256 value) external {
+        shieldedBy[asset][user] = value;
+    }
 }
 
 contract PolicyPoolTest is Test {
     PolicyPoolHarness internal pool;
+    ScreeningRegistry internal registry;
+    address internal screener = makeAddr("screener");
     TestToken internal usdc;
     TestToken internal eurc;
     address internal owner = makeAddr("owner");
@@ -28,6 +36,9 @@ contract PolicyPoolTest is Test {
     function setUp() public {
         usdc = new TestToken();
         eurc = new TestToken();
+        registry = new ScreeningRegistry(owner, 30 days);
+        vm.prank(owner);
+        registry.setScreener(screener, true);
         pool = new PolicyPoolHarness(
             PolicyPool.Config({
                 hasher: IPoseidon2(address(new Poseidon2Hasher())),
@@ -35,12 +46,17 @@ contract PolicyPoolTest is Test {
                 eurc: address(eurc),
                 shieldVerifier: IHonkVerifier(address(new ShieldVerifier())),
                 spendVerifier: IHonkVerifier(address(new SpendVerifier())),
+                screening: IScreening(address(registry)),
+                association: IAssociation(address(new AssociationRegistry(owner))),
+                elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
                 perUserCaps: [uint128(1_000e6), uint128(500e6)],
                 globalCaps: [uint128(10_000e6), uint128(5_000e6)]
             })
         );
+        vm.prank(screener);
+        registry.setRisk(alice, 0, keccak256("clear"));
         usdc.mint(alice, 50_000e6);
         vm.prank(alice);
         usdc.approve(address(pool), type(uint256).max);
@@ -187,15 +203,68 @@ contract PolicyPoolTest is Test {
         pool.spend(hex"deadbeef", p, "");
     }
 
-    function test_TheGuardianAndAssociationRootsAreOwnerManaged() public {
+    function test_TheGuardianIsOwnerManaged() public {
         vm.prank(alice);
         vm.expectRevert(PolicyPool.NotOwner.selector);
         pool.setGuardian(alice);
-        vm.startPrank(owner);
+        vm.prank(owner);
         pool.setGuardian(alice);
-        pool.setAssociationRoot(99, true);
-        vm.stopPrank();
         assertEq(pool.guardian(), alice);
-        assertTrue(pool.approvedAssociationRoot(99));
+    }
+
+    function test_ADepositFromAnUnscreenedAddressIsRefused() public {
+        address newcomer = makeAddr("newcomer");
+        vm.prank(newcomer);
+        vm.expectRevert(PolicyPool.NotScreened.selector);
+        pool.shield(1, 1e6, 1, "", "");
+    }
+
+    function test_ABlockedAddressCannotDepositEvenWithAFreshRecord() public {
+        vm.prank(screener);
+        registry.setRisk(alice, 2, keccak256("listed"));
+        vm.prank(alice);
+        vm.expectRevert(PolicyPool.Blocked.selector);
+        pool.shield(1, 1e6, 1, "", "");
+    }
+
+    function test_AStaleRecordIsNotEnoughAndReScreeningRestoresAccess() public {
+        vm.warp(block.timestamp + 30 days + 1);
+        vm.prank(alice);
+        vm.expectRevert(PolicyPool.NotScreened.selector);
+        pool.shield(1, 1e6, 1, "", "");
+        vm.prank(screener);
+        registry.setRisk(alice, 0, keccak256("again"));
+        vm.prank(alice);
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.shield(1, 1e6, 1, "", "");
+    }
+
+    function test_AnElevatedAddressIsLimitedNotRefused() public {
+        vm.prank(screener);
+        registry.setRisk(alice, 1, keccak256("neighbour"));
+        vm.startPrank(alice);
+        vm.expectRevert(PolicyPool.UserCapExceeded.selector);
+        pool.shield(1, 250e6 + 1, 1, "", "");
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.shield(1, 250e6, 1, "", "");
+        vm.stopPrank();
+    }
+
+    function test_AnElevatedAddressCannotBeatItsLimitWithSeveralDeposits() public {
+        vm.prank(screener);
+        registry.setRisk(alice, 1, keccak256("neighbour"));
+        pool.setShieldedBy(1, alice, 200e6);
+        vm.prank(alice);
+        vm.expectRevert(PolicyPool.UserCapExceeded.selector);
+        pool.shield(1, 51e6, 1, "", "");
+    }
+
+    function test_AClearAddressUsesTheFullCap() public {
+        vm.startPrank(alice);
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.shield(1, 1_000e6, 1, "", "");
+        vm.expectRevert(PolicyPool.UserCapExceeded.selector);
+        pool.shield(1, 1_000e6 + 1, 1, "", "");
+        vm.stopPrank();
     }
 }

@@ -3,6 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IHonkVerifier} from "./IHonkVerifier.sol";
 import {IPoseidon2} from "./Poseidon2Hasher.sol";
+import {IAssociation} from "./AssociationRegistry.sol";
+import {IScreening} from "./ScreeningRegistry.sol";
 import {NullifierSet} from "./NullifierSet.sol";
 import {PoolTree} from "./PoolTree.sol";
 
@@ -32,6 +34,9 @@ contract PolicyPool is PoolTree, NullifierSet {
         address eurc;
         IHonkVerifier shieldVerifier;
         IHonkVerifier spendVerifier;
+        IScreening screening;
+        IAssociation association;
+        uint16 elevatedCapBps;
         address owner;
         address guardian;
         uint128[2] perUserCaps;
@@ -59,6 +64,8 @@ contract PolicyPool is PoolTree, NullifierSet {
     error AmountTooLarge();
     error UserCapExceeded();
     error GlobalCapExceeded();
+    error Blocked();
+    error NotScreened();
     error CiphertextTooLarge();
     error InvalidRecipient();
     error PoolPaused();
@@ -80,12 +87,14 @@ contract PolicyPool is PoolTree, NullifierSet {
     event GuardianChanged(address guardian);
     event OwnershipTransferStarted(address pendingOwner);
     event OwnershipTransferred(address owner);
-    event AssociationRootSet(uint256 root, bool approved);
 
     IERC20Like private immutable USDC;
     IERC20Like private immutable EURC;
     IHonkVerifier public immutable shieldVerifier;
     IHonkVerifier public immutable spendVerifier;
+    IScreening public immutable screening;
+    IAssociation public immutable association;
+    uint16 public immutable elevatedCapBps;
 
     address public owner;
     address public pendingOwner;
@@ -97,7 +106,6 @@ contract PolicyPool is PoolTree, NullifierSet {
     mapping(uint8 asset => uint256) public totalShielded;
     mapping(uint8 asset => mapping(address user => uint256)) public shieldedBy;
     mapping(address user => uint256) public shieldNonce;
-    mapping(uint256 root => bool) public approvedAssociationRoot;
 
     modifier nonReentrant() {
         if (lock != 1) revert Reentrancy();
@@ -121,6 +129,9 @@ contract PolicyPool is PoolTree, NullifierSet {
         EURC = IERC20Like(config.eurc);
         shieldVerifier = config.shieldVerifier;
         spendVerifier = config.spendVerifier;
+        screening = config.screening;
+        association = config.association;
+        elevatedCapBps = config.elevatedCapBps;
         owner = config.owner;
         guardian = config.guardian;
         caps[1] = Caps(config.perUserCaps[0], config.globalCaps[0]);
@@ -153,7 +164,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         if (ciphertext.length > MAX_CIPHERTEXT) revert CiphertextTooLarge();
         if (p.timestamp > block.timestamp || p.timestamp + MAX_PROOF_AGE < block.timestamp) revert StaleTimestamp();
         if (!isKnownRoot(p.root)) revert UnknownRoot();
-        if (p.associationRoot != 0 && !approvedAssociationRoot[p.associationRoot]) revert UnknownAssociationRoot();
+        if (p.associationRoot != 0 && !association.isApproved(p.associationRoot)) revert UnknownAssociationRoot();
         address recipient = _recipient(p);
         _checkField(p.nullifiers[0]);
         _checkField(p.nullifiers[1]);
@@ -198,11 +209,6 @@ contract PolicyPool is PoolTree, NullifierSet {
         emit GuardianChanged(guardian_);
     }
 
-    function setAssociationRoot(uint256 root, bool approved) external onlyOwner {
-        approvedAssociationRoot[root] = approved;
-        emit AssociationRootSet(root, approved);
-    }
-
     function transferOwnership(address next) external onlyOwner {
         pendingOwner = next;
         emit OwnershipTransferStarted(next);
@@ -232,9 +238,13 @@ contract PolicyPool is PoolTree, NullifierSet {
     }
 
     function _recordDeposit(uint8 asset, uint256 amount) private {
+        (uint8 risk, bool fresh) = screening.status(msg.sender);
+        if (risk == 2) revert Blocked();
+        if (!fresh) revert NotScreened();
         Caps memory limit = caps[asset];
+        uint256 userCap = risk == 1 ? (uint256(limit.perUser) * elevatedCapBps) / 10_000 : limit.perUser;
         uint256 user = shieldedBy[asset][msg.sender] + amount;
-        if (user > limit.perUser) revert UserCapExceeded();
+        if (user > userCap) revert UserCapExceeded();
         uint256 total = totalShielded[asset] + amount;
         if (total > limit.global) revert GlobalCapExceeded();
         shieldedBy[asset][msg.sender] = user;

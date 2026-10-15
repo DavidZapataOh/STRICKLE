@@ -44,9 +44,21 @@
       "create2": true
     },
     "PolicyPool": {
-      "address": "0x84CdA29BBAbf5868C6Bf46245B75E2A02Df33921",
-      "txHash": "0x816ab7643ed8e2b513759bc16de7f6e4dbaf103c1ea66c096937a8836a0a9a33",
-      "blockNumber": 67309066,
+      "address": "0x12A1E6226545834cab9ED68c094a5da62F222958",
+      "txHash": "0x9ccca8beb37bd2e97ea6236de2961fc9cbd179daf92c610a24c81acd191d9386",
+      "blockNumber": 67316363,
+      "create2": true
+    },
+    "ScreeningRegistry": {
+      "address": "0x63BABfa4bEC33eadcb2C77A04f10e5bD41acCdDa",
+      "txHash": "0x3a3aa68fd93f46df0d1a9d8d700de840b87e51e99ac1f7b8027900adcfaa53a9",
+      "blockNumber": 67316329,
+      "create2": true
+    },
+    "AssociationRegistry": {
+      "address": "0xf971A5eF563EAA02438C448d3A1906f47E7E81Cb",
+      "txHash": "0x2771ed68b124dbcfa5d481ff6d524a40cca874938f658752419edd6bf42a333d",
+      "blockNumber": 67316329,
       "create2": true
     }
   }

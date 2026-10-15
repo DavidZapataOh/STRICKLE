@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { MIN_FEE_PER_GAS, networks, rpcUrl } from "@strickle/arc/networks";
-import { type Address, type Hex, createPublicClient, createWalletClient, erc20Abi, http, parseEventLogs } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { BaseError, ContractFunctionRevertedError, type Address, type Hex, createPublicClient, createWalletClient, erc20Abi, http, keccak256, parseAbi, parseEventLogs, toBytes } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { poolAbi } from "../src/abi.ts";
+import { buildAssociationSet } from "../src/association.ts";
 import { ASSET_ID } from "../src/constants.ts";
 import { combinePartials, dealAuthority, partialDecrypt } from "../src/crypto/authority.ts";
 import { type OutputPlaintext, envelopeEpk, openSection, sealEnvelope } from "../src/crypto/envelope.ts";
@@ -26,6 +27,17 @@ const USDC = 1_000_000n;
 const manifest = JSON.parse(readFileSync(new URL("../../../contracts/deployments/arc-testnet.json", import.meta.url), "utf8"));
 const pool = manifest.contracts.PolicyPool.address as Address;
 const deployBlock = BigInt(manifest.contracts.PolicyPool.blockNumber);
+const screeningAddress = manifest.contracts.ScreeningRegistry.address as Address;
+const associationAddress = manifest.contracts.AssociationRegistry.address as Address;
+const screeningAbi = parseAbi([
+  "function setRisks(address[] who, uint8[] risks, bytes32 evidence)",
+  "function status(address who) view returns (uint8 risk, bool fresh)",
+]);
+const associationAbi = parseAbi([
+  "function publish(uint256 root, bytes32 evidence)",
+  "function revoke(uint256 root)",
+  "function isApproved(uint256 root) view returns (bool)",
+]);
 const usdc = networks[network].usdc;
 const explorer = networks[network].explorerUrl;
 
@@ -50,6 +62,18 @@ async function send(label: string, request: Parameters<typeof wallet.writeContra
 }
 
 type Receipt = Awaited<ReturnType<typeof send>>;
+
+interface SpendCallInputs {
+  root: bigint;
+  nullifiers: [bigint, bigint];
+  commitments: [bigint, bigint];
+  publicAmount: bigint;
+  recipient: bigint;
+  asset: number;
+  timestamp: bigint;
+  associationRoot: bigint;
+  enc: [bigint, bigint];
+}
 
 const ledger = new PoolLedger();
 
@@ -78,8 +102,46 @@ function inserted(receipt: Receipt) {
 const balanceOf = (who: Address) => publicClient.readContract({ address: usdc, abi: erc20Abi, functionName: "balanceOf", args: [who] });
 const totalShielded = () => publicClient.readContract({ address: pool, abi: poolAbi, functionName: "totalShielded", args: [1] });
 
+function revertName(error: unknown): string | undefined {
+  if (!(error instanceof BaseError)) return undefined;
+  const reverted = error.walk((cause) => cause instanceof ContractFunctionRevertedError);
+  return reverted instanceof ContractFunctionRevertedError ? reverted.data?.errorName : undefined;
+}
+
+async function expectRefusal(description: string, errorName: string, attempt: () => Promise<unknown>): Promise<void> {
+  try {
+    await attempt();
+  } catch (error) {
+    const name = revertName(error);
+    if (name === errorName) {
+      console.log(`refused as expected: ${description} (${errorName})`);
+      return;
+    }
+    throw new Error(`${description}: expected ${errorName}, got ${name ?? String(error)}`);
+  }
+  throw new Error(`${description}: expected ${errorName}, but the call succeeded`);
+}
+
+const attemptShield = (who: Address, amount: bigint) =>
+  publicClient.simulateContract({ address: pool, abi: poolAbi, functionName: "shield", args: [ASSET_ID.USDC, amount, 1n, "0x", "0x"], account: who });
+
 function check(condition: boolean, message: string): void {
   if (!condition) throw new Error(`check failed: ${message}`);
+}
+
+async function readDeposits() {
+  const head = await publicClient.getBlockNumber();
+  const found: { depositor: Address; label: bigint; timestamp: number }[] = [];
+  const timestamps = new Map<bigint, number>();
+  for (let from = deployBlock; from <= head; from += 5_000n) {
+    const to = from + 4_999n < head ? from + 4_999n : head;
+    const logs = parseEventLogs({ abi: poolAbi, eventName: "Shielded", logs: await publicClient.getLogs({ address: pool, fromBlock: from, toBlock: to }) });
+    for (const log of logs) {
+      if (!timestamps.has(log.blockNumber)) timestamps.set(log.blockNumber, Number((await publicClient.getBlock({ blockNumber: log.blockNumber })).timestamp));
+      found.push({ depositor: log.args.depositor, label: log.args.label, timestamp: timestamps.get(log.blockNumber) as number });
+    }
+  }
+  return found;
 }
 
 async function main(): Promise<void> {
@@ -115,6 +177,20 @@ async function main(): Promise<void> {
   const totalBefore = await totalShielded();
   const walletBefore = await balanceOf(account.address);
 
+  const stranger = privateKeyToAccount(generatePrivateKey()).address;
+  const listed = privateKeyToAccount(generatePrivateKey()).address;
+  const neighbour = privateKeyToAccount(generatePrivateKey()).address;
+  const screeningEvidence = keccak256(toBytes(JSON.stringify({ source: "pool-live", at: Date.now() })));
+  await send("screen the depositor clear, one wallet blocked, one elevated", {
+    address: screeningAddress,
+    abi: screeningAbi,
+    functionName: "setRisks",
+    args: [[account.address, listed, neighbour], [0, 2, 1], screeningEvidence],
+  });
+  await expectRefusal("a never-screened wallet cannot deposit", "NotScreened", () => attemptShield(stranger, 1n * USDC));
+  await expectRefusal("a blocked wallet cannot deposit", "Blocked", () => attemptShield(listed, 1n * USDC));
+  await expectRefusal("an elevated wallet is held to a quarter of the cap", "UserCapExceeded", () => attemptShield(neighbour, 251n * USDC));
+
   const n0 = make(1n * USDC, "operating", FREE_POLICY);
   console.log("proving the shield...");
   const shield = await proveShield(n0, label);
@@ -133,7 +209,12 @@ async function main(): Promise<void> {
   const stepNow = async () => (await publicClient.getBlock()).timestamp;
   const seen: { ciphertext: Hex; notes: Note[] }[] = [];
 
-  const spend = async (name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">, policies: Policy[]) => {
+  const spend = async (
+    name: string,
+    spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">,
+    policies: Policy[],
+    beforeSend?: (call: { proof: Hex; inputs: SpendCallInputs; ciphertext: Hex }) => Promise<void>,
+  ) => {
     const base = withDummies({ ...spec, tree: ledger.tree, signer: { kind: "user", sk }, now: await stepNow() });
     const ciphertext = seal(deriveOutputNotes(base).notes, policies);
     console.log(`proving ${name}...`);
@@ -141,12 +222,9 @@ async function main(): Promise<void> {
     const [root, nf0, nf1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot, enc0, enc1] = publicInputs as [
       bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint,
     ];
-    const receipt = await send(name, {
-      address: pool,
-      abi: poolAbi,
-      functionName: "spend",
-      args: [proof, { root, nullifiers: [nf0, nf1], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot, enc: [enc0, enc1] }, ciphertext],
-    });
+    const inputs: SpendCallInputs = { root, nullifiers: [nf0, nf1], commitments: [c0, c1], publicAmount, recipient, asset: Number(asset), timestamp, associationRoot, enc: [enc0, enc1] };
+    await beforeSend?.({ proof, inputs, ciphertext });
+    const receipt = await send(name, { address: pool, abi: poolAbi, functionName: "spend", args: [proof, inputs, ciphertext] });
     const event = inserted(receipt);
     const index = ledger.append(event.commitment0, event.commitment1);
 
@@ -190,11 +268,36 @@ async function main(): Promise<void> {
   ring.revokeAccountant();
   console.log("accountant revoked");
 
+  const deposits = await readDeposits();
+  const statuses = new Map<Address, 0 | 1 | 2 | undefined>();
+  for (const depositor of new Set(deposits.map((d) => d.depositor))) {
+    const [risk, fresh] = await publicClient.readContract({ address: screeningAddress, abi: screeningAbi, functionName: "status", args: [depositor] });
+    statuses.set(depositor, fresh ? (risk as 0 | 1 | 2) : undefined);
+  }
+  const set = buildAssociationSet({ deposits, statusOf: (address) => statuses.get(address) });
+  const position = set.proofFor(label);
+  console.log(`association set of ${set.labels.length} clear deposits; our label is at position ${position.index}`);
+  const setEvidence = keccak256(toBytes(JSON.stringify({ provider: account.address, labels: set.labels.length })));
+
   await spend(
-    "pay out the operating box",
-    { inputs: [{ note: operatingNote, policy: FREE_POLICY, leafIndex: split.index + 1 }, null], outputs: [{ note: empty() }, { note: empty() }], publicAmount: 400_000n, recipient: addressToField(payee) },
+    "pay out the operating box with an association-set proof",
+    {
+      inputs: [{ note: operatingNote, policy: FREE_POLICY, leafIndex: split.index + 1 }, null],
+      outputs: [{ note: empty() }, { note: empty() }],
+      publicAmount: 400_000n,
+      recipient: addressToField(payee),
+      association: { tree: position.tree, index: position.index },
+    },
     [FREE_POLICY, FREE_POLICY],
+    async ({ proof, inputs, ciphertext }) => {
+      await expectRefusal("a withdrawal backed by a set nobody published", "UnknownAssociationRoot", () =>
+        publicClient.simulateContract({ address: pool, abi: poolAbi, functionName: "spend", args: [proof, inputs, ciphertext], account: account.address }),
+      );
+      await send("publish the association set", { address: associationAddress, abi: associationAbi, functionName: "publish", args: [set.tree.root, setEvidence] });
+    },
   );
+  await send("revoke the association set", { address: associationAddress, abi: associationAbi, functionName: "revoke", args: [set.tree.root] });
+  check(!(await publicClient.readContract({ address: associationAddress, abi: associationAbi, functionName: "isApproved", args: [set.tree.root] })), "a revoked set no longer backs withdrawals");
 
   // Viewing tiers, read back from what the chain stored.
   const [splitTx, , lastTx] = seen as [(typeof seen)[number], (typeof seen)[number], (typeof seen)[number]];

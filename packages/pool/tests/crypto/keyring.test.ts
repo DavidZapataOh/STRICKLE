@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { generateViewKey } from "../../src/crypto/keys.ts";
 import { ViewKeyRing } from "../../src/crypto/keyring.ts";
-import { openSection, sealEnvelope } from "../../src/crypto/envelope.ts";
+import { combinePartials, dealAuthority, partialDecrypt } from "../../src/crypto/authority.ts";
+import { envelopeEpk, openSection, sealEnvelope } from "../../src/crypto/envelope.ts";
 import { decodeAccountantPayload } from "../../src/crypto/wire.ts";
 import type { Note } from "../../src/note.ts";
 import { FREE_POLICY } from "../../src/policy.ts";
@@ -53,5 +54,46 @@ describe("view key ring", () => {
     ring.revokeAuthority();
     expect(ring.epochs()).toEqual({ accountant: 2, authority: 2 });
     expect(ring.viewers().map((v) => v.tier)).toEqual(["owner"]);
+  });
+
+  describe("tracing bounded in time by authority key epochs", () => {
+    const openWith = (envelope: `0x${string}`, deal: ReturnType<typeof dealAuthority>, holders: number[]) => {
+      const epk = envelopeEpk(envelope);
+      const partials = holders.map((i) => partialDecrypt(epk, deal.shares[i] as never));
+      return openSection(envelope, 0, "authority", { publicKey: deal.publicKey, sharedSecret: combinePartials(partials) });
+    };
+
+    it("lets an epoch's authority trace only the envelopes sealed in that epoch", () => {
+      const ring = new ViewKeyRing(generateViewKey());
+      const first = dealAuthority(2, 3);
+      ring.setAuthority(first.publicKey);
+      const inFirst = sealWith(ring, 1n);
+      const second = dealAuthority(2, 3);
+      ring.setAuthority(second.publicKey);
+      const inSecond = sealWith(ring, 2n);
+
+      expect(openWith(inFirst, first, [0, 1])).toBeDefined();
+      expect(openWith(inSecond, first, [0, 1])).toBeUndefined();
+      expect(openWith(inSecond, second, [1, 2])).toBeDefined();
+      expect(openWith(inFirst, second, [1, 2])).toBeUndefined();
+    });
+
+    it("makes an expired epoch untraceable once the holders destroy their shares", () => {
+      const ring = new ViewKeyRing(generateViewKey());
+      const deal = dealAuthority(3, 5);
+      ring.setAuthority(deal.publicKey);
+      const envelope = sealWith(ring, 1n);
+      expect(openWith(envelope, deal, [0, 1, 2])).toBeDefined();
+      // retention ended: two of five holders delete their shares, leaving fewer than the threshold
+      expect(openWith(envelope, deal, [2, 3])).toBeUndefined();
+    });
+
+    it("stops sealing for the authority at all after a revocation", () => {
+      const ring = new ViewKeyRing(generateViewKey());
+      const deal = dealAuthority(2, 3);
+      ring.setAuthority(deal.publicKey);
+      ring.revokeAuthority();
+      expect(openWith(sealWith(ring, 3n), deal, [0, 1])).toBeUndefined();
+    });
   });
 });
