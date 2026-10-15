@@ -1,13 +1,11 @@
 // workflows/agent/scripts/live-support.mjs
 import { readFileSync } from "node:fs";
 import { formatPlainDate, fromEpochDay } from "@strickle/core";
-import { decryptState, parseMaster } from "../enclave/keys.ts";
-import { decodeProfile } from "../enclave/profile.ts";
 import { createPublicClient, getAddress, http, parseAbi, parseAbiItem } from "viem";
 import { executeSponsored, networks, walletsClient } from "@strickle/arc";
 import { seal } from "@strickle/prover/sealed";
-import { profileAad } from "../enclave/keys.ts";
-import { encodeProfile } from "../enclave/profile.ts";
+import { decryptState, parseMaster, profileAad } from "../enclave/keys.ts";
+import { decodeProfile, encodeProfile } from "../enclave/profile.ts";
 
 export const abi = {
   state: parseAbi([

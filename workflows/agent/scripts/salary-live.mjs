@@ -1,5 +1,5 @@
 // workflows/agent/scripts/salary-live.mjs
-import { addDays, allocatePayment, formatPlainDate, fromEpochDay, money } from "@strickle/core";
+import { addDays, allocatePayment, formatPlainDate, money } from "@strickle/core";
 import { getAddress } from "viem";
 import { decryptState, parseMaster } from "../enclave/keys.ts";
 import { decodeProfile } from "../enclave/profile.ts";
