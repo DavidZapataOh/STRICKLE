@@ -4,5 +4,8 @@
       "name": "v1.17.0",
       "rev": "f3dae6e6ee381f25eb6a246f7da9b85c91a68219"
     }
+  },
+  "lib/poseidon2-evm": {
+    "rev": "30c69861b6bf2cb1a93583e05a4713c275f1bc28"
   }
 }
