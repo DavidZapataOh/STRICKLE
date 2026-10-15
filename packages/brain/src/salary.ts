@@ -91,3 +91,35 @@ export function decideSalary(input: SalaryInput): SalaryDecision {
   const breaches = slacks.filter((slack) => slack < payNow).length;
   return { owed, payNow, pending: owed - payNow, safeMax, ceilings, gates, binding, breachBps: Math.ceil((breaches * 10_000) / slacks.length) };
 }
+
+/** What the pessimistic (P10) path can sustain per 30 days: its growth over the forecast, scaled to a month, never below 0. */
+export function proposeSalary(forecast: Forecast): bigint {
+  if (forecast.weeks < 1 || forecast.p10.length < forecast.weeks) throw new RangeError("the forecast has no weeks");
+  const growth = (forecast.p10[forecast.weeks - 1] as bigint) - forecast.openingBalance;
+  return growth > 0n ? (growth * 30n) / BigInt(forecast.weeks * 7) : 0n;
+}
+
+export function raisedSalary(current: bigint, policy?: SalaryPolicy): bigint {
+  if (current < 0n) throw new RangeError("the salary must not be negative");
+  return (current * BigInt(10_000 + resolvePolicy(policy).raiseStepBps)) / 10_000n;
+}
+
+/** Consecutive months, ending with the latest, whose operating balance at the start of the month was strictly above target. */
+export function monthsAboveTarget(monthStartLevels: readonly { operating: bigint; target: bigint }[]): number {
+  let months = 0;
+  for (let i = monthStartLevels.length - 1; i >= 0; i--) {
+    const level = monthStartLevels[i] as { operating: bigint; target: bigint };
+    if (level.operating <= level.target) break;
+    months++;
+  }
+  return months;
+}
+
+/** A raise is only ever a proposal: it needs enough months above target, a real increase and a raised salary that would itself be paid in full. */
+export function salaryRaiseProposal(input: { current: bigint; monthsAboveTarget: number; raisedDecision: SalaryDecision; policy?: SalaryPolicy }): { propose: boolean; raised: bigint } {
+  const policy = resolvePolicy(input.policy);
+  const raised = raisedSalary(input.current, input.policy);
+  if (input.raisedDecision.owed !== raised) throw new RangeError("the raised decision must be computed for the raised salary");
+  const propose = input.monthsAboveTarget >= policy.raiseAfterMonths && raised > input.current && input.raisedDecision.payNow === input.raisedDecision.owed;
+  return { propose, raised };
+}
