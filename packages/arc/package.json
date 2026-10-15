@@ -1,0 +1,26 @@
+{
+  "name": "@strickle/arc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./networks": "./src/networks.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "status": "node --env-file-if-exists=../../../.env src/status-cli.ts",
+    "register-entity-secret": "node --env-file-if-exists=../../../.env src/register-entity-secret-cli.ts",
+    "setup-gas-station-wallets": "node --env-file-if-exists=../../../.env src/setup-gas-station-wallets-cli.ts"
+  },
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^10.8.1",
+    "viem": "^2.57.7"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  }
+}

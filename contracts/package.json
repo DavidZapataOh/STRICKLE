@@ -1,0 +1,16 @@
+{
+  "name": "@strickle/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "arc-forge fmt --check",
+    "typecheck": "arc-forge build",
+    "test": "arc-forge test --network arc && node --test \"scripts/*.test.mjs\"",
+    "deploy": "node --env-file-if-exists=../../.env scripts/deploy.mjs"
+  },
+  "dependencies": {
+    "@strickle/arc": "*",
+    "viem": "^2.57.7"
+  }
+}

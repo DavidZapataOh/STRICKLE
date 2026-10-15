@@ -1,0 +1,23 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.37"
+evm_version = "osaka"
+
+[fuzz]
+runs = 1000
+
+[invariant]
+runs = 256
+depth = 64
+fail_on_revert = true
+
+[profile.ci.fuzz]
+runs = 10000
+
+[profile.ci.invariant]
+runs = 1024
+depth = 128

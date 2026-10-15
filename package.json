@@ -1,8 +1,15 @@
 {
   "name": "strickle",
   "private": true,
-  "engines": { "node": ">=24" },
-  "workspaces": ["apps/*", "packages/*", "workflows/*"],
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "workflows/*",
+    "contracts"
+  ],
   "scripts": {
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
