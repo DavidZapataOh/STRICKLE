@@ -75,3 +75,35 @@ export function actionClass(action: Action): ActionKind {
       return "salary-day-one";
   }
 }
+
+export type Outcome = { kind: "tax-due-paid-clean" } | { kind: "incident" } | { kind: "clean-month" };
+
+function validate(record: AutonomyRecord): void {
+  if (record.cleanTaxDueDates < 0 || record.cleanMonths < 0 || !Number.isInteger(record.cleanTaxDueDates) || !Number.isInteger(record.cleanMonths)) throw new RangeError("the clean counters must be non-negative integers");
+  if (record.paymentCap < 0n || record.paymentCapStart < 0n || record.paymentCapCeiling < 0n) throw new RangeError("the payment cap values must not be negative");
+}
+
+export function recordOutcome(record: AutonomyRecord, outcome: Outcome, policy: AutonomyPolicy): AutonomyRecord {
+  validate(record);
+  if (policy.capStep < 0n) throw new RangeError("capStep must not be negative");
+  switch (outcome.kind) {
+    case "tax-due-paid-clean":
+      return { ...record, cleanTaxDueDates: record.cleanTaxDueDates + 1 };
+    case "incident":
+      return { ...record, cleanTaxDueDates: 0, cleanMonths: 0, paymentCap: record.paymentCapStart };
+    case "clean-month": {
+      const cleanMonths = record.cleanMonths + 1;
+      const raise = cleanMonths % (policy.capStepEvery ?? DEFAULT_CAP_STEP_EVERY) === 0;
+      const raised = record.paymentCap + policy.capStep;
+      const paymentCap = raise ? (raised > record.paymentCapCeiling ? record.paymentCapCeiling : raised) : record.paymentCap;
+      return { ...record, cleanMonths, paymentCap };
+    }
+  }
+}
+
+/** How many of the two earnable permissions are on: taxes to local currency automatic, and a payment cap above its start. */
+export function autonomyLevel(record: AutonomyRecord, policy: AutonomyPolicy = { capStep: 0n }): { earned: number; of: 2; label: "standard" | "turbo" } {
+  validate(record);
+  const earned = Number(record.cleanTaxDueDates >= (policy.taxesToLocalAfter ?? DEFAULT_TAXES_TO_LOCAL_AFTER)) + Number(record.paymentCap > record.paymentCapStart);
+  return { earned, of: 2, label: earned === 2 ? "turbo" : "standard" };
+}

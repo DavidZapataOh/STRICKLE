@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { type ActionKind, type AutonomyPolicy, type AutonomyRecord, actionClass, decideAutonomy } from "../src/autonomy.ts";
+import { type ActionKind, type AutonomyPolicy, type AutonomyRecord, actionClass, autonomyLevel, decideAutonomy, recordOutcome } from "../src/autonomy.ts";
 import type { BreakerState } from "../src/breaker.ts";
 
 const running: BreakerState = { status: "running" };
@@ -102,5 +102,57 @@ describe("actionClass", () => {
     expect(actionClass({ kind: "redeem", amount: 1n })).toBe("vault-redeem");
     expect(actionClass({ kind: "pay", from: "profit", amount: 1n })).toBe("payment");
     expect(actionClass({ kind: "salary", amount: 1n })).toBe("salary-day-one");
+  });
+});
+describe("recordOutcome", () => {
+  const p: AutonomyPolicy = { capStep: 100n };
+  it("a clean due date adds one", () => {
+    expect(recordOutcome(record(), { kind: "tax-due-paid-clean" }, p).cleanTaxDueDates).toBe(1);
+  });
+  it("an incident resets the clean counters and puts the cap back to its start", () => {
+    const earned = record({ cleanTaxDueDates: 5, cleanMonths: 9, paymentCap: 800n });
+    expect(recordOutcome(earned, { kind: "incident" }, p)).toEqual(record({ cleanTaxDueDates: 0, cleanMonths: 0, paymentCap: 500n }));
+  });
+  it("the cap rises one step every third clean month and stops at the ceiling", () => {
+    let r = record();
+    const caps: bigint[] = [];
+    for (let month = 0; month < 18; month++) {
+      r = recordOutcome(r, { kind: "clean-month" }, p);
+      caps.push(r.paymentCap);
+    }
+    expect(caps.slice(0, 6)).toEqual([500n, 500n, 600n, 600n, 600n, 700n]);
+    expect(caps.at(-1)).toBe(1_100n); // six steps from 500
+    const near = recordOutcome(record({ paymentCap: 1_950n, cleanMonths: 2 }), { kind: "clean-month" }, p);
+    expect(near.paymentCap).toBe(2_000n); // capped at the ceiling, not 2,050
+  });
+  it("honours a custom step period and never mutates its input", () => {
+    const before = record();
+    const after = recordOutcome(before, { kind: "clean-month" }, { capStep: 50n, capStepEvery: 1 });
+    expect(after.paymentCap).toBe(550n);
+    expect(before).toEqual(record());
+  });
+  it("rejects a negative step and an invalid record", () => {
+    expect(() => recordOutcome(record(), { kind: "clean-month" }, { capStep: -1n })).toThrow(RangeError);
+    expect(() => recordOutcome(record({ cleanMonths: -1 }), { kind: "clean-month" }, p)).toThrow(RangeError);
+  });
+});
+
+describe("autonomyLevel", () => {
+  const p: AutonomyPolicy = { capStep: 100n };
+  it("counts the two earnable permissions and shows Turbo only when both are on", () => {
+    expect(autonomyLevel(record(), p)).toEqual({ earned: 0, of: 2, label: "standard" });
+    expect(autonomyLevel(record({ cleanTaxDueDates: 2 }), p)).toEqual({ earned: 1, of: 2, label: "standard" });
+    expect(autonomyLevel(record({ paymentCap: 600n }), p)).toEqual({ earned: 1, of: 2, label: "standard" });
+    expect(autonomyLevel(record({ cleanTaxDueDates: 2, paymentCap: 600n }), p)).toEqual({ earned: 2, of: 2, label: "turbo" });
+  });
+  it("an incident takes it back to standard", () => {
+    const turbo = record({ cleanTaxDueDates: 4, paymentCap: 900n, cleanMonths: 12 });
+    expect(autonomyLevel(recordOutcome(turbo, { kind: "incident" }, p), p).label).toBe("standard");
+  });
+  it("is monotone in the earned permissions", () => {
+    fc.assert(fc.property(fc.nat(6), fc.bigInt({ min: 0n, max: 400n }), (dueDates, extra) => {
+      const base = autonomyLevel(record({ cleanTaxDueDates: dueDates, paymentCap: 500n + extra }), p).earned;
+      expect(autonomyLevel(record({ cleanTaxDueDates: dueDates + 1, paymentCap: 500n + extra + 1n }), p).earned).toBeGreaterThanOrEqual(base);
+    }), { numRuns: 200 });
   });
 });
