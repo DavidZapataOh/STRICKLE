@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ShieldVerifier} from "../../src/pool/verifiers/ShieldVerifier.sol";
 import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
+import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
 
@@ -29,6 +30,7 @@ contract PolicyPoolTest is Test {
         eurc = new TestToken();
         pool = new PolicyPoolHarness(
             PolicyPool.Config({
+                hasher: IPoseidon2(address(new Poseidon2Hasher())),
                 usdc: address(usdc),
                 eurc: address(eurc),
                 shieldVerifier: IHonkVerifier(address(new ShieldVerifier())),

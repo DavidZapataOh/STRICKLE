@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IHonkVerifier} from "./IHonkVerifier.sol";
+import {IPoseidon2} from "./Poseidon2Hasher.sol";
 import {NullifierSet} from "./NullifierSet.sol";
 import {PoolTree} from "./PoolTree.sol";
 
@@ -26,6 +27,7 @@ contract PolicyPool is PoolTree, NullifierSet {
     }
 
     struct Config {
+        IPoseidon2 hasher;
         address usdc;
         address eurc;
         IHonkVerifier shieldVerifier;
@@ -112,7 +114,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         _;
     }
 
-    constructor(Config memory config) {
+    constructor(Config memory config) PoolTree(config.hasher) {
         USDC = IERC20Like(config.usdc);
         EURC = IERC20Like(config.eurc);
         shieldVerifier = config.shieldVerifier;

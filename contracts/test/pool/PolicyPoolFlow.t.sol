@@ -5,6 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {ShieldVerifier} from "../../src/pool/verifiers/ShieldVerifier.sol";
 import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
+import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
 import {NullifierSet} from "../../src/pool/NullifierSet.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
@@ -24,6 +25,7 @@ contract PolicyPoolFlowTest is Test {
     PolicyPool internal pool;
     TestToken internal usdc;
     TestToken internal eurc;
+    IPoseidon2 internal hasher;
     IHonkVerifier internal shieldVerifier;
     IHonkVerifier internal spendVerifier;
     uint256 internal emptyRoot;
@@ -38,6 +40,7 @@ contract PolicyPoolFlowTest is Test {
         assertEq(bob, makeAddr("bob"));
         assertEq(carol, makeAddr("carol"));
 
+        hasher = IPoseidon2(address(new Poseidon2Hasher()));
         shieldVerifier = IHonkVerifier(address(new ShieldVerifier()));
         spendVerifier = IHonkVerifier(address(new SpendVerifier()));
         usdc = new TestToken();
@@ -51,6 +54,7 @@ contract PolicyPoolFlowTest is Test {
     function _deploy(address usdcToken) internal returns (PolicyPool) {
         return new PolicyPool(
             PolicyPool.Config({
+                hasher: hasher,
                 usdc: usdcToken,
                 eurc: address(eurc),
                 shieldVerifier: shieldVerifier,
@@ -309,6 +313,7 @@ contract PolicyPoolFlowTest is Test {
     function test_AVerifierAnsweringFalseIsNeverAccepted() public {
         PolicyPool target = new PolicyPool(
             PolicyPool.Config({
+                hasher: hasher,
                 usdc: address(usdc),
                 eurc: address(eurc),
                 shieldVerifier: IHonkVerifier(address(new FalseVerifier())),
