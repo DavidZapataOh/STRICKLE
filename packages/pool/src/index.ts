@@ -8,3 +8,4 @@ export * from "./vectors.ts";
 export * from "./merkle.ts";
 export * from "./ledger.ts";
 export * from "./pool-client.ts";
+export * from "./abi.ts";

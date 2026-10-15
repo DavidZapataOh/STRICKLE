@@ -48,6 +48,8 @@ jobs:
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run lint
       - run: npm run typecheck
+      - name: Pool ABI is up to date
+        run: npm run pool:abi && git diff --exit-code packages/pool/src/abi.ts
       - run: npm test
       - run: npm run build
 

@@ -25,7 +25,9 @@
     "circuits:verifiers": "node scripts/verifiers.mjs generate",
     "circuits:verifiers:check": "node scripts/verifiers.mjs check",
     "circuits:fixtures": "npm run fixtures -w @strickle/pool",
-    "circuits:scenario": "npm run scenario -w @strickle/pool"
+    "circuits:scenario": "npm run scenario -w @strickle/pool",
+    "pool:abi": "node scripts/pool-abi.mjs",
+    "pool:live": "npm run live -w @strickle/pool"
   },
   "devDependencies": {
     "@types/node": "^24",
