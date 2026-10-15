@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./node": "./src/node.ts",
     "./browser": "./src/browser.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./sealed": "./src/sealed.ts"
   },
   "scripts": {
     "lint": "eslint .",
