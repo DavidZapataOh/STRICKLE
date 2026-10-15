@@ -144,3 +144,30 @@ jobs:
       - run: npm run pool:vectors
       - name: Generated files are up to date
         run: git diff --exit-code -- packages/pool/vectors circuits contracts/src/pool/PoolZeros.sol contracts/src/pool/verifiers
+
+  prover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache@v6
+        with:
+          path: ~/.strickle/toolchain
+          key: toolchain-${{ hashFiles('toolchain.json') }}
+      - run: npm run toolchain:install
+      - run: npm run circuits:compile
+      - run: npx playwright install --with-deps chromium-headless-shell
+      - run: npm run test:circuits -w @strickle/prover
+      - run: npm run test:circuits -w @strickle/prover-service
+      - run: node packages/prover/scripts/fetch-crs.mjs
+      - run: npm run bench -w @strickle/prover-service
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: prover-bench-report
+          path: apps/prover/bench/report.json
+          if-no-files-found: ignore

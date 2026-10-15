@@ -35,3 +35,7 @@ playwright-report/
 
 # Compiled circuits
 circuits/target/
+
+# Reference string downloaded by scripts/fetch-crs.mjs
+packages/prover/crs/
+apps/prover/bench/report.json

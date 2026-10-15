@@ -148,6 +148,7 @@ describe("prover service: nothing leaks", () => {
 
 function gated(delayMs: number): Prover {
   return {
+    prepare: real.prepare.bind(real),
     execute: real.execute.bind(real),
     prove: real.prove.bind(real),
     verify: real.verify.bind(real),

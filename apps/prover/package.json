@@ -7,7 +7,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:circuits": "vitest run --config vitest.circuits.config.mts",
-    "start": "node src/main.ts"
+    "start": "node src/main.ts",
+    "bench": "node bench/run.ts"
   },
   "dependencies": {
     "@noble/curves": "2.4.0",
@@ -16,6 +17,8 @@
   },
   "devDependencies": {
     "@strickle/pool": "*",
+    "playwright-core": "^1.64.1",
+    "vite": "^8.3.4",
     "vitest": "^5.0.4"
   }
 }

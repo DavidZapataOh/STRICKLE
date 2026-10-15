@@ -58,6 +58,15 @@ describe("proving engine", () => {
     expect(current.loads).toEqual(["shield"]);
   });
 
+  it("prepares a circuit ahead of time so the first proof does not pay for it", async () => {
+    current = counting();
+    await current.prover.prepare("shield");
+    expect(current.loads).toEqual(["shield"]);
+    await current.prover.proveInputs("shield", fixture("shield"));
+    expect(current.loads).toEqual(["shield"]);
+    await expect(current.prover.prepare("nope")).rejects.toThrow();
+  });
+
   it("rejects an unknown circuit", async () => {
     current = counting();
     await expect(current.prover.execute("nope", {})).rejects.toThrow();

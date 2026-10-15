@@ -10,6 +10,8 @@ export interface ProverOptions {
 }
 
 export interface Prover {
+  /** Loads the circuit and starts Barretenberg (WASM, CRS) so the first proof is fast; safe to call early, e.g. while a form is filled in. */
+  prepare(name: string): Promise<void>;
   execute(name: string, inputs: InputMap): Promise<{ witness: Uint8Array }>;
   prove(name: string, witness: Uint8Array): Promise<ProofData>;
   verify(name: string, proof: ProofData): Promise<boolean>;
@@ -48,6 +50,9 @@ export function createProver(options: ProverOptions): Prover {
   };
 
   return {
+    async prepare(name) {
+      await backend(name);
+    },
     async execute(name, inputs) {
       const { witness } = await new Noir(await circuit(name)).execute(inputs);
       return { witness };
