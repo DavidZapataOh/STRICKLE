@@ -29,6 +29,19 @@ describe("decompose", () => {
     expect(recurring[0]?.next).toEqual(addDays(asOf, 4));
   });
 
+  it("needs three payments to call a flow recurring", () => {
+    const { recurring, variableWeeks } = decompose([entry(30, 1_000n * U, "acme"), entry(0, 1_000n * U, "acme")], asOf);
+    expect(recurring).toEqual([]);
+    expect(variableWeeks[0]).toBe(1_000n * U);
+    expect(variableWeeks[4]).toBe(1_000n * U);
+  });
+
+  it("keeps day 90 of the history and drops day 91", () => {
+    const { variableWeeks } = decompose([entry(90, -10n * U, "a"), entry(91, -20n * U, "b")], asOf);
+    expect(variableWeeks[12]).toBe(-10n * U);
+    expect(variableWeeks.reduce((sum, week) => sum + week, 0n)).toBe(-10n * U);
+  });
+
   it("treats a source with irregular gaps as a project flow", () => {
     const { recurring, variableWeeks } = decompose([entry(70, 800n * U, "beta"), entry(20, 1_200n * U, "beta"), entry(0, 500n * U, "beta")], asOf);
     expect(recurring).toEqual([]);
