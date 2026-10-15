@@ -1,0 +1,87 @@
+{
+  "id": "ar-monotributo",
+  "country": "AR",
+  "regime": "Monotributo",
+  "kind": "monotributo-monthly",
+  "version": "2026-08",
+  "validFrom": "2026-08-01",
+  "validTo": "2027-01-31",
+  "source": {
+    "title": "ARCA, Monotributo: montos y categorías vigentes desde el 1/08/2026; due day from ARCA monotributo payments help",
+    "url": "https://www.afip.gob.ar/monotributo/categorias.asp",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "ARS",
+    "dueDay": 20,
+    "categories": [
+      {
+        "id": "A",
+        "incomeCap": "12009410.45",
+        "services": "49527.18",
+        "goods": "49527.18"
+      },
+      {
+        "id": "B",
+        "incomeCap": "17595182.74",
+        "services": "56379.08",
+        "goods": "56379.08"
+      },
+      {
+        "id": "C",
+        "incomeCap": "24670494.31",
+        "services": "66020.12",
+        "goods": "64530.58"
+      },
+      {
+        "id": "D",
+        "incomeCap": "30628651.43",
+        "services": "84612.93",
+        "goods": "82564.81"
+      },
+      {
+        "id": "E",
+        "incomeCap": "36028231.33",
+        "services": "119811.45",
+        "goods": "108267.51"
+      },
+      {
+        "id": "F",
+        "incomeCap": "45151659.41",
+        "services": "150784.21",
+        "goods": "129930.65"
+      },
+      {
+        "id": "G",
+        "incomeCap": "53995798.87",
+        "services": "230312.94",
+        "goods": "158815.05"
+      },
+      {
+        "id": "H",
+        "incomeCap": "81924660.37",
+        "services": "522706.68",
+        "goods": "317895.01"
+      },
+      {
+        "id": "I",
+        "incomeCap": "91699761.90",
+        "services": "963747.86",
+        "goods": "474992.78"
+      },
+      {
+        "id": "J",
+        "incomeCap": "105012519.20",
+        "services": "1167299.76",
+        "goods": "580793.69"
+      },
+      {
+        "id": "K",
+        "incomeCap": "126610838.75",
+        "services": "1614446.04",
+        "goods": "702103.24"
+      }
+    ]
+  }
+}
