@@ -10,7 +10,8 @@
     "test:copy": "node scripts/word-budget.mjs",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "npm run test:copy",
-    "test:responsive": "playwright test"
+    "test:responsive": "playwright test",
+    "test:perf": "npm run build && lhci autorun"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -31,6 +32,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "@playwright/test": "^1.64.1",
-    "@strickle/gates": "*"
+    "@strickle/gates": "*",
+    "@lhci/cli": "^0.15.1"
   }
 }
