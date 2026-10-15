@@ -15,7 +15,7 @@ describe("shield circuit", () => {
     const note = makeNote({ amount: 5_000_000n, label: 777n });
     const inputs = buildShieldInputs({ note }).inputs;
     const other = buildShieldInputs({ note: makeNote({ amount: 5_000_000n, label: 777n }) }).inputs;
-    await expect(executeCircuit("shield", { ...inputs, commitment: other.commitment })).rejects.toThrow();
+    await expect(executeCircuit("shield", { ...inputs, commitment: other.commitment as string })).rejects.toThrow();
   });
 
   it("rejects a note worth more than the deposited amount", async () => {

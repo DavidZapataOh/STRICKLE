@@ -1,3 +1,4 @@
+import type { InputMap } from "@noir-lang/noir_js";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeProver, executeCircuit } from "../../src/prove.ts";
 import { type SpendSpec, buildSpendInputs } from "../../src/witness.ts";
@@ -6,7 +7,7 @@ import { World, baseSpend, makeNote, user } from "./fixture.ts";
 afterAll(closeProver);
 
 const run = (spec: SpendSpec) => executeCircuit("spend", buildSpendInputs(spec).inputs);
-const runWith = (spec: SpendSpec, patch: Record<string, unknown>) =>
+const runWith = (spec: SpendSpec, patch: InputMap) =>
   executeCircuit("spend", { ...buildSpendInputs(spec).inputs, ...patch });
 
 describe("spend core: valid transactions", () => {
@@ -108,7 +109,7 @@ describe("spend core: membership and nullifiers", () => {
   it("rejects a nullifier that is not derived from the note and its position", async () => {
     const spec = baseSpend(new World());
     const built = buildSpendInputs(spec).inputs as { nullifiers: string[] };
-    await expect(runWith(spec, { nullifiers: ["0x1234", built.nullifiers[1]] })).rejects.toThrow();
+    await expect(runWith(spec, { nullifiers: ["0x1234", built.nullifiers[1] as string] })).rejects.toThrow();
   });
 
   it("rejects spending the same note in both input slots (equal nullifiers)", async () => {

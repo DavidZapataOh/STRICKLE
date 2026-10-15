@@ -123,6 +123,28 @@ fn main(
     assert(total_in == total_out + (public_amount as u128), "value is not conserved");
 
     // --- rules: locks and release ---
+    let mut any_locked = false;
+    let mut required_lock: u64 = 0;
+    for i in 0..2 {
+        let input = inputs[i];
+        let locked = !input.dummy & (now < input.note.lock_until);
+        let shortened = min_u64(input.note.lock_until, now + (input.policy.release_delay as u64));
+        let required = if is_agent { input.note.lock_until } else { shortened };
+        any_locked = any_locked | locked;
+        required_lock = if locked & (required > required_lock) { required } else { required_lock };
+    }
+    let value_leaves = (public_amount != 0) | any_move | any_send;
+    assert(!any_locked | !value_leaves, "a locked note cannot leave its box");
+    for j in 0..2 {
+        let out = outputs[j].note;
+        let active = out.amount != 0;
+        let keeps_box = (out.owner_pk == base_note.owner_pk) & (out.box_id == base_note.box_id);
+        assert(!(any_locked & active) | (keeps_box & (out.lock_until >= required_lock)), "re-lock is too short");
+        let changes_shape = !((out.policy == base_note.policy) & (out.flags == base_note.flags));
+        let reissue = active & keeps_box & changes_shape;
+        let waited = out.lock_until >= now + (base_policy.release_delay as u64);
+        assert(!reissue | (!is_agent & waited), "changing a policy needs the release delay");
+    }
     // --- rules: floor and recipients ---
     // --- rules: agent role ---
     // --- rules: labels and association ---
