@@ -115,7 +115,7 @@ function signerKeys(signer: Signer): { nk: bigint; auth: bigint; secret: bigint 
     : { nk: signer.nk, auth: signer.authHash, secret: signer.ak };
 }
 
-function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }) {
+function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }, withPath = true) {
   const asset = spec.asset ?? "USDC";
   const real = spec.inputs.find((input) => input !== null);
   const { nk } = signerKeys(spec.signer);
@@ -128,7 +128,7 @@ function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [b
           note: noteToInputs(input.note),
           policy: policyToInputs(input.policy),
           leaf_index: input.leafIndex.toString(),
-          path: spec.tree.path(input.leafIndex).map(toHex32),
+          path: withPath ? spec.tree.path(input.leafIndex).map(toHex32) : [],
           dummy: false,
         },
       };
@@ -174,7 +174,8 @@ function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
 /** The notes a spend will actually commit and their delivery values; call `withDummies` first so the answer is stable. */
 export function deriveOutputNotes(spec: SpendSpec): { notes: Note[]; enc: bigint[]; nullifiers: bigint[] } {
   if (!spec.dummyNk || !spec.dummySalt) throw new Error("call withDummies(spec) first");
-  const nullifiers = inputSlots(spec as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }).map((slot) => slot.nullifier);
+  // The Merkle path is only needed by the circuit, so deriving the notes does not require the ledger tree.
+  const nullifiers = inputSlots(spec as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }, false).map((slot) => slot.nullifier);
   const finals = finalOutputs(spec, nullifiers[0] as bigint);
   return { notes: finals.map((final) => final.note), enc: finals.map((final) => final.enc), nullifiers };
 }

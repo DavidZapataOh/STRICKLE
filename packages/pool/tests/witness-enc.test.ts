@@ -42,4 +42,9 @@ describe("a spec can fix the delivery values of outputs the owner does not keep"
     expect(a.enc[1]).not.toBe(b.enc[1]);
     expect(noteCommitment(a.notes[0] as Note)).toBe(noteCommitment(b.notes[0] as Note));
   });
+
+  it("derives the output notes without a ledger tree, which only the proof needs", () => {
+    const spec = { signer: base.signer, dummyNk: base.dummyNk, dummySalt: base.dummySalt, inputs: [...base.inputs], outputs: [...base.outputs], enc: [21n, 22n] as [bigint, bigint] };
+    expect(deriveOutputNotes(withDummies(spec as never)).enc[1]).toBe(22n);
+  });
 });

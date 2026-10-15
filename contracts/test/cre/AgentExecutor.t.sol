@@ -455,4 +455,19 @@ contract AgentExecutorTest is Test {
         vm.expectRevert(AgentExecutor.NotAVault.selector);
         deliverAction(5, args);
     }
+
+    function test_decodesThePrivateSpendReportTheWorkflowEncodes() public view {
+        (uint8 action, bytes memory args) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/private-spend-report.hex"))),
+            (uint8, bytes)
+        );
+        assertEq(action, executor.PRIVATE_SPEND());
+        (address v, bytes memory proof, PolicyPool.SpendInputs memory p,, uint64 next,) =
+            abi.decode(args, (address, bytes, PolicyPool.SpendInputs, bytes, uint64, bytes));
+        assertEq(v, address(uint160(0xa1)));
+        assertEq(proof, hex"c0ffee");
+        assertEq(p.asset, 1);
+        assertEq(p.publicAmount, 300_000);
+        assertEq(next, 4);
+    }
 }

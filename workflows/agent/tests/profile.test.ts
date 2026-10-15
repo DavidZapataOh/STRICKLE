@@ -60,6 +60,9 @@ describe("profile", () => {
 });
 
 
+const privNote = { note: { amount: "1", ownerPk: "1", policy: "1", label: "1", box: "payroll", asset: "USDC", flags: 0, lockUntil: "0", delayFloor: 0, salt: "1" }, policy: { floor: "0", allowlistRoot: "0", restricted: false, agentKeyHash: "0", agentCap: "0", agentActions: 8, releaseDelay: 0, templateRoot: "0" }, allowlist: [], leafIndex: null };
+const privMode = { enabled: true, ak: "1", nk: "2", authHash: "3", ownerPk: "4", viewers: [], notes: [] };
+
 describe("the extended profile", () => {
   const payee = "0x00000000000000000000000000000000000000a1";
   const full = {
@@ -124,7 +127,7 @@ describe("the extended profile", () => {
   const proposal = { id: "salary-2026-11", kind: "salary-day-one" as const, amount: "1000000", payee, digest: `0x${"ab".repeat(32)}`, createdAt: 1_800_000_000, expiresAt: 1_800_604_800, status: "pending" as const, decidedAt: 0 };
 
   it("round-trips a nonce, a user key and a proposal", () => {
-    const more = { ...full, nonce: "7", userKey: `0x${"cd".repeat(32)}`, proposals: [proposal] };
+    const more = profileSchema.parse({ ...full, nonce: "7", userKey: `0x${"cd".repeat(32)}`, proposals: [proposal] });
     expect(decodeProfile(encodeProfile(more))).toEqual(more);
   });
 
@@ -133,6 +136,8 @@ describe("the extended profile", () => {
     expect(decoded.nonce).toBe("0");
     expect(decoded.userKey).toBe(ZERO_KEY);
     expect(decoded.proposals).toEqual([]);
+    expect(decoded.privateMode.enabled).toBe(false);
+    expect(decoded.privateMode.notes).toEqual([]);
   });
 
   it.each([
@@ -141,6 +146,10 @@ describe("the extended profile", () => {
     ["an unknown proposal status", { proposals: [{ ...proposal, status: "done" }] }],
     ["a proposal id with spaces", { proposals: [{ ...proposal, id: "not valid" }] }],
     ["a negative nonce", { nonce: "-1" }],
+    ["seven private notes", { privateMode: { ...privMode, notes: Array.from({ length: 7 }, () => privNote) } }],
+    ["nine allowlist addresses", { privateMode: { ...privMode, notes: [{ ...privNote, allowlist: Array.from({ length: 9 }, () => "0x00000000000000000000000000000000000000b2") }] } }],
+    ["four viewers", { privateMode: { ...privMode, viewers: Array.from({ length: 4 }, () => ({ tier: "owner", publicKey: `0x${"ab".repeat(32)}` })) } }],
+    ["a non-decimal agent key", { privateMode: { ...privMode, ak: "0xff" } }],
   ])("refuses %s", (_name, patch) => {
     expect(profileSchema.safeParse({ ...full, ...patch }).success).toBe(false);
   });
@@ -192,5 +201,12 @@ describe("mergeProfile", () => {
   it("keeps the nonce and the proposals the agent holds", () => {
     const kept = { id: "salary-2026-11", kind: "salary-day-one" as const, amount: "1", payee, digest: `0x${"ab".repeat(32)}`, createdAt: 1, expiresAt: 2, status: "pending" as const, decidedAt: 0 };
     expect(mergeProfile({ ...existing, nonce: "9", proposals: [kept] }, { ...submitted, nonce: "0" })).toMatchObject({ nonce: "9", proposals: [kept] });
+  });
+  it("keeps the agent's private notes, so a resubmission neither resurrects nor drops one", () => {
+    const mnote = privNote;
+    const mode = { enabled: true, ak: "1", nk: "2", authHash: "3", ownerPk: "4", viewers: [] };
+    const withNotes = profileSchema.parse({ ...valid, privateMode: { ...mode, notes: [mnote] } });
+    const resubmitted = profileSchema.parse({ ...valid, privateMode: { ...mode, notes: [] } });
+    expect(mergeProfile(withNotes, resubmitted).privateMode.notes).toEqual(withNotes.privateMode.notes);
   });
 });

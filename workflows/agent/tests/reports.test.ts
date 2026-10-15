@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { decodeAbiParameters } from "viem";
 import { describe, expect, it } from "vitest";
-import { encodeNoticeReport, encodeSalaryReport, encodeTickReport } from "../enclave/reports.ts";
+import { encodeNoticeReport, encodePrivateSpendReport, encodeSalaryReport, encodeTickReport } from "../enclave/reports.ts";
 
 const vault = "0x00000000000000000000000000000000000000a1" as const;
 const payee = "0x00000000000000000000000000000000000000b2" as const;
@@ -39,5 +39,18 @@ describe("reports", () => {
     const [v, id, sealed] = decodeAbiParameters([{ type: "address" }, { type: "uint64" }, { type: "bytes" }], args);
     expect([v.toLowerCase(), id, sealed]).toEqual([vault, 5n, "0xabcd"]);
     expect(encodeNoticeReport(input)).toBe(fixture("notice-report.hex"));
+  });
+  it("encodes PRIVATE_SPEND as (5, args) and matches the fixture", () => {
+    const input = {
+      vault,
+      proof: "0xc0ffee" as const,
+      inputs: { root: 1n, nullifiers: [2n, 3n] as [bigint, bigint], commitments: [4n, 5n] as [bigint, bigint], publicAmount: 300000n, recipient: 6n, asset: 1, timestamp: 7n, associationRoot: 0n, enc: [8n, 9n] as [bigint, bigint] },
+      poolCiphertext: "0xe17e" as const,
+      next: 4n,
+      stateCiphertext: "0x5747" as const,
+    };
+    const [action] = decodeAbiParameters([{ type: "uint8" }, { type: "bytes" }], encodePrivateSpendReport(input));
+    expect(action).toBe(5);
+    expect(encodePrivateSpendReport(input)).toBe(fixture("private-spend-report.hex"));
   });
 });
