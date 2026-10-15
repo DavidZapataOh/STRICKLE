@@ -7,3 +7,4 @@ export * from "./kinds/monotributo.ts";
 export * from "./kinds/simple.ts";
 export * from "./calendar.ts";
 export * from "./withholdings.ts";
+export * from "./fx.ts";
