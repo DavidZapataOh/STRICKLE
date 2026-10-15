@@ -9,3 +9,4 @@ export * from "./proposal.ts";
 export * from "./templates.ts";
 export * from "./receipt.ts";
 export * from "./undo.ts";
+export * from "./early-payment.ts";
