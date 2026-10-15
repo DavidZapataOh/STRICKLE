@@ -1,0 +1,25 @@
+{
+  "id": "pk-export-of-services",
+  "country": "PK",
+  "regime": "Export of services, final tax under section 154A",
+  "kind": "flat-rate-receipts",
+  "version": "2026-06",
+  "validFrom": "2026-07-01",
+  "validTo": "2029-06-30",
+  "source": {
+    "title": "FBR, Income Tax Ordinance 2001 amended up to 30 June 2026: section 154A and First Schedule Part III Division IVA (0.25% for PSEB-registered IT exporters for tax years 2024 to 2029, 1% otherwise)",
+    "url": "https://download1.fbr.gov.pk/Docs/2026724177725705IncomeTaxOrdinanace2001.pdf",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "PKR",
+    "options": [
+      { "id": "pseb-it-exports", "rateBps": 25 },
+      { "id": "other-exports", "rateBps": 100 }
+    ],
+    "allowance": "0.00",
+    "withheldAtSource": true,
+    "dueDates": []
+  }
+}

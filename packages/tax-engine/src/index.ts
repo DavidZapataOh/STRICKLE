@@ -7,3 +7,6 @@ export * from "./kinds/monotributo.ts";
 export * from "./kinds/simple.ts";
 export * from "./kinds/mei.ts";
 export * from "./kinds/safe-harbor.ts";
+export * from "./kinds/flat-rate.ts";
+export * from "./kinds/fallback.ts";
+export * from "./reserve.ts";

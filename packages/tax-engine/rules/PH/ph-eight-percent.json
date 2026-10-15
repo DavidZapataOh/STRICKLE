@@ -1,0 +1,28 @@
+{
+  "id": "ph-eight-percent",
+  "country": "PH",
+  "regime": "8% income tax option for self-employed individuals and professionals",
+  "kind": "flat-rate-receipts",
+  "version": "2026",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "BIR, digest of Revenue Regulations No. 8-2018 (RA 10963 TRAIN): 8% on gross receipts above P250,000, P3,000,000 VAT threshold, quarterly returns May 15, Aug 15, Nov 15, annual return April 15",
+    "url": "https://bir-cdn.bir.gov.ph/local/pdf/Digest%20RR%208-2018_copy.pdf",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "PHP",
+    "options": [{ "id": "eight-percent", "rateBps": 800 }],
+    "allowance": "250000.00",
+    "receiptsCap": "3000000.00",
+    "withheldAtSource": false,
+    "dueDates": [
+      { "label": "Q1", "month": 5, "day": 15, "yearOffset": 0 },
+      { "label": "Q2", "month": 8, "day": 15, "yearOffset": 0 },
+      { "label": "Q3", "month": 11, "day": 15, "yearOffset": 0 },
+      { "label": "Annual", "month": 4, "day": 15, "yearOffset": 1 }
+    ]
+  }
+}
