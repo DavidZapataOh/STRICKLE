@@ -10,11 +10,13 @@ import {
   encodeCallMsg,
   getNetwork,
   handler,
+  handlerInTee,
   hexToBase64,
 } from "@chainlink/cre-sdk";
 import { EVM_PB } from "@chainlink/cre-sdk/pb";
-import { decodeFunctionResult, encodeFunctionData, getAddress, zeroAddress } from "viem";
+import { decodeFunctionResult, encodeFunctionData, getAddress, keccak256, toBytes, zeroAddress } from "viem";
 import { type Config, configSchema } from "./config.ts";
+import { onProfileSubmitted } from "./enclave/profile-handler.ts";
 import { encodeTick, factoryAbi } from "./tick.ts";
 
 const onCron = (runtime: Runtime<Config>): string => {
@@ -53,9 +55,24 @@ const onCron = (runtime: Runtime<Config>): string => {
   return bytesToHex(written.txHash ?? new Uint8Array(32));
 };
 
+export const HANDLER_NAMES = ["heartbeat", "profile"] as const;
+
 export const initWorkflow = (config: Config) => {
   const cron = new CronCapability();
-  return [handler(cron.trigger({ schedule: config.schedule }), onCron)];
+  const network = getNetwork({ chainFamily: "evm", chainSelectorName: config.chainName });
+  if (!network) throw new Error(`unknown chain: ${config.chainName}`);
+  const evm = new EVMClient(network.chainSelector.selector);
+  return [
+    handler(cron.trigger({ schedule: config.schedule }), onCron),
+    handlerInTee(
+      evm.logTrigger({
+        addresses: [hexToBase64(config.stateAddress)],
+        topics: [{ values: [hexToBase64(keccak256(toBytes("ProfileSubmitted(address,uint64,bytes)")))] }],
+      }),
+      onProfileSubmitted,
+      {},
+    ),
+  ];
 };
 
 export async function main() {

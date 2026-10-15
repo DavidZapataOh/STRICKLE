@@ -78,6 +78,12 @@
       "txHash": "0xd9fa34e3b78c7ee6f2407b397f008264906f7e88b493b77430799b750219516a",
       "blockNumber": 67395695,
       "create2": true
+    },
+    "AgentState": {
+      "address": "0xc8224D78e864476258785646a93a6884967b3973",
+      "txHash": "0xbda952b6bd743b8002434e18f13080be9824c60de636979a40aa9c36d8f76cb0",
+      "blockNumber": 67397658,
+      "create2": true
     }
   }
 }

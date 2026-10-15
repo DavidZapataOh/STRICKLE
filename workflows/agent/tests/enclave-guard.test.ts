@@ -1,0 +1,27 @@
+// workflows/agent/tests/enclave-guard.test.ts
+import { readFileSync, readdirSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+const dir = new URL("../enclave/", import.meta.url);
+const sources = readdirSync(dir).map((name) => [name, readFileSync(new URL(name, dir), "utf8")] as const);
+const outsideDeliver = sources.filter(([name]) => name !== "deliver.ts");
+
+describe("enclave sources", () => {
+  it.each(sources)("%s never logs", (_name, source) => {
+    expect(source).not.toMatch(/\.log\(|console\./);
+  });
+
+  it.each(outsideDeliver)("%s never touches the chain-read capability or a random generator", (_name, source) => {
+    expect(source).not.toMatch(/EVMClient|callContract|randomBytes|Math\.random|getRandomValues/);
+  });
+
+  it("only deliver.ts leaves the enclave", () => {
+    for (const [, source] of outsideDeliver) expect(source).not.toContain("usingTheDons");
+  });
+
+  it("the handler fetches the master only through the secrets API and never returns it", () => {
+    const handler = readFileSync(new URL("profile-handler.ts", dir), "utf8");
+    expect(handler).toContain('getSecret({ id: "AGENT_MASTER" })');
+    expect(handler).not.toMatch(/return[^;]*master/i);
+  });
+});

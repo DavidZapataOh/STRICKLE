@@ -7,6 +7,8 @@ const valid = {
   chainName: "arc-testnet",
   factoryAddress: "0x00000000000000000000000000000000000000aa",
   heartbeatAddress: "0x00000000000000000000000000000000000000bb",
+  stateAddress: "0x00000000000000000000000000000000000000cc",
+  rpcUrl: "https://rpc.testnet.arc.io",
   gasLimit: "300000",
 };
 
@@ -25,5 +27,13 @@ describe("configSchema", () => {
 
   it("rejects an unknown chain name", () => {
     expect(() => configSchema.parse({ ...valid, chainName: "mainnet" })).toThrow();
+  });
+
+  it("rejects a non-https rpc url", () => {
+    expect(() => configSchema.parse({ ...valid, rpcUrl: "http://rpc.testnet.arc.io" })).toThrow();
+  });
+
+  it("rejects a malformed state address", () => {
+    expect(() => configSchema.parse({ ...valid, stateAddress: "0x1" })).toThrow();
   });
 });

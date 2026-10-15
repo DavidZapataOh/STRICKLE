@@ -8,6 +8,16 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests && node --test scripts/*.test.mjs"
   },
-  "dependencies": { "@chainlink/cre-sdk": "1.23.0", "viem": "^2.57.7", "zod": "3.25.76" },
-  "devDependencies": { "vitest": "^5.0.4" }
+  "dependencies": {
+    "@chainlink/cre-sdk": "1.23.0",
+    "viem": "^2.57.7",
+    "zod": "3.25.76",
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@strickle/prover": "*"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  }
 }
