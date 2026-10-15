@@ -42,6 +42,8 @@ describe("renderExplanation: rejects anything the model could invent", () => {
     ["Portuguese hundreds", "Movi quinhentos para impostos.", "pt-br"],
     ["a Spanish compound number", "Tengo veintiuno días.", "es"],
     ["an English plural number word", "Hundreds of accounts."],
+    ["an English number word inside a Spanish text", "Moví five cuentas a impuestos.", "es"],
+    ["an English number word inside a Portuguese text", "Movi seven contas para impostos.", "pt-br"],
     ["a fullwidth digit", "I moved \uff15 to taxes."],
     ["a superscript digit", "Plan A\u00b2 is ready."],
     ["a circled digit", "Step \u2460 is ready."],
