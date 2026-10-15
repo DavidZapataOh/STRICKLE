@@ -16,13 +16,13 @@ describe("proofs", () => {
     expect(await verifyCircuit("shield", proof)).toBe(true);
   });
 
-  it("proves and verifies a spend with its 11 public inputs and nothing secret in them", async () => {
+  it("proves and verifies a spend with its 13 public inputs and nothing secret in them", async () => {
     const world = new World();
     const spec = baseSpend(world);
     const built = buildSpendInputs(spec);
     const { witness } = await executeCircuit("spend", built.inputs);
     const proof = await proveCircuit("spend", witness);
-    expect(proof.publicInputs).toHaveLength(11);
+    expect(proof.publicInputs).toHaveLength(13);
     expect(proof.publicInputs).toEqual(built.publicInputs.map(hex));
     expect(await verifyCircuit("spend", proof)).toBe(true);
   });
@@ -42,6 +42,6 @@ describe("proofs", () => {
     expect(shield.publicInputs).toHaveLength(4);
     expect(shield.proof).toMatch(/^0x[0-9a-f]+$/);
     const spend = await proveSpend(baseSpend(new World()));
-    expect(spend.publicInputs).toHaveLength(11);
+    expect(spend.publicInputs).toHaveLength(13);
   });
 });

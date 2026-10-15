@@ -1,6 +1,7 @@
 import type { Asset } from "@strickle/core";
 import type { InputMap } from "@noir-lang/noir_js";
 import { ALLOWLIST_DEPTH, ASSET_ID, ASSOCIATION_DEPTH, DOMAIN, TEMPLATE_DEPTH, TREE_DEPTH, boxId } from "./constants.ts";
+import { deliveryKey, deliverySalt, encryptDelivery, packDelivery } from "./delivery.ts";
 import { randomField, toHex32 } from "./field.ts";
 import { authHash, nullifierKey } from "./keys.ts";
 import type { MerkleTree } from "./merkle.ts";
@@ -97,7 +98,7 @@ export function buildShieldInputs(args: { note: Note; label?: bigint }): { input
   };
 }
 
-export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInputs: bigint[] } {
+export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInputs: bigint[]; outputNotes: Note[] } {
   const asset = spec.asset ?? "USDC";
   const now = spec.now ?? 1_800_000_000n;
   const publicAmount = spec.publicAmount ?? 0n;
@@ -149,18 +150,26 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
     };
   });
 
-  const outputs = spec.outputs.map((output) => ({
-    commitment: noteCommitment(output.note),
+  const nullifiers = inputNotes.map((input) => input.nullifier);
+  const finals = spec.outputs.map((output, j) => {
+    const isSelf = output.note.amount > 0n && real !== undefined && output.note.ownerPk === real.note.ownerPk;
+    if (!isSelf) return { output, note: output.note, enc: 0n };
+    const key = deliveryKey(signerNk, nullifiers[0] as bigint, j);
+    const note: Note = { ...output.note, salt: deliverySalt(key) };
+    return { output, note, enc: encryptDelivery(packDelivery(note), key) };
+  });
+  const outputs = finals.map(({ output, note }) => ({
+    commitment: noteCommitment(note),
     circuit: {
-      note: noteToInputs(output.note),
+      note: noteToInputs(note),
       template_index: (output.template?.index ?? 0).toString(),
       template_path: (output.template ? output.template.tree.path(output.template.index) : zeros(TEMPLATE_DEPTH)).map(toHex32),
     },
   }));
+  const enc = finals.map((final) => final.enc);
 
   const allowlistPath = spec.allowlist ? spec.allowlist.tree.path(spec.allowlist.index) : zeros(ALLOWLIST_DEPTH);
   const associationPath = spec.association ? spec.association.tree.path(spec.association.index) : zeros(ASSOCIATION_DEPTH);
-  const nullifiers = inputNotes.map((input) => input.nullifier);
   const commitments = outputs.map((output) => output.commitment);
   const associationRoot = spec.association ? spec.association.tree.root : 0n;
 
@@ -175,6 +184,7 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       now: now.toString(),
       ciphertext_hash: toHex32(ciphertextHash),
       association_root: toHex32(associationRoot),
+      enc: enc.map(toHex32),
       inputs: inputNotes.map((input) => input.circuit),
       outputs: outputs.map((output) => output.circuit),
       signer_kind: signer.kind === "user" ? 0 : 1,
@@ -187,6 +197,7 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       association_index: (spec.association?.index ?? 0).toString(),
       association_path: associationPath.map(toHex32),
     },
-    publicInputs: [spec.tree.root, ...nullifiers, ...commitments, publicAmount, recipient, BigInt(ASSET_ID[asset]), now, ciphertextHash, associationRoot],
+    publicInputs: [spec.tree.root, ...nullifiers, ...commitments, publicAmount, recipient, BigInt(ASSET_ID[asset]), now, ciphertextHash, associationRoot, ...enc],
+    outputNotes: finals.map((final) => final.note),
   };
 }
