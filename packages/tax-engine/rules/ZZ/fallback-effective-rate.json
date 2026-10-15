@@ -1,0 +1,19 @@
+{
+  "id": "fallback-effective-rate",
+  "country": "ZZ",
+  "regime": "Fallback estimate for countries without a rule",
+  "kind": "fallback-effective-rate",
+  "version": "2026",
+  "validFrom": "2026-01-01",
+  "validTo": "2099-12-31",
+  "source": {
+    "title": "Strickle estimate policy, not an official tax rule: last year's effective rate x year-to-date income x 1.08, surplus returned as a refund; a user with no prior-year income gets a flat 30% of year-to-date income",
+    "url": "https://github.com/DavidZapataOh/STRICKLE",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "bufferBps": 10800,
+    "firstYearRateBps": 3000
+  }
+}

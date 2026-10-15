@@ -1,0 +1,27 @@
+{
+  "COP": {
+    "kind": "socrata-trm",
+    "url": "https://www.datos.gov.co/resource/32sa-8pi3.json",
+    "floorBps": 600,
+    "source": { "title": "Superintendencia Financiera de Colombia, Tasa de Cambio Representativa del Mercado (TRM), open data on datos.gov.co", "url": "https://www.datos.gov.co/resource/32sa-8pi3.json", "retrievedOn": "2026-10-15" }
+  },
+  "ARS": {
+    "kind": "argentinadatos",
+    "url": "https://api.argentinadatos.com/v1/cotizaciones/dolares/bolsa",
+    "field": "compra",
+    "floorBps": 800,
+    "source": { "title": "argentinadatos.com, USD MEP (bolsa) buy rate; the rate a holder of USDC converts at, not the official crawling-peg rate", "url": "https://api.argentinadatos.com/v1/cotizaciones/dolares/bolsa", "retrievedOn": "2026-10-15" }
+  },
+  "MXN": {
+    "kind": "frankfurter",
+    "url": "https://api.frankfurter.dev/v1",
+    "floorBps": 0,
+    "source": { "title": "European Central Bank euro foreign exchange reference rates through api.frankfurter.dev", "url": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=MXN", "retrievedOn": "2026-10-15" }
+  },
+  "BRL": {
+    "kind": "frankfurter",
+    "url": "https://api.frankfurter.dev/v1",
+    "floorBps": 0,
+    "source": { "title": "European Central Bank euro foreign exchange reference rates through api.frankfurter.dev", "url": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL", "retrievedOn": "2026-10-15" }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "us-estimated-tax-safe-harbor",
+  "country": "US",
+  "regime": "Federal estimated tax safe harbor",
+  "kind": "safe-harbor-quarterly",
+  "version": "2026",
+  "validFrom": "2026-01-01",
+  "validTo": "2027-01-15",
+  "source": {
+    "title": "IRS Publication 505, Tax Withholding and Estimated Tax (2026): General Rule, Higher Income Taxpayers, When To Pay Estimated Tax",
+    "url": "https://www.irs.gov/publications/p505",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "USD",
+    "currentYearRateBps": 9000,
+    "priorYearRateBps": 10000,
+    "higherIncomePriorYearRateBps": 11000,
+    "higherIncomeAgiOver": "150000.00",
+    "higherIncomeAgiOverMarriedSeparate": "75000.00",
+    "dueDates": ["2026-04-15", "2026-06-15", "2026-09-15", "2027-01-15"]
+  }
+}

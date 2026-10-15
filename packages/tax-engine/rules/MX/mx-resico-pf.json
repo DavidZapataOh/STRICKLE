@@ -1,0 +1,29 @@
+{
+  "id": "mx-resico-pf",
+  "country": "MX",
+  "regime": "Régimen Simplificado de Confianza, persona física",
+  "kind": "resico-monthly",
+  "version": "2026.1",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "Ley del Impuesto sobre la Renta, arts. 113-E, 113-F y 113-J (text mirrored by Justia México); monthly table cross-checked against practitioner guides",
+    "url": "https://mexico.justia.com/federales/leyes/ley-del-impuesto-sobre-la-renta/titulo-iv/capitulo-ii/seccion-iv/",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "MXN",
+    "brackets": [
+      { "upTo": "25000.00", "rateBps": 100 },
+      { "upTo": "50000.00", "rateBps": 110 },
+      { "upTo": "83333.33", "rateBps": 150 },
+      { "upTo": "208333.33", "rateBps": 200 },
+      { "upTo": "3500000.00", "rateBps": 250 }
+    ],
+    "annualCap": "3500000.00",
+    "dueDay": 17,
+    "withholdingRateBps": 125,
+    "vatRateBps": 1600
+  }
+}

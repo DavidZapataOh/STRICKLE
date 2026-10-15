@@ -1,0 +1,24 @@
+{
+  "id": "br-mei",
+  "country": "BR",
+  "regime": "MEI (Microempreendedor Individual)",
+  "kind": "mei-monthly",
+  "version": "2026",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "Receita Federal, Simples Nacional: MEI - atualização de valores devidos em 2026; annual cap from Perguntas e Respostas MEI e Simei; due day from Manual do PGMEI",
+    "url": "https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=c3b2044c-ff97-432a-b33c-ecf2a3df6dc3",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "BRL",
+    "inss": "81.05",
+    "carrierInss": "194.52",
+    "iss": "5.00",
+    "icms": "1.00",
+    "annualCap": "81000.00",
+    "dueDay": 20
+  }
+}

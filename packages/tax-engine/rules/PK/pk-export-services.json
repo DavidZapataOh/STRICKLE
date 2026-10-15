@@ -1,0 +1,30 @@
+{
+  "id": "pk-export-services",
+  "country": "PK",
+  "regime": "Export of services final tax (section 154A)",
+  "kind": "eligibility-conditions",
+  "version": "2026.1",
+  "validFrom": "2026-07-01",
+  "validTo": "2027-06-30",
+  "source": {
+    "title": "Income Tax Ordinance, 2001, section 154A and First Schedule Part III Division IVA (FBR, amended upto 30 June 2026)",
+    "url": "https://download1.fbr.gov.pk/Docs/2026724177725705IncomeTaxOrdinanace2001.pdf",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "regime": "export-services-final-tax",
+    "benefit": "Final tax of 0.25% of proceeds on IT and IT-enabled services exports (1% on other exported services)",
+    "safePath": "bank-and-mirror-mode",
+    "note": "The Ordinance does not say what happens to proceeds that do not pass an authorized dealer; the tax is deducted by the bank at realization, so the final-tax treatment is only available through one. The 0.25% rate also requires registration with the Pakistan Software Export Board and holds for tax years 2024 to 2029; the final-tax conditions in section 154A(2) (returns filed) apply too. The State Bank procedure under section 154A(5) was not read. The older requirement that 80% of proceeds arrive through normal banking channels (section 65F) is omitted by the Finance Act 2022 and is not applied.",
+    "conditions": [
+      {
+        "id": "proceeds-realized-through-authorized-dealer",
+        "description": "The tax on export-services income is deducted by an authorized dealer in foreign exchange (a bank) when the foreign-exchange proceeds are realized. Proceeds that arrive as USDC do not pass through that deduction, so the 0.25% final-tax treatment cannot be obtained that way.",
+        "basis": "Income Tax Ordinance 2001 section 154A(1): \"Every authorized dealer in foreign exchange shall, at the time of realization of foreign exchange proceeds on account of the following, deduct tax from the proceeds at the rates specified in Division IVA of Part III of the First Schedule\"; section 154A(2): the tax is final on fulfilment of the conditions listed; Division IVA: 0.25% of proceeds for IT services by persons registered with the Pakistan Software Export Board.",
+        "satisfiedBy": ["bank"],
+        "violatedBy": ["stablecoin"]
+      }
+    ]
+  }
+}
