@@ -8,6 +8,7 @@ export const configSchema = z.object({
   chainName: z.literal("arc-testnet"),
   factoryAddress: address,
   heartbeatAddress: address,
+  rpcUrl: z.string().regex(/^https:\/\//),
   gasLimit: z.string().regex(/^[0-9]+$/),
 });
 
