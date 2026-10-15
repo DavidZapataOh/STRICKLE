@@ -26,3 +26,20 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  arc-live:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      CIRCLE_API_KEY_TESTNET: ${{ secrets.CIRCLE_API_KEY_TESTNET }}
+      CIRCLE_ENTITY_SECRET_TESTNET: ${{ secrets.CIRCLE_ENTITY_SECRET_TESTNET }}
+      CIRCLE_GAS_STATION_SCA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_SCA_WALLET_ID }}
+      CIRCLE_GAS_STATION_EOA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_EOA_WALLET_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration -w @strickle/arc
