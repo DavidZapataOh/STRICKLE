@@ -10,3 +10,4 @@ export * from "./ledger.ts";
 export * from "./pool-client.ts";
 export * from "./abi.ts";
 export * from "./delivery.ts";
+export * from "./recover.ts";
