@@ -1,3 +1,5 @@
+import type { BoxKind, CascadeState } from "@strickle/core";
+
 export interface LiquidityPolicy {
   floorDays?: number;
   targetDays?: number;
@@ -62,4 +64,44 @@ export function emergencyTarget(dailySpend: bigint, months: 3 | 6 | 12 = DEFAULT
   nonNegative(dailySpend, "dailySpend");
   const { emergencyMonths } = resolveLiquidityPolicy({ emergencyMonths: months });
   return BigInt(DAYS_PER_MONTH * emergencyMonths) * dailySpend;
+}
+
+export const SOFT_LOCK_SECONDS = 86_400;
+
+const smaller = (a: bigint, b: bigint): bigint => (a < b ? a : b);
+
+/** Moves only what operating cash holds above its target into the fund, never more than the fund's gap. */
+export function emergencySweep(input: { operatingBalance: bigint; dailySpend: bigint; emergencyBalance: bigint; policy?: LiquidityPolicy }): { toEmergency: bigint; operatingAfter: bigint; emergencyAfter: bigint } {
+  nonNegative(input.emergencyBalance, "emergencyBalance");
+  const status = operatingStatus(input.operatingBalance, input.dailySpend, input.policy);
+  const { emergencyMonths } = resolveLiquidityPolicy(input.policy);
+  const excess = atLeastZero(input.operatingBalance - status.target);
+  const gap = atLeastZero(emergencyTarget(input.dailySpend, emergencyMonths) - input.emergencyBalance);
+  const toEmergency = smaller(excess, gap);
+  return { toEmergency, operatingAfter: input.operatingBalance - toEmergency, emergencyAfter: input.emergencyBalance + toEmergency };
+}
+
+/** The agent's internal routing rule: emergency money never funds the salary box. The owner can still withdraw after the soft lock. */
+export function agentMayMoveEmergencyTo(destination: BoxKind): boolean {
+  return destination !== "salary";
+}
+
+export function emergencyUnlockAt(requestedAtSeconds: number): number {
+  if (!Number.isInteger(requestedAtSeconds) || requestedAtSeconds < 0) throw new RangeError("the time must be a non-negative integer of epoch seconds");
+  return requestedAtSeconds + SOFT_LOCK_SECONDS;
+}
+
+/** The liquidity fields of the cascade's state, computed from the same rules as the status above. */
+export function cascadeLiquidity(input: { dailySpend: bigint; operatingBalance: bigint; emergencyBalance: bigint; policy?: LiquidityPolicy }): Pick<CascadeState, "dailySpend" | "operatingBalance" | "floorDays" | "targetDays" | "emergencyTarget" | "emergencyBalance"> {
+  nonNegative(input.operatingBalance, "operatingBalance");
+  nonNegative(input.emergencyBalance, "emergencyBalance");
+  const { floorDays, targetDays, emergencyMonths } = resolveLiquidityPolicy(input.policy);
+  return {
+    dailySpend: input.dailySpend,
+    operatingBalance: input.operatingBalance,
+    floorDays,
+    targetDays,
+    emergencyTarget: emergencyTarget(input.dailySpend, emergencyMonths),
+    emergencyBalance: input.emergencyBalance,
+  };
 }
