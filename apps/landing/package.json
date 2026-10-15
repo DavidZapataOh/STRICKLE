@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:copy": "node scripts/word-budget.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "npm run test:copy"
   },
   "dependencies": {
