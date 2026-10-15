@@ -40,3 +40,5 @@ circuits/target/
 packages/prover/crs/
 apps/prover/bench/report.json
 .claude/worktrees/
+.cre_build_tmp.*
+binary.wasm*

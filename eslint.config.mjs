@@ -10,6 +10,7 @@ export default defineConfig([
     "contracts/out/**",
     "contracts/cache/**",
     "contracts/broadcast/**",
+    "**/.cre_build_tmp.*",
   ]),
   tseslint.configs.recommended,
 ]);
