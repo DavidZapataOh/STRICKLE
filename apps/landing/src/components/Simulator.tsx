@@ -42,16 +42,12 @@ function useTween(value: number, ms = 450) {
   const [shown, setShown] = useState(value);
   const from = useRef(value);
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      from.current = value;
-      setShown(value);
-      return;
-    }
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
     const start = performance.now();
     const a = from.current;
     let raf = 0;
     const step = (now: number) => {
-      const p = Math.min(1, (now - start) / ms);
+      const p = duration === 0 ? 1 : Math.min(1, (now - start) / duration);
       const v = Math.round(a + (value - a) * (1 - Math.pow(1 - p, 3)));
       from.current = v;
       setShown(v);
@@ -152,7 +148,9 @@ export function Simulator({ t, lang }: { t: Dictionary; lang: Locale }) {
     profit: money(r.profit, lang),
   });
   useEffect(() => {
-    if (stamp > 1) setLive(liveText);
+    if (stamp <= 1) return;
+    const id = setTimeout(() => setLive(liveText), 0);
+    return () => clearTimeout(id);
     // announce only when the receipt re-strikes, not on every keystroke
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stamp]);
