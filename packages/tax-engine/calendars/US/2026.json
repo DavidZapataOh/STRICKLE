@@ -1,0 +1,23 @@
+{
+  "country": "US",
+  "year": 2026,
+  "holidays": [
+    "2026-01-01",
+    "2026-01-19",
+    "2026-02-16",
+    "2026-05-25",
+    "2026-06-19",
+    "2026-07-03",
+    "2026-09-07",
+    "2026-10-12",
+    "2026-11-11",
+    "2026-11-26",
+    "2026-12-25"
+  ],
+  "businessDayRule": "next",
+  "source": {
+    "title": "Nager.Date public holidays API (nationwide holidays)",
+    "url": "https://date.nager.at/api/v3/PublicHolidays/2026/US",
+    "retrievedOn": "2026-10-15"
+  }
+}

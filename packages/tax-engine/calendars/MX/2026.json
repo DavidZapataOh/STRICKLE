@@ -1,0 +1,21 @@
+{
+  "country": "MX",
+  "year": 2026,
+  "holidays": [
+    "2026-01-01",
+    "2026-02-02",
+    "2026-03-16",
+    "2026-04-02",
+    "2026-04-03",
+    "2026-05-01",
+    "2026-09-16",
+    "2026-11-16",
+    "2026-12-25"
+  ],
+  "businessDayRule": "next",
+  "source": {
+    "title": "Nager.Date public holidays API (nationwide holidays)",
+    "url": "https://date.nager.at/api/v3/PublicHolidays/2026/MX",
+    "retrievedOn": "2026-10-15"
+  }
+}
