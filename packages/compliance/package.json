@@ -1,0 +1,23 @@
+{
+  "name": "@strickle/compliance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "screen": "node --env-file-if-exists=../../../.env scripts/screen.ts"
+  },
+  "dependencies": {
+    "@strickle/arc": "*",
+    "@strickle/pool": "*",
+    "viem": "^2.57.7"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  }
+}
