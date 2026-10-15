@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
@@ -54,6 +54,52 @@ export function recordDeployment({ runFile, manifestFile, chainId }) {
   return manifest;
 }
 
+// Blockscout's hosted API has no per-IP limit for a keyed client; the explorer's own endpoint allows ten requests per window.
+export function verifierEndpoint(network, chainId, apiKey = process.env.BLOCKSCOUT_API_KEY) {
+  return apiKey
+    ? { url: `https://api.blockscout.com/${chainId}/api/`, keyArgs: ["--verifier-api-key", apiKey] }
+    : { url: `${networks[network].explorerUrl}/api/`, keyArgs: [] };
+}
+
+function verifyContract({ contractName, entry, manifest, network, chainId, rpc, retries }) {
+  const libraries = libraryArgs(contractName, manifest);
+  const { url, keyArgs } = verifierEndpoint(network, chainId);
+  const args = [
+    "verify-contract",
+    entry.address,
+    contractPath(contractName),
+    "--chain-id",
+    String(chainId),
+    "--verifier",
+    "blockscout",
+    "--verifier-url",
+    url,
+    ...keyArgs,
+    "--retries",
+    String(retries),
+    "--delay",
+    "15",
+    "--rpc-url",
+    rpc,
+  ];
+  const env = { ...process.env };
+  let configFile;
+  if (libraries.length > 0) {
+    // Linked libraries must reach the verifier through the build config; as flags the bytecode does not match.
+    const linked = libraries.filter((_, i) => i % 2 === 1).map((library) => JSON.stringify(library));
+    configFile = join(contractsDir, "foundry.verify.toml");
+    writeFileSync(configFile, readFileSync(join(contractsDir, "foundry.toml"), "utf8").replace('libs = ["lib"]', `libs = ["lib"]\nlibraries = [${linked.join(", ")}]`));
+    env.FOUNDRY_CONFIG = configFile;
+  } else {
+    args.push("--guess-constructor-args");
+  }
+  try {
+    execFileSync("arc-forge", args, { cwd: contractsDir, stdio: "inherit", env });
+  } finally {
+    if (configFile) rmSync(configFile, { force: true });
+  }
+}
+
 export function deploy({
   network,
   script,
@@ -79,29 +125,7 @@ export function deploy({
     for (const { contractName } of created) {
       const entry = manifest.contracts[contractName];
       if (!entry) continue;
-      execFileSync(
-        "arc-forge",
-        [
-          "verify-contract",
-          entry.address,
-          contractPath(contractName),
-          "--chain-id",
-          String(chainId),
-          "--verifier",
-          "blockscout",
-          "--verifier-url",
-          `${networks[network].explorerUrl}/api/`,
-          "--retries",
-          String(verifyRetries),
-          "--delay",
-          "15",
-          "--guess-constructor-args",
-          "--rpc-url",
-          rpc,
-          ...libraryArgs(contractName, manifest),
-        ],
-        { cwd: contractsDir, stdio: "inherit" },
-      );
+      verifyContract({ contractName, entry, manifest, network, chainId, rpc, retries: verifyRetries });
     }
   }
   return manifest;

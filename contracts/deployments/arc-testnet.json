@@ -2,63 +2,63 @@
   "chainId": 5042002,
   "contracts": {
     "ShieldRelationsLib": {
-      "address": "0x4F26840bB4f20418e15CC9e070990C29A9EFD844",
-      "txHash": "0x4868408aa5c5327c9e4864f26f81a3134dcc0ee5250f65fa2edffeb0a716db3c",
-      "blockNumber": 67320830,
+      "address": "0xe1f0D8ecBA0429f93b60e4b1D14061F0fDd299f8",
+      "txHash": "0xc384087ace6607ddd223cde20d7783175abee613385f445a0f3ccfbe2a1177e0",
+      "blockNumber": 67378696,
       "create2": true
     },
     "SpendZKTranscriptLib": {
-      "address": "0x47B23C96f9CCaE2b64A52504a19Ce6C71b7e3026",
-      "txHash": "0x404fdc03118ae390b3d45fd608bae740b2419291d7a86b8502173976b49bc88a",
-      "blockNumber": 67320830,
+      "address": "0xC064B8785383a83C9E13AA93569cfd0f2950b9e0",
+      "txHash": "0x799116a424608339d3359aa73302dfa73f76bc87fff98123460dda293c36a91c",
+      "blockNumber": 67378696,
       "create2": true
     },
     "SpendRelationsLib": {
-      "address": "0x85f3C84bb9194BD5aE993Fd9F0818711fF00CfD6",
-      "txHash": "0x071776df169930209f0672e15fc4671ddcd88d63ef416203ee02dbe6bed06e6f",
-      "blockNumber": 67320830,
+      "address": "0xA6d082A47bf36FC407C13e21dCf881e64f663546",
+      "txHash": "0xc8631e281aab39ccc631bc22849d2333c253bc9b89c08cbf8a3b5112d6634c0c",
+      "blockNumber": 67378697,
       "create2": true
     },
     "ShieldZKTranscriptLib": {
-      "address": "0xD60B3528961f1DfaBE6137999A39BFD85aE8ff97",
-      "txHash": "0xdde4ae8ad45da56c71131dd16a0b285e5b7417c5376c6ced8557513064c3d0f5",
-      "blockNumber": 67320830,
+      "address": "0xC0fE2e342Ca0Bac8CbdAf35b910d60a6b1DA8EfF",
+      "txHash": "0x985f10930106b27fc4226edf040c5e3dc0d5d9ff4e03bcf4637d2821897bf8f4",
+      "blockNumber": 67378697,
       "create2": true
     },
     "ShieldVerifier": {
-      "address": "0x27F732c8471b9ADaB4779D975cB61dc5F38E711D",
-      "txHash": "0xdb476bcea00f436a2187cf8d14cda513116ecaa32a8c1ee5bd846a00dcf4928b",
-      "blockNumber": 67320830,
+      "address": "0x1c7b2a5384D308FF281fd4E5D11C2A2256a77819",
+      "txHash": "0x3bdad0a01ff48a96e41b41612adb6b16f352fe3f01d414591ba57daf41653046",
+      "blockNumber": 67378697,
       "create2": true
     },
     "SpendVerifier": {
-      "address": "0xb9B3E02F2C3B67d7B9E312865C5F98e92195345A",
-      "txHash": "0x2811e0e8a1b41638967210b1634f5c4c67456ffde1c8e7758f8614cca9d75a86",
-      "blockNumber": 67320830,
+      "address": "0x33300117271E47F6d538C07fe596D6a1EF06E784",
+      "txHash": "0x382d8f7db23f704246a26f7dbe4e1e68bc5b9a5a0f082b91a3e733a875a98a66",
+      "blockNumber": 67378697,
       "create2": true
     },
     "Poseidon2Hasher": {
-      "address": "0xEAaD4572A8A5f4e62329bc50F93979d7daa96fb7",
-      "txHash": "0x34e14c4416c4f28b4a1e5dbb8c210941d86a54ff93a7d81584dda7955acc76fd",
-      "blockNumber": 67306907,
+      "address": "0x435f441d5E8E8639365E5a20206c0081A709a200",
+      "txHash": "0x8c605b15c7e2ee739a5a30e08e1e8377eba88572e66801a0dc7e1a5b069cc5db",
+      "blockNumber": 67378622,
       "create2": true
     },
     "PolicyPool": {
-      "address": "0x18fDa6b6db085971bc0150ba173baCb98b14Ec69",
-      "txHash": "0x71bc74a65387f55382198fef2d47d06b362e2c88e89c25939790a9fede6c2b95",
-      "blockNumber": 67320872,
+      "address": "0x20a16Ea01dC22D834CcC4962BB9153eeBa733D9F",
+      "txHash": "0xb016dafcd9140909bd9d46f4089d6b866c7fb6c4d297112e359fc83ddf2e34d7",
+      "blockNumber": 67378745,
       "create2": true
     },
     "ScreeningRegistry": {
-      "address": "0x63BABfa4bEC33eadcb2C77A04f10e5bD41acCdDa",
-      "txHash": "0x3a3aa68fd93f46df0d1a9d8d700de840b87e51e99ac1f7b8027900adcfaa53a9",
-      "blockNumber": 67316329,
+      "address": "0x53658f68Ec87ca91BF1637a9Dce1f17E8c8Da576",
+      "txHash": "0x7600fa79aa01d7bb704802727515b4c27cbdb170625b0ff47482140197343d6e",
+      "blockNumber": 67378584,
       "create2": true
     },
     "AssociationRegistry": {
-      "address": "0xf971A5eF563EAA02438C448d3A1906f47E7E81Cb",
-      "txHash": "0x2771ed68b124dbcfa5d481ff6d524a40cca874938f658752419edd6bf42a333d",
-      "blockNumber": 67316329,
+      "address": "0xb00d06aB5b23A45C7024E985A4f01b331297e6B8",
+      "txHash": "0x8926316d0af7c2d7e5d7cebf45ee75f91a50314fefe321e16ceae10f9dbb394a",
+      "blockNumber": 67378584,
       "create2": true
     },
     "BoxVault": {
