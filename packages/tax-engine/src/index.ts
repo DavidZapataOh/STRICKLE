@@ -5,6 +5,7 @@ export type { OutOfRegime, Outcome } from "./kinds/outcome.ts";
 export * from "./kinds/resico.ts";
 export * from "./kinds/monotributo.ts";
 export * from "./kinds/simple.ts";
+export * from "./kinds/eligibility.ts";
 export * from "./kinds/mei.ts";
 export * from "./kinds/safe-harbor.ts";
 export * from "./kinds/flat-rate.ts";

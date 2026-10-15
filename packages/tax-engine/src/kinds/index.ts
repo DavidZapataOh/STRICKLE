@@ -1,4 +1,5 @@
 import { RuleError, type TaxRule } from "../rule.ts";
+import { ELIGIBILITY_KIND, parseEligibilityParams } from "./eligibility.ts";
 import { FALLBACK_KIND, parseFallbackParams } from "./fallback.ts";
 import { FLAT_RATE_KIND, parseFlatRateParams } from "./flat-rate.ts";
 import { MEI_KIND, parseMeiParams } from "./mei.ts";
@@ -11,6 +12,7 @@ const PARSERS: Record<string, (params: Record<string, unknown>) => unknown> = {
   [RESICO_KIND]: parseResicoParams,
   [MONOTRIBUTO_KIND]: parseMonotributoParams,
   [SIMPLE_KIND]: parseSimpleParams,
+  [ELIGIBILITY_KIND]: parseEligibilityParams,
   [MEI_KIND]: parseMeiParams,
   [SAFE_HARBOR_KIND]: parseSafeHarborParams,
   [FLAT_RATE_KIND]: parseFlatRateParams,
