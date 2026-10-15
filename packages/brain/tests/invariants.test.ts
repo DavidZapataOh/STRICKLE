@@ -191,6 +191,12 @@ describe("evaluate: several violations", () => {
     expect(codes(found)).toEqual(["taxes-untouched", "daily-cap", "signature-required"]);
     expect(found.map((v) => v.gap)).toEqual([600n, 100n, 300n]);
   });
+  it("lists a broken book before the other violations", () => {
+    const before = snap();
+    const action: Action = { kind: "pay", from: "taxes", amount: 10n };
+    const broken = { ...predict(before, action), liquid: 5_000n };
+    expect(codes(evaluate(before, broken, policy, action))).toEqual(["books-balance", "taxes-untouched"]);
+  });
   it("rejects a negative cap or threshold", () => {
     const action: Action = { kind: "sweep", amount: 0n };
     expect(() => evaluate(snap(), snap(), { dailyCap: -1n, signatureThreshold: 0n }, action)).toThrow(RangeError);
