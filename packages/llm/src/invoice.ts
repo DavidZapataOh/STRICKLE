@@ -3,7 +3,7 @@ import { type PlainDate, daysBetween, parsePlainDate } from "@strickle/core";
 export const CURRENCIES = ["USD", "EUR", "MXN", "BRL", "COP", "ARS"] as const;
 
 export interface InvoiceFields {
-  payer: string;
+  issuer: string;
   currency: string;
   total: string;
   lines: { description: string; amount: string }[];
@@ -24,12 +24,12 @@ export class Unconfirmed {
   }
   preview(): Readonly<Record<string, string>> {
     const v = values.get(this) as InvoiceFields;
-    return { payer: v.payer, currency: v.currency, total: v.total, issueDate: v.issueDate, dueDate: v.dueDate };
+    return { issuer: v.issuer, currency: v.currency, total: v.total, issueDate: v.issueDate, dueDate: v.dueDate };
   }
 }
 
 export interface Confirmed {
-  payer: string;
+  issuer: string;
   currency: string;
   totalMinor: bigint;
   dueDate: PlainDate;
@@ -68,8 +68,8 @@ export function invoiceValid(raw: unknown): { ok: true; invoice: Unconfirmed } |
   const r = raw as Record<string, unknown>;
   const problems: string[] = [];
 
-  const payer = typeof r.payer === "string" ? r.payer.trim() : "";
-  if (payer === "" || payer.length > 120) problems.push("payer: required, at most 120 characters");
+  const issuer = typeof r.issuer === "string" ? r.issuer.trim() : "";
+  if (issuer === "" || issuer.length > 120) problems.push("issuer: required, at most 120 characters");
   const currency = typeof r.currency === "string" ? r.currency : "";
   if (!(CURRENCIES as readonly string[]).includes(currency)) problems.push("currency: not supported");
   const total = typeof r.total === "string" && MONEY.test(r.total) ? r.total : undefined;
@@ -96,7 +96,7 @@ export function invoiceValid(raw: unknown): { ok: true; invoice: Unconfirmed } |
   if (!terms.ok) problems.push("terms: discount percent, discount days and net days are not valid");
 
   if (problems.length > 0 || !total || !issue || !due || !terms.ok) return { ok: false, problems };
-  const fields: InvoiceFields = { payer, currency, total, lines, issueDate: r.issueDate as string, dueDate: r.dueDate as string };
+  const fields: InvoiceFields = { issuer, currency, total, lines, issueDate: r.issueDate as string, dueDate: r.dueDate as string };
   if (terms.terms) fields.terms = terms.terms;
   return { ok: true, invoice: Unconfirmed.of(fields) };
 }
@@ -105,7 +105,7 @@ export function invoiceValid(raw: unknown): { ok: true; invoice: Unconfirmed } |
 export function confirm(invoice: Unconfirmed, entered: { total: string; dueDate: string }): Confirmed | { error: "mismatch" } {
   const v = values.get(invoice);
   if (!v || !MONEY.test(entered.total) || minor(entered.total) !== minor(v.total) || entered.dueDate !== v.dueDate) return { error: "mismatch" };
-  const confirmed: Confirmed = { payer: v.payer, currency: v.currency, totalMinor: minor(v.total), dueDate: parsePlainDate(v.dueDate) };
+  const confirmed: Confirmed = { issuer: v.issuer, currency: v.currency, totalMinor: minor(v.total), dueDate: parsePlainDate(v.dueDate) };
   if (v.terms) confirmed.terms = { discountBps: Math.round(Number(v.terms.discountPercent) * 100), discountDays: v.terms.discountDays, netDays: v.terms.netDays };
   return confirmed;
 }

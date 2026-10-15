@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Unconfirmed, confirm, invoiceValid } from "../src/invoice.ts";
 
 const valid = {
-  payer: "Acme Corp",
+  issuer: "Acme Corp",
   currency: "USD",
   total: "1200.00",
   lines: [{ description: "Design work", amount: "1000.00" }, { description: "Hosting", amount: "200.00" }],
@@ -28,7 +28,7 @@ describe("invoiceValid", () => {
     expect(Object.getOwnPropertyNames(Unconfirmed).sort()).toEqual(["length", "name", "of", "prototype"]);
     expect(Object.getOwnPropertyNames(Unconfirmed.prototype).sort()).toEqual(["constructor", "preview"]);
     expect(JSON.stringify(r.invoice)).toBe("{}");
-    expect(r.invoice.preview()).toEqual({ payer: "Acme Corp", currency: "USD", total: "1200.00", issueDate: "2026-10-01", dueDate: "2026-10-31" });
+    expect(r.invoice.preview()).toEqual({ issuer: "Acme Corp", currency: "USD", total: "1200.00", issueDate: "2026-10-01", dueDate: "2026-10-31" });
   });
   it.each([
     ["lines that do not sum to the total", { total: "1200.01" }, /sum/],
@@ -37,7 +37,7 @@ describe("invoiceValid", () => {
     ["an impossible date", { issueDate: "2026-02-30" }, /issueDate/],
     ["a due date before the issue date", { dueDate: "2026-09-30" }, /dueDate/],
     ["an unsupported currency", { currency: "XYZ" }, /currency/],
-    ["a missing payer", { payer: "" }, /payer/],
+    ["a missing issuer", { issuer: "" }, /issuer/],
     ["no lines", { lines: [], total: "0.00" }, /lines/],
     ["a discount above 100%", { terms: { discountPercent: "101", discountDays: 10, netDays: 30 } }, /terms/],
     ["discount days after the net days", { terms: { discountPercent: "2", discountDays: 40, netDays: 30 } }, /terms/],
@@ -63,7 +63,7 @@ describe("confirm", () => {
     return r.invoice;
   };
   it("turns the fields into parsed integers only when the user's own typed total and date match", () => {
-    expect(confirm(unconfirmed(), { total: "1200.00", dueDate: "2026-10-31" })).toEqual({ payer: "Acme Corp", currency: "USD", totalMinor: 120_000n, dueDate: { year: 2026, month: 10, day: 31 }, terms: { discountBps: 200, discountDays: 10, netDays: 30 } });
+    expect(confirm(unconfirmed(), { total: "1200.00", dueDate: "2026-10-31" })).toEqual({ issuer: "Acme Corp", currency: "USD", totalMinor: 120_000n, dueDate: { year: 2026, month: 10, day: 31 }, terms: { discountBps: 200, discountDays: 10, netDays: 30 } });
   });
   it("carries the early-payment terms, parsed, and none when the invoice has none", () => {
     const withTerms = confirm(unconfirmed(), { total: "1200.00", dueDate: "2026-10-31" });
