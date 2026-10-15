@@ -39,7 +39,10 @@ describe("formatFact: the other types", () => {
   });
   it("days, counts and dates", () => {
     expect(formatFact({ type: "days", value: 14 }, "en", "en-US")).toBe("14 days");
+    expect(formatFact({ type: "days", value: 1 }, "en", "en-US")).toBe("1 day");
     expect(formatFact({ type: "days", value: 1 }, "es", "es-MX")).toBe("1 día");
+    expect(formatFact({ type: "days", value: 1 }, "pt-br", "pt-BR")).toBe("1 dia");
+    expect(formatFact({ type: "days", value: 0 }, "en", "en-US")).toBe("0 days");
     expect(formatFact({ type: "days", value: 14 }, "pt-br", "pt-BR")).toBe("14 dias");
     expect(formatFact({ type: "count", value: 200 }, "en", "en-US")).toBe("200");
     expect(formatFact({ type: "date", value: plainDate(2026, 1, 15) }, "en", "en-US")).toBe("Jan 15, 2026");
