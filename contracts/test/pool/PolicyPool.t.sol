@@ -6,6 +6,7 @@ import {ShieldVerifier} from "../../src/pool/verifiers/ShieldVerifier.sol";
 import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
 import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
+import {AssociationRegistry, IAssociation} from "../../src/pool/AssociationRegistry.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
 import {IScreening, ScreeningRegistry} from "../../src/pool/ScreeningRegistry.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
@@ -46,6 +47,7 @@ contract PolicyPoolTest is Test {
                 shieldVerifier: IHonkVerifier(address(new ShieldVerifier())),
                 spendVerifier: IHonkVerifier(address(new SpendVerifier())),
                 screening: IScreening(address(registry)),
+                association: IAssociation(address(new AssociationRegistry(owner))),
                 elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
@@ -201,16 +203,13 @@ contract PolicyPoolTest is Test {
         pool.spend(hex"deadbeef", p, "");
     }
 
-    function test_TheGuardianAndAssociationRootsAreOwnerManaged() public {
+    function test_TheGuardianIsOwnerManaged() public {
         vm.prank(alice);
         vm.expectRevert(PolicyPool.NotOwner.selector);
         pool.setGuardian(alice);
-        vm.startPrank(owner);
+        vm.prank(owner);
         pool.setGuardian(alice);
-        pool.setAssociationRoot(99, true);
-        vm.stopPrank();
         assertEq(pool.guardian(), alice);
-        assertTrue(pool.approvedAssociationRoot(99));
     }
 
     function test_ADepositFromAnUnscreenedAddressIsRefused() public {

@@ -6,6 +6,7 @@ import {ShieldVerifier} from "../../src/pool/verifiers/ShieldVerifier.sol";
 import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
 import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
+import {AssociationRegistry, IAssociation} from "../../src/pool/AssociationRegistry.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
 import {IScreening, ScreeningRegistry} from "../../src/pool/ScreeningRegistry.sol";
 import {NullifierSet} from "../../src/pool/NullifierSet.sol";
@@ -28,6 +29,8 @@ contract PolicyPoolFlowTest is Test {
     TestToken internal eurc;
     IPoseidon2 internal hasher;
     ScreeningRegistry internal registry;
+    AssociationRegistry internal associations;
+    address internal provider = makeAddr("provider");
     address internal screener = makeAddr("screener");
     IHonkVerifier internal shieldVerifier;
     IHonkVerifier internal spendVerifier;
@@ -49,8 +52,13 @@ contract PolicyPoolFlowTest is Test {
         usdc = new TestToken();
         eurc = new TestToken();
         registry = new ScreeningRegistry(owner, 30 days);
+        associations = new AssociationRegistry(owner);
+        vm.prank(owner);
+        associations.setProvider(provider, true);
         pool = _deploy(address(usdc));
         emptyRoot = pool.currentRoot();
+        vm.prank(provider);
+        associations.publish(_inputs(2).associationRoot, keccak256("set v1"));
         vm.warp(scenarioNow);
         vm.prank(owner);
         registry.setScreener(screener, true);
@@ -60,6 +68,10 @@ contract PolicyPoolFlowTest is Test {
     }
 
     function _deploy(address usdcToken) internal returns (PolicyPool) {
+        return _deployWith(usdcToken, associations);
+    }
+
+    function _deployWith(address usdcToken, AssociationRegistry registryOfSets) internal returns (PolicyPool) {
         return new PolicyPool(
             PolicyPool.Config({
                 hasher: hasher,
@@ -68,6 +80,7 @@ contract PolicyPoolFlowTest is Test {
                 shieldVerifier: shieldVerifier,
                 spendVerifier: spendVerifier,
                 screening: IScreening(address(registry)),
+                association: IAssociation(address(registryOfSets)),
                 elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
@@ -201,8 +214,8 @@ contract PolicyPoolFlowTest is Test {
         _shield(pool, alice);
         bytes memory proof = _proof(0);
         bytes memory ciphertext = _ciphertext(0);
-        vm.prank(owner);
-        pool.setAssociationRoot(12345, true);
+        vm.prank(provider);
+        associations.publish(12345, keccak256("other set"));
 
         PolicyPool.SpendInputs memory p = _inputs(0);
         p.publicAmount = 1;
@@ -345,6 +358,7 @@ contract PolicyPoolFlowTest is Test {
                 shieldVerifier: IHonkVerifier(address(new FalseVerifier())),
                 spendVerifier: IHonkVerifier(address(new FalseVerifier())),
                 screening: IScreening(address(registry)),
+                association: IAssociation(address(associations)),
                 elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
@@ -366,6 +380,49 @@ contract PolicyPoolFlowTest is Test {
         PolicyPool.SpendInputs memory p = _inputs(0);
         vm.expectRevert(PolicyPool.CiphertextTooLarge.selector);
         pool.spend(_proof(0), p, new bytes(2049));
+    }
+
+    function test_AWithdrawalBackedByAnAssociationSetNeedsAnApprovedRoot() public {
+        AssociationRegistry fresh = new AssociationRegistry(owner);
+        vm.prank(owner);
+        fresh.setProvider(provider, true);
+        PolicyPool target = _deployWith(address(usdc), fresh);
+        _fund(alice, usdc, target);
+        _shield(target, alice);
+        target.spend(_proof(0), _inputs(0), _ciphertext(0));
+        target.spend(_proof(1), _inputs(1), _ciphertext(1));
+        PolicyPool.SpendInputs memory p = _inputs(2);
+        assertTrue(p.associationRoot != 0);
+        vm.expectRevert(PolicyPool.UnknownAssociationRoot.selector);
+        target.spend(_proof(2), p, _ciphertext(2));
+
+        vm.prank(provider);
+        fresh.publish(p.associationRoot, keccak256("set v1"));
+        target.spend(_proof(2), p, _ciphertext(2));
+        assertEq(usdc.balanceOf(carol), 100e6);
+    }
+
+    function test_ARevokedSetStopsBackingWithdrawals() public {
+        _shield(pool, alice);
+        _spend(0);
+        _spend(1);
+        PolicyPool.SpendInputs memory p = _inputs(2);
+        vm.prank(provider);
+        associations.revoke(p.associationRoot);
+        vm.expectRevert(PolicyPool.UnknownAssociationRoot.selector);
+        pool.spend(_proof(2), p, _ciphertext(2));
+    }
+
+    function test_ARootOfAnotherSetCannotReplaceTheProvenOne() public {
+        _shield(pool, alice);
+        _spend(0);
+        _spend(1);
+        vm.prank(provider);
+        associations.publish(777, keccak256("another set"));
+        PolicyPool.SpendInputs memory p = _inputs(2);
+        p.associationRoot = 777;
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.spend(_proof(2), p, _ciphertext(2));
     }
 
     function test_ScreeningNeverBlocksExits() public {

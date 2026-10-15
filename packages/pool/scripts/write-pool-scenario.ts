@@ -26,6 +26,7 @@ const ledger = new PoolLedger();
 const allowlist = new MerkleTree(10);
 allowlist.insert(recipientLeaf(addressToField(bob)));
 
+const labelSet = new MerkleTree(20);
 const payrollPolicy: Policy = { ...FREE_POLICY, restricted: true, allowlistRoot: allowlist.root };
 
 const note = (overrides: Partial<Note>, policy: Policy): Note => ({
@@ -80,6 +81,7 @@ async function spendStep(
 }
 
 const label = shieldLabel(alice, 0n);
+labelSet.insert(label);
 const n0 = note({ amount: 1_000n * USDC, label }, FREE_POLICY);
 const shieldProof = await proveShield(n0, label);
 const shieldIndex = ledger.append(noteCommitment(n0), 0n);
@@ -113,6 +115,7 @@ const payCarol = await spendStep(
     outputs: [{ note: n4 }, { note: note({ ownerPk: 5n }, FREE_POLICY) }],
     publicAmount: 100n * USDC,
     recipient: addressToField(carol),
+    association: { tree: labelSet, index: 0 },
   },
   [FREE_POLICY, FREE_POLICY],
 );

@@ -97,8 +97,8 @@ contract ScreeningRegistry is IScreening {
 
     function _set(address who, uint8 risk, bytes32 evidence) private {
         if (risk > 2) revert InvalidRisk();
-        uint64 at = uint64(block.timestamp);
-        records[who] = Record(risk, at, evidence);
-        emit RiskSet(who, risk, at, evidence);
+        uint64 now_ = uint64(block.timestamp);
+        records[who] = Record(risk, now_, evidence);
+        emit RiskSet(who, risk, now_, evidence);
     }
 }

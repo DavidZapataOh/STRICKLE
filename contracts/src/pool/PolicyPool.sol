@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IHonkVerifier} from "./IHonkVerifier.sol";
 import {IPoseidon2} from "./Poseidon2Hasher.sol";
+import {IAssociation} from "./AssociationRegistry.sol";
 import {IScreening} from "./ScreeningRegistry.sol";
 import {NullifierSet} from "./NullifierSet.sol";
 import {PoolTree} from "./PoolTree.sol";
@@ -34,6 +35,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         IHonkVerifier shieldVerifier;
         IHonkVerifier spendVerifier;
         IScreening screening;
+        IAssociation association;
         uint16 elevatedCapBps;
         address owner;
         address guardian;
@@ -85,13 +87,13 @@ contract PolicyPool is PoolTree, NullifierSet {
     event GuardianChanged(address guardian);
     event OwnershipTransferStarted(address pendingOwner);
     event OwnershipTransferred(address owner);
-    event AssociationRootSet(uint256 root, bool approved);
 
     IERC20Like private immutable USDC;
     IERC20Like private immutable EURC;
     IHonkVerifier public immutable shieldVerifier;
     IHonkVerifier public immutable spendVerifier;
     IScreening public immutable screening;
+    IAssociation public immutable association;
     uint16 public immutable elevatedCapBps;
 
     address public owner;
@@ -104,7 +106,6 @@ contract PolicyPool is PoolTree, NullifierSet {
     mapping(uint8 asset => uint256) public totalShielded;
     mapping(uint8 asset => mapping(address user => uint256)) public shieldedBy;
     mapping(address user => uint256) public shieldNonce;
-    mapping(uint256 root => bool) public approvedAssociationRoot;
 
     modifier nonReentrant() {
         if (lock != 1) revert Reentrancy();
@@ -129,6 +130,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         shieldVerifier = config.shieldVerifier;
         spendVerifier = config.spendVerifier;
         screening = config.screening;
+        association = config.association;
         elevatedCapBps = config.elevatedCapBps;
         owner = config.owner;
         guardian = config.guardian;
@@ -162,7 +164,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         if (ciphertext.length > MAX_CIPHERTEXT) revert CiphertextTooLarge();
         if (p.timestamp > block.timestamp || p.timestamp + MAX_PROOF_AGE < block.timestamp) revert StaleTimestamp();
         if (!isKnownRoot(p.root)) revert UnknownRoot();
-        if (p.associationRoot != 0 && !approvedAssociationRoot[p.associationRoot]) revert UnknownAssociationRoot();
+        if (p.associationRoot != 0 && !association.isApproved(p.associationRoot)) revert UnknownAssociationRoot();
         address recipient = _recipient(p);
         _checkField(p.nullifiers[0]);
         _checkField(p.nullifiers[1]);
@@ -205,11 +207,6 @@ contract PolicyPool is PoolTree, NullifierSet {
     function setGuardian(address guardian_) external onlyOwner {
         guardian = guardian_;
         emit GuardianChanged(guardian_);
-    }
-
-    function setAssociationRoot(uint256 root, bool approved) external onlyOwner {
-        approvedAssociationRoot[root] = approved;
-        emit AssociationRootSet(root, approved);
     }
 
     function transferOwnership(address next) external onlyOwner {
