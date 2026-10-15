@@ -498,6 +498,11 @@ export const poolAbi = [
             "name": "associationRoot",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "enc",
+            "type": "uint256[2]",
+            "internalType": "uint256[2]"
           }
         ]
       },
@@ -621,6 +626,37 @@ export const poolAbi = [
         "type": "uint128",
         "indexed": false,
         "internalType": "uint128"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Delivery",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint32",
+        "indexed": true,
+        "internalType": "uint32"
+      },
+      {
+        "name": "nullifier0",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "enc0",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "enc1",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false

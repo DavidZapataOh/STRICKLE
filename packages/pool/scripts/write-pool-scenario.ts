@@ -48,20 +48,21 @@ interface SpendOutput {
   inputs: Record<string, unknown>;
 }
 
-async function spendStep(name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">): Promise<{ step: SpendOutput; index: number }> {
+async function spendStep(name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">): Promise<{ step: SpendOutput; index: number; notes: Note[] }> {
   const ciphertext = filler(name);
   const full: SpendSpec = { ...spec, tree: ledger.tree, signer: { kind: "user", sk: SK }, now: SCENARIO_NOW, ciphertextHash: ciphertextHash(ciphertext) };
-  const { proof, publicInputs } = await proveSpend(full);
-  const [root, n0, n1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot] = publicInputs.map(String);
+  const { proof, publicInputs, outputNotes } = await proveSpend(full);
+  const [root, n0, n1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot, enc0, enc1] = publicInputs.map(String);
   const index = ledger.append(BigInt(c0 as string), BigInt(c1 as string));
   return {
     index,
+    notes: outputNotes,
     step: {
       kind: "spend",
       name,
       proof,
       ciphertext,
-      inputs: { root, nullifiers: [n0, n1], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot },
+      inputs: { root, nullifiers: [n0, n1], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot, enc: [enc0, enc1] },
     },
   };
 }
@@ -77,7 +78,7 @@ const n1 = note({ amount: 600n * USDC, box: "payroll", label }, payrollPolicy);
 const n2 = note({ amount: 400n * USDC, label }, FREE_POLICY);
 const split = await spendStep("split", { inputs: [inputN0, null], outputs: [{ note: n1 }, { note: n2 }] });
 
-const inputN1: InputSpec = { note: n1, policy: payrollPolicy, leafIndex: split.index };
+const inputN1: InputSpec = { note: split.notes[0] as Note, policy: payrollPolicy, leafIndex: split.index };
 const n3 = note({ amount: 350n * USDC, box: "payroll", label }, payrollPolicy);
 const payBob = await spendStep("payBob", {
   inputs: [inputN1, null],
@@ -87,7 +88,7 @@ const payBob = await spendStep("payBob", {
   allowlist: { tree: allowlist, index: 0 },
 });
 
-const inputN2: InputSpec = { note: n2, policy: FREE_POLICY, leafIndex: split.index + 1 };
+const inputN2: InputSpec = { note: split.notes[1] as Note, policy: FREE_POLICY, leafIndex: split.index + 1 };
 const n4 = note({ amount: 300n * USDC, label }, FREE_POLICY);
 const payCarol = await spendStep("payCarol", {
   inputs: [inputN2, null],

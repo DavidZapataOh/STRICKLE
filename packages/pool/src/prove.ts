@@ -42,6 +42,11 @@ export interface ProvedTransaction {
   publicInputs: bigint[];
 }
 
+export interface ProvedSpend extends ProvedTransaction {
+  /** The notes actually committed: self outputs carry the salt derived by the circuit. */
+  outputNotes: Note[];
+}
+
 async function proveAndCheck(name: CircuitName, inputs: InputMap, publicInputs: bigint[]): Promise<ProvedTransaction> {
   const { witness } = await executeCircuit(name, inputs);
   const proof = await proveCircuit(name, witness);
@@ -55,7 +60,7 @@ export function proveShield(note: Note, label: bigint): Promise<ProvedTransactio
   return proveAndCheck("shield", built.inputs, built.publicInputs);
 }
 
-export function proveSpend(spec: SpendSpec): Promise<ProvedTransaction> {
+export async function proveSpend(spec: SpendSpec): Promise<ProvedSpend> {
   const built = buildSpendInputs(spec);
-  return proveAndCheck("spend", built.inputs, built.publicInputs);
+  return { ...(await proveAndCheck("spend", built.inputs, built.publicInputs)), outputNotes: built.outputNotes };
 }

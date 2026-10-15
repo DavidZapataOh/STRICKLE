@@ -96,6 +96,8 @@ contract PolicyPoolFlowTest is Test {
         p.asset = uint8(vm.parseJsonUint(json, _key(i, ".inputs.asset")));
         p.timestamp = uint64(vm.parseJsonUint(json, _key(i, ".inputs.timestamp")));
         p.associationRoot = vm.parseJsonUint(json, _key(i, ".inputs.associationRoot"));
+        uint256[] memory enc = vm.parseJsonUintArray(json, _key(i, ".inputs.enc"));
+        p.enc = [enc[0], enc[1]];
     }
 
     function _shield(PolicyPool target, address who) internal returns (uint32) {
@@ -220,6 +222,16 @@ contract PolicyPoolFlowTest is Test {
 
         p = _inputs(0);
         p.nullifiers[1] += 1;
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.spend(proof, p, ciphertext);
+
+        p = _inputs(0);
+        p.enc[0] += 1;
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        pool.spend(proof, p, ciphertext);
+
+        p = _inputs(0);
+        p.enc[1] += 1;
         vm.expectRevert(PolicyPool.InvalidProof.selector);
         pool.spend(proof, p, ciphertext);
 
@@ -412,6 +424,24 @@ contract PolicyPoolFlowTest is Test {
             vm.expectRevert(abi.encodeWithSelector(PoolTreeError.NotFieldElement.selector, pool.FIELD_MODULUS()));
             pool.spend(_proof(0), p, _ciphertext(0));
         }
+    }
+
+    function test_SpendRejectsDeliveryValuesOutsideTheField() public {
+        _shield(pool, alice);
+        for (uint256 slot = 0; slot < 2; slot++) {
+            PolicyPool.SpendInputs memory p = _inputs(0);
+            p.enc[slot] = pool.FIELD_MODULUS();
+            vm.expectRevert(abi.encodeWithSelector(PoolTreeError.NotFieldElement.selector, pool.FIELD_MODULUS()));
+            pool.spend(_proof(0), p, _ciphertext(0));
+        }
+    }
+
+    function test_SpendEmitsTheDeliveryForTheWallet() public {
+        _shield(pool, alice);
+        PolicyPool.SpendInputs memory p = _inputs(0);
+        vm.expectEmit(true, false, false, true, address(pool));
+        emit PolicyPool.Delivery(2, p.nullifiers[0], p.enc[0], p.enc[1]);
+        pool.spend(_proof(0), p, _ciphertext(0));
     }
 }
 
