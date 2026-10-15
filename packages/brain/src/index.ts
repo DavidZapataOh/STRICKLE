@@ -8,3 +8,4 @@ export * from "./autonomy.ts";
 export * from "./proposal.ts";
 export * from "./templates.ts";
 export * from "./receipt.ts";
+export * from "./undo.ts";
