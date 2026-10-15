@@ -1,6 +1,6 @@
 // workflows/agent/tests/profile.test.ts
 import { describe, expect, it } from "vitest";
-import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, decodeProfile, encodeProfile, profileSchema } from "../enclave/profile.ts";
+import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, decodeProfile, encodeProfile, mergeProfile, profileSchema } from "../enclave/profile.ts";
 
 const valid = {
   version: 1 as const,
@@ -119,5 +119,50 @@ describe("the extended profile", () => {
     ["more than seven breaker codes", { breaker: { halted: true, since: "2026-10-01", codes: Array(8).fill("c") } }],
   ])("refuses %s", (_name, patch) => {
     expect(profileSchema.safeParse({ ...full, ...patch }).success).toBe(false);
+  });
+});
+
+describe("mergeProfile", () => {
+  const payee = "0x00000000000000000000000000000000000000a1";
+  const base = profileSchema.parse(valid);
+  const existing = profileSchema.parse({
+    ...valid,
+    taxRateBps: 1_000,
+    salaryOwed: "777",
+    salary: { proposed: "1000000", pending: "250000", payee, day: 1, lastPaid: "2026-11" },
+    history: [["2026-10-01", "500000000", "deposit"]],
+    tick: { lastDay: "2026-11-01", p10: "-1", p50: "2" },
+    breaker: { halted: true, since: "2026-11-01", codes: ["books-balance"] },
+  });
+  const submitted = profileSchema.parse({
+    ...valid,
+    taxRateBps: 2_500,
+    salary: { proposed: "2000000", pending: "0", payee: "0x00000000000000000000000000000000000000b2", day: 5, lastPaid: "" },
+    limits: { dailyCap: "5", signatureThreshold: "6" },
+  });
+
+  it("is the submission when nothing exists yet", () => {
+    expect(mergeProfile(undefined, submitted)).toEqual(submitted);
+  });
+
+  it("takes what the owner edits from the submission", () => {
+    const merged = mergeProfile(existing, submitted);
+    expect(merged.taxRateBps).toBe(2_500);
+    expect(merged.salary).toMatchObject({ proposed: "2000000", day: 5, payee: "0x00000000000000000000000000000000000000b2" });
+    expect(merged.limits).toEqual({ dailyCap: "5", signatureThreshold: "6" });
+  });
+
+  it("keeps what the agent maintains, so a resubmission cannot pay a month twice or clear a halt", () => {
+    const merged = mergeProfile(existing, submitted);
+    expect(merged.salary).toMatchObject({ pending: "250000", lastPaid: "2026-11" });
+    expect(merged.salaryOwed).toBe(existing.salary.proposed === submitted.salary.proposed ? "777" : submitted.salaryOwed);
+    expect(merged.tick).toEqual(existing.tick);
+    expect(merged.breaker).toEqual(existing.breaker);
+    expect(merged.history).toEqual(existing.history);
+  });
+
+  it("takes the submitted history only while the agent has none", () => {
+    const withHistory = profileSchema.parse({ ...valid, history: [["2026-09-01", "1", "import"]] });
+    expect(mergeProfile(base, withHistory).history).toEqual(withHistory.history);
   });
 });

@@ -74,3 +74,16 @@ export function decodeProfile(bytes: Uint8Array): Profile {
     throw new Error("profile is not valid");
   }
 }
+
+export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
+  if (!existing) return submitted;
+  return {
+    ...submitted,
+    history: existing.history.length > 0 ? existing.history : submitted.history,
+    tick: existing.tick,
+    breaker: existing.breaker,
+    // Until the agent has ticked once, or when the owner changes the salary, the funding target is still the owner's.
+    salaryOwed: existing.tick.lastDay === "" || existing.salary.proposed !== submitted.salary.proposed ? submitted.salaryOwed : existing.salaryOwed,
+    salary: { ...submitted.salary, pending: existing.salary.pending, lastPaid: existing.salary.lastPaid },
+  };
+}
