@@ -34,6 +34,14 @@
     "@types/node": "^24",
     "eslint": "^9",
     "typescript": "^5",
-    "typescript-eslint": "^8"
+    "typescript-eslint": "^8",
+    "viem": "^2.57.7",
+    "ox": "0.14.56"
+  },
+  "overrides": {
+    "@circle-fin/modular-wallets-core": {
+      "viem": "$viem",
+      "ox": "$ox"
+    }
   }
 }
