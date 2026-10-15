@@ -13,6 +13,8 @@ const valid = {
   gasLimit: "300000",
   sandboxClock: true,
   dailySchedule: "0 0 * * * *",
+  gatewayAddress: "0x00000000000000000000000000000000000000ee",
+  chainId: 5042002,
 };
 
 describe("configSchema", () => {
@@ -36,6 +38,10 @@ describe("configSchema", () => {
   it("requires a daily schedule", () => {
     const rest = Object.fromEntries(Object.entries(valid).filter(([key]) => key !== "dailySchedule"));
     expect(() => configSchema.parse(rest)).toThrow();
+  });
+
+  it("rejects a malformed gateway address", () => {
+    expect(() => configSchema.parse({ ...valid, gatewayAddress: "0x1" })).toThrow();
   });
 
   it("rejects a gas limit that is not a number string", () => {
