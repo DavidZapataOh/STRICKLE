@@ -79,3 +79,34 @@ export async function executeSponsored(args: {
   }
   throw new Error(`${args.functionName} did not complete in time`);
 }
+
+/** Sends a token transfer from a Circle smart account (sponsored) and waits for it; returns the transaction hash. */
+export async function transferSponsored(args: {
+  circle: CircleClient;
+  network: ArcNetwork;
+  walletAddress: Address;
+  to: Address;
+  token: Address;
+  /** Decimal amount as Circle expects it, e.g. "0.2". */
+  amount: string;
+  timeoutMs?: number;
+}): Promise<Hex> {
+  const created = await args.circle.createTransaction({
+    blockchain: args.network.circleBlockchain,
+    walletAddress: args.walletAddress,
+    destinationAddress: args.to,
+    tokenAddress: args.token,
+    amount: [args.amount],
+    fee: { type: "level", config: { feeLevel: "MEDIUM" } },
+  });
+  const id = created.data?.id;
+  if (!id) throw new Error("Circle returned no transaction id");
+  const deadline = Date.now() + (args.timeoutMs ?? 180_000);
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 2_500));
+    const tx = (await args.circle.getTransaction({ id })).data?.transaction;
+    if (tx?.state === "COMPLETE" && tx.txHash) return tx.txHash as Hex;
+    if (tx && FAILED.includes(tx.state)) throw new Error(`transfer ended in state ${tx.state}`);
+  }
+  throw new Error("transfer did not complete in time");
+}

@@ -27,7 +27,8 @@
     "circuits:fixtures": "npm run fixtures -w @strickle/pool",
     "circuits:scenario": "npm run scenario -w @strickle/pool",
     "pool:abi": "node scripts/pool-abi.mjs",
-    "pool:live": "npm run live -w @strickle/pool"
+    "pool:live": "npm run live -w @strickle/pool",
+    "pool:private-mode": "npm run private-mode -w @strickle/pool"
   },
   "devDependencies": {
     "@types/node": "^24",
