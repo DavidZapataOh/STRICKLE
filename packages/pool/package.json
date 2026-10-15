@@ -18,7 +18,8 @@
     "@aztec/bb.js": "5.0.1",
     "@noir-lang/noir_js": "1.0.0-rc.3",
     "@strickle/core": "*",
-    "@zkpassport/poseidon2": "0.6.2"
+    "@zkpassport/poseidon2": "0.6.2",
+    "viem": "^2.57.7"
   },
   "devDependencies": {
     "fast-check": "^4.10.2",
