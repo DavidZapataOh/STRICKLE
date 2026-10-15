@@ -11,6 +11,9 @@ export const DOMAIN = {
   RECIPIENT: 8n,
   AUTH: 9n,
   TEMPLATE: 10n,
+  DELIVERY_KEY: 11n,
+  DELIVERY_SALT: 12n,
+  DELIVERY_PAD: 13n,
 } as const;
 
 export const TREE_DEPTH = 24;

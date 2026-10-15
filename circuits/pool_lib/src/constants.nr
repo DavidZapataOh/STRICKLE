@@ -8,6 +8,9 @@ pub global DOM_LABEL: Field = 7;
 pub global DOM_RECIPIENT: Field = 8;
 pub global DOM_AUTH: Field = 9;
 pub global DOM_TEMPLATE: Field = 10;
+pub global DOM_DELIVERY_KEY: Field = 11;
+pub global DOM_DELIVERY_SALT: Field = 12;
+pub global DOM_DELIVERY_PAD: Field = 13;
 
 pub global TREE_DEPTH: u32 = 24;
 pub global ALLOWLIST_DEPTH: u32 = 10;
