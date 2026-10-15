@@ -168,7 +168,7 @@ async function main(): Promise<void> {
     { box: "operating", asset: "USDC", policy: FREE_POLICY, label },
   ];
 
-  const make = (amount: bigint, box: Note["box"], policy: Policy): Note => ({ amount, ownerPk: owner, policy: policyHash(policy), label, box, asset: "USDC", flags: 0, lockUntil: 0n, salt: randomField() });
+  const make = (amount: bigint, box: Note["box"], policy: Policy): Note => ({ amount, ownerPk: owner, policy: policyHash(policy), label, box, asset: "USDC", flags: 0, lockUntil: 0n, delayFloor: 0, salt: randomField() });
   const empty = (): Note => ({ ...make(0n, "operating", FREE_POLICY), ownerPk: 5n, label: 0n });
   const seal = (notes: Note[], policies: Policy[]) =>
     sealEnvelope(notes.map((n, j): OutputPlaintext | null => (n.amount > 0n ? { note: n, policy: policies[j] as Policy, viewers: ring.viewers() } : null)) as [OutputPlaintext | null, OutputPlaintext | null]);

@@ -44,6 +44,7 @@ export function recoverSelfNotes(args: { nk: bigint; ownerPk: bigint; transactio
         asset: candidate.asset,
         flags: delivery.flags,
         lockUntil: delivery.lockUntil,
+        delayFloor: delivery.delayFloor,
         salt: deliverySalt(key),
       };
       if (noteCommitment(note) === transaction.commitments[j]) {

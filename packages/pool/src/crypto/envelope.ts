@@ -47,8 +47,8 @@ const wrapNonce = (outputIndex: number): Uint8Array => {
   return nonce;
 };
 
-const wrapKey = (shared: Uint8Array, epk: Uint8Array, viewerPublicKey: Uint8Array): Uint8Array =>
-  hkdf(sha256, shared, concat(epk, viewerPublicKey), WRAP_INFO, 32);
+const wrapKey = (shared: Uint8Array, epk: Uint8Array, viewerPublicKey: Uint8Array, tierCode: number): Uint8Array =>
+  hkdf(sha256, shared, concat(epk, viewerPublicKey), concat(WRAP_INFO, Uint8Array.of(tierCode)), 32);
 
 function payloadFor(tier: Tier, output: OutputPlaintext): Uint8Array {
   if (tier === "owner") return encodeOwnerPayload(output);
@@ -59,7 +59,7 @@ function payloadFor(tier: Tier, output: OutputPlaintext): Uint8Array {
 function section(output: OutputPlaintext, viewer: Viewer, esk: bigint, epk: Uint8Array, outputIndex: number): Uint8Array {
   const contentKey = randomBytes(32);
   const shared = Point.fromBytes(viewer.publicKey).multiply(esk).toBytes();
-  const wrapped = chacha20poly1305(wrapKey(shared, epk, viewer.publicKey), wrapNonce(outputIndex)).encrypt(contentKey);
+  const wrapped = chacha20poly1305(wrapKey(shared, epk, viewer.publicKey, TIER_CODE[viewer.tier]), wrapNonce(outputIndex)).encrypt(contentKey);
   const plaintext = payloadFor(viewer.tier, output);
   const sealed = chacha20poly1305(contentKey, ZERO_NONCE).encrypt(plaintext);
   return concat(Uint8Array.of(TIER_CODE[viewer.tier]), keyId(viewer.publicKey), wrapped, Uint8Array.of(plaintext.length >> 8, plaintext.length & 0xff), sealed);
@@ -131,7 +131,7 @@ export function openSection(envelope: Hex, outputIndex: 0 | 1, tier: Tier, opene
     if (candidate.tier !== TIER_CODE[tier] || !sameBytes(candidate.keyId, id)) continue;
     try {
       const shared = opener.sharedSecret ?? Point.fromBytes(parsed.epk).multiply(opener.secret as bigint).toBytes();
-      const contentKey = chacha20poly1305(wrapKey(shared, parsed.epk, opener.publicKey), wrapNonce(outputIndex)).decrypt(candidate.wrap);
+      const contentKey = chacha20poly1305(wrapKey(shared, parsed.epk, opener.publicKey, TIER_CODE[tier]), wrapNonce(outputIndex)).decrypt(candidate.wrap);
       return chacha20poly1305(contentKey, ZERO_NONCE).decrypt(candidate.payload);
     } catch {
       continue;

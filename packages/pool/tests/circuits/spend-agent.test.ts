@@ -192,3 +192,26 @@ describe("agent: locks", () => {
     await expect(run(locked(NOW + 2n * 86_400n, { kind: "user", sk: user.sk } as never))).resolves.toBeDefined();
   });
 });
+
+describe("agent: what it cannot set on the notes it creates", () => {
+  it("rejects a split whose destination note arrives with the released flag", async () => {
+    const w = agentWorld();
+    const spec = split(w);
+    spec.outputs[0] = { note: makeNote({ box: "salary", amount: 400_000n, flags: FLAG_RELEASED, policy: policyHash(salaryPolicy) }), template: { tree: w.t.tree, index: w.t.salary } };
+    await expect(run(spec)).rejects.toThrow();
+  });
+
+  it("rejects an agent locking the change note into the far future", async () => {
+    const w = agentWorld();
+    const spec = split(w);
+    spec.outputs[1] = { note: makeNote({ box: "operating", amount: w.input.note.amount - 400_000n, lockUntil: 2n ** 63n, policy: w.input.note.policy }) };
+    await expect(run(spec)).rejects.toThrow();
+  });
+
+  it("rejects an agent locking the destination note", async () => {
+    const w = agentWorld();
+    const spec = split(w);
+    spec.outputs[0] = { note: makeNote({ box: "salary", amount: 400_000n, lockUntil: NOW + 10n ** 9n, policy: policyHash(salaryPolicy) }), template: { tree: w.t.tree, index: w.t.salary } };
+    await expect(run(spec)).rejects.toThrow();
+  });
+});

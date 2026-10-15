@@ -32,6 +32,7 @@ export interface PoolVectors {
     asset: number;
     flags: number;
     lockUntil: string;
+    delayFloor: number;
     salt: string;
     meta: string;
     commitment: string;
@@ -50,6 +51,7 @@ export interface PoolVectors {
     amount: string;
     flags: number;
     lockUntil: string;
+    delayFloor: number;
     key: string;
     salt: string;
     pad: string;
@@ -121,6 +123,7 @@ export function buildVectors(): PoolVectors {
       asset: i % 2 === 0 ? "USDC" : "EURC",
       flags: i % 5 === 0 ? 1 : 0,
       lockUntil: i === 2 ? 0n : i === 3 ? U64_MAX : 1_800_000_000n + u64() % 100_000_000n,
+      delayFloor: i === 0 ? 0 : i === 1 ? 2 ** 32 - 1 : (i * 3_607) % 604_800,
       salt: next(),
     });
   }
@@ -133,6 +136,7 @@ export function buildVectors(): PoolVectors {
     asset: ASSET_ID[n.asset],
     flags: n.flags,
     lockUntil: n.lockUntil.toString(),
+    delayFloor: n.delayFloor,
     salt: toHex32(n.salt),
     meta: toHex32(packMeta(n)),
     commitment: toHex32(noteCommitment(n)),
@@ -191,7 +195,8 @@ export function buildVectors(): PoolVectors {
     const flags = i === 0 || i % 3 === 0 ? 1 : 0;
     const lockUntil = i === 0 ? U64_MAX : i === 1 ? 0n : u64();
     const key = deliveryKey(nk, nullifier0, index);
-    const packed = packDelivery({ amount, flags, lockUntil });
+    const delayFloor = i === 0 ? 2 ** 32 - 1 : i === 1 ? 0 : (i * 7_919) % 604_800;
+    const packed = packDelivery({ amount, flags, lockUntil, delayFloor });
     return {
       nk: toHex32(nk),
       nullifier0: toHex32(nullifier0),
@@ -199,6 +204,7 @@ export function buildVectors(): PoolVectors {
       amount: amount.toString(),
       flags,
       lockUntil: lockUntil.toString(),
+      delayFloor,
       key: toHex32(key),
       salt: toHex32(deliverySalt(key)),
       pad: toHex32(deliveryPad(key)),
@@ -249,7 +255,7 @@ export function renderNoirTests(v: PoolVectors): string {
     lines.push(
       "#[test]",
       `fn note_vector_${i}() {`,
-      `    let note = Note { amount: ${n.amount}, owner_pk: ${n.ownerPk}, policy: ${n.policy}, label: ${n.label}, box_id: ${n.box}, asset: ${n.asset}, flags: ${n.flags}, lock_until: ${n.lockUntil}, salt: ${n.salt} };`,
+      `    let note = Note { amount: ${n.amount}, owner_pk: ${n.ownerPk}, policy: ${n.policy}, label: ${n.label}, box_id: ${n.box}, asset: ${n.asset}, flags: ${n.flags}, lock_until: ${n.lockUntil}, delay_floor: ${n.delayFloor}, salt: ${n.salt} };`,
       `    assert_eq(note.meta(), ${n.meta});`,
       `    assert_eq(note.commitment(), ${n.commitment});`,
       "}",
@@ -267,8 +273,8 @@ export function renderNoirTests(v: PoolVectors): string {
       `    assert_eq(key, ${d.key});`,
       `    assert_eq(delivery_salt(key), ${d.salt});`,
       `    assert_eq(delivery_pad(key), ${d.pad});`,
-      `    assert_eq(pack_delivery(${d.amount}, ${d.flags}, ${d.lockUntil}), ${d.packed});`,
-      `    assert_eq(pack_delivery(${d.amount}, ${d.flags}, ${d.lockUntil}) + delivery_pad(key), ${d.enc});`,
+      `    assert_eq(pack_delivery(${d.amount}, ${d.flags}, ${d.lockUntil}, ${d.delayFloor}), ${d.packed});`,
+      `    assert_eq(pack_delivery(${d.amount}, ${d.flags}, ${d.lockUntil}, ${d.delayFloor}) + delivery_pad(key), ${d.enc});`,
       "}",
       "",
     );

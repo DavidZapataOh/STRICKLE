@@ -23,7 +23,7 @@ describe("self delivery", () => {
       const key = deliveryKey(user.nk, BigInt(nullifier0), j);
       const note = built.outputNotes[j];
       expect(note?.salt).toBe(deliverySalt(key));
-      expect(unpackDelivery(decryptDelivery(enc as bigint, key))).toEqual({ amount: note?.amount, flags: note?.flags, lockUntil: note?.lockUntil });
+      expect(unpackDelivery(decryptDelivery(enc as bigint, key))).toEqual({ amount: note?.amount, flags: note?.flags, lockUntil: note?.lockUntil, delayFloor: note?.delayFloor });
     }
   });
 
@@ -31,17 +31,15 @@ describe("self delivery", () => {
     await expect(run(buildSpendInputs(baseSpend(new World())).inputs)).resolves.toBeDefined();
   });
 
-  it("gives an output of another owner no delivery and accepts it only with enc = 0", async () => {
+  it("fills the delivery slot of an output sent to another owner with a random value the circuit accepts", async () => {
     const world = new World();
     const spec = baseSpend(world);
     const input = spec.inputs[0]!;
-    spec.signer = { kind: "user", sk: user.sk };
     spec.outputs = [{ note: makeNote({ amount: 400_000n, box: "salary", policy: input.note.policy }) }, { note: makeNote({ amount: 600_000n, ownerPk: 99n, policy: input.note.policy }) }];
-    // sending to another owner is a user action; the delivery of the second output must be empty
     const built = buildSpendInputs(spec);
-    expect(built.publicInputs[12]).toBe(0n);
+    expect(built.publicInputs[12]).not.toBe(0n);
     await expect(run(built.inputs)).resolves.toBeDefined();
-    await expect(run({ ...built.inputs, enc: [(built.inputs.enc as string[])[0] as string, "0x01"] })).rejects.toThrow();
+    await expect(run({ ...built.inputs, enc: [(built.inputs.enc as string[])[0] as string, "0x01"] })).resolves.toBeDefined();
   });
 
   it("rejects a self output with a wrong encrypted amount, flags or lock", async () => {
@@ -65,13 +63,12 @@ describe("self delivery", () => {
     await expect(run(forged as InputMap)).rejects.toThrow();
   });
 
-  it("rejects a delivery on a zero-amount output", async () => {
+  it("does not tell an empty output from a kept one by its delivery value", () => {
     const world = new World();
     const input = world.add(makeNote({ amount: 1_000_000n }));
     const spec: SpendSpec = { ...baseSpend(world, input), outputs: [{ note: makeNote({ amount: 1_000_000n }) }, { note: makeNote({ amount: 0n, ownerPk: 5n }) }] };
     const built = buildSpendInputs(spec);
-    expect((built.inputs.enc as string[])[1]).toBe(toHex32(0n));
-    await expect(run({ ...built.inputs, enc: [(built.inputs.enc as string[])[0] as string, "0x05"] })).rejects.toThrow();
+    expect(built.publicInputs[12]).not.toBe(0n);
   });
 
   it("uses fresh keys for the same owner in a second transaction", () => {
@@ -79,6 +76,6 @@ describe("self delivery", () => {
     const second = buildSpendInputs(baseSpend(new World()));
     expect(first.publicInputs[11]).not.toBe(second.publicInputs[11]);
     expect(deliveryPad(deliveryKey(user.nk, BigInt(first.publicInputs[1] as bigint), 0))).not.toBe(deliveryPad(deliveryKey(user.nk, BigInt(second.publicInputs[1] as bigint), 0)));
-    expect(packDelivery({ amount: 1n, flags: 0, lockUntil: 0n })).toBe(1n);
+    expect(packDelivery({ amount: 1n, flags: 0, lockUntil: 0n, delayFloor: 0 })).toBe(1n);
   });
 });

@@ -20,6 +20,8 @@ interface IERC20Like {
 contract PolicyPool is PoolTree, NullifierSet {
     uint256 public constant MAX_PROOF_AGE = 600;
     uint256 public constant MAX_CIPHERTEXT = 2048;
+    /// @notice A guardian pause lapses by itself; only the owner can hold the pool closed longer.
+    uint64 public constant GUARDIAN_PAUSE = 3 days;
     uint256 private constant SPEND_INPUTS = 13;
     uint256 private constant SHIELD_INPUTS = 4;
 
@@ -99,7 +101,7 @@ contract PolicyPool is PoolTree, NullifierSet {
     address public owner;
     address public pendingOwner;
     address public guardian;
-    bool public paused;
+    uint64 public pausedUntil;
     uint256 private lock = 1;
 
     mapping(uint8 asset => Caps) public caps;
@@ -115,7 +117,7 @@ contract PolicyPool is PoolTree, NullifierSet {
     }
 
     modifier whenNotPaused() {
-        if (paused) revert PoolPaused();
+        if (paused()) revert PoolPaused();
         _;
     }
 
@@ -193,14 +195,19 @@ contract PolicyPool is PoolTree, NullifierSet {
         emit CapsLowered(asset, perUser, global);
     }
 
+    function paused() public view returns (bool) {
+        return block.timestamp < pausedUntil;
+    }
+
     function pause() external {
         if (msg.sender != guardian && msg.sender != owner) revert NotGuardian();
-        paused = true;
+        uint64 until = msg.sender == owner ? type(uint64).max : uint64(block.timestamp) + GUARDIAN_PAUSE;
+        if (until > pausedUntil) pausedUntil = until;
         emit Paused(msg.sender);
     }
 
     function unpause() external onlyOwner {
-        paused = false;
+        pausedUntil = 0;
         emit Unpaused(msg.sender);
     }
 

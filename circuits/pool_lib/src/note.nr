@@ -10,6 +10,7 @@ pub struct Note {
     pub asset: u8,
     pub flags: u8,
     pub lock_until: u64,
+    pub delay_floor: u32,
     pub salt: Field,
 }
 
@@ -19,6 +20,7 @@ impl Note {
             + (self.asset as Field) * 0x100
             + (self.flags as Field) * 0x10000
             + (self.lock_until as Field) * 0x100000000
+            + (self.delay_floor as Field) * 0x1000000000000000000000000
     }
 
     pub fn commitment(self) -> Field {

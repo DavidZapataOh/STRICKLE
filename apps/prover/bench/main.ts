@@ -27,6 +27,7 @@ const note = (overrides: Partial<Note>): Note => ({
   asset: "USDC",
   flags: 0,
   lockUntil: 0n,
+  delayFloor: 0,
   salt: 1_000_001n,
   ...overrides,
 });

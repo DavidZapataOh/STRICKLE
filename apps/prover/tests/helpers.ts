@@ -18,6 +18,7 @@ export const note = (overrides: Partial<Note> = {}): Note => ({
   asset: "USDC",
   flags: 0,
   lockUntil: 0n,
+  delayFloor: 0,
   salt: 7_000_000_000_000_000_000_000_001n,
   ...overrides,
 });

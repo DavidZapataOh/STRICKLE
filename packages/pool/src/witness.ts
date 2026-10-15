@@ -60,6 +60,7 @@ export function noteToInputs(note: Note): Record<string, string | number> {
     asset: ASSET_ID[note.asset],
     flags: note.flags,
     lock_until: note.lockUntil.toString(),
+    delay_floor: note.delayFloor,
     salt: toHex32(note.salt),
   };
 }
@@ -139,6 +140,7 @@ function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [b
       asset,
       flags: 0,
       lockUntil: 0n,
+      delayFloor: 0,
       salt: spec.dummySalt[slot] ?? 0n,
     };
     return {
@@ -157,11 +159,12 @@ function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [b
 function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
   const real = spec.inputs.find((input) => input !== null);
   const { nk } = signerKeys(spec.signer);
+  const inheritedDelay = spec.inputs.reduce((max, input) => (input ? Math.max(max, input.policy.releaseDelay, input.note.delayFloor) : max), 0);
   return spec.outputs.map((output, j) => {
     const isSelf = output.note.amount > 0n && real !== undefined && output.note.ownerPk === real.note.ownerPk;
-    if (!isSelf) return { output, note: output.note, enc: 0n };
+    if (!isSelf) return { output, note: output.note, enc: randomField() };
     const key = deliveryKey(nk, nullifier0, j);
-    const note: Note = { ...output.note, salt: deliverySalt(key) };
+    const note: Note = { ...output.note, delayFloor: Math.max(output.note.delayFloor, inheritedDelay), salt: deliverySalt(key) };
     return { output, note, enc: encryptDelivery(packDelivery(note), key) };
   });
 }

@@ -13,6 +13,9 @@ pub fn delivery_pad(key: Field) -> Field {
     Poseidon2::hash([DOM_DELIVERY_PAD, key], 2)
 }
 
-pub fn pack_delivery(amount: u64, flags: u8, lock_until: u64) -> Field {
-    (amount as Field) + (flags as Field) * 0x10000000000000000 + (lock_until as Field) * 0x1000000000000000000
+pub fn pack_delivery(amount: u64, flags: u8, lock_until: u64, delay_floor: u32) -> Field {
+    (amount as Field)
+        + (flags as Field) * 0x10000000000000000
+        + (lock_until as Field) * 0x1000000000000000000
+        + (delay_floor as Field) * 0x10000000000000000000000000000000000
 }

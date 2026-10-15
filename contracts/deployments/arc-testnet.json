@@ -2,39 +2,39 @@
   "chainId": 5042002,
   "contracts": {
     "ShieldRelationsLib": {
-      "address": "0x5044D3e88e8059E2A0e2e35ca1211a5CEf925a8c",
-      "txHash": "0xb9a853123a6f80642002cd90dcaf25404f124ae0546e0a329ad84e45067356b8",
-      "blockNumber": 67301985,
+      "address": "0x4F26840bB4f20418e15CC9e070990C29A9EFD844",
+      "txHash": "0x4868408aa5c5327c9e4864f26f81a3134dcc0ee5250f65fa2edffeb0a716db3c",
+      "blockNumber": 67320830,
       "create2": true
     },
     "SpendZKTranscriptLib": {
-      "address": "0x4cA9f50d370d406A933BB0ef614739db42b7a252",
-      "txHash": "0x5a5e6b8b0fc5fe21ea80538ef8b447c1f4d446fb73dfbfa4564d8ddb4de5d039",
-      "blockNumber": 67309040,
+      "address": "0x47B23C96f9CCaE2b64A52504a19Ce6C71b7e3026",
+      "txHash": "0x404fdc03118ae390b3d45fd608bae740b2419291d7a86b8502173976b49bc88a",
+      "blockNumber": 67320830,
       "create2": true
     },
     "SpendRelationsLib": {
-      "address": "0xBf72c0e8596ccc0BfE108b856688737B73EA6D8e",
-      "txHash": "0x1811018411f124c80167f2a863458208672c2e7e74460aa6bc64435b7cf2852e",
-      "blockNumber": 67309041,
+      "address": "0x85f3C84bb9194BD5aE993Fd9F0818711fF00CfD6",
+      "txHash": "0x071776df169930209f0672e15fc4671ddcd88d63ef416203ee02dbe6bed06e6f",
+      "blockNumber": 67320830,
       "create2": true
     },
     "ShieldZKTranscriptLib": {
-      "address": "0x7C5009BDDD03C0b7926e852BEea247603505d979",
-      "txHash": "0x4074acac68962f74a441d81ab6ba649a0ee130c6b93dc02e3fc60df44069b4e8",
-      "blockNumber": 67301986,
+      "address": "0xD60B3528961f1DfaBE6137999A39BFD85aE8ff97",
+      "txHash": "0xdde4ae8ad45da56c71131dd16a0b285e5b7417c5376c6ced8557513064c3d0f5",
+      "blockNumber": 67320830,
       "create2": true
     },
     "ShieldVerifier": {
-      "address": "0x54Dd7a810331D2dAa02eb1b3403CEDF21013d97b",
-      "txHash": "0xcfa27eda93d3bd9392317d8203db82aa4895b20df5a9e90d89fcccc204349e63",
-      "blockNumber": 67301986,
+      "address": "0x27F732c8471b9ADaB4779D975cB61dc5F38E711D",
+      "txHash": "0xdb476bcea00f436a2187cf8d14cda513116ecaa32a8c1ee5bd846a00dcf4928b",
+      "blockNumber": 67320830,
       "create2": true
     },
     "SpendVerifier": {
-      "address": "0x5dEb22b4C0850A2a29e3025031DbEABF8A01844b",
-      "txHash": "0xcd5fde4a653fb395b2cc7a0ef2c997edb407bbc8dded6d4ce81144c964a94b34",
-      "blockNumber": 67309041,
+      "address": "0xb9B3E02F2C3B67d7B9E312865C5F98e92195345A",
+      "txHash": "0x2811e0e8a1b41638967210b1634f5c4c67456ffde1c8e7758f8614cca9d75a86",
+      "blockNumber": 67320830,
       "create2": true
     },
     "Poseidon2Hasher": {
@@ -44,9 +44,9 @@
       "create2": true
     },
     "PolicyPool": {
-      "address": "0x12A1E6226545834cab9ED68c094a5da62F222958",
-      "txHash": "0x9ccca8beb37bd2e97ea6236de2961fc9cbd179daf92c610a24c81acd191d9386",
-      "blockNumber": 67316363,
+      "address": "0x18fDa6b6db085971bc0150ba173baCb98b14Ec69",
+      "txHash": "0x71bc74a65387f55382198fef2d47d06b362e2c88e89c25939790a9fede6c2b95",
+      "blockNumber": 67320872,
       "create2": true
     },
     "ScreeningRegistry": {

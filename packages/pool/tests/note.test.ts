@@ -13,8 +13,7 @@ const base: Note = {
   box: "taxes",
   asset: "USDC",
   flags: 0,
-  lockUntil: 1_800_000_000n,
-  salt: 444n,
+  lockUntil: 1_800_000_000n, delayFloor: 0, salt: 444n,
 };
 
 const fieldElement = fc.bigInt({ min: 0n, max: FIELD_MODULUS - 1n });
@@ -27,6 +26,7 @@ const noteArbitrary: fc.Arbitrary<Note> = fc.record({
   asset: fc.constantFrom("USDC", "EURC"),
   flags: fc.constantFrom(0, FLAG_RELEASED),
   lockUntil: fc.bigInt({ min: 0n, max: 2n ** 64n - 1n }),
+  delayFloor: fc.integer({ min: 0, max: 2 ** 32 - 1 }),
   salt: fieldElement,
 });
 
@@ -40,8 +40,8 @@ describe("meta packing", () => {
     fc.assert(
       fc.property(noteArbitrary, (note) => {
         const meta = packMeta(note);
-        expect(meta).toBeLessThan(2n ** 96n);
-        expect(unpackMeta(meta)).toEqual({ box: note.box, asset: note.asset, flags: note.flags, lockUntil: note.lockUntil });
+        expect(meta).toBeLessThan(2n ** 128n);
+        expect(unpackMeta(meta)).toEqual({ box: note.box, asset: note.asset, flags: note.flags, lockUntil: note.lockUntil, delayFloor: note.delayFloor });
       }),
     );
   });
@@ -62,6 +62,7 @@ describe("noteCommitment", () => {
       { ...base, asset: "EURC" },
       { ...base, flags: FLAG_RELEASED },
       { ...base, lockUntil: base.lockUntil + 1n },
+      { ...base, delayFloor: base.delayFloor + 1 },
       { ...base, salt: base.salt + 1n },
     ];
     const commitments = new Set([noteCommitment(base), ...variants.map(noteCommitment)]);
@@ -84,6 +85,8 @@ describe("assertNote", () => {
     ["amount beyond u64", { amount: 2n ** 64n }],
     ["negative amount", { amount: -1n }],
     ["lockUntil beyond u64", { lockUntil: 2n ** 64n }],
+    ["delayFloor beyond u32", { delayFloor: 2 ** 32 }],
+    ["negative delayFloor", { delayFloor: -1 }],
     ["owner not a field element", { ownerPk: FIELD_MODULUS }],
     ["policy not a field element", { policy: FIELD_MODULUS }],
     ["label not a field element", { label: -1n }],
