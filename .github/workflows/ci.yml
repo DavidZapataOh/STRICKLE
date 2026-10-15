@@ -66,3 +66,30 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:integration -w @strickle/arc
+
+  db:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: strickle
+          POSTGRES_PASSWORD: strickle
+          POSTGRES_DB: strickle
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U strickle"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://strickle:strickle@localhost:54329/strickle
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration -w @strickle/db
