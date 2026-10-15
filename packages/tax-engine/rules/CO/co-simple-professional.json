@@ -1,0 +1,39 @@
+{
+  "id": "co-simple-professional",
+  "country": "CO",
+  "regime": "Régimen Simple de Tributación, group 3: professional, consulting and scientific services (natural person)",
+  "kind": "simple-bimonthly",
+  "version": "2026.1",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "DIAN, Tarifas RST (groups and rates); DIAN monthly due-date pages (advance windows); UVT 2026 and the 3,500 UVT advance exemption and F.260 dates from practitioner compilations of Decreto 2229 de 2023",
+    "url": "https://micrositios.dian.gov.co/regimen-simple-tributacion/tarifas-rst/",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "currency": "COP",
+    "uvt": "52374.00",
+    "brackets": [
+      { "upToUvt": 6000, "rateBps": 590 },
+      { "upToUvt": 15000, "rateBps": 730 },
+      { "upToUvt": 30000, "rateBps": 1200 },
+      { "upToUvt": 100000, "rateBps": 1450 }
+    ],
+    "advanceExemptBelowUvt": 3500,
+    "advanceWindows": [
+      { "bimester": 1, "from": "2026-05-12", "to": "2026-05-26" },
+      { "bimester": 2, "from": "2026-06-10", "to": "2026-06-24" },
+      { "bimester": 3, "from": "2026-07-09", "to": "2026-07-24" },
+      { "bimester": 4, "from": "2026-09-09", "to": "2026-09-22" }
+    ],
+    "annualDeclaration": [
+      { "digits": [1, 2], "date": "2026-04-20" },
+      { "digits": [3, 4], "date": "2026-04-21" },
+      { "digits": [5, 6], "date": "2026-04-22" },
+      { "digits": [7, 8], "date": "2026-04-23" },
+      { "digits": [9, 0], "date": "2026-04-24" }
+    ]
+  }
+}
