@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { toHex32 } from "../src/field.ts";
 import { agentKeyHash, nullifierKey, ownerPk } from "../src/keys.ts";
+import { MerkleTree } from "../src/merkle.ts";
 import { type Note, noteCommitment, noteNullifier, packMeta } from "../src/note.ts";
 import { hash } from "../src/poseidon.ts";
 import { policyHash } from "../src/policy.ts";
-import { buildVectors, renderNoirTests } from "../src/vectors.ts";
+import { buildVectors, renderNoirMerkleTests, renderNoirTests, renderSolidityZeros } from "../src/vectors.ts";
 
 const file = new URL("../vectors/pool-vectors.json", import.meta.url);
 const noirFile = new URL("../../../circuits/pool_lib/src/vectors.nr", import.meta.url);
@@ -71,5 +73,27 @@ describe("generated vectors", () => {
       expect(noteCommitment(note)).toBe(big(n.commitment));
     }
     for (const n of v.nullifiers) expect(noteNullifier(big(n.nk), big(n.commitment), n.leafIndex)).toBe(big(n.nullifier));
+  });
+  it("includes Merkle vectors that rebuild their roots", () => {
+    const { merkle } = buildVectors();
+    expect(merkle.zeros).toHaveLength(25);
+    expect(merkle.pairs.length).toBeGreaterThanOrEqual(70);
+    const tree = new MerkleTree(24);
+    merkle.pairs.forEach((pair) => {
+      expect(toHex32(tree.insertPair(BigInt(pair.a), BigInt(pair.b)).root)).toBe(pair.root);
+    });
+    for (const path of merkle.paths) {
+      expect(toHex32(MerkleTree.rootFromPath(BigInt(path.leaf), path.index, path.siblings.map(BigInt)))).toBe(path.root);
+    }
+    expect(merkle.small.map((s) => s.depth)).toEqual(expect.arrayContaining([10, 20]));
+  });
+
+  it("the committed Noir Merkle tests and Solidity zeros are up to date", () => {
+    expect(readFileSync(new URL("../../../circuits/pool_lib/src/merkle_vectors.nr", import.meta.url), "utf8")).toBe(
+      renderNoirMerkleTests(buildVectors()),
+    );
+    expect(readFileSync(new URL("../../../contracts/src/pool/PoolZeros.sol", import.meta.url), "utf8")).toBe(
+      renderSolidityZeros(buildVectors()),
+    );
   });
 });
