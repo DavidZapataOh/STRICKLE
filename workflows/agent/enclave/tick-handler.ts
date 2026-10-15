@@ -1,6 +1,6 @@
 // workflows/agent/enclave/tick-handler.ts
 import type { TeeRuntime } from "@chainlink/cre-sdk";
-import { type Address, bytesToHex, getAddress, hexToBytes } from "viem";
+import { type Address, type Hex, bytesToHex, getAddress, hexToBytes } from "viem";
 import type { Config } from "../config.ts";
 import { decodeDelegated, decodeHead, decodeStateLog, decodeTickBooks, delegatedRequest, headRequest, stateLogRequest, tickRequests } from "./books.ts";
 import { ASSET_ID } from "./cascade.ts";
@@ -58,7 +58,7 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
           : encodeTickReport({ vault, next, ciphertext }),
       );
       if (profile.userKey !== ZERO_KEY && plan.notices.length > 0) {
-        const userKey = hexToBytes(profile.userKey);
+        const userKey = hexToBytes(profile.userKey as Hex);
         plan.notices.forEach((notice, offset) => {
           const id = current.notices + BigInt(offset) + 1n;
           deliver(runtime, executor, encodeNoticeReport({ vault, id, sealed: bytesToHex(sealNotice(master, userKey, vault, id, notice)) }));
