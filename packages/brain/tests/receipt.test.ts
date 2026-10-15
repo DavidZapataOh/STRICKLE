@@ -10,7 +10,7 @@ const factsFor = (kind: ReceiptKind): Facts => {
   const keys = TEMPLATE_KEYS[kind];
   const values: Record<string, FactValue> = {};
   keys.values.forEach((key, i) => {
-    values[key] = key === "rate" || key === "from" || key === "to" ? { type: "bps", value: 2_000 + i } : usdc(BigInt(1_000_000 * (i + 1)));
+    values[key] = key === "rate" || key === "apr" || key === "from" || key === "to" ? { type: "bps", value: 2_000 + i } : usdc(BigInt(1_000_000 * (i + 1)));
   });
   const labels: Record<string, string> = {};
   for (const key of keys.labels) labels[key] = key === "reason" ? "scenario-risk" : `label-${key}`;
@@ -129,6 +129,11 @@ describe("undoSummary", () => {
   });
   it("a split does not claim to be reversible and points to moving between boxes", () => {
     expect(undoSummary("split")).toMatchObject({ undoable: false, reason: expect.stringContaining("moving") });
+  });
+  it("an early payment is not reversible and its proposal can be cancelled", () => {
+    expect(undoSummary("early-payment")).toMatchObject({ undoable: false, reason: expect.stringContaining("left your accounts") });
+    expect(undoSummary("early-payment-proposal")).toEqual({ undoable: true, how: "cancel-proposal" });
+    expect(UNDO_KIND["early-payment-proposal"]).toBe("proposal-cancelled");
   });
   it("a receipt that undoes another is not undoable", () => {
     expect(undoSummary("vault-redeem", "abc")).toMatchObject({ undoable: false });

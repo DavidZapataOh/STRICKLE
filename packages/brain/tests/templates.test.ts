@@ -60,7 +60,7 @@ const sample = (kind: ReceiptKind): Facts => {
   const keys = TEMPLATE_KEYS[kind];
   const values: Record<string, FactValue> = {};
   keys.values.forEach((key, i) => {
-    const bps = key === "rate" || (kind === "taxes-recompute" && (key === "from" || key === "to"));
+    const bps = key === "rate" || key === "apr" || (kind === "taxes-recompute" && (key === "from" || key === "to"));
     values[key] = bps ? { type: "bps", value: 2_000 + i } : usdc(BigInt(1_000_000 * (i + 1)) + 500_000n);
   });
   const labels: Record<string, string> = {};
@@ -87,6 +87,17 @@ describe("template", () => {
     expect(template(facts, "en", "en-US")).toContain("daily cap");
     expect(template(facts, "es", "es-MX")).toContain("tope diario");
     expect(template(facts, "pt-br", "pt-BR")).toContain("teto diário");
+  });
+
+  it("an early payment shows the APR next to the saving in each language", () => {
+    const facts: Facts = {
+      kind: "early-payment",
+      values: { net: usdc(980_000_000n), discount: usdc(20_000_000n), apr: { type: "bps", value: 3_724 } },
+      labels: { to: "Acme" },
+    };
+    expect(template(facts, "en", "en-US")).toContain("37.24%");
+    expect(template(facts, "es", "es-CO")).toContain("37,24%");
+    expect(template(facts, "pt-br", "pt-BR")).toContain("37,24%");
   });
 
   it("every kind has its keys declared and the three languages differ", () => {

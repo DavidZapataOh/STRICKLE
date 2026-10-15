@@ -6,7 +6,8 @@ export type ReceiptKind =
   | "split" | "taxes-recompute" | "vault-sweep" | "vault-redeem" | "emergency-sweep"
   | "salary" | "salary-trim" | "salary-raise-proposal" | "payment" | "payment-proposal"
   | "taxes-to-local" | "taxes-to-local-proposal" | "structural-change-proposal" | "breaker-halt" | "breaker-reset"
-  | "move" | "proposal-cancelled";
+  | "move" | "proposal-cancelled"
+  | "early-payment" | "early-payment-proposal";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -98,6 +99,8 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   "structural-change-proposal": { values: [], labels: ["change"] },
   move: { values: ["amount"], labels: ["from", "to"] },
   "proposal-cancelled": { values: [], labels: ["what"] },
+  "early-payment": { values: ["net", "discount", "apr"], labels: ["to"] },
+  "early-payment-proposal": { values: ["net", "discount", "apr"], labels: ["to"] },
   "breaker-halt": { values: [], labels: ["reason"] },
   "breaker-reset": { values: [], labels: ["actor"] },
 };
@@ -193,6 +196,16 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l) => `I cancelled the pending proposal: ${l("what")}. Nothing changed.`,
     es: (_v, l) => `Cancelé la propuesta pendiente: ${l("what")}. No cambió nada.`,
     "pt-br": (_v, l) => `Cancelei a proposta pendente: ${l("what")}. Nada mudou.`,
+  },
+  "early-payment": {
+    en: (v, l) => `I paid ${l("to")} ${v("net")} today instead of at the due date and saved ${v("discount")}, about ${v("apr")} a year. Your cushion stays above its floor.`,
+    es: (v, l) => `Le pagué a ${l("to")} ${v("net")} hoy en vez de en el vencimiento y ahorré ${v("discount")}, cerca de ${v("apr")} al año. Tu colchón sigue por encima de su piso.`,
+    "pt-br": (v, l) => `Paguei ${v("net")} a ${l("to")} hoje em vez de no vencimento e economizei ${v("discount")}, cerca de ${v("apr")} ao ano. Sua reserva continua acima do piso.`,
+  },
+  "early-payment-proposal": {
+    en: (v, l) => `I propose paying ${l("to")} ${v("net")} early to save ${v("discount")}, about ${v("apr")} a year. Your cushion would stay above its floor. I will not do it unless you approve.`,
+    es: (v, l) => `Propongo pagarle a ${l("to")} ${v("net")} antes para ahorrar ${v("discount")}, cerca de ${v("apr")} al año. Tu colchón seguiría por encima de su piso. No lo haré si no lo apruebas.`,
+    "pt-br": (v, l) => `Proponho pagar ${v("net")} a ${l("to")} antes para economizar ${v("discount")}, cerca de ${v("apr")} ao ano. Sua reserva continuaria acima do piso. Não farei isso sem a sua aprovação.`,
   },
   "structural-change-proposal": {
     en: (_v, l) => `I propose a change to how your boxes work: ${l("change")}. Nothing changes unless you approve.`,

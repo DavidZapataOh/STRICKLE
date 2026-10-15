@@ -44,6 +44,7 @@ const IRREVERSIBLE: Partial<Record<ReceiptKind, string>> = {
   "taxes-to-local": "The conversion has been made, so it cannot be reverted.",
   "breaker-halt": "This records a safety stop; there is nothing to undo.",
   "breaker-reset": "This records a human reset; there is nothing to undo.",
+  "early-payment": "The payment has left your accounts, so it cannot be taken back.",
   split: "The money now sits in its boxes under their locks; it can be adjusted by moving between boxes, and the locks apply.",
 };
 
@@ -55,6 +56,7 @@ const REVERSIBLE: Partial<Record<ReceiptKind, UndoHow>> = {
   "payment-proposal": "cancel-proposal",
   "salary-raise-proposal": "cancel-proposal",
   "structural-change-proposal": "cancel-proposal",
+  "early-payment-proposal": "cancel-proposal",
 };
 
 export function undoSummary(kind: ReceiptKind, undoes?: string): UndoSummary {
@@ -79,6 +81,7 @@ export const UNDO_KIND: Partial<Record<ReceiptKind, ReceiptKind>> = {
   "payment-proposal": "proposal-cancelled",
   "salary-raise-proposal": "proposal-cancelled",
   "structural-change-proposal": "proposal-cancelled",
+  "early-payment-proposal": "proposal-cancelled",
 };
 
 export function buildReceipt(input: { kind: ReceiptKind; ruleId: string; facts: Facts; createdAt: number; sequence: number; undoes?: string; styles?: Partial<Record<Lang, NumberStyle>> }): Receipt {
