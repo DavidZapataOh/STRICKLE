@@ -27,3 +27,8 @@ recovery/
 contracts/out/
 contracts/cache/
 contracts/broadcast/
+
+# Test and gate output
+test-results/
+playwright-report/
+.lighthouseci/

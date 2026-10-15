@@ -30,6 +30,8 @@ Open [http://localhost:3000](http://localhost:3000). Visitors to `/` are redirec
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
+| `npm run test:responsive` | Check every route at every required viewport: text ≥ 12 px, no horizontal overflow, centered content |
+| `npm run test:perf` | Lighthouse budgets: LCP, CLS, TBT and JavaScript weight |
 | `npm run test:copy` | Check the copy against the brand's word budget and banned phrases, in every language |
 
 ## Languages
