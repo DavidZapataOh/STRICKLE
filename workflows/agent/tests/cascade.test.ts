@@ -2,9 +2,9 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { BOX_ID, planSplit } from "../enclave/cascade.ts";
-import { type Profile, profileSchema } from "../enclave/profile.ts";
+import { profileSchema } from "../enclave/profile.ts";
 
-const live: Profile = {
+const live = profileSchema.parse({
   version: 1,
   taxRateBps: 0,
   taxBufferBps: 10_500,
@@ -15,7 +15,7 @@ const live: Profile = {
   payrollDue: "0",
   salaryOwed: "0",
   emergencyTarget: "0",
-};
+});
 const empty = { asset: "USDC" as const, unallocated: 1_000_000n, operating: 0n, payrollFunded: 0n, emergency: 0n };
 
 describe("planSplit", () => {
@@ -53,7 +53,8 @@ describe("planSplit", () => {
       salaryOwed: fc.bigInt({ min: 0n, max: 10n ** 12n }).map(String),
       emergencyTarget: fc.bigInt({ min: 0n, max: 10n ** 12n }).map(String),
     })
-    .filter((profile) => profileSchema.safeParse(profile).success);
+    .filter((profile) => profileSchema.safeParse(profile).success)
+    .map((profile) => profileSchema.parse(profile));
   const booksArb = fc.record({
     asset: fc.constantFrom("USDC" as const, "EURC" as const),
     unallocated: fc.bigInt({ min: 1n, max: 10n ** 12n }),
