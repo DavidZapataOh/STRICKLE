@@ -56,6 +56,10 @@ jobs:
   arc-live:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    # The live tests share testnet wallets and assert exact balances: one run at a time.
+    concurrency:
+      group: arc-live-testnet
+      cancel-in-progress: false
     env:
       CIRCLE_API_KEY_TESTNET: ${{ secrets.CIRCLE_API_KEY_TESTNET }}
       CIRCLE_ENTITY_SECRET_TESTNET: ${{ secrets.CIRCLE_ENTITY_SECRET_TESTNET }}
