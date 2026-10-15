@@ -38,3 +38,9 @@ export function renderExplanation(modelText: string, facts: Facts, lang: Lang, s
 
   return { ok: true, text: text.replace(/\{([^{}]*)\}/g, (_match, key: string) => formatFact(facts.values[key] as Parameters<typeof formatFact>[0], lang, style)) };
 }
+
+/** The facts the engine wants shown that a model text never mentions: an explanation that drops a number is not accepted. */
+export function missingFacts(modelText: string, facts: Facts): string[] {
+  const used = new Set([...modelText.matchAll(/\{([^{}]*)\}/g)].map((match) => match[1] as string));
+  return Object.keys(facts.values).filter((key) => !used.has(key));
+}

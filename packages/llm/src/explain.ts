@@ -1,7 +1,7 @@
-import { type Facts, type Lang, type NumberStyle, template } from "@strickle/brain";
+import { type Facts, type Lang, type NumberStyle, placeholderTemplate, template } from "@strickle/brain";
 import { type Category, classificationValid, CATEGORIES } from "./classification.ts";
 import { complete } from "./client.ts";
-import { renderExplanation } from "./explanation-guard.ts";
+import { missingFacts, renderExplanation } from "./explanation-guard.ts";
 import { type Unconfirmed, invoiceValid } from "./invoice.ts";
 import { minimize } from "./minimize.ts";
 
@@ -14,20 +14,20 @@ export interface CallOptions {
 export async function explain(facts: Facts, lang: Lang, style: NumberStyle, options: CallOptions = {}): Promise<{ text: string; source: "model" | "template" }> {
   const fallback = { text: template(facts, lang, style), source: "template" as const };
   try {
-    const placeholders = Object.keys(facts.values).map((key) => `{${key}}`).join(", ");
+    const canonical = placeholderTemplate(facts, lang);
     const raw = (await complete({
       model: options.model,
       task: "explain",
       system: [
-        "You explain a financial decision of a budgeting agent to its user in one or two short sentences.",
-        `Write in ${LANGUAGE_NAME[lang]}. Plain, calm, no jargon.`,
-        `You may refer to amounts, percentages, days and dates ONLY through these placeholders: ${placeholders}. Write them exactly with the braces.`,
-        "Never write any digit and never spell out a number in words. Never invent a value. Do not give advice and do not promise returns.",
+        `You rephrase one sentence of a personal-finance assistant so it reads warmly and clearly in ${LANGUAGE_NAME[lang]}.`,
+        "Keep exactly the same meaning and every {placeholder} exactly as written, with its braces. Every placeholder must appear in your answer.",
+        "Do not add any fact, reason, advice, promise or number. Do not mention anything the sentence does not say. Never write a digit and never spell a number out in words.",
+        "The answer is at most two short sentences.",
       ].join(" "),
-      user: JSON.stringify({ decision: facts.kind, labels: minimize(facts.labels, Object.keys(facts.labels)), available_placeholders: Object.keys(facts.values) }),
+      user: JSON.stringify({ sentence: canonical }),
       schema: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false },
     })) as { text?: unknown };
-    if (typeof raw.text !== "string") return fallback;
+    if (typeof raw.text !== "string" || missingFacts(raw.text, facts).length > 0) return fallback;
     const rendered = renderExplanation(raw.text, facts, lang, style);
     return rendered.ok ? { text: rendered.text, source: "model" } : fallback;
   } catch {
