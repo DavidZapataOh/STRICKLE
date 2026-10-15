@@ -211,19 +211,32 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
   },
 };
 
-/** The deterministic explanation: only the engine's facts, formatted for the language and number style. */
-export function template(facts: Facts, lang: Lang, style: NumberStyle): string {
+function sentence(facts: Facts, lang: Lang, value: (key: string) => string): string {
   const keys = TEMPLATE_KEYS[facts.kind];
   if (!keys) throw new RangeError(`unknown kind ${String(facts.kind)}`);
-  const v = (key: string): string => {
-    const fact = facts.values[key];
-    if (!fact) throw new RangeError(`${facts.kind}: the fact "${key}" is missing`);
-    return formatFact(fact, lang, style);
-  };
   const l = (key: string): string => {
     const label = facts.labels[key];
     if (label === undefined) throw new RangeError(`${facts.kind}: the label "${key}" is missing`);
     return label;
   };
-  return SENTENCES[facts.kind][lang](v, l, lang);
+  return SENTENCES[facts.kind][lang](value, l, lang);
+}
+
+const present = (facts: Facts, key: string): FactValue => {
+  const fact = facts.values[key];
+  if (!fact) throw new RangeError(`${facts.kind}: the fact "${key}" is missing`);
+  return fact;
+};
+
+/** The deterministic explanation: only the engine's facts, formatted for the language and number style. */
+export function template(facts: Facts, lang: Lang, style: NumberStyle): string {
+  return sentence(facts, lang, (key) => formatFact(present(facts, key), lang, style));
+}
+
+/** The same sentence with each value left as a `{placeholder}`: the canonical text a model may rephrase, never extend. */
+export function placeholderTemplate(facts: Facts, lang: Lang): string {
+  return sentence(facts, lang, (key) => {
+    present(facts, key);
+    return `{${key}}`;
+  });
 }

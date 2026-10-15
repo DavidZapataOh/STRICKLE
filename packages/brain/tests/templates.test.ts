@@ -1,6 +1,6 @@
 import { plainDate } from "@strickle/core";
 import { describe, expect, it } from "vitest";
-import { type FactValue, type Facts, type Lang, type NumberStyle, type ReceiptKind, TEMPLATE_KEYS, formatFact, template } from "../src/templates.ts";
+import { type FactValue, type Facts, type Lang, type NumberStyle, type ReceiptKind, TEMPLATE_KEYS, formatFact, placeholderTemplate, template } from "../src/templates.ts";
 
 const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
 
@@ -109,5 +109,30 @@ describe("template", () => {
     expect(template(facts, "en", "en-US")).toContain("scenarios");
     expect(template(facts, "es", "es-MX")).toContain("escenarios");
     expect(template(facts, "pt-br", "pt-BR")).toContain("cenários");
+  });
+});
+
+describe("placeholderTemplate", () => {
+  const kinds = Object.keys(TEMPLATE_KEYS) as ReceiptKind[];
+  const langs: [Lang, NumberStyle][] = [["en", "en-US"], ["es", "es-MX"], ["pt-br", "pt-BR"]];
+
+  it.each(kinds)("%s keeps every value as a {placeholder} and every label as itself", (kind) => {
+    const facts = sample(kind);
+    for (const [lang] of langs) {
+      const text = placeholderTemplate(facts, lang);
+      for (const key of Object.keys(facts.values)) expect(text).toContain(`{${key}}`);
+      expect(text).not.toMatch(/\d/);
+    }
+  });
+
+  it("is the deterministic sentence before the numbers are put in", () => {
+    const facts: Facts = { kind: "salary", values: { amount: usdc(760_000_000n) }, labels: {} };
+    expect(placeholderTemplate(facts, "en")).toBe("I paid your salary: {amount}.");
+    expect(placeholderTemplate(facts, "es")).toBe("Pagué tu sueldo: {amount}.");
+    expect(placeholderTemplate(facts, "pt-br")).toBe("Paguei seu salário: {amount}.");
+  });
+
+  it("throws on a missing fact like the full template does", () => {
+    expect(() => placeholderTemplate({ kind: "payment", values: {}, labels: { to: "x" } }, "en")).toThrow(/amount/);
   });
 });
