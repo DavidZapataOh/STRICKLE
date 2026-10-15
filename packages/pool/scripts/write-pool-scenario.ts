@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { type Address, type Hex, concatHex, keccak256, toBytes } from "viem";
+import { type Address, type Hex, keccak256, toBytes } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { closeProver, proveShield, proveSpend } from "../src/prove.ts";
 import { ASSET_ID } from "../src/constants.ts";
@@ -8,7 +8,10 @@ import { MerkleTree } from "../src/merkle.ts";
 import { type Note, noteCommitment } from "../src/note.ts";
 import { FREE_POLICY, type Policy, policyHash } from "../src/policy.ts";
 import { addressToField, ciphertextHash, shieldLabel } from "../src/pool-client.ts";
-import { type InputSpec, type SpendSpec, recipientLeaf } from "../src/witness.ts";
+import { type InputSpec, type SpendSpec, deriveOutputNotes, recipientLeaf, withDummies } from "../src/witness.ts";
+import { generateViewKey, deriveOwnerViewKey } from "../src/crypto/keys.ts";
+import { type OutputPlaintext, sealEnvelope } from "../src/crypto/envelope.ts";
+import { ViewKeyRing } from "../src/crypto/keyring.ts";
 import { SK, freshSalt, user } from "../tests/circuits/fixture.ts";
 
 const SCENARIO_NOW = 1_900_000_000n;
@@ -38,7 +41,11 @@ const note = (overrides: Partial<Note>, policy: Policy): Note => ({
   ...overrides,
 });
 
-const filler = (seed: string): Hex => concatHex([1, 2, 3].map((part) => keccak256(toBytes(`${seed}-${part}`))));
+const ring = new ViewKeyRing(deriveOwnerViewKey(SK));
+ring.setAccountant(generateViewKey().publicKey);
+
+const seal = (notes: Note[], policies: [Policy, Policy]) =>
+  sealEnvelope(notes.map((n, j): OutputPlaintext | null => (n.amount > 0n ? { note: n, policy: policies[j] as Policy, viewers: ring.viewers() } : null)) as [OutputPlaintext | null, OutputPlaintext | null]);
 
 interface SpendOutput {
   kind: "spend";
@@ -48,9 +55,14 @@ interface SpendOutput {
   inputs: Record<string, unknown>;
 }
 
-async function spendStep(name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">): Promise<{ step: SpendOutput; index: number; notes: Note[] }> {
-  const ciphertext = filler(name);
-  const full: SpendSpec = { ...spec, tree: ledger.tree, signer: { kind: "user", sk: SK }, now: SCENARIO_NOW, ciphertextHash: ciphertextHash(ciphertext) };
+async function spendStep(
+  name: string,
+  spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">,
+  policies: [Policy, Policy],
+): Promise<{ step: SpendOutput; index: number; notes: Note[] }> {
+  const base = withDummies({ ...spec, tree: ledger.tree, signer: { kind: "user", sk: SK }, now: SCENARIO_NOW });
+  const ciphertext = seal(deriveOutputNotes(base).notes, policies);
+  const full: SpendSpec = { ...base, ciphertextHash: ciphertextHash(ciphertext) };
   const { proof, publicInputs, outputNotes } = await proveSpend(full);
   const [root, n0, n1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot, enc0, enc1] = publicInputs.map(String);
   const index = ledger.append(BigInt(c0 as string), BigInt(c1 as string));
@@ -71,31 +83,39 @@ const label = shieldLabel(alice, 0n);
 const n0 = note({ amount: 1_000n * USDC, label }, FREE_POLICY);
 const shieldProof = await proveShield(n0, label);
 const shieldIndex = ledger.append(noteCommitment(n0), 0n);
-const shieldCiphertext = filler("shield");
+const shieldCiphertext = seal([n0, { ...n0, amount: 0n }], [FREE_POLICY, FREE_POLICY]);
 
 const inputN0: InputSpec = { note: n0, policy: FREE_POLICY, leafIndex: shieldIndex };
 const n1 = note({ amount: 600n * USDC, box: "payroll", label }, payrollPolicy);
 const n2 = note({ amount: 400n * USDC, label }, FREE_POLICY);
-const split = await spendStep("split", { inputs: [inputN0, null], outputs: [{ note: n1 }, { note: n2 }] });
+const split = await spendStep("split", { inputs: [inputN0, null], outputs: [{ note: n1 }, { note: n2 }] }, [payrollPolicy, FREE_POLICY]);
 
 const inputN1: InputSpec = { note: split.notes[0] as Note, policy: payrollPolicy, leafIndex: split.index };
 const n3 = note({ amount: 350n * USDC, box: "payroll", label }, payrollPolicy);
-const payBob = await spendStep("payBob", {
-  inputs: [inputN1, null],
-  outputs: [{ note: n3 }, { note: note({ ownerPk: 5n }, FREE_POLICY) }],
-  publicAmount: 250n * USDC,
-  recipient: addressToField(bob),
-  allowlist: { tree: allowlist, index: 0 },
-});
+const payBob = await spendStep(
+  "payBob",
+  {
+    inputs: [inputN1, null],
+    outputs: [{ note: n3 }, { note: note({ ownerPk: 5n }, FREE_POLICY) }],
+    publicAmount: 250n * USDC,
+    recipient: addressToField(bob),
+    allowlist: { tree: allowlist, index: 0 },
+  },
+  [payrollPolicy, FREE_POLICY],
+);
 
 const inputN2: InputSpec = { note: split.notes[1] as Note, policy: FREE_POLICY, leafIndex: split.index + 1 };
 const n4 = note({ amount: 300n * USDC, label }, FREE_POLICY);
-const payCarol = await spendStep("payCarol", {
-  inputs: [inputN2, null],
-  outputs: [{ note: n4 }, { note: note({ ownerPk: 5n }, FREE_POLICY) }],
-  publicAmount: 100n * USDC,
-  recipient: addressToField(carol),
-});
+const payCarol = await spendStep(
+  "payCarol",
+  {
+    inputs: [inputN2, null],
+    outputs: [{ note: n4 }, { note: note({ ownerPk: 5n }, FREE_POLICY) }],
+    publicAmount: 100n * USDC,
+    recipient: addressToField(carol),
+  },
+  [FREE_POLICY, FREE_POLICY],
+);
 
 const label2 = shieldLabel(alice, 1n);
 const n5 = note({ amount: 500n * USDC, label: label2 }, FREE_POLICY);
@@ -117,7 +137,7 @@ const scenario = {
     amount: (500n * USDC).toString(),
     commitment: noteCommitment(n5).toString(),
     proof: secondShield.proof,
-    ciphertext: filler("shield2"),
+    ciphertext: seal([n5, { ...n5, amount: 0n }], [FREE_POLICY, FREE_POLICY]),
   },
   spends: [split.step, payBob.step, payCarol.step],
   expected: { afterSplit: (1_000n * USDC).toString(), afterBob: (750n * USDC).toString(), afterCarol: (650n * USDC).toString() },

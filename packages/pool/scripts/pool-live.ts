@@ -1,18 +1,25 @@
 import { readFileSync } from "node:fs";
 import { MIN_FEE_PER_GAS, networks, rpcUrl } from "@strickle/arc/networks";
-import { type Address, type Hex, concatHex, createPublicClient, createWalletClient, erc20Abi, http, keccak256, parseEventLogs, toBytes } from "viem";
+import { type Address, type Hex, createPublicClient, createWalletClient, erc20Abi, http, parseEventLogs } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { poolAbi } from "../src/abi.ts";
 import { ASSET_ID } from "../src/constants.ts";
+import { combinePartials, dealAuthority, partialDecrypt } from "../src/crypto/authority.ts";
+import { type OutputPlaintext, envelopeEpk, openSection, sealEnvelope } from "../src/crypto/envelope.ts";
+import { ViewKeyRing } from "../src/crypto/keyring.ts";
+import { deriveOwnerViewKey, generateViewKey } from "../src/crypto/keys.ts";
+import { openOwnerNote } from "../src/crypto/scan.ts";
+import { decodeAccountantPayload, decodeAuthorityPayload } from "../src/crypto/wire.ts";
 import { randomField } from "../src/field.ts";
-import { ownerPk } from "../src/keys.ts";
+import { nullifierKey, ownerPk } from "../src/keys.ts";
 import { PoolLedger } from "../src/ledger.ts";
 import { MerkleTree } from "../src/merkle.ts";
 import { type Note, noteCommitment } from "../src/note.ts";
 import { FREE_POLICY, type Policy, policyHash } from "../src/policy.ts";
 import { addressToField, ciphertextHash, shieldLabel } from "../src/pool-client.ts";
 import { closeProver, executeCircuit, proveShield, proveSpend } from "../src/prove.ts";
-import { type SpendSpec, buildSpendInputs, recipientLeaf } from "../src/witness.ts";
+import { type Candidate, recoverSelfNotes } from "../src/recover.ts";
+import { type SpendSpec, buildSpendInputs, deriveOutputNotes, recipientLeaf, withDummies } from "../src/witness.ts";
 
 const network = "testnet";
 const USDC = 1_000_000n;
@@ -42,6 +49,8 @@ async function send(label: string, request: Parameters<typeof wallet.writeContra
   return receipt;
 }
 
+type Receipt = Awaited<ReturnType<typeof send>>;
+
 const ledger = new PoolLedger();
 
 async function rebuildLedgerFromEvents(): Promise<void> {
@@ -60,40 +69,47 @@ async function rebuildLedgerFromEvents(): Promise<void> {
   console.log(`ledger rebuilt from ${logs.length} events; root matches the contract`);
 }
 
-function absorb(receipt: Awaited<ReturnType<typeof send>>): number {
+function inserted(receipt: Receipt) {
   const [event] = parseEventLogs({ abi: poolAbi, eventName: "NotesInserted", logs: receipt.logs });
   if (!event) throw new Error("no NotesInserted event in the receipt");
-  return ledger.append(event.args.commitment0, event.args.commitment1);
+  return event.args;
 }
 
-const filler = (seed: string): Hex => concatHex([1, 2, 3].map((part) => keccak256(toBytes(`${seed}-${part}`))));
 const balanceOf = (who: Address) => publicClient.readContract({ address: usdc, abi: erc20Abi, functionName: "balanceOf", args: [who] });
 const totalShielded = () => publicClient.readContract({ address: pool, abi: poolAbi, functionName: "totalShielded", args: [1] });
+
+function check(condition: boolean, message: string): void {
+  if (!condition) throw new Error(`check failed: ${message}`);
+}
 
 async function main(): Promise<void> {
   await rebuildLedgerFromEvents();
 
   const sk = randomField();
+  const nk = nullifierKey(sk);
   const owner = ownerPk(sk);
+  const ownerView = deriveOwnerViewKey(sk);
+  const accountant = generateViewKey();
+  const authority = dealAuthority(2, 3);
+  const ring = new ViewKeyRing(ownerView);
+  ring.setAccountant(accountant.publicKey);
+  ring.setAuthority(authority.publicKey);
+
   const nonce = await publicClient.readContract({ address: pool, abi: poolAbi, functionName: "shieldNonce", args: [account.address] });
   const label = shieldLabel(account.address, nonce);
   const payee = account.address;
   const allowlist = new MerkleTree(10);
   allowlist.insert(recipientLeaf(addressToField(payee)));
   const payroll: Policy = { ...FREE_POLICY, restricted: true, allowlistRoot: allowlist.root };
+  const candidates: Candidate[] = [
+    { box: "payroll", asset: "USDC", policy: payroll, label },
+    { box: "operating", asset: "USDC", policy: FREE_POLICY, label },
+  ];
 
-  const make = (amount: bigint, box: Note["box"], policy: Policy): Note => ({
-    amount,
-    ownerPk: owner,
-    policy: policyHash(policy),
-    label,
-    box,
-    asset: "USDC",
-    flags: 0,
-    lockUntil: 0n,
-    salt: randomField(),
-  });
-  const filler0 = (): Note => ({ ...make(0n, "operating", FREE_POLICY), ownerPk: 5n, label: 0n });
+  const make = (amount: bigint, box: Note["box"], policy: Policy): Note => ({ amount, ownerPk: owner, policy: policyHash(policy), label, box, asset: "USDC", flags: 0, lockUntil: 0n, salt: randomField() });
+  const empty = (): Note => ({ ...make(0n, "operating", FREE_POLICY), ownerPk: 5n, label: 0n });
+  const seal = (notes: Note[], policies: Policy[]) =>
+    sealEnvelope(notes.map((n, j): OutputPlaintext | null => (n.amount > 0n ? { note: n, policy: policies[j] as Policy, viewers: ring.viewers() } : null)) as [OutputPlaintext | null, OutputPlaintext | null]);
 
   const poolBefore = await balanceOf(pool);
   const totalBefore = await totalShielded();
@@ -103,21 +119,25 @@ async function main(): Promise<void> {
   console.log("proving the shield...");
   const shield = await proveShield(n0, label);
   await send("approve", { address: usdc, abi: erc20Abi, functionName: "approve", args: [pool, 1n * USDC] });
-  const shieldIndex = absorb(
-    await send("shield 1 USDC", {
-      address: pool,
-      abi: poolAbi,
-      functionName: "shield",
-      args: [ASSET_ID.USDC, 1n * USDC, noteCommitment(n0), shield.proof, filler("shield")],
-    }),
-  );
+  const shieldReceipt = await send("shield 1 USDC", {
+    address: pool,
+    abi: poolAbi,
+    functionName: "shield",
+    args: [ASSET_ID.USDC, 1n * USDC, noteCommitment(n0), shield.proof, seal([n0, empty()], [FREE_POLICY, FREE_POLICY])],
+  });
+  const shieldEvent = inserted(shieldReceipt);
+  const shieldIndex = ledger.append(shieldEvent.commitment0, shieldEvent.commitment1);
+  const shieldOpened = openOwnerNote(shieldEvent.ciphertext, 0, ownerView, noteCommitment(n0));
+  check(shieldOpened !== undefined && shieldOpened.note.amount === 1n * USDC, "the owner opens the shielded note from the chain envelope");
 
   const stepNow = async () => (await publicClient.getBlock()).timestamp;
-  const spend = async (name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">) => {
-    const ciphertext = filler(name);
-    const full: SpendSpec = { ...spec, tree: ledger.tree, signer: { kind: "user", sk }, now: await stepNow(), ciphertextHash: ciphertextHash(ciphertext) };
+  const seen: { ciphertext: Hex; notes: Note[] }[] = [];
+
+  const spend = async (name: string, spec: Omit<SpendSpec, "tree" | "signer" | "now" | "ciphertextHash">, policies: Policy[]) => {
+    const base = withDummies({ ...spec, tree: ledger.tree, signer: { kind: "user", sk }, now: await stepNow() });
+    const ciphertext = seal(deriveOutputNotes(base).notes, policies);
     console.log(`proving ${name}...`);
-    const { proof, publicInputs, outputNotes } = await proveSpend(full);
+    const { proof, publicInputs, outputNotes } = await proveSpend({ ...base, ciphertextHash: ciphertextHash(ciphertext) });
     const [root, nf0, nf1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot, enc0, enc1] = publicInputs as [
       bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint,
     ];
@@ -127,13 +147,21 @@ async function main(): Promise<void> {
       functionName: "spend",
       args: [proof, { root, nullifiers: [nf0, nf1], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot, enc: [enc0, enc1] }, ciphertext],
     });
-    return { index: absorb(receipt), notes: outputNotes };
+    const event = inserted(receipt);
+    const index = ledger.append(event.commitment0, event.commitment1);
+
+    const recovered = recoverSelfNotes({ nk, ownerPk: owner, transaction: { nullifier0: nf0, commitments: [c0, c1], enc: [enc0, enc1], firstIndex: index }, candidates });
+    const expected = outputNotes.filter((n) => n.amount > 0n);
+    check(recovered.length === expected.length && recovered.every((r, i) => noteCommitment(r.note) === noteCommitment(expected[i] as Note)), `${name}: self notes recovered from public data and nk`);
+    seen.push({ ciphertext: event.ciphertext, notes: outputNotes });
+    return { index, notes: outputNotes };
   };
 
-  const split = await spend("split into payroll and operating", {
-    inputs: [{ note: n0, policy: FREE_POLICY, leafIndex: shieldIndex }, null],
-    outputs: [{ note: make(600_000n, "payroll", payroll) }, { note: make(400_000n, "operating", FREE_POLICY) }],
-  });
+  const split = await spend(
+    "split into payroll and operating",
+    { inputs: [{ note: n0, policy: FREE_POLICY, leafIndex: shieldIndex }, null], outputs: [{ note: make(600_000n, "payroll", payroll) }, { note: make(400_000n, "operating", FREE_POLICY) }] },
+    [payroll, FREE_POLICY],
+  );
   const [payrollNote, operatingNote] = split.notes as [Note, Note];
 
   const strangerSpec: SpendSpec = {
@@ -141,7 +169,7 @@ async function main(): Promise<void> {
     signer: { kind: "user", sk },
     now: await stepNow(),
     inputs: [{ note: payrollNote, policy: payroll, leafIndex: split.index }, null],
-    outputs: [{ note: filler0() }, { note: filler0() }],
+    outputs: [{ note: empty() }, { note: empty() }],
     publicAmount: 600_000n,
     recipient: addressToField("0x000000000000000000000000000000000000dEaD"),
     allowlist: { tree: allowlist, index: 0 },
@@ -153,19 +181,38 @@ async function main(): Promise<void> {
     () => console.log("rule check: the payroll box cannot pay an address outside its allowlist (no proof exists)"),
   );
 
-  await spend("pay the approved payee from payroll", {
-    inputs: [{ note: payrollNote, policy: payroll, leafIndex: split.index }, null],
-    outputs: [{ note: filler0() }, { note: filler0() }],
-    publicAmount: 600_000n,
-    recipient: addressToField(payee),
-    allowlist: { tree: allowlist, index: 0 },
-  });
-  await spend("pay out the operating box", {
-    inputs: [{ note: operatingNote, policy: FREE_POLICY, leafIndex: split.index + 1 }, null],
-    outputs: [{ note: filler0() }, { note: filler0() }],
-    publicAmount: 400_000n,
-    recipient: addressToField(payee),
-  });
+  await spend(
+    "pay the approved payee from payroll",
+    { inputs: [{ note: payrollNote, policy: payroll, leafIndex: split.index }, null], outputs: [{ note: empty() }, { note: empty() }], publicAmount: 600_000n, recipient: addressToField(payee), allowlist: { tree: allowlist, index: 0 } },
+    [FREE_POLICY, FREE_POLICY],
+  );
+
+  ring.revokeAccountant();
+  console.log("accountant revoked");
+
+  await spend(
+    "pay out the operating box",
+    { inputs: [{ note: operatingNote, policy: FREE_POLICY, leafIndex: split.index + 1 }, null], outputs: [{ note: empty() }, { note: empty() }], publicAmount: 400_000n, recipient: addressToField(payee) },
+    [FREE_POLICY, FREE_POLICY],
+  );
+
+  // Viewing tiers, read back from what the chain stored.
+  const [splitTx, , lastTx] = seen as [(typeof seen)[number], (typeof seen)[number], (typeof seen)[number]];
+  for (const [j, note] of splitTx.notes.entries()) {
+    const view = decodeAccountantPayload(openSection(splitTx.ciphertext, j as 0 | 1, "accountant", accountant) as Uint8Array);
+    check(view.amount === note.amount && view.box === note.box && view.asset === "USDC", `accountant sees the bookkeeping fields of output ${j}`);
+    const owned = openOwnerNote(splitTx.ciphertext, j as 0 | 1, ownerView, noteCommitment(note));
+    check(owned !== undefined && owned.note.salt === note.salt, `owner opens output ${j} of the split from its envelope`);
+    const epk = envelopeEpk(splitTx.ciphertext);
+    const partials = [authority.shares[0], authority.shares[2]].map((share) => partialDecrypt(epk, share as never));
+    const authorityView = decodeAuthorityPayload(openSection(splitTx.ciphertext, j as 0 | 1, "authority", { publicKey: authority.publicKey, sharedSecret: combinePartials(partials) }) as Uint8Array);
+    check(authorityView.amount === note.amount, `two authority shares open output ${j}`);
+    const oneShare = openSection(splitTx.ciphertext, j as 0 | 1, "authority", { publicKey: authority.publicKey, sharedSecret: combinePartials([partialDecrypt(epk, authority.shares[1] as never)]) });
+    check(oneShare === undefined, `a single authority share opens nothing for output ${j}`);
+  }
+  check(openSection(lastTx.ciphertext, 0, "accountant", accountant) === undefined, "after revocation the old accountant key finds nothing in the new envelope");
+  check(openSection(splitTx.ciphertext, 0, "accountant", accountant) !== undefined, "the revoked accountant still reads what was sealed before the revocation");
+  console.log("viewing tiers verified on-chain data: owner, accountant, threshold authority, revocation");
 
   const poolAfter = await balanceOf(pool);
   const totalAfter = await totalShielded();
