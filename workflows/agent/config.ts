@@ -9,6 +9,7 @@ export const configSchema = z.object({
   factoryAddress: address,
   heartbeatAddress: address,
   stateAddress: address,
+  executorAddress: address,
   rpcUrl: z.string().regex(/^https:\/\//),
   gasLimit: z.string().regex(/^[0-9]+$/),
 });

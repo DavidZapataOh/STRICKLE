@@ -24,4 +24,10 @@ describe("enclave sources", () => {
     expect(handler).toContain('getSecret({ id: "AGENT_MASTER" })');
     expect(handler).not.toMatch(/return[^;]*master/i);
   });
+
+  it("the deposit handler caps the work per run and skips instead of failing a whole run", () => {
+    const handler = readFileSync(new URL("deposit-handler.ts", dir), "utf8");
+    expect(handler).toMatch(/MAX_PER_RUN\s*=\s*5/);
+    expect(handler).toContain("catch");
+  });
 });

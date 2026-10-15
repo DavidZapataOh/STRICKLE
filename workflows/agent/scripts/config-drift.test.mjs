@@ -12,5 +12,6 @@ for (const file of ["config.staging.json", "config.production.json"]) {
     assert.equal(config.factoryAddress, manifest.BoxVaultFactory.address);
     assert.equal(config.heartbeatAddress, manifest.AgentHeartbeat.address);
     assert.equal(config.stateAddress, manifest.AgentState.address);
+    assert.equal(config.executorAddress, manifest.AgentExecutor.address);
   });
 }

@@ -16,6 +16,7 @@ import {
 import { EVM_PB } from "@chainlink/cre-sdk/pb";
 import { decodeFunctionResult, encodeFunctionData, getAddress, keccak256, toBytes, zeroAddress } from "viem";
 import { type Config, configSchema } from "./config.ts";
+import { onDepositPoll } from "./enclave/deposit-handler.ts";
 import { onProfileSubmitted } from "./enclave/profile-handler.ts";
 import { encodeTick, factoryAbi } from "./tick.ts";
 
@@ -55,7 +56,7 @@ const onCron = (runtime: Runtime<Config>): string => {
   return bytesToHex(written.txHash ?? new Uint8Array(32));
 };
 
-export const HANDLER_NAMES = ["heartbeat", "profile"] as const;
+export const HANDLER_NAMES = ["heartbeat", "profile", "deposits"] as const;
 
 export const initWorkflow = (config: Config) => {
   const cron = new CronCapability();
@@ -72,6 +73,7 @@ export const initWorkflow = (config: Config) => {
       onProfileSubmitted,
       {},
     ),
+    handlerInTee(cron.trigger({ schedule: "0 * * * * *" }), onDepositPoll, {}),
   ];
 };
 
