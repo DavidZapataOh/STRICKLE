@@ -123,3 +123,9 @@ export function salaryRaiseProposal(input: { current: bigint; monthsAboveTarget:
   const propose = input.monthsAboveTarget >= policy.raiseAfterMonths && raised > input.current && input.raisedDecision.payNow === input.raisedDecision.owed;
   return { propose, raised };
 }
+
+/** What the cascade must still fund: the owed salary minus what the salary box already holds. */
+export function cascadeSalaryOwed(owed: bigint, salaryBoxBalance: bigint): bigint {
+  if (owed < 0n || salaryBoxBalance < 0n) throw new RangeError("amounts must not be negative");
+  return owed > salaryBoxBalance ? owed - salaryBoxBalance : 0n;
+}
