@@ -7,7 +7,7 @@ const facts: Facts = { kind: "salary", values: { amount: { type: "amount", units
 describe("degradation with a key the API rejects", () => {
   const original = process.env.ANTHROPIC_API_KEY;
   it("explain falls back to the template, classify to uncategorized, readInvoice to manual entry; none throws", async () => {
-    process.env.ANTHROPIC_API_KEY = "invalid-key-for-the-degradation-test";
+    process.env.ANTHROPIC_API_KEY = "x".repeat(24); // a value the API rejects, built so that it does not look like a committed secret
     try {
       expect(await explain(facts, "en", "en-US")).toEqual({ text: template(facts, "en", "en-US"), source: "template" });
       expect(await classify({ description: "Notion", amount: "10.00", currency: "USD", direction: "out" })).toEqual({ category: "uncategorized", source: "fallback" });
