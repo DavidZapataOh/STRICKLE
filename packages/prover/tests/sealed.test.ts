@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+import { generateProverKey, open, seal } from "../src/sealed.ts";
+
+const aad = new TextEncoder().encode("strickle-prover/v1:spend");
+const message = new TextEncoder().encode(JSON.stringify({ secret: "do not leak" }));
+
+describe("sealed box", () => {
+  it("opens with the recipient's key and the same associated data", () => {
+    const key = generateProverKey();
+    const sealed = seal(message, key.publicKey, aad);
+    expect(open(sealed, key.secret, key.publicKey, aad)).toEqual(message);
+  });
+
+  it("produces a different ciphertext every time", () => {
+    const key = generateProverKey();
+    expect(seal(message, key.publicKey, aad)).not.toEqual(seal(message, key.publicKey, aad));
+  });
+
+  it("does not reveal the plaintext in the sealed bytes", () => {
+    const key = generateProverKey();
+    const text = new TextDecoder("latin1").decode(seal(message, key.publicKey, aad));
+    expect(text).not.toContain("do not leak");
+  });
+
+  it("refuses another key, other associated data, any flipped byte, truncation and a bad version", () => {
+    const key = generateProverKey();
+    const other = generateProverKey();
+    const sealed = seal(message, key.publicKey, aad);
+    expect(open(sealed, other.secret, other.publicKey, aad)).toBeUndefined();
+    expect(open(sealed, key.secret, key.publicKey, new TextEncoder().encode("strickle-prover/v1:shield"))).toBeUndefined();
+    for (let position = 0; position < sealed.length; position += 5) {
+      const tampered = new Uint8Array(sealed);
+      tampered[position] = (tampered[position] as number) ^ 1;
+      expect(open(tampered, key.secret, key.publicKey, aad)).toBeUndefined();
+    }
+    expect(open(sealed.slice(0, sealed.length - 1), key.secret, key.publicKey, aad)).toBeUndefined();
+    expect(open(new Uint8Array(10), key.secret, key.publicKey, aad)).toBeUndefined();
+    const wrongVersion = new Uint8Array(sealed);
+    wrongVersion[0] = 2;
+    expect(open(wrongVersion, key.secret, key.publicKey, aad)).toBeUndefined();
+  });
+
+  it("generates distinct 32-byte public keys", () => {
+    const a = generateProverKey();
+    const b = generateProverKey();
+    expect(a.publicKey).toHaveLength(32);
+    expect(a.publicKey).not.toEqual(b.publicKey);
+  });
+});

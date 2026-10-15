@@ -4,9 +4,12 @@ import { buildShieldInputs, buildSpendInputs } from "../src/witness.ts";
 import { World, baseSpend, makeNote } from "../tests/circuits/fixture.ts";
 
 const outDir = new URL("../../../contracts/test/fixtures/proofs/", import.meta.url);
+const inputsDir = new URL("../../prover/tests/fixtures/", import.meta.url);
 mkdirSync(outDir, { recursive: true });
+mkdirSync(inputsDir, { recursive: true });
 
 async function write(name: "shield" | "spend", inputs: Parameters<typeof executeCircuit>[1]): Promise<void> {
+  writeFileSync(new URL(`${name}-inputs.json`, inputsDir), `${JSON.stringify(inputs)}\n`);
   const { witness } = await executeCircuit(name, inputs);
   const proof = await proveCircuit(name, witness);
   if (!(await verifyCircuit(name, proof))) throw new Error(`${name}: the fresh proof does not verify`);

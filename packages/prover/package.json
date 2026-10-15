@@ -1,0 +1,28 @@
+{
+  "name": "@strickle/prover",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts",
+    "./browser": "./src/browser.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:circuits": "vitest run --config vitest.circuits.config.mts"
+  },
+  "dependencies": {
+    "@aztec/bb.js": "5.0.1",
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@noir-lang/noir_js": "1.0.0-rc.3"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  }
+}
