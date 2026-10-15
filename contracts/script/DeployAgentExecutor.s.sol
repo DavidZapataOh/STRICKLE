@@ -13,7 +13,8 @@ contract DeployAgentExecutor is Script {
             vm.envAddress("CRE_FORWARDER"),
             vm.addr(key),
             vm.envAddress("BOX_VAULT_FACTORY"),
-            vm.envAddress("AGENT_STATE")
+            vm.envAddress("AGENT_STATE"),
+            vm.envAddress("POLICY_POOL")
         );
         vm.stopBroadcast();
     }
