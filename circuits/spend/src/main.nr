@@ -146,6 +146,16 @@ fn main(
         assert(!reissue | (!is_agent & waited), "changing a policy needs the release delay");
     }
     // --- rules: floor and recipients ---
+    let released = (base_note.flags & 1) == 1;
+    let lifted = !is_agent & released;
+    let restricted = base_policy.restricted == 1;
+    let leaving = (public_amount as u128) + moved_total + sent_total;
+    assert(!(leaving != 0) | lifted | (stay_total >= (base_policy.floor as u128)), "below the floor");
+    assert(!(any_move | any_send) | lifted | !restricted, "a restricted box cannot move or send");
+    let recipient_leaf = Poseidon2::hash([DOM_RECIPIENT, recipient], 2);
+    let recipient_allowed =
+        compute_root(recipient_leaf, allowlist_index, allowlist_path) == base_policy.allowlist_root;
+    assert(!((public_amount != 0) & restricted) | lifted | recipient_allowed, "recipient is not approved");
     // --- rules: agent role ---
     // --- rules: labels and association ---
 }
