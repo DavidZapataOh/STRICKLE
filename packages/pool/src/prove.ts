@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { Barretenberg, UltraHonkBackend } from "@aztec/bb.js";
 import { type CompiledCircuit, type InputMap, Noir } from "@noir-lang/noir_js";
+import { type Hex, bytesToHex } from "viem";
+import type { Note } from "./note.ts";
+import { type SpendSpec, buildShieldInputs, buildSpendInputs } from "./witness.ts";
 
 export type CircuitName = "shield" | "spend";
 
@@ -32,4 +35,27 @@ export async function verifyCircuit(name: CircuitName, proofData: Awaited<Return
 export async function closeProver(): Promise<void> {
   await api?.destroy();
   api = undefined;
+}
+
+export interface ProvedTransaction {
+  proof: Hex;
+  publicInputs: bigint[];
+}
+
+async function proveAndCheck(name: CircuitName, inputs: InputMap, publicInputs: bigint[]): Promise<ProvedTransaction> {
+  const { witness } = await executeCircuit(name, inputs);
+  const proof = await proveCircuit(name, witness);
+  if (!(await verifyCircuit(name, proof))) throw new Error(`${name}: the fresh proof does not verify`);
+  if (proof.publicInputs.map(BigInt).join() !== publicInputs.join()) throw new Error(`${name}: public inputs differ from the witness`);
+  return { proof: bytesToHex(proof.proof), publicInputs };
+}
+
+export function proveShield(note: Note, label: bigint): Promise<ProvedTransaction> {
+  const built = buildShieldInputs({ note, label });
+  return proveAndCheck("shield", built.inputs, built.publicInputs);
+}
+
+export function proveSpend(spec: SpendSpec): Promise<ProvedTransaction> {
+  const built = buildSpendInputs(spec);
+  return proveAndCheck("spend", built.inputs, built.publicInputs);
 }

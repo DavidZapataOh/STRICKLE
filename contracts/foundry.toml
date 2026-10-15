@@ -7,7 +7,7 @@ libs = ["lib"]
 solc_version = "0.8.36"
 evm_version = "osaka"
 remappings = ["poseidon2-evm/=lib/poseidon2-evm/"]
-fs_permissions = [{ access = "read", path = "../packages/pool/vectors" }, { access = "read", path = "test/fixtures/proofs" }]
+fs_permissions = [{ access = "read", path = "../packages/pool/vectors" }, { access = "read", path = "test/fixtures/proofs" }, { access = "read", path = "test/fixtures/pool" }]
 
 [fuzz]
 runs = 1000

@@ -4,9 +4,12 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 import {LibPoseidon2Yul} from "poseidon2-evm/src/bn254/yul/LibPoseidon2Yul.sol";
 import {PoolTree} from "../../src/pool/PoolTree.sol";
+import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
 import {PoolZeros} from "../../src/pool/PoolZeros.sol";
 
 contract PoolTreeHarness is PoolTree {
+    constructor(IPoseidon2 hasher) PoolTree(hasher) {}
+
     function insertPair(uint256 a, uint256 b) external returns (uint32, uint256) {
         return _insertPair(a, b);
     }
@@ -17,7 +20,7 @@ contract PoolTreeTest is Test {
     string internal vectors;
 
     function setUp() public {
-        tree = new PoolTreeHarness();
+        tree = new PoolTreeHarness(IPoseidon2(address(new Poseidon2Hasher())));
         vectors = vm.readFile("../packages/pool/vectors/pool-vectors.json");
     }
 
@@ -130,5 +133,19 @@ contract PoolTreeTest is Test {
         used = before - gasleft();
         emit log_named_uint("gas: second insertPair", used);
         assertLt(used, 700_000, "insert budget");
+    }
+
+    function test_ATreeRefusesAHasherThatDoesNotComputePoseidon2() public {
+        address wrong = address(new WrongHasher());
+        vm.expectRevert(PoolTree.BadHasher.selector);
+        new PoolTreeHarness(IPoseidon2(wrong));
+        vm.expectRevert(PoolTree.BadHasher.selector);
+        new PoolTreeHarness(IPoseidon2(makeAddr("not a contract")));
+    }
+}
+
+contract WrongHasher is IPoseidon2 {
+    function hash2(uint256 a, uint256 b) external pure returns (uint256) {
+        return a + b;
     }
 }

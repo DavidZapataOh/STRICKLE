@@ -36,6 +36,18 @@
       "txHash": "0x52726b767eeabb8171cbd5e9d4d5a3628e4dcb27be403734ff0d0a043621e751",
       "blockNumber": 67301986,
       "create2": true
+    },
+    "Poseidon2Hasher": {
+      "address": "0xEAaD4572A8A5f4e62329bc50F93979d7daa96fb7",
+      "txHash": "0x34e14c4416c4f28b4a1e5dbb8c210941d86a54ff93a7d81584dda7955acc76fd",
+      "blockNumber": 67306907,
+      "create2": true
+    },
+    "PolicyPool": {
+      "address": "0x4fbA708f728c3A94AbFb8Aa7FCEC92010e47b4C4",
+      "txHash": "0x4d81f79040960433c9c08347423e01acea6c172f8cd3ddd2dde128b0e5fd7a86",
+      "blockNumber": 67306969,
+      "create2": true
     }
   }
 }

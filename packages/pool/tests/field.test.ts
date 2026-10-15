@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIELD_MODULUS, assertField, assertUint, toHex32 } from "../src/field.ts";
+import { FIELD_MODULUS, assertField, assertUint, randomField, toHex32 } from "../src/field.ts";
 
 describe("field", () => {
   it("is the BN254 scalar field", () => {
@@ -21,5 +21,13 @@ describe("field", () => {
 
   it("formats 32-byte hex", () => {
     expect(toHex32(255n)).toBe("0x" + "0".repeat(62) + "ff");
+  });
+});
+
+describe("randomField", () => {
+  it("returns distinct values below the modulus", () => {
+    const values = Array.from({ length: 50 }, () => randomField());
+    expect(new Set(values).size).toBe(50);
+    expect(values.every((value) => value >= 0n && value < FIELD_MODULUS)).toBe(true);
   });
 });

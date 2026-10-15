@@ -1,7 +1,7 @@
 import type { Asset } from "@strickle/core";
 import type { InputMap } from "@noir-lang/noir_js";
 import { ALLOWLIST_DEPTH, ASSET_ID, ASSOCIATION_DEPTH, DOMAIN, TEMPLATE_DEPTH, TREE_DEPTH, boxId } from "./constants.ts";
-import { toHex32 } from "./field.ts";
+import { randomField, toHex32 } from "./field.ts";
 import { authHash, nullifierKey } from "./keys.ts";
 import type { MerkleTree } from "./merkle.ts";
 import { type Note, noteCommitment, noteNullifier } from "./note.ts";
@@ -33,7 +33,9 @@ export interface SpendSpec {
   ciphertextHash?: bigint;
   allowlist?: { tree: MerkleTree; index: number };
   association?: { tree: MerkleTree; index: number };
+  /** Both default to fresh random values: a dummy input reused across transactions would repeat its nullifier. */
   dummyNk?: [bigint, bigint];
+  dummySalt?: [bigint, bigint];
 }
 
 const ZERO_POLICY: Policy = {
@@ -101,7 +103,8 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
   const publicAmount = spec.publicAmount ?? 0n;
   const recipient = spec.recipient ?? 0n;
   const ciphertextHash = spec.ciphertextHash ?? 0n;
-  const dummyNk = spec.dummyNk ?? [11n, 22n];
+  const dummyNk = spec.dummyNk ?? [randomField(), randomField()];
+  const dummySalt = spec.dummySalt ?? [randomField(), randomField()];
 
   const real = spec.inputs.find((input) => input !== null);
   const signer = spec.signer;
@@ -132,7 +135,7 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       asset,
       flags: 0,
       lockUntil: 0n,
-      salt: BigInt(slot + 1),
+      salt: dummySalt[slot] ?? 0n,
     };
     return {
       nullifier: noteNullifier(dummyNk[slot] ?? 0n, noteCommitment(dummyNote), 0),

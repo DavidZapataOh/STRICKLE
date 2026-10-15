@@ -12,13 +12,17 @@
     "test": "vitest run",
     "vectors": "node scripts/generate-vectors.ts",
     "test:circuits": "vitest run --config vitest.circuits.config.mts",
-    "fixtures": "node scripts/write-proof-fixtures.ts"
+    "fixtures": "node scripts/write-proof-fixtures.ts",
+    "scenario": "node scripts/write-pool-scenario.ts",
+    "live": "node --env-file-if-exists=../../../.env scripts/pool-live.ts"
   },
   "dependencies": {
     "@aztec/bb.js": "5.0.1",
     "@noir-lang/noir_js": "1.0.0-rc.3",
+    "@strickle/arc": "*",
     "@strickle/core": "*",
-    "@zkpassport/poseidon2": "0.6.2"
+    "@zkpassport/poseidon2": "0.6.2",
+    "viem": "^2.57.7"
   },
   "devDependencies": {
     "fast-check": "^4.10.2",
