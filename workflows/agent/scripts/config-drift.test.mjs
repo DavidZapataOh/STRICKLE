@@ -11,5 +11,6 @@ for (const file of ["config.staging.json", "config.production.json"]) {
     const config = read(`../${file}`);
     assert.equal(config.factoryAddress, manifest.BoxVaultFactory.address);
     assert.equal(config.heartbeatAddress, manifest.AgentHeartbeat.address);
+    assert.equal(config.stateAddress, manifest.AgentState.address);
   });
 }
