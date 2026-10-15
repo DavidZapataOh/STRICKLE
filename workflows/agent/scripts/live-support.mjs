@@ -1,9 +1,10 @@
 // workflows/agent/scripts/live-support.mjs
 import { readFileSync } from "node:fs";
+import { seal } from "@strickle/prover/sealed";
+import { actionHash, requestAad } from "../enclave/signed.ts";
 import { formatPlainDate, fromEpochDay } from "@strickle/core";
 import { createPublicClient, getAddress, http, parseAbi, parseAbiItem } from "viem";
 import { executeSponsored, networks, walletsClient } from "@strickle/arc";
-import { seal } from "@strickle/prover/sealed";
 import { decryptState, parseMaster, profileAad } from "../enclave/keys.ts";
 import { decodeProfile, encodeProfile } from "../enclave/profile.ts";
 
@@ -82,4 +83,25 @@ export async function salaryOffset(ctx) {
     if (today.day === 1 && text > lastDay && text.slice(0, 7) > lastPaid) return { offset, today };
   }
   throw new Error("no first of the month found");
+}
+
+export async function signAction(ctx, action, nonce, deadline) {
+  const executor = ctx.contracts.AgentExecutor.address;
+  const data = JSON.stringify({
+    domain: { name: "Strickle Agent", version: "1", chainId: ctx.network.chain.id, verifyingContract: executor },
+    types: {
+      EIP712Domain: [{ name: "name", type: "string" }, { name: "version", type: "string" }, { name: "chainId", type: "uint256" }, { name: "verifyingContract", type: "address" }],
+      Action: [{ name: "vault", type: "address" }, { name: "actionHash", type: "bytes32" }, { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" }],
+    },
+    primaryType: "Action",
+    message: { vault: ctx.vault, actionHash: actionHash(action), nonce: String(nonce), deadline: String(deadline) },
+  });
+  return (await ctx.circle.signTypedData({ walletId: ctx.walletId, data })).data.signature;
+}
+
+// What the app sends through the gateway: only the vault and an opaque blob sealed to the enclave's published key.
+export async function sealRequest(ctx, request) {
+  const key = await ctx.publicClient.readContract({ address: ctx.contracts.AgentState.address, abi: abi.state, functionName: "enclaveKey" });
+  const sealed = seal(new TextEncoder().encode(JSON.stringify(request)), Buffer.from(key.slice(2), "hex"), requestAad(ctx.vault));
+  return { vault: ctx.vault, sealed: `0x${Buffer.from(sealed).toString("hex")}` };
 }
