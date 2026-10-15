@@ -20,7 +20,7 @@ contract TestToken {
         return true;
     }
 
-    function transfer(address to, uint256 amount) external returns (bool) {
+    function transfer(address to, uint256 amount) external virtual returns (bool) {
         return _move(msg.sender, to, amount);
     }
 

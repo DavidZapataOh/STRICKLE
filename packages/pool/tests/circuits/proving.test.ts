@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { closeProver, executeCircuit, proveCircuit, verifyCircuit } from "../../src/prove.ts";
+import { closeProver, executeCircuit, proveCircuit, proveShield, proveSpend, verifyCircuit } from "../../src/prove.ts";
 import { buildShieldInputs, buildSpendInputs } from "../../src/witness.ts";
 import { World, baseSpend, makeNote } from "./fixture.ts";
 
@@ -34,5 +34,14 @@ describe("proofs", () => {
     const proof = await proveCircuit("spend", witness);
     const tampered = { ...proof, publicInputs: [...proof.publicInputs.slice(0, 5), hex(1n), ...proof.publicInputs.slice(6)] };
     expect(await verifyCircuit("spend", tampered)).toBe(false);
+  });
+
+  it("returns a ready-to-send proof and its public inputs for a shield and a spend", async () => {
+    const note = makeNote({ amount: 5_000_000n, label: 9n });
+    const shield = await proveShield(note, 9n);
+    expect(shield.publicInputs).toHaveLength(4);
+    expect(shield.proof).toMatch(/^0x[0-9a-f]+$/);
+    const spend = await proveSpend(baseSpend(new World()));
+    expect(spend.publicInputs).toHaveLength(11);
   });
 });

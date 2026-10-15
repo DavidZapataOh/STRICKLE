@@ -24,7 +24,8 @@
     "circuits:compile": "node scripts/toolchain.mjs run --cwd circuits nargo compile --workspace",
     "circuits:verifiers": "node scripts/verifiers.mjs generate",
     "circuits:verifiers:check": "node scripts/verifiers.mjs check",
-    "circuits:fixtures": "npm run fixtures -w @strickle/pool"
+    "circuits:fixtures": "npm run fixtures -w @strickle/pool",
+    "circuits:scenario": "npm run scenario -w @strickle/pool"
   },
   "devDependencies": {
     "@types/node": "^24",
