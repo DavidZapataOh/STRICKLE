@@ -11,7 +11,7 @@
   "dailySchedule": "0 0 * * * *",
   "chainId": 5042002,
   "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01",
-  "proverUrl": "https://prover.invalid",
-  "proverKey": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "proverUrl": "https://prover-production-9f66.up.railway.app",
+  "proverKey": "0x12b8177b57bf905efd6a75b4337869d6d63b2f3ba1f69f6daf450ca719a0ab73",
   "privateSpendGas": "6500000"
 }
