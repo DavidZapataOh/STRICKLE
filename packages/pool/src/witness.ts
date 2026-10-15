@@ -1,7 +1,51 @@
+import type { Asset } from "@strickle/core";
 import type { InputMap } from "@noir-lang/noir_js";
-import { ASSET_ID, boxId } from "./constants.ts";
+import { ALLOWLIST_DEPTH, ASSET_ID, ASSOCIATION_DEPTH, DOMAIN, TEMPLATE_DEPTH, TREE_DEPTH, boxId } from "./constants.ts";
 import { toHex32 } from "./field.ts";
-import { type Note, noteCommitment } from "./note.ts";
+import { authHash, nullifierKey } from "./keys.ts";
+import type { MerkleTree } from "./merkle.ts";
+import { type Note, noteCommitment, noteNullifier } from "./note.ts";
+import { hash } from "./poseidon.ts";
+import type { Policy } from "./policy.ts";
+
+export interface InputSpec {
+  note: Note;
+  policy: Policy;
+  leafIndex: number;
+}
+
+export interface OutputSpec {
+  note: Note;
+  template?: { tree: MerkleTree; index: number };
+}
+
+export type Signer = { kind: "user"; sk: bigint } | { kind: "agent"; ak: bigint; nk: bigint; authHash: bigint };
+
+export interface SpendSpec {
+  tree: MerkleTree;
+  inputs: [InputSpec | null, InputSpec | null];
+  outputs: [OutputSpec, OutputSpec];
+  signer: Signer;
+  publicAmount?: bigint;
+  recipient?: bigint;
+  asset?: Asset;
+  now?: bigint;
+  ciphertextHash?: bigint;
+  allowlist?: { tree: MerkleTree; index: number };
+  association?: { tree: MerkleTree; index: number };
+  dummyNk?: [bigint, bigint];
+}
+
+const ZERO_POLICY: Policy = {
+  floor: 0n,
+  allowlistRoot: 0n,
+  restricted: false,
+  agentKeyHash: 0n,
+  agentCap: 0n,
+  agentActions: 0,
+  releaseDelay: 0,
+  templateRoot: 0n,
+};
 
 export function noteToInputs(note: Note): Record<string, string | number> {
   return {
@@ -17,6 +61,25 @@ export function noteToInputs(note: Note): Record<string, string | number> {
   };
 }
 
+function policyToInputs(policy: Policy): Record<string, string | number> {
+  return {
+    floor: policy.floor.toString(),
+    allowlist_root: toHex32(policy.allowlistRoot),
+    restricted: policy.restricted ? 1 : 0,
+    agent_key_hash: toHex32(policy.agentKeyHash),
+    agent_cap: policy.agentCap.toString(),
+    agent_actions: policy.agentActions,
+    release_delay: policy.releaseDelay,
+    template_root: toHex32(policy.templateRoot),
+  };
+}
+
+const zeros = (length: number): bigint[] => Array.from({ length }, () => 0n);
+
+export function recipientLeaf(recipient: bigint): bigint {
+  return hash([DOMAIN.RECIPIENT, recipient]);
+}
+
 export function buildShieldInputs(args: { note: Note; label?: bigint }): { inputs: InputMap; publicInputs: bigint[] } {
   const label = args.label ?? args.note.label;
   const commitment = noteCommitment(args.note);
@@ -29,5 +92,98 @@ export function buildShieldInputs(args: { note: Note; label?: bigint }): { input
       note: noteToInputs(args.note),
     },
     publicInputs: [commitment, args.note.amount, BigInt(ASSET_ID[args.note.asset]), label],
+  };
+}
+
+export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInputs: bigint[] } {
+  const asset = spec.asset ?? "USDC";
+  const now = spec.now ?? 1_800_000_000n;
+  const publicAmount = spec.publicAmount ?? 0n;
+  const recipient = spec.recipient ?? 0n;
+  const ciphertextHash = spec.ciphertextHash ?? 0n;
+  const dummyNk = spec.dummyNk ?? [11n, 22n];
+
+  const real = spec.inputs.find((input) => input !== null);
+  const signer = spec.signer;
+  const signerNk = signer.kind === "user" ? nullifierKey(signer.sk) : signer.nk;
+  const signerAuth = signer.kind === "user" ? authHash(signer.sk) : signer.authHash;
+  const secret = signer.kind === "user" ? signer.sk : signer.ak;
+
+  const inputNotes = spec.inputs.map((input, slot) => {
+    if (input) {
+      const commitment = noteCommitment(input.note);
+      return {
+        nullifier: noteNullifier(signerNk, commitment, input.leafIndex),
+        circuit: {
+          note: noteToInputs(input.note),
+          policy: policyToInputs(input.policy),
+          leaf_index: input.leafIndex.toString(),
+          path: spec.tree.path(input.leafIndex).map(toHex32),
+          dummy: false,
+        },
+      };
+    }
+    const dummyNote: Note = {
+      amount: 0n,
+      ownerPk: 0n,
+      policy: 0n,
+      label: 0n,
+      box: real?.note.box ?? "operating",
+      asset,
+      flags: 0,
+      lockUntil: 0n,
+      salt: BigInt(slot + 1),
+    };
+    return {
+      nullifier: noteNullifier(dummyNk[slot] ?? 0n, noteCommitment(dummyNote), 0),
+      circuit: {
+        note: noteToInputs(dummyNote),
+        policy: policyToInputs(ZERO_POLICY),
+        leaf_index: "0",
+        path: zeros(TREE_DEPTH).map(toHex32),
+        dummy: true,
+      },
+    };
+  });
+
+  const outputs = spec.outputs.map((output) => ({
+    commitment: noteCommitment(output.note),
+    circuit: {
+      note: noteToInputs(output.note),
+      template_index: (output.template?.index ?? 0).toString(),
+      template_path: (output.template ? output.template.tree.path(output.template.index) : zeros(TEMPLATE_DEPTH)).map(toHex32),
+    },
+  }));
+
+  const allowlistPath = spec.allowlist ? spec.allowlist.tree.path(spec.allowlist.index) : zeros(ALLOWLIST_DEPTH);
+  const associationPath = spec.association ? spec.association.tree.path(spec.association.index) : zeros(ASSOCIATION_DEPTH);
+  const nullifiers = inputNotes.map((input) => input.nullifier);
+  const commitments = outputs.map((output) => output.commitment);
+  const associationRoot = spec.association ? spec.association.tree.root : 0n;
+
+  return {
+    inputs: {
+      root: toHex32(spec.tree.root),
+      nullifiers: nullifiers.map(toHex32),
+      commitments: commitments.map(toHex32),
+      public_amount: publicAmount.toString(),
+      recipient: toHex32(recipient),
+      asset: ASSET_ID[asset],
+      now: now.toString(),
+      ciphertext_hash: toHex32(ciphertextHash),
+      association_root: toHex32(associationRoot),
+      inputs: inputNotes.map((input) => input.circuit),
+      outputs: outputs.map((output) => output.circuit),
+      signer_kind: signer.kind === "user" ? 0 : 1,
+      secret: toHex32(secret),
+      owner_auth_hash: toHex32(signerAuth),
+      owner_nk: toHex32(signerNk),
+      dummy_nk: dummyNk.map(toHex32),
+      allowlist_index: (spec.allowlist?.index ?? 0).toString(),
+      allowlist_path: allowlistPath.map(toHex32),
+      association_index: (spec.association?.index ?? 0).toString(),
+      association_path: associationPath.map(toHex32),
+    },
+    publicInputs: [spec.tree.root, ...nullifiers, ...commitments, publicAmount, recipient, BigInt(ASSET_ID[asset]), now, ciphertextHash, associationRoot],
   };
 }
