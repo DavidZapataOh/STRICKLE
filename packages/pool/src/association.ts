@@ -1,8 +1,7 @@
-import { MerkleTree } from "@strickle/pool/merkle";
-import { FIELD_MODULUS } from "@strickle/pool/field";
+import { ASSOCIATION_DEPTH } from "./constants.ts";
+import { MerkleTree } from "./merkle.ts";
+import { FIELD_MODULUS } from "./field.ts";
 import type { Address } from "viem";
-
-export const ASSOCIATION_DEPTH = 20;
 
 export interface DepositRecord {
   depositor: Address;

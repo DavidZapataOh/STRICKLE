@@ -1,4 +1,4 @@
-import { MerkleTree } from "@strickle/pool/merkle";
+import { MerkleTree } from "../src/merkle.ts";
 import { describe, expect, it } from "vitest";
 import { buildAssociationSet } from "../src/association.ts";
 

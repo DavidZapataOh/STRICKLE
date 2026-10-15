@@ -17,3 +17,4 @@ export * from "./crypto/keyring.ts";
 export * from "./crypto/keys.ts";
 export * from "./crypto/scan.ts";
 export * from "./crypto/wire.ts";
+export * from "./association.ts";
