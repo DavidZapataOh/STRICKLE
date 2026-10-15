@@ -1,0 +1,21 @@
+{
+  "name": "@strickle/prover-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test:circuits": "vitest run --config vitest.circuits.config.mts",
+    "start": "node src/main.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noir-lang/noir_js": "1.0.0-rc.3",
+    "@strickle/prover": "*"
+  },
+  "devDependencies": {
+    "@strickle/pool": "*",
+    "vitest": "^5.0.4"
+  }
+}
