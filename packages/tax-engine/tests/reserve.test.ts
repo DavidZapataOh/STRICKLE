@@ -41,10 +41,17 @@ describe("reserveFor: rule origin", () => {
   });
 });
 
+describe("reserveFor: first year", () => {
+  it("falls back to the flat default for a user with no prior-year income", () => {
+    const result = reserveFor(rules, { ...request("PK"), country: "ZZ", lastYear: { income: 0n, tax: 0n } });
+    expect(result).toMatchObject({ origin: "fallback", basis: "first-year-flat", amount: m("15000.00") });
+  });
+});
+
 describe("reserveFor: fallback origin", () => {
   it("uses last year's effective rate x year-to-date x 1.08 for a country without rules", () => {
     const result = reserveFor(rules, request("NG"));
-    expect(result).toMatchObject({ origin: "fallback", reason: "no-rule", amount: m("5400.00"), ruleId: "fallback-effective-rate" });
+    expect(result).toMatchObject({ origin: "fallback", reason: "no-rule", amount: m("5400.00"), basis: "effective-rate", ruleId: "fallback-effective-rate" });
     expect(result.source.title).toMatch(/not an official/i);
   });
   it("falls back when the country's rule has expired", () => {

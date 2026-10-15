@@ -19,6 +19,15 @@ describe("adverseMoveBps", () => {
     expect(adverseMoveBps(series, 1)).toBe(1000);
   });
 
+  it("never returns less than the floor, and leaves a larger measured move alone", () => {
+    const flat = Array.from({ length: 30 }, (_, i) => 10 + i);
+    expect(adverseMoveBps(flat, 2, 0.05, 600)).toBe(600);
+    const series = Array.from({ length: 26 }, () => 100);
+    series[10] = 80;
+    series[20] = 90;
+    expect(adverseMoveBps(series, 1, 0.05, 600)).toBe(1000);
+  });
+
   it("is zero when the local currency never appreciated", () => {
     expect(adverseMoveBps(Array.from({ length: 30 }, (_, i) => 10 + i), 2)).toBe(0);
   });
@@ -122,6 +131,12 @@ describe("planReserve", () => {
     expect(plan.credit).toBe(0n);
     expect(plan.reserve).toBeGreaterThanOrEqual(fxReserve({ liability: 1_500_00n, spot: "18.5", adverseBps: 0 }));
     expect(plan.schedule.reduce((sum, item) => sum + item.amount, 0n)).toBe(plan.reserve);
+  });
+
+  it("applies the cushion floor of the currency", () => {
+    const common = { country: "MX", calendars, today: plainDate(2026, 11, 2), nominalDue: plainDate(2026, 11, 17), liability: 100_000n, withheld: [], spot: "18.5", series: Array.from({ length: 60 }, (_, i) => 10 + i), tranches: 2 };
+    expect(planReserve(common).adverseBps).toBe(0);
+    expect(planReserve({ ...common, floorBps: 800 }).adverseBps).toBe(800);
   });
 
   it("needs no reserve when withholdings cover the liability", () => {
