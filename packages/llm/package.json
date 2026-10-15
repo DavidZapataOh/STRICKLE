@@ -1,0 +1,16 @@
+{
+  "name": "@strickle/llm",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:live": "vitest run --config vitest.live.config.mts",
+    "eval": "node --env-file-if-exists=../../../.env eval/run.ts"
+  },
+  "dependencies": { "@anthropic-ai/sdk": "0.134.0", "@strickle/brain": "*", "@strickle/core": "*" },
+  "devDependencies": { "fast-check": "^4.10.2", "vitest": "^5.0.4" }
+}
