@@ -15,7 +15,8 @@
     "test:circuits": "vitest run --config vitest.circuits.config.mts",
     "fixtures": "node scripts/write-proof-fixtures.ts",
     "scenario": "node scripts/write-pool-scenario.ts",
-    "live": "node --env-file-if-exists=../../../.env scripts/pool-live.ts"
+    "live": "node --env-file-if-exists=../../../.env scripts/pool-live.ts",
+    "private-mode": "node --env-file-if-exists=../../../.env scripts/private-mode-live.ts"
   },
   "dependencies": {
     "@aztec/bb.js": "5.0.1",
