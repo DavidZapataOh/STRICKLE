@@ -5,6 +5,8 @@ export interface ParsedConfig {
   circuitsDir: string;
   tokenHashes: string[];
   secret?: bigint;
+  host: string;
+  pool?: { address: string; deployBlock: bigint; rpcUrl: string };
 }
 
 export function parseConfig(env: Record<string, string | undefined>): ParsedConfig {
@@ -20,7 +22,10 @@ export function parseConfig(env: Record<string, string | undefined>): ParsedConf
     if (!/^(0x)?[0-9a-fA-F]+$/.test(env.PROVER_SECRET)) throw new Error("PROVER_SECRET must be a hex scalar");
     secret = BigInt(env.PROVER_SECRET.startsWith("0x") ? env.PROVER_SECRET : `0x${env.PROVER_SECRET}`);
   }
-  return { port, circuitsDir: env.PROVER_CIRCUITS ?? "circuits/target", tokenHashes: tokens, secret };
+  const poolVars = [env.POOL_ADDRESS, env.POOL_DEPLOY_BLOCK, env.RPC_URL];
+  if (poolVars.some((value) => value !== undefined) && poolVars.some((value) => value === undefined)) throw new Error("POOL_ADDRESS, POOL_DEPLOY_BLOCK and RPC_URL must be set together");
+  const pool = env.POOL_ADDRESS === undefined ? undefined : { address: env.POOL_ADDRESS, deployBlock: BigInt(env.POOL_DEPLOY_BLOCK as string), rpcUrl: env.RPC_URL as string };
+  return { port, host: env.HOST ?? "127.0.0.1", circuitsDir: env.PROVER_CIRCUITS ?? "circuits/target", tokenHashes: tokens, secret, pool };
 }
 
 /** A fresh bearer token for a caller, and the digest the service is configured with. */

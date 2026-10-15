@@ -3,6 +3,7 @@ import { type IncomingMessage, type ServerResponse, createServer } from "node:ht
 import type { InputMap } from "@noir-lang/noir_js";
 import { type Prover, ProtocolError, ReplayCache, type ProverKey, decodeRequest, generateProverKey } from "@strickle/prover";
 import { JobQueue } from "./queue.ts";
+import type { SpecResolver } from "./spec.ts";
 
 export interface ServiceConfig {
   /** Circuits the service will prove; anything else is refused before any decryption. */
@@ -11,6 +12,8 @@ export interface ServiceConfig {
   /** SHA-256 hex digests of the accepted bearer tokens. */
   tokenHashes: string[];
   secretKey?: ProverKey;
+  /** When set, `spend_spec` is served: the service builds the witness from a spec against its copy of the pool ledger. */
+  specs?: SpecResolver;
   /** Unix seconds. */
   now?: () => number;
   maxBody?: number;
@@ -20,7 +23,7 @@ export interface ServiceConfig {
 }
 
 export interface Service {
-  listen(port?: number): Promise<number>;
+  listen(port?: number, host?: string): Promise<number>;
   close(): Promise<void>;
   publicKey: Uint8Array;
 }
@@ -81,7 +84,7 @@ export function createService(config: ServiceConfig): Service {
     }
     const circuit = typeof body === "object" && body !== null ? (body as Record<string, unknown>).circuit : undefined;
     if (typeof circuit !== "string" || !/^[a-z][a-z0-9_]{0,31}$/.test(circuit)) return reply(response, 400, { error: "malformed" });
-    if (!config.circuits.includes(circuit)) return reply(response, 400, { error: "unknown-circuit" });
+    if (!config.circuits.includes(circuit) || (circuit === "spend_spec" && !config.specs)) return reply(response, 400, { error: "unknown-circuit" });
 
     let decoded;
     try {
@@ -91,7 +94,10 @@ export function createService(config: ServiceConfig): Service {
     }
 
     const started = Date.now();
-    const job = queue.run(() => config.prover.proveInputs(circuit, decoded.inputs as InputMap));
+    const job = queue.run(async () => {
+      if (circuit !== "spend_spec") return config.prover.proveInputs(circuit, decoded.inputs as InputMap);
+      return config.prover.proveInputs("spend", await (config.specs as SpecResolver).inputsFor(decoded.inputs));
+    });
     if (!job) return reply(response, 429, { error: "busy" });
     let timer: NodeJS.Timeout | undefined;
     try {
@@ -113,6 +119,15 @@ export function createService(config: ServiceConfig): Service {
     }
   }
 
+  async function leaf(request: IncomingMessage, response: ServerResponse): Promise<number> {
+    if (!authorised(request.headers.authorization, hashes)) return reply(response, 401, { error: "unauthorized" });
+    if (!config.specs) return reply(response, 404, { error: "not-found" });
+    const commitment = new URL(request.url ?? "", "http://localhost").searchParams.get("c") ?? "";
+    if (!/^0x[0-9a-f]{1,64}$/.test(commitment)) return reply(response, 400, { error: "malformed" });
+    const index = await config.specs.leaf(BigInt(commitment));
+    return reply(response, 200, { index: index ?? null, size: config.specs.size() });
+  }
+
   function reply(response: ServerResponse, status: number, body: unknown): number {
     send(response, status, body);
     return status;
@@ -129,6 +144,8 @@ export function createService(config: ServiceConfig): Service {
           finish(reply(response, 200, { version: VERSION, publicKey: hex(key.publicKey), circuits: config.circuits, maxBody, maxQueue }));
         } else if (route === "POST /v1/prove") {
           finish(await prove(request, response));
+        } else if (route.startsWith("GET /v1/leaf?")) {
+          finish(await leaf(request, response));
         } else {
           finish(reply(response, 404, { error: "not-found" }));
         }
@@ -140,9 +157,9 @@ export function createService(config: ServiceConfig): Service {
 
   return {
     publicKey: key.publicKey,
-    listen: (port = 0) =>
+    listen: (port = 0, host = "127.0.0.1") =>
       new Promise((resolve) => {
-        server.listen(port, "127.0.0.1", () => resolve((server.address() as { port: number }).port));
+        server.listen(port, host, () => resolve((server.address() as { port: number }).port));
       }),
     close: () =>
       new Promise((resolve) => {
