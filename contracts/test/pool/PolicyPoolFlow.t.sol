@@ -7,6 +7,7 @@ import {SpendVerifier} from "../../src/pool/verifiers/SpendVerifier.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
 import {IPoseidon2, Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
 import {PolicyPool} from "../../src/pool/PolicyPool.sol";
+import {IScreening, ScreeningRegistry} from "../../src/pool/ScreeningRegistry.sol";
 import {NullifierSet} from "../../src/pool/NullifierSet.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
 import {FeeToken} from "../fixtures/FeeToken.sol";
@@ -26,6 +27,8 @@ contract PolicyPoolFlowTest is Test {
     TestToken internal usdc;
     TestToken internal eurc;
     IPoseidon2 internal hasher;
+    ScreeningRegistry internal registry;
+    address internal screener = makeAddr("screener");
     IHonkVerifier internal shieldVerifier;
     IHonkVerifier internal spendVerifier;
     uint256 internal emptyRoot;
@@ -45,9 +48,14 @@ contract PolicyPoolFlowTest is Test {
         spendVerifier = IHonkVerifier(address(new SpendVerifier()));
         usdc = new TestToken();
         eurc = new TestToken();
+        registry = new ScreeningRegistry(owner, 30 days);
         pool = _deploy(address(usdc));
         emptyRoot = pool.currentRoot();
         vm.warp(scenarioNow);
+        vm.prank(owner);
+        registry.setScreener(screener, true);
+        vm.prank(screener);
+        registry.setRisk(alice, 0, keccak256("clear"));
         _fund(alice, usdc, pool);
     }
 
@@ -59,6 +67,8 @@ contract PolicyPoolFlowTest is Test {
                 eurc: address(eurc),
                 shieldVerifier: shieldVerifier,
                 spendVerifier: spendVerifier,
+                screening: IScreening(address(registry)),
+                elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
                 perUserCaps: [uint128(2_000e6), uint128(500e6)],
@@ -276,6 +286,10 @@ contract PolicyPoolFlowTest is Test {
     function test_ShieldIsBoundToTheDepositorAndItsNonce() public {
         address mallory = makeAddr("mallory");
         _fund(mallory, usdc, pool);
+        vm.expectRevert(PolicyPool.NotScreened.selector);
+        _shield(pool, mallory);
+        vm.prank(screener);
+        registry.setRisk(mallory, 0, keccak256("clear"));
         vm.expectRevert(PolicyPool.InvalidProof.selector);
         _shield(pool, mallory);
         assertEq(pool.shieldNonce(mallory), 0);
@@ -330,6 +344,8 @@ contract PolicyPoolFlowTest is Test {
                 eurc: address(eurc),
                 shieldVerifier: IHonkVerifier(address(new FalseVerifier())),
                 spendVerifier: IHonkVerifier(address(new FalseVerifier())),
+                screening: IScreening(address(registry)),
+                elevatedCapBps: 2_500,
                 owner: owner,
                 guardian: guardian,
                 perUserCaps: [uint128(2_000e6), uint128(500e6)],
@@ -350,6 +366,21 @@ contract PolicyPoolFlowTest is Test {
         PolicyPool.SpendInputs memory p = _inputs(0);
         vm.expectRevert(PolicyPool.CiphertextTooLarge.selector);
         pool.spend(_proof(0), p, new bytes(2049));
+    }
+
+    function test_ScreeningNeverBlocksExits() public {
+        _shield(pool, alice);
+        vm.prank(screener);
+        registry.setRisk(alice, 2, keccak256("listed later"));
+        vm.prank(alice);
+        vm.expectRevert(PolicyPool.Blocked.selector);
+        pool.shield(1, 1e6, 1, "", "");
+        // the notes already inside can still be spent and paid out
+        _spend(0);
+        _spend(1);
+        _spend(2);
+        assertEq(usdc.balanceOf(address(pool)), 650e6);
+        assertEq(usdc.balanceOf(bob), 250e6);
     }
 
     function test_APausedPoolRejectsTheRealSpend() public {

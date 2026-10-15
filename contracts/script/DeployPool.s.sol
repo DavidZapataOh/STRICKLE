@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {IHonkVerifier} from "../src/pool/IHonkVerifier.sol";
 import {IPoseidon2} from "../src/pool/Poseidon2Hasher.sol";
 import {PolicyPool} from "../src/pool/PolicyPool.sol";
+import {IScreening} from "../src/pool/ScreeningRegistry.sol";
 
 contract DeployPool is Script {
     address internal constant USDC = 0x3600000000000000000000000000000000000000;
@@ -23,6 +24,8 @@ contract DeployPool is Script {
             eurc: eurc,
             shieldVerifier: IHonkVerifier(vm.envAddress("SHIELD_VERIFIER")),
             spendVerifier: IHonkVerifier(vm.envAddress("SPEND_VERIFIER")),
+            screening: IScreening(vm.envAddress("SCREENING_REGISTRY")),
+            elevatedCapBps: uint16(vm.envOr("ELEVATED_CAP_BPS", uint256(2_500))),
             owner: deployer,
             guardian: deployer,
             perUserCaps: [

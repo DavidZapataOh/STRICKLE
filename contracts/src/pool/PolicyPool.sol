@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IHonkVerifier} from "./IHonkVerifier.sol";
 import {IPoseidon2} from "./Poseidon2Hasher.sol";
+import {IScreening} from "./ScreeningRegistry.sol";
 import {NullifierSet} from "./NullifierSet.sol";
 import {PoolTree} from "./PoolTree.sol";
 
@@ -32,6 +33,8 @@ contract PolicyPool is PoolTree, NullifierSet {
         address eurc;
         IHonkVerifier shieldVerifier;
         IHonkVerifier spendVerifier;
+        IScreening screening;
+        uint16 elevatedCapBps;
         address owner;
         address guardian;
         uint128[2] perUserCaps;
@@ -59,6 +62,8 @@ contract PolicyPool is PoolTree, NullifierSet {
     error AmountTooLarge();
     error UserCapExceeded();
     error GlobalCapExceeded();
+    error Blocked();
+    error NotScreened();
     error CiphertextTooLarge();
     error InvalidRecipient();
     error PoolPaused();
@@ -86,6 +91,8 @@ contract PolicyPool is PoolTree, NullifierSet {
     IERC20Like private immutable EURC;
     IHonkVerifier public immutable shieldVerifier;
     IHonkVerifier public immutable spendVerifier;
+    IScreening public immutable screening;
+    uint16 public immutable elevatedCapBps;
 
     address public owner;
     address public pendingOwner;
@@ -121,6 +128,8 @@ contract PolicyPool is PoolTree, NullifierSet {
         EURC = IERC20Like(config.eurc);
         shieldVerifier = config.shieldVerifier;
         spendVerifier = config.spendVerifier;
+        screening = config.screening;
+        elevatedCapBps = config.elevatedCapBps;
         owner = config.owner;
         guardian = config.guardian;
         caps[1] = Caps(config.perUserCaps[0], config.globalCaps[0]);
@@ -232,9 +241,13 @@ contract PolicyPool is PoolTree, NullifierSet {
     }
 
     function _recordDeposit(uint8 asset, uint256 amount) private {
+        (uint8 risk, bool fresh) = screening.status(msg.sender);
+        if (risk == 2) revert Blocked();
+        if (!fresh) revert NotScreened();
         Caps memory limit = caps[asset];
+        uint256 userCap = risk == 1 ? (uint256(limit.perUser) * elevatedCapBps) / 10_000 : limit.perUser;
         uint256 user = shieldedBy[asset][msg.sender] + amount;
-        if (user > limit.perUser) revert UserCapExceeded();
+        if (user > userCap) revert UserCapExceeded();
         uint256 total = totalShielded[asset] + amount;
         if (total > limit.global) revert GlobalCapExceeded();
         shieldedBy[asset][msg.sender] = user;
