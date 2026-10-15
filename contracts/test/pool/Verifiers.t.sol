@@ -85,11 +85,15 @@ contract VerifiersTest is Test {
     function test_ATruncatedOrExtendedInputListIsRejected() public {
         (bytes memory proof, bytes32[] memory inputs) = _load("spend");
         bytes32[] memory shorter = new bytes32[](inputs.length - 1);
-        for (uint256 i = 0; i < shorter.length; i++) shorter[i] = inputs[i];
+        for (uint256 i = 0; i < shorter.length; i++) {
+            shorter[i] = inputs[i];
+        }
         vm.expectRevert();
         spend.verify(proof, shorter);
         bytes32[] memory longer = new bytes32[](inputs.length + 1);
-        for (uint256 i = 0; i < inputs.length; i++) longer[i] = inputs[i];
+        for (uint256 i = 0; i < inputs.length; i++) {
+            longer[i] = inputs[i];
+        }
         vm.expectRevert();
         spend.verify(proof, longer);
     }
