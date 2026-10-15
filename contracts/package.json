@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "arc-forge fmt --check",
     "typecheck": "arc-forge build",
-    "test": "arc-forge test --network arc",
+    "test": "arc-forge test --network arc && node --test \"scripts/*.test.mjs\"",
     "deploy": "node --env-file-if-exists=../../.env scripts/deploy.mjs"
   },
   "dependencies": {
