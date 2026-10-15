@@ -105,3 +105,8 @@ export async function sealRequest(ctx, request) {
   const sealed = seal(new TextEncoder().encode(JSON.stringify(request)), Buffer.from(key.slice(2), "hex"), requestAad(ctx.vault));
   return { vault: ctx.vault, sealed: `0x${Buffer.from(sealed).toString("hex")}` };
 }
+
+export async function readProfile(ctx) {
+  const state = await readState(ctx);
+  return decodeProfile(decryptState(parseMaster(process.env.AGENT_MASTER_VALUE), ctx.vault, state.version, state.ciphertext));
+}
