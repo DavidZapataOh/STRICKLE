@@ -5,3 +5,4 @@ export * from "./salary.ts";
 export * from "./invariants.ts";
 export * from "./breaker.ts";
 export * from "./autonomy.ts";
+export * from "./proposal.ts";
