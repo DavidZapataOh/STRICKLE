@@ -1,4 +1,5 @@
-import { type PlainDate, addDays, daysBetween } from "@strickle/core";
+import { type Asset, type PlainDate, addDays, daysBetween } from "@strickle/core";
+import { mulberry32, randomBelow } from "./prng.ts";
 
 const WINDOW_WEEKS = 13;
 const WINDOW_DAYS = WINDOW_WEEKS * 7;
@@ -78,4 +79,94 @@ export function decompose(history: readonly CashEntry[], asOf: PlainDate): Decom
     }
   }
   return { recurring, variableWeeks, excludedOneOffIncome };
+}
+
+export interface ForecastInput {
+  asset: Asset;
+  asOf: PlainDate;
+  openingBalance: bigint;
+  history: readonly CashEntry[];
+  seed: number;
+  scenarios?: number;
+  weeks?: number;
+}
+
+export interface Forecast {
+  asset: Asset;
+  weeks: number;
+  scenarios: number;
+  openingBalance: bigint;
+  /** Median and 10th percentile of the closing balance of each forecast week. */
+  p50: bigint[];
+  p10: bigint[];
+  /** Closing balance per scenario and week: `paths[scenario][week]`. */
+  paths: bigint[][];
+}
+
+const positiveInteger = (value: number, name: string): void => {
+  if (!Number.isInteger(value) || value < 1) throw new RangeError(`${name} must be a positive integer, got ${value}`);
+};
+
+/** Nearest-rank percentile of an ascending list; `bps` is the percentile in basis points. */
+export function percentile(sorted: readonly bigint[], bps: number): bigint {
+  const rank = Math.max(1, Math.ceil((bps * sorted.length) / 10_000));
+  return sorted[rank - 1] as bigint;
+}
+
+function recurringByWeek(recurring: readonly RecurringFlow[], asOf: PlainDate, weeks: number): bigint[] {
+  const totals: bigint[] = Array.from({ length: weeks }, () => 0n);
+  for (const { amount, everyDays, next } of recurring) {
+    for (let offset = daysBetween(asOf, next); offset <= weeks * 7; offset += everyDays) {
+      const week = Math.floor((offset - 1) / 7);
+      totals[week] = (totals[week] as bigint) + amount;
+    }
+  }
+  return totals;
+}
+
+/** Bootstrap forecast: each scenario redraws historical variable weeks on top of the recurring flows. */
+export function forecast({ asset, asOf, openingBalance, history, seed, scenarios = 200, weeks = 13 }: ForecastInput): Forecast {
+  positiveInteger(scenarios, "scenarios");
+  positiveInteger(weeks, "weeks");
+  const next = mulberry32(seed);
+  const { recurring, variableWeeks } = decompose(history, asOf);
+  const fixed = recurringByWeek(recurring, asOf, weeks);
+
+  const paths: bigint[][] = [];
+  for (let scenario = 0; scenario < scenarios; scenario++) {
+    let balance = openingBalance;
+    const path: bigint[] = [];
+    for (let week = 0; week < weeks; week++) {
+      balance += (variableWeeks[randomBelow(next, WINDOW_WEEKS)] as bigint) + (fixed[week] as bigint);
+      path.push(balance);
+    }
+    paths.push(path);
+  }
+
+  const p50: bigint[] = [];
+  const p10: bigint[] = [];
+  for (let week = 0; week < weeks; week++) {
+    const column = paths.map((path) => path[week] as bigint).sort(compareBigint);
+    p50.push(percentile(column, 5_000));
+    p10.push(percentile(column, 1_000));
+  }
+  return { asset, weeks, scenarios, openingBalance, p50, p10, paths };
+}
+
+/**
+ * Share of scenarios, in basis points rounded up, whose balance drops below `threshold` at the start or in
+ * any of the first `weeks` weeks.
+ */
+export function breachShareBps(f: Forecast, threshold: bigint, weeks: number): number {
+  const horizon = Math.min(weeks, f.weeks);
+  let breaches = 0;
+  for (const path of f.paths) {
+    let lowest = f.openingBalance;
+    for (let week = 0; week < horizon; week++) {
+      const balance = path[week] as bigint;
+      if (balance < lowest) lowest = balance;
+    }
+    if (lowest < threshold) breaches++;
+  }
+  return Math.ceil((breaches * 10_000) / f.scenarios);
 }
