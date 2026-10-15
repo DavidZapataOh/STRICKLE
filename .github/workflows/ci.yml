@@ -62,6 +62,7 @@ jobs:
       CIRCLE_GAS_STATION_SCA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_SCA_WALLET_ID }}
       CIRCLE_GAS_STATION_EOA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_EOA_WALLET_ID }}
       CIRCLE_AGENT_SCA_WALLET_ID: ${{ secrets.CIRCLE_AGENT_SCA_WALLET_ID }}
+      CIRCLE_CLIENT_KEY_TESTNET: ${{ secrets.CIRCLE_CLIENT_KEY_TESTNET }}
       REQUIRE_CIRCLE: "1"
     steps:
       - uses: actions/checkout@v7
@@ -70,6 +71,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:integration -w @strickle/arc
 
   db:
