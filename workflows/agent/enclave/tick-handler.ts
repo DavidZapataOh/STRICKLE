@@ -1,15 +1,16 @@
 // workflows/agent/enclave/tick-handler.ts
 import type { TeeRuntime } from "@chainlink/cre-sdk";
-import { type Address, bytesToHex, getAddress } from "viem";
+import { type Address, bytesToHex, getAddress, hexToBytes } from "viem";
 import type { Config } from "../config.ts";
 import { decodeDelegated, decodeHead, decodeStateLog, decodeTickBooks, delegatedRequest, headRequest, stateLogRequest, tickRequests } from "./books.ts";
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
-import { decodeProfile, encodeProfile } from "./profile.ts";
+import { sealNotice } from "./notices.ts";
+import { ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
-import { encodeSalaryReport, encodeTickReport } from "./reports.ts";
+import { encodeNoticeReport, encodeSalaryReport, encodeTickReport } from "./reports.ts";
 import { planTick } from "./tick.ts";
 
 export const MAX_PER_RUN = 5;
@@ -36,7 +37,7 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
 
   const master = parseMaster(runtime.getSecret({ id: "AGENT_MASTER" }).result().value);
   const answers = ethBatch(runtime, stalest.flatMap((entry) => tickRequests(state, entry.vault)));
-  const books = stalest.map((_, index) => decodeTickBooks(answers.slice(index * 14, index * 14 + 14)));
+  const books = stalest.map((_, index) => decodeTickBooks(answers.slice(index * 15, index * 15 + 15)));
   const logs = ethBatch(runtime, books.map((entry, index) => stateLogRequest(state, (stalest[index] as { vault: Address }).vault, entry.version, entry.at)));
 
   stalest.forEach((entry, position) => {
@@ -45,7 +46,7 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
       const vault = getAddress(entry.vault);
       const profile = decodeProfile(decryptState(master, vault, current.version, decodeStateLog(logs[position])));
       const today = todayOf(runtime.now(), runtime.config.sandboxClock ? profile.clockOffsetDays : 0);
-      const plan = planTick(profile, current.books, today, vault);
+      const plan = planTick(profile, current.books, today, vault, Math.floor(runtime.now().getTime() / 1000));
       if (plan.kind === "skip") return;
       const next = current.version + 1n;
       const ciphertext = bytesToHex(encryptState(master, vault, next, encodeProfile(plan.next)));
@@ -56,6 +57,13 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
           ? encodeSalaryReport({ vault, asset: ASSET_ID.USDC, payee: plan.payee, amount: plan.amount, seen: plan.seen, next, ciphertext })
           : encodeTickReport({ vault, next, ciphertext }),
       );
+      if (profile.userKey !== ZERO_KEY && plan.notices.length > 0) {
+        const userKey = hexToBytes(profile.userKey);
+        plan.notices.forEach((notice, offset) => {
+          const id = current.notices + BigInt(offset) + 1n;
+          deliver(runtime, executor, encodeNoticeReport({ vault, id, sealed: bytesToHex(sealNotice(master, userKey, vault, id, notice)) }));
+        });
+      }
     } catch {
       // a vault that cannot be processed now is left for a later run; nothing about it may be logged
     }
