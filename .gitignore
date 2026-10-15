@@ -22,3 +22,8 @@ Thumbs.db
 
 # Circle entity-secret recovery files must never be committed
 recovery/
+
+# Foundry output (cache/ also holds sensitive broadcast values)
+contracts/out/
+contracts/cache/
+contracts/broadcast/
