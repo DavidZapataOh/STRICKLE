@@ -20,7 +20,8 @@
     "toolchain:install": "node scripts/toolchain.mjs install",
     "toolchain:verify": "node scripts/toolchain.mjs verify",
     "pool:vectors": "npm run vectors -w @strickle/pool",
-    "circuits:test": "node scripts/toolchain.mjs run --cwd circuits nargo test --workspace"
+    "circuits:test": "node scripts/toolchain.mjs run --cwd circuits nargo test --workspace",
+    "circuits:compile": "node scripts/toolchain.mjs run --cwd circuits nargo compile --workspace"
   },
   "devDependencies": {
     "@types/node": "^24",

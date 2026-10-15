@@ -1,0 +1,9 @@
+[package]
+name = "shield"
+type = "bin"
+authors = [""]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+pool_lib = { path = "../pool_lib" }
+poseidon = { git = "https://github.com/noir-lang/poseidon", tag = "v0.4.0" }

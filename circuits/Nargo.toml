@@ -1,2 +1,2 @@
 [workspace]
-members = ["pool_lib"]
+members = ["pool_lib", "shield", "spend"]

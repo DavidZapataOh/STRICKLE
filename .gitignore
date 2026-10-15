@@ -32,3 +32,6 @@ contracts/broadcast/
 test-results/
 playwright-report/
 .lighthouseci/
+
+# Compiled circuits
+circuits/target/

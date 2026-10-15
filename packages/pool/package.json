@@ -3,14 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "vectors": "node scripts/generate-vectors.ts"
+    "vectors": "node scripts/generate-vectors.ts",
+    "test:circuits": "vitest run --config vitest.circuits.config.mts"
   },
   "dependencies": {
+    "@aztec/bb.js": "5.0.1",
+    "@noir-lang/noir_js": "1.0.0-rc.3",
     "@strickle/core": "*",
     "@zkpassport/poseidon2": "0.6.2"
   },
