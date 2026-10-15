@@ -365,4 +365,27 @@ contract AgentExecutorTest is Test {
         assertEq(tv, address(uint160(0xa1)));
         assertEq(tnext, 3);
     }
+
+    function test_aNoticeIsPublishedForARegisteredVault() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        vm.expectEmit(true, true, false, true, address(state));
+        emit AgentState.Notice(address(vault), 1, hex"aa");
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+        assertEq(state.noticeCount(address(vault)), 1);
+    }
+
+    function test_aNoticeForAnUnregisteredVaultIsRefused() public {
+        vm.expectRevert(AgentExecutor.NotAVault.selector);
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+    }
+
+    function test_noticeIdsMustFollowTheChainsCount() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+        vm.expectRevert(abi.encodeWithSelector(AgentState.StaleNotice.selector, uint64(2), uint64(1)));
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"bb"));
+        deliverAction(4, abi.encode(address(vault), uint64(2), hex"bb"));
+    }
 }
