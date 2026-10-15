@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { contractPath, deploy, libraryArgs, recordDeployment } from "./deploy.mjs";
+import { contractPath, deploy, libraryArgs, recordDeployment, verifierEndpoint } from "./deploy.mjs";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
 const PORT = 8561;
@@ -154,4 +154,9 @@ test("libraryArgs links a verifier to the library addresses recorded in the mani
   ]);
   assert.deepEqual(libraryArgs("Probe", manifest), []);
   assert.throws(() => libraryArgs("ShieldVerifier", { contracts: {} }), /ShieldRelationsLib is not in the manifest/);
+});
+
+test("verification goes through the hosted Blockscout API when a key is set, and the explorer otherwise", () => {
+  assert.deepEqual(verifierEndpoint("testnet", 5042002, "key"), { url: "https://api.blockscout.com/5042002/api/", keyArgs: ["--verifier-api-key", "key"] });
+  assert.deepEqual(verifierEndpoint("testnet", 5042002, undefined), { url: "https://explorer.testnet.arc.io/api/", keyArgs: [] });
 });
