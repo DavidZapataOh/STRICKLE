@@ -6,10 +6,11 @@ import { deploy } from "./deploy.mjs";
 const contractsDir = new URL("..", import.meta.url).pathname;
 
 export function verifierEnv(manifest) {
+  const hasher = manifest.contracts.Poseidon2Hasher?.address;
   const shield = manifest.contracts.ShieldVerifier?.address;
   const spend = manifest.contracts.SpendVerifier?.address;
-  if (!shield || !spend) throw new Error("deploy the shield and spend verifiers first");
-  return { SHIELD_VERIFIER: shield, SPEND_VERIFIER: spend };
+  if (!hasher || !shield || !spend) throw new Error("deploy the hasher and the verifiers first");
+  return { POSEIDON2_HASHER: hasher, SHIELD_VERIFIER: shield, SPEND_VERIFIER: spend };
 }
 
 if (import.meta.main) {
