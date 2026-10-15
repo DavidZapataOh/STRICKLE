@@ -4,6 +4,7 @@ import { type Address, bytesToHex, getAddress } from "viem";
 import type { Config } from "../config.ts";
 import { booksRequests, decodeBooks, decodePending, decodeStateLog, onePerVault, pendingRequest, stateLogRequest } from "./books.ts";
 import { ASSET_ID, planSplit } from "./cascade.ts";
+import { todayOf } from "./clock.ts";
 import { deliver } from "./deliver.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { decodeProfile, encodeProfile } from "./profile.ts";
@@ -37,13 +38,18 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
       const vault = getAddress(item.vault);
       const asset = ASSETS[item.asset - 1];
       const profile = decodeProfile(decryptState(master, vault, books.version, decodeStateLog(logs[position])));
-      const plan = planSplit(profile, {
-        asset,
-        unallocated: item.amount,
-        operating: books.operating,
-        payrollFunded: books.payrollFunded,
-        emergency: books.emergency,
-      });
+      const today = todayOf(runtime.now(), runtime.config.sandboxClock ? profile.clockOffsetDays : 0);
+      const plan = planSplit(
+        profile,
+        {
+          asset,
+          unallocated: item.amount,
+          operating: books.operating,
+          payrollFunded: books.payrollFunded,
+          emergency: books.emergency,
+        },
+        today,
+      );
       const next = books.version + 1n;
       deliver(
         runtime,

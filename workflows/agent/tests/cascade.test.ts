@@ -1,4 +1,5 @@
 // workflows/agent/tests/cascade.test.ts
+import { plainDate } from "@strickle/core";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { BOX_ID, planSplit } from "../enclave/cascade.ts";
@@ -16,28 +17,29 @@ const live = profileSchema.parse({
   salaryOwed: "0",
   emergencyTarget: "0",
 });
+const today = plainDate(2026, 11, 1);
 const empty = { asset: "USDC" as const, unallocated: 1_000_000n, operating: 0n, payrollFunded: 0n, emergency: 0n };
 
 describe("planSplit", () => {
   it("fills the operating floor and target first, then profit", () => {
-    const plan = planSplit(live, empty);
+    const plan = planSplit(live, empty, today);
     expect(plan.boxes).toEqual([BOX_ID.operating, BOX_ID.profit]);
     expect(plan.amounts).toEqual([840_000n, 160_000n]);
   });
 
   it("reserves taxes before anything else", () => {
-    const plan = planSplit({ ...live, taxRateBps: 2_000 }, empty);
+    const plan = planSplit({ ...live, taxRateBps: 2_000 }, empty, today);
     expect(plan.boxes[0]).toBe(BOX_ID.taxes);
     expect(plan.amounts[0]).toBe(210_000n);
   });
 
   it("carries the unpaid salary into the next profile", () => {
-    const plan = planSplit({ ...live, salaryOwed: "5000000" }, empty);
+    const plan = planSplit({ ...live, salaryOwed: "5000000" }, empty, today);
     expect(plan.next.salaryOwed).toBe("4280000");
   });
 
   it("leaves an unrelated profile field untouched", () => {
-    expect(planSplit(live, empty).next).toEqual(live);
+    expect({ ...planSplit(live, empty, today).next, history: live.history, salaryOwed: live.salaryOwed }).toEqual(live);
   });
 
   const profileArb = fc
@@ -66,7 +68,7 @@ describe("planSplit", () => {
   it("allocates exactly the payment, on ascending valid boxes, whatever the profile", () => {
     fc.assert(
       fc.property(profileArb, booksArb, (profile, books) => {
-        const plan = planSplit(profile, books);
+        const plan = planSplit(profile, books, today);
         expect(plan.amounts.reduce((sum, amount) => sum + amount, 0n)).toBe(books.unallocated);
         expect(plan.boxes.every((box, index) => box >= 1 && box <= 6 && (index === 0 || box > plan.boxes[index - 1]))).toBe(true);
         expect(plan.amounts.every((amount) => amount > 0n)).toBe(true);
@@ -74,5 +76,25 @@ describe("planSplit", () => {
         expect(BigInt(plan.next.salaryOwed)).toBeLessThanOrEqual(BigInt(profile.salaryOwed));
       }),
     );
+  });
+});
+
+describe("planSplit history", () => {
+  it("records the deposit as an inflow dated today", () => {
+    expect(planSplit(live, empty, today).next.history.at(-1)).toEqual(["2026-11-01", "1000000", "deposit"]);
+  });
+
+  it("drops entries older than 91 days", () => {
+    const old = { ...live, history: [["2026-07-01", "5", "deposit"], ["2026-10-20", "7", "deposit"]] as [string, string, string][] };
+    const history = planSplit(old, empty, today).next.history;
+    expect(history.map((entry) => entry[0])).toEqual(["2026-10-20", "2026-11-01"]);
+  });
+
+  it("keeps at most 200 entries, dropping the oldest", () => {
+    const crowded = { ...live, history: Array.from({ length: 200 }, (_, i) => ["2026-10-20", String(i + 1), "deposit"] as [string, string, string]) };
+    const history = planSplit(crowded, empty, today).next.history;
+    expect(history).toHaveLength(200);
+    expect(history[0][1]).toBe("2");
+    expect(history.at(-1)?.[1]).toBe("1000000");
   });
 });
