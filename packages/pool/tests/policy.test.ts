@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AGENT_ACTION, DOMAIN } from "../src/constants.ts";
 import { hash } from "../src/poseidon.ts";
-import { FREE_POLICY, type Policy, policyHash } from "../src/policy.ts";
+import { FREE_POLICY, type Policy, policyHash, templateLeaf } from "../src/policy.ts";
 
 const base: Policy = {
   floor: 1_000_000n,
@@ -11,11 +11,12 @@ const base: Policy = {
   agentCap: 500_000n,
   agentActions: AGENT_ACTION.SPLIT | AGENT_ACTION.PAY_ALLOWLISTED,
   releaseDelay: 86_400,
+  templateRoot: 4242n,
 };
 
 describe("policyHash", () => {
   it("hashes the fields in the documented order under the policy tag", () => {
-    expect(policyHash(base)).toBe(hash([DOMAIN.POLICY, 1_000_000n, 12345n, 1n, 777n, 500_000n, 9n, 86_400n]));
+    expect(policyHash(base)).toBe(hash([DOMAIN.POLICY, 1_000_000n, 12345n, 1n, 777n, 500_000n, 9n, 86_400n, 4242n]));
   });
 
   it("changes when any single field changes", () => {
@@ -27,6 +28,7 @@ describe("policyHash", () => {
       { ...base, agentCap: base.agentCap + 1n },
       { ...base, agentActions: AGENT_ACTION.SWEEP },
       { ...base, releaseDelay: base.releaseDelay + 1 },
+      { ...base, templateRoot: base.templateRoot + 1n },
     ];
     const hashes = new Set([policyHash(base), ...variants.map(policyHash)]);
     expect(hashes.size).toBe(variants.length + 1);
@@ -49,6 +51,13 @@ describe("policyHash", () => {
       agentCap: 0n,
       agentActions: 0,
       releaseDelay: 0,
+      templateRoot: 0n,
     });
+  });
+});
+
+describe("templateLeaf", () => {
+  it("hashes the box id and the policy under the template tag", () => {
+    expect(templateLeaf("payroll", 99n)).toBe(hash([DOMAIN.TEMPLATE, 2n, 99n]));
   });
 });

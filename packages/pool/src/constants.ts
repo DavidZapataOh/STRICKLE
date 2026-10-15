@@ -9,11 +9,14 @@ export const DOMAIN = {
   AGENT: 6n,
   LABEL: 7n,
   RECIPIENT: 8n,
+  AUTH: 9n,
+  TEMPLATE: 10n,
 } as const;
 
 export const TREE_DEPTH = 24;
 export const ALLOWLIST_DEPTH = 10;
 export const ASSOCIATION_DEPTH = 20;
+export const TEMPLATE_DEPTH = 3;
 
 export const ASSET_ID: Record<Asset, number> = { USDC: 1, EURC: 2 };
 

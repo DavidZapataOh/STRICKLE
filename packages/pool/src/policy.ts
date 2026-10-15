@@ -1,4 +1,5 @@
-import { DOMAIN } from "./constants.ts";
+import type { BoxKind } from "@strickle/core";
+import { DOMAIN, boxId } from "./constants.ts";
 import { assertUint } from "./field.ts";
 import { hash } from "./poseidon.ts";
 
@@ -10,6 +11,7 @@ export interface Policy {
   agentCap: bigint;
   agentActions: number;
   releaseDelay: number;
+  templateRoot: bigint;
 }
 
 export const FREE_POLICY: Policy = {
@@ -20,6 +22,7 @@ export const FREE_POLICY: Policy = {
   agentCap: 0n,
   agentActions: 0,
   releaseDelay: 0,
+  templateRoot: 0n,
 };
 
 function assertSmallInt(value: number, max: number, name: string): void {
@@ -40,5 +43,10 @@ export function policyHash(policy: Policy): bigint {
     policy.agentCap,
     BigInt(policy.agentActions),
     BigInt(policy.releaseDelay),
+    policy.templateRoot,
   ]);
+}
+
+export function templateLeaf(box: BoxKind, policy: bigint): bigint {
+  return hash([DOMAIN.TEMPLATE, BigInt(boxId(box)), policy]);
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { toHex32 } from "../src/field.ts";
-import { agentKeyHash, nullifierKey, ownerPk } from "../src/keys.ts";
+import { agentKeyHash, authHash, nullifierKey, ownerPk } from "../src/keys.ts";
 import { MerkleTree } from "../src/merkle.ts";
 import { type Note, noteCommitment, noteNullifier, packMeta } from "../src/note.ts";
 import { hash } from "../src/poseidon.ts";
@@ -41,6 +41,7 @@ describe("generated vectors", () => {
     for (const h of v.hash) expect(hash(h.inputs.map(big))).toBe(big(h.out));
     for (const k of v.keys) {
       expect(ownerPk(big(k.sk))).toBe(big(k.pk));
+      expect(authHash(big(k.sk))).toBe(big(k.authHash));
       expect(nullifierKey(big(k.sk))).toBe(big(k.nk));
       expect(agentKeyHash(big(k.ak))).toBe(big(k.agentKeyHash));
     }
@@ -54,6 +55,7 @@ describe("generated vectors", () => {
           agentCap: BigInt(p.agentCap),
           agentActions: p.agentActions,
           releaseDelay: p.releaseDelay,
+          templateRoot: big(p.templateRoot),
         }),
       ).toBe(big(p.hash));
     }
