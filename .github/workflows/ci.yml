@@ -118,3 +118,24 @@ jobs:
             apps/landing/test-results
             apps/landing/.lighthouseci
           if-no-files-found: ignore
+
+  circuits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache@v6
+        with:
+          path: ~/.strickle/toolchain
+          key: toolchain-${{ hashFiles('toolchain.json') }}
+      - run: npm run toolchain:install
+      - run: npm run circuits:test
+      - run: npm run pool:vectors
+      - name: Generated files are up to date
+        run: git diff --exit-code -- packages/pool/vectors circuits

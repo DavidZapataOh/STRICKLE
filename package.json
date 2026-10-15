@@ -16,7 +16,11 @@
     "test": "npm run test --workspaces --if-present && node --test \"scripts/*.test.mjs\"",
     "build": "npm run build --workspaces --if-present",
     "db:up": "docker compose up -d --wait db",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "toolchain:install": "node scripts/toolchain.mjs install",
+    "toolchain:verify": "node scripts/toolchain.mjs verify",
+    "pool:vectors": "npm run vectors -w @strickle/pool",
+    "circuits:test": "node scripts/toolchain.mjs run --cwd circuits nargo test --workspace"
   },
   "devDependencies": {
     "@types/node": "^24",
