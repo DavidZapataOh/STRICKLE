@@ -2,6 +2,7 @@
 import { z } from "zod";
 
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+const hash32 = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 
 export const configSchema = z.object({
   schedule: z.string().min(1),
@@ -14,6 +15,9 @@ export const configSchema = z.object({
   dailySchedule: z.string().min(1),
   gatewayAddress: address,
   chainId: z.number().int(),
+  proverUrl: z.string().regex(/^https?:\/\//),
+  proverKey: hash32,
+  privateSpendGas: z.string().regex(/^[0-9]+$/),
   sandboxClock: z.boolean(),
   gasLimit: z.string().regex(/^[0-9]+$/),
 });

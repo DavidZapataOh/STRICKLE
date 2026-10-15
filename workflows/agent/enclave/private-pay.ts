@@ -79,5 +79,5 @@ export function acceptSpend(plan: Extract<PrivatePlan, { ok: true }>, publicInpu
   const matches = plan.expected.every((value, i) => value === undefined || value === publicInputs[i]);
   if (!matches) return { ok: false as const };
   const p = publicInputs;
-  return { ok: true as const, inputs: { root: p[0], nullifiers: [p[1], p[2]], commitments: [p[3], p[4]], publicAmount: p[5], recipient: p[6], asset: Number(p[7]), timestamp: p[8], associationRoot: p[10], enc: [p[11], p[12]] } };
+  return { ok: true as const, inputs: { root: p[0], nullifiers: [p[1], p[2]] as [bigint, bigint], commitments: [p[3], p[4]] as [bigint, bigint], publicAmount: p[5], recipient: p[6], asset: Number(p[7]), timestamp: p[8], associationRoot: p[10], enc: [p[11], p[12]] as [bigint, bigint] } };
 }

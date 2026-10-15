@@ -47,4 +47,11 @@ describe("enclave sources", () => {
     expect(handler).toMatch(/nonce/);
     expect(handler).toMatch(/deadline/);
   });
+
+  it("the prover is reached only through the TEE runtime and the token only through the secrets API", () => {
+    const call = readFileSync(new URL("prover-call.ts", dir), "utf8");
+    const handler = readFileSync(new URL("action-handler.ts", dir), "utf8");
+    expect(handler).toContain('getSecret({ id: "PROVER_TOKEN" })');
+    expect(call).not.toMatch(/getSecret|ConfidentialHTTPClient|fetch\(/);
+  });
 });

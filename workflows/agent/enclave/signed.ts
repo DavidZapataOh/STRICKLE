@@ -13,6 +13,9 @@ export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("approve"), proposalId: z.string().max(24), digest: hash32 }).strict(),
   z.object({ kind: z.literal("reject"), proposalId: z.string().max(24) }).strict(),
   z
+    .object({ kind: z.literal("pay"), box: z.enum(["taxes", "payroll", "salary", "operating", "emergency", "profit"]), to: address, amount: units.refine((value) => BigInt(value) > 0n) })
+    .strict(),
+  z
     .object({
       kind: z.literal("adjust"),
       changes: z

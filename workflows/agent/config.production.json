@@ -10,5 +10,8 @@
   "sandboxClock": true,
   "dailySchedule": "0 0 * * * *",
   "chainId": 5042002,
-  "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01"
+  "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01",
+  "proverUrl": "https://prover.invalid",
+  "proverKey": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "privateSpendGas": "6500000"
 }

@@ -15,6 +15,9 @@ const valid = {
   dailySchedule: "0 0 * * * *",
   gatewayAddress: "0x00000000000000000000000000000000000000ee",
   chainId: 5042002,
+  proverUrl: "https://prover.example.test",
+  proverKey: `0x${"ab".repeat(32)}`,
+  privateSpendGas: "6500000",
 };
 
 describe("configSchema", () => {
@@ -42,6 +45,15 @@ describe("configSchema", () => {
 
   it("rejects a malformed gateway address", () => {
     expect(() => configSchema.parse({ ...valid, gatewayAddress: "0x1" })).toThrow();
+  });
+
+  it.each(["proverUrl", "proverKey", "privateSpendGas"])("requires %s", (key) => {
+    const without = Object.fromEntries(Object.entries(valid).filter(([name]) => name !== key));
+    expect(() => configSchema.parse(without)).toThrow();
+  });
+
+  it("rejects a prover key that is not 32 bytes of hex", () => {
+    expect(() => configSchema.parse({ ...valid, proverKey: "0x1234" })).toThrow();
   });
 
   it("rejects a gas limit that is not a number string", () => {
