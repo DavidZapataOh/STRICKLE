@@ -72,6 +72,12 @@
       "txHash": "0x0397c3caaf55964a127a9087cfa3e6d5f9166102646d8fd71d954767bf494efa",
       "blockNumber": 67324330,
       "create2": true
+    },
+    "AgentHeartbeat": {
+      "address": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
+      "txHash": "0xd9fa34e3b78c7ee6f2407b397f008264906f7e88b493b77430799b750219516a",
+      "blockNumber": 67395695,
+      "create2": true
     }
   }
 }
