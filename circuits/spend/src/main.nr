@@ -171,4 +171,20 @@ fn main(
         assert(!(is_agent & moves_j) | template_ok, "destination is not an approved template");
     }
     // --- rules: labels and association ---
+    let label0 = inputs[0].note.label;
+    let label1 = inputs[1].note.label;
+    let mixed = !dummy0 & !dummy1 & (label0 != label1);
+    let common = if dummy0 { label1 } else { label0 };
+    for j in 0..2 {
+        let out = outputs[j].note;
+        assert((out.label == 0) | (!mixed & (out.label == common)), "an output cannot gain or change a label");
+        assert((out.box_id >= 1) & (out.box_id <= 6), "unknown box");
+        assert(out.flags <= 1, "unknown flags");
+    }
+    let association_member =
+        compute_root(common, association_index, association_path) == association_root;
+    assert(
+        !((association_root != 0) & (public_amount != 0)) | ((common != 0) & !mixed & association_member),
+        "the label is not in the association set",
+    );
 }
