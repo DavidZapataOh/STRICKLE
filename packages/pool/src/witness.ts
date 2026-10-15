@@ -37,6 +37,8 @@ export interface SpendSpec {
   /** Both default to fresh random values: a dummy input reused across transactions would repeat its nullifier. */
   dummyNk?: [bigint, bigint];
   dummySalt?: [bigint, bigint];
+  /** Delivery values for outputs the owner does not keep; default fresh random. */
+  enc?: [bigint, bigint];
 }
 
 const ZERO_POLICY: Policy = {
@@ -162,7 +164,7 @@ function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
   const inheritedDelay = spec.inputs.reduce((max, input) => (input ? Math.max(max, input.policy.releaseDelay, input.note.delayFloor) : max), 0);
   return spec.outputs.map((output, j) => {
     const isSelf = output.note.amount > 0n && real !== undefined && output.note.ownerPk === real.note.ownerPk;
-    if (!isSelf) return { output, note: output.note, enc: randomField() };
+    if (!isSelf) return { output, note: output.note, enc: spec.enc?.[j] ?? randomField() };
     const key = deliveryKey(nk, nullifier0, j);
     const note: Note = { ...output.note, delayFloor: Math.max(output.note.delayFloor, inheritedDelay), salt: deliverySalt(key) };
     return { output, note, enc: encryptDelivery(packDelivery(note), key) };

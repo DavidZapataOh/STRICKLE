@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ProtocolError, ReplayCache, aadFor, decodeRequest, encodeRequest } from "../src/protocol.ts";
-import { generateProverKey, seal } from "../src/sealed.ts";
+import { ProtocolError, ReplayCache, aadFor, decodeRequest, encodeRequest, encodeRequestWith } from "../src/protocol.ts";
+import { generateProverKey, scalarFrom, seal } from "../src/sealed.ts";
 
 const key = generateProverKey();
 const id = (n: number) => n.toString(16).padStart(64, "0");
@@ -75,5 +75,13 @@ describe("prove request protocol", () => {
     for (const bad of [request({ requestId: "short" }), request({ requestId: id(255).toUpperCase() }), request({ issuedAt: 1.5 }), request({ issuedAt: "1000" }), request({ inputs: undefined })]) {
       expect(codeOf(() => decode(encodeRequest(bad, key.publicKey)))).toBe("malformed");
     }
+  });
+
+  it("encodeRequestWith is reproducible for a fixed ephemeral secret and decodes like any request", () => {
+    const key = generateProverKey();
+    const request = { requestId: "ab".repeat(32), issuedAt: 1_000, circuit: "spend", inputs: { a: 1 } };
+    const secret = scalarFrom(new Uint8Array(64).fill(7));
+    expect(encodeRequestWith(request, key.publicKey, secret)).toEqual(encodeRequestWith(request, key.publicKey, secret));
+    expect(decodeRequest(encodeRequestWith(request, key.publicKey, secret), key, 1_000, new ReplayCache(600))).toEqual(request);
   });
 });

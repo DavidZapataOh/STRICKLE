@@ -1,4 +1,4 @@
-import { open, seal, type ProverKey } from "./sealed.ts";
+import { open, seal, sealWith, type ProverKey } from "./sealed.ts";
 
 export type ProtocolCode = "malformed" | "stale" | "replayed" | "wrong-circuit";
 
@@ -45,6 +45,11 @@ function fromBase64(text: string): Uint8Array {
 export function encodeRequest(request: ProveRequest, serverPublicKey: Uint8Array): ProveBody {
   const plaintext = new TextEncoder().encode(JSON.stringify(request));
   return { circuit: request.circuit, sealed: toBase64(seal(plaintext, serverPublicKey, aadFor(request.circuit))) };
+}
+
+export function encodeRequestWith(request: ProveRequest, serverPublicKey: Uint8Array, ephemeralSecret: bigint): ProveBody {
+  const plaintext = new TextEncoder().encode(JSON.stringify(request));
+  return { circuit: request.circuit, sealed: toBase64(sealWith(plaintext, serverPublicKey, aadFor(request.circuit), ephemeralSecret)) };
 }
 
 /** Remembers request ids for a while so an intercepted request cannot be played again. */

@@ -56,8 +56,7 @@ function payloadFor(tier: Tier, output: OutputPlaintext): Uint8Array {
   return encodeAuthorityPayload(output.note);
 }
 
-function section(output: OutputPlaintext, viewer: Viewer, esk: bigint, epk: Uint8Array, outputIndex: number): Uint8Array {
-  const contentKey = randomBytes(32);
+function section(output: OutputPlaintext, viewer: Viewer, esk: bigint, epk: Uint8Array, outputIndex: number, contentKey: Uint8Array): Uint8Array {
   const shared = Point.fromBytes(viewer.publicKey).multiply(esk).toBytes();
   const wrapped = chacha20poly1305(wrapKey(shared, epk, viewer.publicKey, TIER_CODE[viewer.tier]), wrapNonce(outputIndex)).encrypt(contentKey);
   const plaintext = payloadFor(viewer.tier, output);
@@ -65,8 +64,8 @@ function section(output: OutputPlaintext, viewer: Viewer, esk: bigint, epk: Uint
   return concat(Uint8Array.of(TIER_CODE[viewer.tier]), keyId(viewer.publicKey), wrapped, Uint8Array.of(plaintext.length >> 8, plaintext.length & 0xff), sealed);
 }
 
-export function sealEnvelope(outputs: [OutputPlaintext | null, OutputPlaintext | null]): Hex {
-  const esk = scalarFromBytes(randomBytes(64));
+export function sealEnvelopeWith(outputs: [OutputPlaintext | null, OutputPlaintext | null], seed: Uint8Array): Hex {
+  const esk = scalarFromBytes(hkdf(sha256, seed, undefined, new TextEncoder().encode("strickle/envelope/esk"), 64));
   const epk = Point.BASE.multiply(esk).toBytes();
   const parts: Uint8Array[] = [Uint8Array.of(VERSION), epk, Uint8Array.of(2)];
   outputs.forEach((output, index) => {
@@ -74,10 +73,15 @@ export function sealEnvelope(outputs: [OutputPlaintext | null, OutputPlaintext |
       parts.push(Uint8Array.of(0));
       return;
     }
-    parts.push(Uint8Array.of(output.viewers.length), ...output.viewers.map((viewer) => section(output, viewer, esk, epk, index)));
+    const sections = output.viewers.map((viewer, viewerIndex) =>
+      section(output, viewer, esk, epk, index, hkdf(sha256, seed, Uint8Array.of(index, viewerIndex), new TextEncoder().encode("strickle/envelope/content"), 32)),
+    );
+    parts.push(Uint8Array.of(output.viewers.length), ...sections);
   });
   return bytesToHex(concat(...parts));
 }
+
+export const sealEnvelope = (outputs: [OutputPlaintext | null, OutputPlaintext | null]): Hex => sealEnvelopeWith(outputs, randomBytes(64));
 
 export function envelopeEpk(envelope: Hex): Uint8Array {
   return hexToBytes(envelope).slice(1, 33);

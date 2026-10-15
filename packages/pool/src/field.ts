@@ -1,3 +1,5 @@
+import { randomBytes } from "@noble/hashes/utils.js";
+
 export const FIELD_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 
 export function assertField(value: bigint, name: string): void {
@@ -12,6 +14,5 @@ export const toHex32 = (value: bigint): string => `0x${value.toString(16).padSta
 
 /** A uniformly random 248-bit value, always below the field modulus. */
 export function randomField(): bigint {
-  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(31));
-  return bytes.reduce((acc, byte) => (acc << 8n) | BigInt(byte), 0n);
+  return randomBytes(31).reduce((acc, byte) => (acc << 8n) | BigInt(byte), 0n);
 }
