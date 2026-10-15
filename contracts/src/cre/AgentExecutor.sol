@@ -20,6 +20,7 @@ interface IFactory {
 
 interface IStateStore {
     function store(address vault, uint64 next, bytes calldata ciphertext) external;
+    function notify(address vault, uint64 id, bytes calldata sealedData) external;
 }
 
 /// @notice The only contract users delegate the agent role to. It can allocate what arrived in a vault and
