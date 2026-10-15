@@ -1,10 +1,21 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
+
+export function contractPath(name, outDir = join(contractsDir, "out")) {
+  for (const dir of readdirSync(outDir)) {
+    const artifact = join(outDir, dir, `${name}.json`);
+    if (!existsSync(artifact)) continue;
+    const target = JSON.parse(readFileSync(artifact, "utf8")).metadata?.settings?.compilationTarget ?? {};
+    const source = Object.keys(target).find((path) => target[path] === name);
+    if (source) return `${source}:${name}`;
+  }
+  throw new Error(`no build artifact found for ${name}; run arc-forge build`);
+}
 
 export function recordDeployment({ runFile, manifestFile, chainId }) {
   const run = JSON.parse(readFileSync(runFile, "utf8"));
@@ -39,29 +50,37 @@ export function deploy({
 }) {
   if (!process.env.PRIVATE_KEY) throw new Error("PRIVATE_KEY is not set");
 
-  const base = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId)];
-  execFileSync("arc-forge", [...base, "--broadcast"], { cwd: contractsDir, stdio: "inherit" });
+  const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--broadcast"];
+  execFileSync("arc-forge", args, { cwd: contractsDir, stdio: "inherit" });
 
-  const manifest = recordDeployment({
-    runFile: join(contractsDir, "broadcast", basename(script), String(chainId), "run-latest.json"),
-    manifestFile: join(manifestDir, `arc-${network}.json`),
-    chainId,
-  });
+  const runFile = join(contractsDir, "broadcast", basename(script), String(chainId), "run-latest.json");
+  const manifest = recordDeployment({ runFile, manifestFile: join(manifestDir, `arc-${network}.json`), chainId });
 
   if (network !== "local") {
     // Verification runs after the manifest is written: a failure must not hide a live deployment.
-    // Retry it with the same command (--resume reuses the broadcast artifact; no second deploy).
-    const verify = [
-      "--resume",
-      "--verify",
-      "--verifier",
-      "blockscout",
-      "--verifier-url",
-      `${networks[network].explorerUrl}/api/`,
-      "--retries",
-      String(verifyRetries),
-    ];
-    execFileSync("arc-forge", [...base, ...verify], { cwd: contractsDir, stdio: "inherit" });
+    // To retry it, run the same verify-contract command for the address in the manifest.
+    const created = JSON.parse(readFileSync(runFile, "utf8")).transactions.filter((tx) => tx.contractName);
+    for (const { contractName } of created) {
+      const entry = manifest.contracts[contractName];
+      if (!entry) continue;
+      execFileSync(
+        "arc-forge",
+        [
+          "verify-contract",
+          entry.address,
+          contractPath(contractName),
+          "--chain-id",
+          String(chainId),
+          "--verifier",
+          "blockscout",
+          "--verifier-url",
+          `${networks[network].explorerUrl}/api/`,
+          "--retries",
+          String(verifyRetries),
+        ],
+        { cwd: contractsDir, stdio: "inherit" },
+      );
+    }
   }
   return manifest;
 }

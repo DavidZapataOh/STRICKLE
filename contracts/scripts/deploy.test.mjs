@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { deploy, recordDeployment } from "./deploy.mjs";
+import { contractPath, deploy, recordDeployment } from "./deploy.mjs";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
 const PORT = 8561;
@@ -101,17 +101,26 @@ test("a second deploy with the same salt fails in Foundry and leaves the manifes
 test("a failed explorer verification still leaves the deployment recorded", () =>
   onFreshChain(() => {
     process.env.PRIVATE_KEY = deployerKey();
+    process.env.PROBE_SALT = cast("keccak", `unverifiable-${Date.now()}`);
     const manifestDir = mkdtempSync(join(tmpdir(), "deployments-"));
 
+    // A salt no real deployment uses, so the explorer cannot find this address. Exit code 1 from verify-contract (not 2, which would be Foundry rejecting the arguments).
     assert.throws(
       () =>
         deploy({ network: "testnet", script: SCRIPT, rpc: RPC, chainId: 31337, manifestDir, verifyRetries: 1 }),
-      /Command failed: arc-forge script/,
+      (error) => /Command failed: arc-forge verify-contract/.test(error.message) && error.status === 1,
     );
 
+    delete process.env.PROBE_SALT;
     const manifest = JSON.parse(readFileSync(join(manifestDir, "arc-testnet.json"), "utf8"));
     assert.notEqual(cast("code", manifest.contracts.Probe.address, "--rpc-url", RPC), "0x");
   }));
+
+test("contractPath resolves the source path Foundry needs for verification", () => {
+  forge("build");
+  assert.equal(contractPath("Probe"), "test/fixtures/Probe.sol:Probe");
+  assert.throws(() => contractPath("DoesNotExist"), /no build artifact/);
+});
 
 test("recordDeployment ignores transactions without a receipt", () => {
   const dir = mkdtempSync(join(tmpdir(), "run-"));
