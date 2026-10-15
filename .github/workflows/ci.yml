@@ -59,6 +59,7 @@ jobs:
       CIRCLE_ENTITY_SECRET_TESTNET: ${{ secrets.CIRCLE_ENTITY_SECRET_TESTNET }}
       CIRCLE_GAS_STATION_SCA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_SCA_WALLET_ID }}
       CIRCLE_GAS_STATION_EOA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_EOA_WALLET_ID }}
+      REQUIRE_CIRCLE: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
