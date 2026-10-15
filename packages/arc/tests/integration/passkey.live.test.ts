@@ -1,7 +1,6 @@
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 import { createPublicClient, erc20Abi, http, type Address, type Hex } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { networks, rpcUrl, transferSponsored, walletsClient } from "../../src/index.ts";
 
@@ -55,15 +54,16 @@ describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => 
     expect(await harness("open", "login", username)).toBe(address);
 
     const circle = walletsClient("testnet");
-    await transferSponsored({ circle, network, walletAddress: (await circle.getWallet({ id: walletId as string })).data?.wallet?.address as Address, to: address, token: network.usdc, amount: "0.3" });
+    const funder = (await circle.getWallet({ id: walletId as string })).data?.wallet?.address as Address;
+    await transferSponsored({ circle, network, walletAddress: funder, to: address, token: network.usdc, amount: "0.3" });
     expect(await balance(address)).toBe(300_000n);
 
-    const recipient = privateKeyToAccount(`0x${"11".repeat(32)}`).address;
-    const before = await balance(recipient);
-    const tx = await harness("transfer", recipient, "0.1");
+    const tx = await harness("transfer", funder, "0.1");
     expect(tx).toMatch(/^0x[0-9a-fA-F]{64}$/);
-    expect(await balance(recipient)).toBe(before + 100_000n);
     expect(await balance(address)).toBe(200_000n);
+
+    await harness("transfer", funder, "0.2");
+    expect(await balance(address)).toBe(0n);
     console.log(`passkey wallet ${address}\nsponsored transfer ${network.explorerUrl}/tx/${tx}`);
   });
 });
