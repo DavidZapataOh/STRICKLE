@@ -210,4 +210,24 @@ contract AgentExecutorTest is Test {
         vm.expectRevert(abi.encodeWithSelector(AgentExecutor.UnknownAction.selector, uint8(9)));
         executor.onReport(meta, abi.encode(uint8(9), hex""));
     }
+
+    function test_decodesTheReportTheWorkflowEncoder() public view {
+        bytes memory encoded = vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/split-report.hex")));
+        (uint8 action, bytes memory args) = abi.decode(encoded, (uint8, bytes));
+        assertEq(action, executor.SPLIT());
+        (
+            address fixtureVault,
+            uint8 asset,
+            uint256 seen,
+            uint8[] memory boxes,
+            uint256[] memory amounts,
+            uint64 next,
+        ) = abi.decode(args, (address, uint8, uint256, uint8[], uint256[], uint64, bytes));
+        assertEq(fixtureVault, address(uint160(0xa1)));
+        assertEq(asset, USDC);
+        assertEq(seen, 1_000_000);
+        assertEq(boxes.length, 2);
+        assertEq(amounts[0] + amounts[1], seen);
+        assertEq(next, 1);
+    }
 }
