@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { formatPlainDate, type PlainDate } from "@strickle/core";
+import { validateKind } from "./kinds/index.ts";
 import { RuleError, isCurrent, parseRule, type TaxRule } from "./rule.ts";
 
 /** Reads `<root>/<COUNTRY>/<rule>.json` files; any invalid file, duplicate id or misfiled rule fails the whole load. */
@@ -12,6 +13,7 @@ export function loadRules(root: string): TaxRule[] {
       let rule: TaxRule;
       try {
         rule = parseRule(JSON.parse(readFileSync(join(root, country.name, file), "utf8")));
+        validateKind(rule);
       } catch (error) {
         throw new Error(`${label}: ${error instanceof RuleError ? error.problems.join("; ") : (error as Error).message}`);
       }
