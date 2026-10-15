@@ -138,6 +138,7 @@ jobs:
       - run: npm run circuits:test
       - run: npm run circuits:compile
       - run: npm run test:circuits -w @strickle/pool
+      - run: npm run circuits:verifiers:check
       - run: npm run pool:vectors
       - name: Generated files are up to date
-        run: git diff --exit-code -- packages/pool/vectors circuits contracts/src/pool/PoolZeros.sol
+        run: git diff --exit-code -- packages/pool/vectors circuits contracts/src/pool/PoolZeros.sol contracts/src/pool/verifiers

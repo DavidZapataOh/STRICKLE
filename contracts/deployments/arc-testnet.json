@@ -1,4 +1,41 @@
 {
   "chainId": 5042002,
-  "contracts": {}
+  "contracts": {
+    "ShieldRelationsLib": {
+      "address": "0x5044D3e88e8059E2A0e2e35ca1211a5CEf925a8c",
+      "txHash": "0xb9a853123a6f80642002cd90dcaf25404f124ae0546e0a329ad84e45067356b8",
+      "blockNumber": 67301985,
+      "create2": true
+    },
+    "SpendZKTranscriptLib": {
+      "address": "0x45727a313389032388074EF537A248ec4BC3F38A",
+      "txHash": "0x67e816a7d7ddbe925ce91e2e92ff7dab35c9795addf1e62c34f89db085a936d6",
+      "blockNumber": 67301986,
+      "create2": true
+    },
+    "SpendRelationsLib": {
+      "address": "0x8854d8ea0110e5731cDc043460A485CF699B0Cb5",
+      "txHash": "0x55c2285d147938b335010b47fa2cd7474104c4cad999a16677265df34541bccc",
+      "blockNumber": 67301986,
+      "create2": true
+    },
+    "ShieldZKTranscriptLib": {
+      "address": "0x7C5009BDDD03C0b7926e852BEea247603505d979",
+      "txHash": "0x4074acac68962f74a441d81ab6ba649a0ee130c6b93dc02e3fc60df44069b4e8",
+      "blockNumber": 67301986,
+      "create2": true
+    },
+    "ShieldVerifier": {
+      "address": "0x54Dd7a810331D2dAa02eb1b3403CEDF21013d97b",
+      "txHash": "0xcfa27eda93d3bd9392317d8203db82aa4895b20df5a9e90d89fcccc204349e63",
+      "blockNumber": 67301986,
+      "create2": true
+    },
+    "SpendVerifier": {
+      "address": "0x962EF3Cd8767B47Fe479ff09bb84f55b7CFC4389",
+      "txHash": "0x52726b767eeabb8171cbd5e9d4d5a3628e4dcb27be403734ff0d0a043621e751",
+      "blockNumber": 67301986,
+      "create2": true
+    }
+  }
 }

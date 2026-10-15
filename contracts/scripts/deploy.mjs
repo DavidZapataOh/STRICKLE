@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, dirname, join } from "node:path";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
+import { privateKeyToAddress } from "viem/accounts";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
 
@@ -15,6 +16,19 @@ export function contractPath(name, outDir = join(contractsDir, "out")) {
     if (source) return `${source}:${name}`;
   }
   throw new Error(`no build artifact found for ${name}; run arc-forge build`);
+}
+
+export function libraryArgs(name, manifest, outDir = join(contractsDir, "out")) {
+  const source = contractPath(name, outDir).split(":")[0];
+  const artifact = JSON.parse(readFileSync(join(outDir, basename(source), `${name}.json`), "utf8"));
+  const links = artifact.bytecode?.linkReferences ?? {};
+  return Object.entries(links).flatMap(([file, libraries]) =>
+    Object.keys(libraries).flatMap((library) => {
+      const entry = manifest.contracts[library];
+      if (!entry) throw new Error(`${library} is not in the manifest; deploy it before ${name}`);
+      return ["--libraries", `${file}:${library}:${entry.address}`];
+    }),
+  );
 }
 
 export function recordDeployment({ runFile, manifestFile, chainId }) {
@@ -50,7 +64,9 @@ export function deploy({
 }) {
   if (!process.env.PRIVATE_KEY) throw new Error("PRIVATE_KEY is not set");
 
-  const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--broadcast"];
+  const key = process.env.PRIVATE_KEY.startsWith("0x") ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`;
+  const sender = privateKeyToAddress(key);
+  const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--sender", sender, "--broadcast"];
   execFileSync("arc-forge", args, { cwd: contractsDir, stdio: "inherit" });
 
   const runFile = join(contractsDir, "broadcast", basename(script), String(chainId), "run-latest.json");
@@ -77,6 +93,9 @@ export function deploy({
           `${networks[network].explorerUrl}/api/`,
           "--retries",
           String(verifyRetries),
+          "--delay",
+          "15",
+          ...libraryArgs(contractName, manifest),
         ],
         { cwd: contractsDir, stdio: "inherit" },
       );

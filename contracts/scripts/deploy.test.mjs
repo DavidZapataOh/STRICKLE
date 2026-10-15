@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { contractPath, deploy, recordDeployment } from "./deploy.mjs";
+import { contractPath, deploy, libraryArgs, recordDeployment } from "./deploy.mjs";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
 const PORT = 8561;
@@ -136,4 +136,22 @@ test("recordDeployment ignores transactions without a receipt", () => {
   );
   const manifest = recordDeployment({ runFile, manifestFile: join(dir, "manifest.json"), chainId: 1 });
   assert.deepEqual(manifest.contracts, {});
+});
+
+test("libraryArgs links a verifier to the library addresses recorded in the manifest", () => {
+  forge("build");
+  const manifest = {
+    contracts: {
+      ShieldRelationsLib: { address: "0x00000000000000000000000000000000000000a1" },
+      ShieldZKTranscriptLib: { address: "0x00000000000000000000000000000000000000a2" },
+    },
+  };
+  assert.deepEqual(libraryArgs("ShieldVerifier", manifest), [
+    "--libraries",
+    "src/pool/verifiers/ShieldVerifier.sol:ShieldRelationsLib:0x00000000000000000000000000000000000000a1",
+    "--libraries",
+    "src/pool/verifiers/ShieldVerifier.sol:ShieldZKTranscriptLib:0x00000000000000000000000000000000000000a2",
+  ]);
+  assert.deepEqual(libraryArgs("Probe", manifest), []);
+  assert.throws(() => libraryArgs("ShieldVerifier", { contracts: {} }), /ShieldRelationsLib is not in the manifest/);
 });

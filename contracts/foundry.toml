@@ -7,7 +7,7 @@ libs = ["lib"]
 solc_version = "0.8.36"
 evm_version = "osaka"
 remappings = ["poseidon2-evm/=lib/poseidon2-evm/"]
-fs_permissions = [{ access = "read", path = "../packages/pool/vectors" }]
+fs_permissions = [{ access = "read", path = "../packages/pool/vectors" }, { access = "read", path = "test/fixtures/proofs" }]
 
 [fuzz]
 runs = 1000
@@ -23,3 +23,9 @@ runs = 10000
 [profile.ci.invariant]
 runs = 1024
 depth = 128
+
+[fmt]
+ignore = ["src/pool/verifiers/*.sol"]
+
+[lint]
+ignore = ["src/pool/verifiers/*.sol"]
