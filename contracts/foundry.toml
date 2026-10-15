@@ -23,3 +23,9 @@ runs = 10000
 [profile.ci.invariant]
 runs = 1024
 depth = 128
+
+[fmt]
+ignore = ["src/pool/verifiers/*.sol"]
+
+[lint]
+ignore = ["src/pool/verifiers/*.sol"]
