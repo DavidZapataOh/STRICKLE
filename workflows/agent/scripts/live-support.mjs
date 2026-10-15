@@ -1,5 +1,8 @@
 // workflows/agent/scripts/live-support.mjs
 import { readFileSync } from "node:fs";
+import { formatPlainDate, fromEpochDay } from "@strickle/core";
+import { decryptState, parseMaster } from "../enclave/keys.ts";
+import { decodeProfile } from "../enclave/profile.ts";
 import { createPublicClient, getAddress, http, parseAbi, parseAbiItem } from "viem";
 import { executeSponsored, networks, walletsClient } from "@strickle/arc";
 import { seal } from "@strickle/prover/sealed";
@@ -63,4 +66,22 @@ export async function waitFor(check, what, seconds = 300) {
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }
   throw new Error(`timed out waiting for ${what}`);
+}
+
+export async function salaryOffset(ctx) {
+  let lastDay = "";
+  let lastPaid = "";
+  const state = await readState(ctx);
+  if (state.version > 0n) {
+    const profile = decodeProfile(decryptState(parseMaster(process.env.AGENT_MASTER_VALUE), ctx.vault, state.version, state.ciphertext));
+    lastDay = profile.tick.lastDay;
+    lastPaid = profile.salary.lastPaid;
+  }
+  const epochDay = Math.floor(Date.now() / 86_400_000);
+  for (let offset = 0; offset < 800; offset++) {
+    const today = fromEpochDay(epochDay + offset);
+    const text = formatPlainDate(today);
+    if (today.day === 1 && text > lastDay && text.slice(0, 7) > lastPaid) return { offset, today };
+  }
+  throw new Error("no first of the month found");
 }
