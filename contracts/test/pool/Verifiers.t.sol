@@ -44,7 +44,7 @@ contract VerifiersTest is Test {
 
     function test_SpendProofVerifies() public view {
         (bytes memory proof, bytes32[] memory inputs) = _load("spend");
-        assertEq(inputs.length, 11);
+        assertEq(inputs.length, 13);
         assertTrue(spend.verify(proof, inputs));
     }
 

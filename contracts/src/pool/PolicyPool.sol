@@ -18,7 +18,7 @@ interface IERC20Like {
 contract PolicyPool is PoolTree, NullifierSet {
     uint256 public constant MAX_PROOF_AGE = 600;
     uint256 public constant MAX_CIPHERTEXT = 2048;
-    uint256 private constant SPEND_INPUTS = 11;
+    uint256 private constant SPEND_INPUTS = 13;
     uint256 private constant SHIELD_INPUTS = 4;
 
     struct Caps {
@@ -47,6 +47,7 @@ contract PolicyPool is PoolTree, NullifierSet {
         uint8 asset;
         uint64 timestamp;
         uint256 associationRoot;
+        uint256[2] enc;
     }
 
     error InvalidProof();
@@ -69,6 +70,7 @@ contract PolicyPool is PoolTree, NullifierSet {
 
     event NotesInserted(uint32 indexed index, uint256 commitment0, uint256 commitment1, bytes ciphertext);
     event Shielded(address indexed depositor, uint8 indexed asset, uint256 amount, uint256 label);
+    event Delivery(uint32 indexed index, uint256 nullifier0, uint256 enc0, uint256 enc1);
     event Spent(
         uint256 nullifier0, uint256 nullifier1, uint8 indexed asset, uint64 publicAmount, address indexed recipient
     );
@@ -155,12 +157,15 @@ contract PolicyPool is PoolTree, NullifierSet {
         address recipient = _recipient(p);
         _checkField(p.nullifiers[0]);
         _checkField(p.nullifiers[1]);
+        _checkField(p.enc[0]);
+        _checkField(p.enc[1]);
 
         _verify(spendVerifier, proof, _spendInputs(p, ciphertext));
 
         _spendPair(p.nullifiers[0], p.nullifiers[1]);
         (index,) = _insertPair(p.commitments[0], p.commitments[1]);
         emit NotesInserted(index, p.commitments[0], p.commitments[1], ciphertext);
+        emit Delivery(index, p.nullifiers[0], p.enc[0], p.enc[1]);
         emit Spent(p.nullifiers[0], p.nullifiers[1], p.asset, p.publicAmount, recipient);
 
         if (p.publicAmount != 0) {
@@ -281,6 +286,8 @@ contract PolicyPool is PoolTree, NullifierSet {
                 % 21888242871839275222246405745257275088548364400416034343698204186575808495617
         );
         inputs[10] = bytes32(p.associationRoot);
+        inputs[11] = bytes32(p.enc[0]);
+        inputs[12] = bytes32(p.enc[1]);
     }
 
     function _token(uint8 asset) private view returns (IERC20Like) {

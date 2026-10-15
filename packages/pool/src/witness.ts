@@ -1,6 +1,7 @@
 import type { Asset } from "@strickle/core";
 import type { InputMap } from "@noir-lang/noir_js";
 import { ALLOWLIST_DEPTH, ASSET_ID, ASSOCIATION_DEPTH, DOMAIN, TEMPLATE_DEPTH, TREE_DEPTH, boxId } from "./constants.ts";
+import { deliveryKey, deliverySalt, encryptDelivery, packDelivery } from "./delivery.ts";
 import { randomField, toHex32 } from "./field.ts";
 import { authHash, nullifierKey } from "./keys.ts";
 import type { MerkleTree } from "./merkle.ts";
@@ -97,26 +98,29 @@ export function buildShieldInputs(args: { note: Note; label?: bigint }): { input
   };
 }
 
-export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInputs: bigint[] } {
+export function withDummies(spec: SpendSpec): SpendSpec {
+  return {
+    ...spec,
+    dummyNk: spec.dummyNk ?? [randomField(), randomField()],
+    dummySalt: spec.dummySalt ?? [randomField(), randomField()],
+  };
+}
+
+function signerKeys(signer: Signer): { nk: bigint; auth: bigint; secret: bigint } {
+  return signer.kind === "user"
+    ? { nk: nullifierKey(signer.sk), auth: authHash(signer.sk), secret: signer.sk }
+    : { nk: signer.nk, auth: signer.authHash, secret: signer.ak };
+}
+
+function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }) {
   const asset = spec.asset ?? "USDC";
-  const now = spec.now ?? 1_800_000_000n;
-  const publicAmount = spec.publicAmount ?? 0n;
-  const recipient = spec.recipient ?? 0n;
-  const ciphertextHash = spec.ciphertextHash ?? 0n;
-  const dummyNk = spec.dummyNk ?? [randomField(), randomField()];
-  const dummySalt = spec.dummySalt ?? [randomField(), randomField()];
-
   const real = spec.inputs.find((input) => input !== null);
-  const signer = spec.signer;
-  const signerNk = signer.kind === "user" ? nullifierKey(signer.sk) : signer.nk;
-  const signerAuth = signer.kind === "user" ? authHash(signer.sk) : signer.authHash;
-  const secret = signer.kind === "user" ? signer.sk : signer.ak;
-
-  const inputNotes = spec.inputs.map((input, slot) => {
+  const { nk } = signerKeys(spec.signer);
+  return spec.inputs.map((input, slot) => {
     if (input) {
       const commitment = noteCommitment(input.note);
       return {
-        nullifier: noteNullifier(signerNk, commitment, input.leafIndex),
+        nullifier: noteNullifier(nk, commitment, input.leafIndex),
         circuit: {
           note: noteToInputs(input.note),
           policy: policyToInputs(input.policy),
@@ -135,10 +139,10 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       asset,
       flags: 0,
       lockUntil: 0n,
-      salt: dummySalt[slot] ?? 0n,
+      salt: spec.dummySalt[slot] ?? 0n,
     };
     return {
-      nullifier: noteNullifier(dummyNk[slot] ?? 0n, noteCommitment(dummyNote), 0),
+      nullifier: noteNullifier(spec.dummyNk[slot] ?? 0n, noteCommitment(dummyNote), 0),
       circuit: {
         note: noteToInputs(dummyNote),
         policy: policyToInputs(ZERO_POLICY),
@@ -148,19 +152,54 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       },
     };
   });
+}
 
-  const outputs = spec.outputs.map((output) => ({
-    commitment: noteCommitment(output.note),
+function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
+  const real = spec.inputs.find((input) => input !== null);
+  const { nk } = signerKeys(spec.signer);
+  return spec.outputs.map((output, j) => {
+    const isSelf = output.note.amount > 0n && real !== undefined && output.note.ownerPk === real.note.ownerPk;
+    if (!isSelf) return { output, note: output.note, enc: 0n };
+    const key = deliveryKey(nk, nullifier0, j);
+    const note: Note = { ...output.note, salt: deliverySalt(key) };
+    return { output, note, enc: encryptDelivery(packDelivery(note), key) };
+  });
+}
+
+/** The notes a spend will actually commit and their delivery values; call `withDummies` first so the answer is stable. */
+export function deriveOutputNotes(spec: SpendSpec): { notes: Note[]; enc: bigint[]; nullifiers: bigint[] } {
+  if (!spec.dummyNk || !spec.dummySalt) throw new Error("call withDummies(spec) first");
+  const nullifiers = inputSlots(spec as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }).map((slot) => slot.nullifier);
+  const finals = finalOutputs(spec, nullifiers[0] as bigint);
+  return { notes: finals.map((final) => final.note), enc: finals.map((final) => final.enc), nullifiers };
+}
+
+export function buildSpendInputs(input: SpendSpec): { inputs: InputMap; publicInputs: bigint[]; outputNotes: Note[] } {
+  const spec = withDummies(input) as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] };
+  const asset = spec.asset ?? "USDC";
+  const now = spec.now ?? 1_800_000_000n;
+  const publicAmount = spec.publicAmount ?? 0n;
+  const recipient = spec.recipient ?? 0n;
+  const ciphertextHash = spec.ciphertextHash ?? 0n;
+  const dummyNk = spec.dummyNk;
+  const { nk: signerNk, auth: signerAuth, secret } = signerKeys(spec.signer);
+  const signer = spec.signer;
+
+  const inputNotes = inputSlots(spec);
+  const nullifiers = inputNotes.map((slot) => slot.nullifier);
+  const finals = finalOutputs(spec, nullifiers[0] as bigint);
+  const outputs = finals.map(({ output, note }) => ({
+    commitment: noteCommitment(note),
     circuit: {
-      note: noteToInputs(output.note),
+      note: noteToInputs(note),
       template_index: (output.template?.index ?? 0).toString(),
       template_path: (output.template ? output.template.tree.path(output.template.index) : zeros(TEMPLATE_DEPTH)).map(toHex32),
     },
   }));
+  const enc = finals.map((final) => final.enc);
 
   const allowlistPath = spec.allowlist ? spec.allowlist.tree.path(spec.allowlist.index) : zeros(ALLOWLIST_DEPTH);
   const associationPath = spec.association ? spec.association.tree.path(spec.association.index) : zeros(ASSOCIATION_DEPTH);
-  const nullifiers = inputNotes.map((input) => input.nullifier);
   const commitments = outputs.map((output) => output.commitment);
   const associationRoot = spec.association ? spec.association.tree.root : 0n;
 
@@ -175,6 +214,7 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       now: now.toString(),
       ciphertext_hash: toHex32(ciphertextHash),
       association_root: toHex32(associationRoot),
+      enc: enc.map(toHex32),
       inputs: inputNotes.map((input) => input.circuit),
       outputs: outputs.map((output) => output.circuit),
       signer_kind: signer.kind === "user" ? 0 : 1,
@@ -187,6 +227,7 @@ export function buildSpendInputs(spec: SpendSpec): { inputs: InputMap; publicInp
       association_index: (spec.association?.index ?? 0).toString(),
       association_path: associationPath.map(toHex32),
     },
-    publicInputs: [spec.tree.root, ...nullifiers, ...commitments, publicAmount, recipient, BigInt(ASSET_ID[asset]), now, ciphertextHash, associationRoot],
+    publicInputs: [spec.tree.root, ...nullifiers, ...commitments, publicAmount, recipient, BigInt(ASSET_ID[asset]), now, ciphertextHash, associationRoot, ...enc],
+    outputNotes: finals.map((final) => final.note),
   };
 }

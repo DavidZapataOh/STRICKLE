@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@aztec/bb.js": "5.0.1",
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
     "@noir-lang/noir_js": "1.0.0-rc.3",
     "@strickle/arc": "*",
     "@strickle/core": "*",

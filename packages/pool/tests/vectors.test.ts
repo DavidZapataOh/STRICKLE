@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { toHex32 } from "../src/field.ts";
+import { deliveryKey, deliveryPad, deliverySalt, encryptDelivery, packDelivery } from "../src/delivery.ts";
 import { agentKeyHash, authHash, nullifierKey, ownerPk } from "../src/keys.ts";
 import { MerkleTree } from "../src/merkle.ts";
 import { type Note, noteCommitment, noteNullifier, packMeta } from "../src/note.ts";
@@ -75,6 +76,15 @@ describe("generated vectors", () => {
       expect(noteCommitment(note)).toBe(big(n.commitment));
     }
     for (const n of v.nullifiers) expect(noteNullifier(big(n.nk), big(n.commitment), n.leafIndex)).toBe(big(n.nullifier));
+    for (const d of v.delivery) {
+      const key = deliveryKey(big(d.nk), big(d.nullifier0), d.index);
+      expect(key).toBe(big(d.key));
+      expect(deliverySalt(key)).toBe(big(d.salt));
+      expect(deliveryPad(key)).toBe(big(d.pad));
+      const packed = packDelivery({ amount: BigInt(d.amount), flags: d.flags, lockUntil: BigInt(d.lockUntil) });
+      expect(packed).toBe(big(d.packed));
+      expect(encryptDelivery(packed, key)).toBe(big(d.enc));
+    }
   });
   it("includes Merkle vectors that rebuild their roots", () => {
     const { merkle } = buildVectors();

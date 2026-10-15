@@ -1,3 +1,4 @@
+use pool_lib::delivery::{delivery_key, delivery_pad, delivery_salt, pack_delivery};
 use pool_lib::constants::{ALLOWLIST_DEPTH, ASSOCIATION_DEPTH, DOM_RECIPIENT, TEMPLATE_DEPTH, TREE_DEPTH};
 use pool_lib::keys::{agent_key_hash, auth_hash, nullifier_key, owner_pk_from};
 use pool_lib::merkle::compute_root;
@@ -39,6 +40,7 @@ fn main(
     now: pub u64,
     ciphertext_hash: pub Field,
     association_root: pub Field,
+    enc: pub [Field; 2],
     inputs: [InputNote; 2],
     outputs: [OutputNote; 2],
     signer_kind: u8,
@@ -186,4 +188,15 @@ fn main(
         !((association_root != 0) & (public_amount != 0)) | ((common != 0) & !mixed & association_member),
         "the label is not in the association set",
     );
+
+    // --- rules: self delivery ---
+    for j in 0..2 {
+        let out = outputs[j].note;
+        let is_self = (out.amount != 0) & (out.owner_pk == base_note.owner_pk);
+        let key = delivery_key(owner_nk, nullifiers[0], j as u8);
+        let expected = pack_delivery(out.amount, out.flags, out.lock_until) + delivery_pad(key);
+        assert(!is_self | (out.salt == delivery_salt(key)), "a self output must use the derived salt");
+        assert(!is_self | (enc[j] == expected), "wrong delivery ciphertext");
+        assert(is_self | (enc[j] == 0), "only self outputs carry a delivery ciphertext");
+    }
 }
