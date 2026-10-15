@@ -33,11 +33,21 @@ if (days > 0) {
   const windowSeconds = days * 86_400;
   const transfers: Transfer[] = [];
   const transferEvent = parseAbi(["event Transfer(address indexed from, address indexed to, uint256 value)"])[0];
-  const step = 5_000n;
+  const step = 2_000n;
   const blockSeconds = 1; // Arc finalises in under a second; the window is converted conservatively
   const from = head.number > BigInt(windowSeconds / blockSeconds) ? head.number - BigInt(windowSeconds / blockSeconds) : 0n;
   for (let start = from; start <= head.number; start += step) {
-    const logs = await publicClient.getLogs({ address: usdc, event: transferEvent, fromBlock: start, toBlock: start + step - 1n < head.number ? start + step - 1n : head.number });
+    const toBlock = start + step - 1n < head.number ? start + step - 1n : head.number;
+    let logs: Awaited<ReturnType<typeof publicClient.getLogs<typeof transferEvent>>> = [];
+    for (let attempt = 1; ; attempt++) {
+      try {
+        logs = await publicClient.getLogs({ address: usdc, event: transferEvent, fromBlock: start, toBlock });
+        break;
+      } catch (error) {
+        if (attempt === 4) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1_000 * attempt));
+      }
+    }
     const timestamps = new Map<bigint, number>();
     for (const log of logs) {
       if (!timestamps.has(log.blockNumber)) timestamps.set(log.blockNumber, Number((await publicClient.getBlock({ blockNumber: log.blockNumber })).timestamp));

@@ -7,6 +7,8 @@ export const screeningAbi = parseAbi([
   "function ttl() view returns (uint64)",
 ]);
 
+const READ_CONCURRENCY = 8;
+
 const canonical = (value: unknown): unknown =>
   Array.isArray(value)
     ? value.map(canonical)
@@ -44,8 +46,9 @@ export async function syncScreening<C extends Chain | undefined>(args: SyncArgs<
 
   const entries = [...desired.entries()];
   const pending: [Address, 0 | 1 | 2][] = [];
-  for (let i = 0; i < entries.length; i += 50) {
-    const slice = entries.slice(i, i + 50);
+  // Public RPC endpoints rate-limit bursts, so records are read a few at a time.
+  for (let i = 0; i < entries.length; i += READ_CONCURRENCY) {
+    const slice = entries.slice(i, i + READ_CONCURRENCY);
     const records = await Promise.all(slice.map(([address]) => publicClient.readContract({ address: registry, abi: screeningAbi, functionName: "recordOf", args: [address] })));
     slice.forEach(([address, risk], j) => {
       const [currentRisk, screenedAt] = records[j] as readonly [number, bigint, Hex];
