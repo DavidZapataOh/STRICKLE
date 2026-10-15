@@ -30,4 +30,11 @@ describe("enclave sources", () => {
     expect(handler).toMatch(/MAX_PER_RUN\s*=\s*5/);
     expect(handler).toContain("catch");
   });
+
+  it("the daily handler caps the work per run, picks the least recently updated vaults and skips instead of failing a run", () => {
+    const handler = readFileSync(new URL("tick-handler.ts", dir), "utf8");
+    expect(handler).toMatch(/MAX_PER_RUN\s*=\s*5/);
+    expect(handler).toMatch(/sort\(/);
+    expect(handler).toContain("catch");
+  });
 });

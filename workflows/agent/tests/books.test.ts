@@ -1,7 +1,21 @@
 // workflows/agent/tests/books.test.ts
 import { describe, expect, it } from "vitest";
 import { type Hex, encodeAbiParameters, encodeFunctionData, encodeFunctionResult, getAddress, keccak256, parseAbi, toBytes } from "viem";
-import { booksRequests, decodeBooks, decodePending, decodeStateLog, onePerVault, pendingRequest, stateLogRequest } from "../enclave/books.ts";
+import {
+  booksRequests,
+  decodeBooks,
+  decodeDelegated,
+  decodeHead,
+  decodePending,
+  decodeStateLog,
+  decodeTickBooks,
+  delegatedRequest,
+  headRequest,
+  onePerVault,
+  pendingRequest,
+  stateLogRequest,
+  tickRequests,
+} from "../enclave/books.ts";
 
 const executor = "0x00000000000000000000000000000000000000dd";
 const state = "0x00000000000000000000000000000000000000cc";
@@ -68,5 +82,44 @@ describe("state log", () => {
 
   it("refuses when the head block has no matching log", () => {
     expect(() => decodeStateLog([])).toThrow(/^no log$/);
+  });
+});
+
+describe("tick reads", () => {
+  const vaultAbi = parseAbi([
+    "function boxBalance(uint8 asset, uint8 box) view returns (uint256)",
+    "function invested(uint8 asset, uint8 box) view returns (uint256)",
+    "function unallocated(uint8 asset) view returns (uint256)",
+  ]);
+  const executorAbi = parseAbi(["function delegated(uint256 seed, uint256 maxHits) view returns (address[])"]);
+
+  it("lists the delegated vaults", () => {
+    expect(delegatedRequest(executor, 7, 10)).toMatchObject({ method: "eth_call", params: [{ to: executor }, "latest"] });
+    expect(decodeDelegated(encodeFunctionResult({ abi: executorAbi, functionName: "delegated", result: [vault] }))).toEqual([vault]);
+  });
+
+  it("reads the head of a vault's state", () => {
+    expect(headRequest(state, vault)).toMatchObject({ method: "eth_call", params: [{ to: state }, "latest"] });
+    expect(decodeHead(encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] }))).toEqual({ version: 3n, at: 90n, applied: 2n });
+  });
+
+  it("asks for the head, six balances, six invested amounts and the unallocated amount in USDC", () => {
+    const requests = tickRequests(state, vault);
+    expect(requests).toHaveLength(14); // plan 04 adds the notice count as a 15th request and updates this case
+    const data = requests.slice(1).map((request) => (request.params[0] as { data: Hex }).data);
+    expect(data.slice(0, 6)).toEqual([1, 2, 3, 4, 5, 6].map((box) => encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [1, box] })));
+    expect(data.slice(6, 12)).toEqual([1, 2, 3, 4, 5, 6].map((box) => encodeFunctionData({ abi: vaultAbi, functionName: "invested", args: [1, box] })));
+    expect(data[12]).toBe(encodeFunctionData({ abi: vaultAbi, functionName: "unallocated", args: [1] }));
+  });
+
+  it("decodes the answers into the planner's books", () => {
+    const head = encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] });
+    const word = (value: bigint) => encodeFunctionResult({ abi: vaultAbi, functionName: "boxBalance", result: value });
+    const answers = [head, ...[1n, 2n, 3n, 4n, 5n, 6n].map(word), ...[0n, 0n, 0n, 9n, 0n, 0n].map(word), word(77n)];
+    const decoded = decodeTickBooks(answers);
+    expect(decoded).toMatchObject({ version: 3n, at: 90n, applied: 2n });
+    expect(decoded.books.boxes).toEqual({ taxes: 1n, payroll: 2n, salary: 3n, operating: 4n, emergency: 5n, profit: 6n });
+    expect(decoded.books.invested.operating).toBe(9n);
+    expect(decoded.books.unallocated).toBe(77n);
   });
 });

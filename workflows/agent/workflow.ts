@@ -18,6 +18,7 @@ import { decodeFunctionResult, encodeFunctionData, getAddress, keccak256, toByte
 import { type Config, configSchema } from "./config.ts";
 import { onDepositPoll } from "./enclave/deposit-handler.ts";
 import { onProfileSubmitted } from "./enclave/profile-handler.ts";
+import { onDailyTick } from "./enclave/tick-handler.ts";
 import { encodeTick, factoryAbi } from "./tick.ts";
 
 const onCron = (runtime: Runtime<Config>): string => {
@@ -56,7 +57,7 @@ const onCron = (runtime: Runtime<Config>): string => {
   return bytesToHex(written.txHash ?? new Uint8Array(32));
 };
 
-export const HANDLER_NAMES = ["heartbeat", "profile", "deposits"] as const;
+export const HANDLER_NAMES = ["heartbeat", "profile", "deposits", "daily"] as const;
 
 export const initWorkflow = (config: Config) => {
   const cron = new CronCapability();
@@ -74,6 +75,7 @@ export const initWorkflow = (config: Config) => {
       {},
     ),
     handlerInTee(cron.trigger({ schedule: "0 * * * * *" }), onDepositPoll, {}),
+    handlerInTee(cron.trigger({ schedule: config.dailySchedule }), onDailyTick, {}),
   ];
 };
 
