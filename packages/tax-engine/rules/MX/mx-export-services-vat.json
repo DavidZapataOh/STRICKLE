@@ -1,0 +1,37 @@
+{
+  "id": "mx-export-services-vat",
+  "country": "MX",
+  "regime": "IVA tasa 0% por exportación de servicios",
+  "kind": "eligibility-conditions",
+  "version": "2026.1",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "Ley del Impuesto al Valor Agregado, art. 29 (Orden Jurídico Nacional, texto vigente, última reforma DOF 12-11-2021); Reglamento de la LIVA, arts. 58 y 61 (https://www.gob.mx/cms/uploads/attachment/file/136558/reg_ley_isr_iva.pdf)",
+    "url": "https://www.ordenjuridico.gob.mx/Documentos/Federal/pdf/wo22.pdf",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "regime": "export-services-vat-zero",
+    "benefit": "0% VAT on services exported by a Mexican resident (LIVA art. 29)",
+    "safePath": "bank-and-mirror-mode",
+    "note": "Reglamento art. 58 is a deeming rule (\"entre otros supuestos\"), so another way to prove the service is used abroad may exist; collecting in USDC leaves the safe harbour rather than proving the 0% rate is lost. The LIVA text is the 2021 consolidated version and the Reglamento is the 2006 original; later reforms and SAT general rules were not checked.",
+    "conditions": [
+      {
+        "id": "payment-route-for-services-used-abroad",
+        "description": "A service sold to a foreign client is treated as used abroad, and so taxed at 0%, when the foreign client without an establishment in Mexico contracts and pays it by named check or funds transfer into the provider's account at a Mexican credit institution or brokerage, and the money comes from an account at a foreign financial institution. A stablecoin transfer is neither.",
+        "basis": "Reglamento de la LIVA art. 58, second paragraph: \"siempre que se paguen mediante cheque nominativo o transferencia de fondos a las cuentas del prestador del servicio en instituciones de crédito o casas de bolsa y el pago provenga de cuentas de instituciones financieras ubicadas en el extranjero\"; art. 61 applies it to independent personal services; LIVA art. 29, last paragraph.",
+        "satisfiedBy": ["bank"],
+        "violatedBy": ["stablecoin"]
+      },
+      {
+        "id": "it-services-paid-to-mexican-bank-account",
+        "description": "For IT services (application development and maintenance, data processing and storage, hosting, information security), the payment must be made electronically from a foreign financial institution's account into the provider's account at a credit institution in Mexico.",
+        "basis": "LIVA art. 29, fracción IV, inciso i), requirement 4: \"Que el pago se realice a través de medios electrónicos y provenga de cuentas de instituciones financieras ubicadas en el extranjero, mismo que deberá realizarse a una cuenta del prestador del servicio en instituciones de crédito en México.\"",
+        "satisfiedBy": ["bank"],
+        "violatedBy": ["stablecoin"]
+      }
+    ]
+  }
+}

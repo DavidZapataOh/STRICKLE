@@ -9,13 +9,20 @@ const rule = (id: string, country = "MX") => ({
   id,
   country,
   regime: "RESICO",
-  kind: "monthly-income-tax",
+  kind: "resico-monthly",
   version: "2026.1",
   validFrom: "2026-01-01",
   validTo: "2026-12-31",
   source: { title: "SAT", url: "https://www.sat.gob.mx/", retrievedOn: "2026-10-01" },
   verification: "unverified",
-  params: {},
+  params: {
+    currency: "MXN",
+    brackets: [{ upTo: "25000.00", rateBps: 100 }],
+    annualCap: "3500000.00",
+    dueDay: 17,
+    withholdingRateBps: 125,
+    vatRateBps: 1600,
+  },
 });
 
 function tree(files: Record<string, unknown>): string {

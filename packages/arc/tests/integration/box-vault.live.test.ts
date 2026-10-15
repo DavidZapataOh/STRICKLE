@@ -21,6 +21,8 @@ const vaultAbi = parseAbi([
   "function nextProposalId() view returns (uint256)",
   "function boxBalance(uint8 asset, uint8 box) view returns (uint256)",
   "function unallocated(uint8 asset) view returns (uint256)",
+  "function allocate(uint8 asset, uint8[] boxes, uint256[] amounts)",
+  "function withdraw(uint8 asset, uint8 box, uint256 amount, address to)",
 ]);
 const OPERATING = 4;
 const PROFIT = 6;
@@ -57,6 +59,18 @@ describe.skipIf((!process.env.CIRCLE_API_KEY_TESTNET && !process.env.REQUIRE_CIR
       vault = (await publicClient.readContract({ address: factory, abi: factoryAbi, functionName: "vaultOf", args: [owner] })) as Address;
     }
     expect(vault).not.toMatch(/^0x0+$/);
+
+    // a run cancelled midway leaves its USDC in the vault; start from empty
+    const read = (functionName: "boxBalance" | "unallocated", args: readonly unknown[]) => publicClient.readContract({ address: vault, abi: vaultAbi, functionName, args } as never) as Promise<bigint>;
+    const returnFunds = async () => {
+      const idle = await read("unallocated", [USDC]);
+      if (idle > 0n) fees.push((await call(ownerWalletId(), vault, vaultAbi, "allocate", [USDC, [PROFIT], [idle]])).feePaid);
+      for (const box of [OPERATING, PROFIT]) {
+        const balance = await read("boxBalance", [USDC, box]);
+        if (balance > 0n) fees.push((await call(ownerWalletId(), vault, vaultAbi, "withdraw", [USDC, box, balance, owner])).feePaid);
+      }
+    };
+    await returnFunds();
 
     const ownerBefore = await publicClient.getBalance({ address: owner });
     const agentBefore = await publicClient.getBalance({ address: agent });
@@ -99,6 +113,11 @@ describe.skipIf((!process.env.CIRCLE_API_KEY_TESTNET && !process.env.REQUIRE_CIR
     const agentAfter = await publicClient.getBalance({ address: agent });
     expect(ownerBefore - ownerAfter).toBe(parseUnits("1", 18));
     expect(agentAfter).toBe(agentBefore);
+
+    await returnFunds();
+    expect(await read("boxBalance", [USDC, OPERATING])).toBe(0n);
+    expect(await read("boxBalance", [USDC, PROFIT])).toBe(0n);
+    expect(await publicClient.getBalance({ address: owner })).toBe(ownerBefore);
 
     const sponsored = fees.reduce((sum, fee) => sum + fee, 0n);
     expect(sponsored).toBeGreaterThan(0n);

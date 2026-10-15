@@ -1,0 +1,37 @@
+{
+  "id": "br-export-services",
+  "country": "BR",
+  "regime": "Exportação de serviços (não incidência de PIS/COFINS)",
+  "kind": "eligibility-conditions",
+  "version": "2026.1",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "source": {
+    "title": "Lei 14.286/2021 art. 3 and Resolução BCB 277/2022 (text via the ANTT legal database, a federal agency mirror; Resolução BCB 277 at https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00000277&seqAto=000&valorAno=2022&orgao=DC%2FBACEN&cod_modulo=419&cod_menu=7157); Lei 10.833/2003 art. 6 II as quoted in CARF acórdão 3202-002.930 (https://acordaos.economia.gov.br/acordaos2/pdfs/processados/10880970827201643_7300035.pdf)",
+    "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=LEI&numeroAto=00014286&seqAto=000&valorAno=2021&orgao=NI&cod_modulo=420&cod_menu=7145",
+    "retrievedOn": "2026-10-15"
+  },
+  "verification": "unverified",
+  "params": {
+    "regime": "export-services-pis-cofins-exemption",
+    "benefit": "PIS/COFINS non-incidence on services provided to a client abroad",
+    "safePath": "bank-and-mirror-mode",
+    "note": "Resolução BCB 277 art. 2 makes the form of an exchange operation free, so a specific contract form is not mandatory; the proof is that the foreign currency came in through an exchange operation with an authorised institution. Whether receiving USDC in a self-custodied wallet is itself an exchange operation was not established. ISS (LC 116/2003 art. 2, I) and IOF on the exchange were not opened and are not asserted. The PIS/COFINS statute text is taken from an official CARF decision quoting it; planalto.gov.br and normativos.bcb.gov.br could not be opened.",
+    "conditions": [
+      {
+        "id": "payment-represents-foreign-currency-inflow",
+        "description": "PIS/COFINS do not apply to services for a client resident abroad only if the payment represents an inflow of foreign currency into Brazil, which the tax authority expects to see proven through the exchange operations (contratos de câmbio) that closed it. Money received as USDC leaves no exchange operation to show.",
+        "basis": "Lei 10.833/2003 art. 6, II (same wording in Lei 10.637/2002 art. 5, II): \"prestação de serviços para pessoa física ou jurídica residente ou domiciliada no exterior, cujo pagamento represente ingresso de divisas\"; CARF acórdão 3202-002.930 (17-09-2025): the non-incidence \"está condicionada à comprovação do efetivo ingresso de divisas no país na forma da legislação monetária e cambial de regência\".",
+        "satisfiedBy": ["bank"],
+        "violatedBy": ["stablecoin"]
+      },
+      {
+        "id": "exchange-through-authorised-institution",
+        "description": "Foreign-exchange operations may only be carried out through institutions authorised by the Central Bank. Converting foreign payments into reais, and international payments or transfers made with virtual assets, fall under these rules, so a bank or authorised provider has to be in the path.",
+        "basis": "Lei 14.286/2021 art. 3: \"As operações no mercado de câmbio podem ser realizadas somente por meio de instituições autorizadas a operar nesse mercado\"; Resolução BCB 277/2022 art. 76-A, I (\"pagamento ou transferência internacional com ativos virtuais\").",
+        "satisfiedBy": ["bank"],
+        "violatedBy": ["stablecoin"]
+      }
+    ]
+  }
+}

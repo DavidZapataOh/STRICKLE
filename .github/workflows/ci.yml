@@ -56,6 +56,10 @@ jobs:
   arc-live:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    # The live tests share testnet wallets and assert exact balances: one run at a time.
+    concurrency:
+      group: arc-live-testnet
+      cancel-in-progress: false
     env:
       CIRCLE_API_KEY_TESTNET: ${{ secrets.CIRCLE_API_KEY_TESTNET }}
       CIRCLE_ENTITY_SECRET_TESTNET: ${{ secrets.CIRCLE_ENTITY_SECRET_TESTNET }}
@@ -63,6 +67,7 @@ jobs:
       CIRCLE_GAS_STATION_EOA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_EOA_WALLET_ID }}
       CIRCLE_AGENT_SCA_WALLET_ID: ${{ secrets.CIRCLE_AGENT_SCA_WALLET_ID }}
       CIRCLE_CLIENT_KEY_TESTNET: ${{ secrets.CIRCLE_CLIENT_KEY_TESTNET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       REQUIRE_CIRCLE: "1"
     steps:
       - uses: actions/checkout@v7
@@ -73,6 +78,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:integration -w @strickle/arc
+      - run: npm run test:live -w @strickle/tax-engine
+      - run: npm run test:live -w @strickle/llm
 
   db:
     runs-on: ubuntu-latest
