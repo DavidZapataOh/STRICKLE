@@ -67,6 +67,7 @@ jobs:
       CIRCLE_GAS_STATION_EOA_WALLET_ID: ${{ secrets.CIRCLE_GAS_STATION_EOA_WALLET_ID }}
       CIRCLE_AGENT_SCA_WALLET_ID: ${{ secrets.CIRCLE_AGENT_SCA_WALLET_ID }}
       CIRCLE_CLIENT_KEY_TESTNET: ${{ secrets.CIRCLE_CLIENT_KEY_TESTNET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       REQUIRE_CIRCLE: "1"
     steps:
       - uses: actions/checkout@v7
@@ -78,6 +79,7 @@ jobs:
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:integration -w @strickle/arc
       - run: npm run test:live -w @strickle/tax-engine
+      - run: npm run test:live -w @strickle/llm
 
   db:
     runs-on: ubuntu-latest

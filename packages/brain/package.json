@@ -3,14 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@strickle/core": "*"
+    "@strickle/core": "*",
+    "@noble/hashes": "2.4.0"
   },
   "devDependencies": {
     "fast-check": "^4.10.2",
