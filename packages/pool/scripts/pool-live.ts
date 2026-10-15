@@ -12,7 +12,7 @@ import { type Note, noteCommitment } from "../src/note.ts";
 import { FREE_POLICY, type Policy, policyHash } from "../src/policy.ts";
 import { addressToField, ciphertextHash, shieldLabel } from "../src/pool-client.ts";
 import { closeProver, executeCircuit, proveShield, proveSpend } from "../src/prove.ts";
-import { type InputSpec, type SpendSpec, buildSpendInputs, recipientLeaf } from "../src/witness.ts";
+import { type SpendSpec, buildSpendInputs, recipientLeaf } from "../src/witness.ts";
 
 const network = "testnet";
 const USDC = 1_000_000n;
@@ -117,29 +117,30 @@ async function main(): Promise<void> {
     const ciphertext = filler(name);
     const full: SpendSpec = { ...spec, tree: ledger.tree, signer: { kind: "user", sk }, now: await stepNow(), ciphertextHash: ciphertextHash(ciphertext) };
     console.log(`proving ${name}...`);
-    const { proof, publicInputs } = await proveSpend(full);
-    const [root, n0_, n1_, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot] = publicInputs as [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
+    const { proof, publicInputs, outputNotes } = await proveSpend(full);
+    const [root, nf0, nf1, c0, c1, publicAmount, recipient, asset, timestamp, , associationRoot, enc0, enc1] = publicInputs as [
+      bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint,
+    ];
     const receipt = await send(name, {
       address: pool,
       abi: poolAbi,
       functionName: "spend",
-      args: [proof, { root, nullifiers: [n0_, n1_], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot }, ciphertext],
+      args: [proof, { root, nullifiers: [nf0, nf1], commitments: [c0, c1], publicAmount, recipient, asset, timestamp, associationRoot, enc: [enc0, enc1] }, ciphertext],
     });
-    return absorb(receipt);
+    return { index: absorb(receipt), notes: outputNotes };
   };
 
-  const n1 = make(600_000n, "payroll", payroll);
-  const n2 = make(400_000n, "operating", FREE_POLICY);
   const split = await spend("split into payroll and operating", {
     inputs: [{ note: n0, policy: FREE_POLICY, leafIndex: shieldIndex }, null],
-    outputs: [{ note: n1 }, { note: n2 }],
+    outputs: [{ note: make(600_000n, "payroll", payroll) }, { note: make(400_000n, "operating", FREE_POLICY) }],
   });
+  const [payrollNote, operatingNote] = split.notes as [Note, Note];
 
   const strangerSpec: SpendSpec = {
     tree: ledger.tree,
     signer: { kind: "user", sk },
     now: await stepNow(),
-    inputs: [{ note: n1, policy: payroll, leafIndex: split }, null],
+    inputs: [{ note: payrollNote, policy: payroll, leafIndex: split.index }, null],
     outputs: [{ note: filler0() }, { note: filler0() }],
     publicAmount: 600_000n,
     recipient: addressToField("0x000000000000000000000000000000000000dEaD"),
@@ -152,16 +153,15 @@ async function main(): Promise<void> {
     () => console.log("rule check: the payroll box cannot pay an address outside its allowlist (no proof exists)"),
   );
 
-  const inputPayroll: InputSpec = { note: n1, policy: payroll, leafIndex: split };
   await spend("pay the approved payee from payroll", {
-    inputs: [inputPayroll, null],
+    inputs: [{ note: payrollNote, policy: payroll, leafIndex: split.index }, null],
     outputs: [{ note: filler0() }, { note: filler0() }],
     publicAmount: 600_000n,
     recipient: addressToField(payee),
     allowlist: { tree: allowlist, index: 0 },
   });
   await spend("pay out the operating box", {
-    inputs: [{ note: n2, policy: FREE_POLICY, leafIndex: split + 1 }, null],
+    inputs: [{ note: operatingNote, policy: FREE_POLICY, leafIndex: split.index + 1 }, null],
     outputs: [{ note: filler0() }, { note: filler0() }],
     publicAmount: 400_000n,
     recipient: addressToField(payee),

@@ -8,15 +8,15 @@
       "create2": true
     },
     "SpendZKTranscriptLib": {
-      "address": "0x45727a313389032388074EF537A248ec4BC3F38A",
-      "txHash": "0x67e816a7d7ddbe925ce91e2e92ff7dab35c9795addf1e62c34f89db085a936d6",
-      "blockNumber": 67301986,
+      "address": "0x4cA9f50d370d406A933BB0ef614739db42b7a252",
+      "txHash": "0x5a5e6b8b0fc5fe21ea80538ef8b447c1f4d446fb73dfbfa4564d8ddb4de5d039",
+      "blockNumber": 67309040,
       "create2": true
     },
     "SpendRelationsLib": {
-      "address": "0x8854d8ea0110e5731cDc043460A485CF699B0Cb5",
-      "txHash": "0x55c2285d147938b335010b47fa2cd7474104c4cad999a16677265df34541bccc",
-      "blockNumber": 67301986,
+      "address": "0xBf72c0e8596ccc0BfE108b856688737B73EA6D8e",
+      "txHash": "0x1811018411f124c80167f2a863458208672c2e7e74460aa6bc64435b7cf2852e",
+      "blockNumber": 67309041,
       "create2": true
     },
     "ShieldZKTranscriptLib": {
@@ -32,9 +32,9 @@
       "create2": true
     },
     "SpendVerifier": {
-      "address": "0x962EF3Cd8767B47Fe479ff09bb84f55b7CFC4389",
-      "txHash": "0x52726b767eeabb8171cbd5e9d4d5a3628e4dcb27be403734ff0d0a043621e751",
-      "blockNumber": 67301986,
+      "address": "0x5dEb22b4C0850A2a29e3025031DbEABF8A01844b",
+      "txHash": "0xcd5fde4a653fb395b2cc7a0ef2c997edb407bbc8dded6d4ce81144c964a94b34",
+      "blockNumber": 67309041,
       "create2": true
     },
     "Poseidon2Hasher": {
@@ -44,9 +44,9 @@
       "create2": true
     },
     "PolicyPool": {
-      "address": "0x4fbA708f728c3A94AbFb8Aa7FCEC92010e47b4C4",
-      "txHash": "0x4d81f79040960433c9c08347423e01acea6c172f8cd3ddd2dde128b0e5fd7a86",
-      "blockNumber": 67306969,
+      "address": "0x84CdA29BBAbf5868C6Bf46245B75E2A02Df33921",
+      "txHash": "0x816ab7643ed8e2b513759bc16de7f6e4dbaf103c1ea66c096937a8836a0a9a33",
+      "blockNumber": 67309066,
       "create2": true
     }
   }
