@@ -1,0 +1,21 @@
+{
+  "name": "@strickle/pool",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "vectors": "node scripts/generate-vectors.ts"
+  },
+  "dependencies": {
+    "@strickle/core": "*",
+    "@zkpassport/poseidon2": "0.6.2"
+  },
+  "devDependencies": {
+    "fast-check": "^4.10.2",
+    "vitest": "^5.0.4"
+  }
+}

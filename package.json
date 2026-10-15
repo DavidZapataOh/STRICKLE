@@ -18,7 +18,8 @@
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose down",
     "toolchain:install": "node scripts/toolchain.mjs install",
-    "toolchain:verify": "node scripts/toolchain.mjs verify"
+    "toolchain:verify": "node scripts/toolchain.mjs verify",
+    "pool:vectors": "npm run vectors -w @strickle/pool"
   },
   "devDependencies": {
     "@types/node": "^24",
