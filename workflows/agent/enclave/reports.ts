@@ -16,3 +16,6 @@ export const encodeSalaryReport = (input: { vault: Address; asset: number; payee
 
 export const encodeTickReport = (input: { vault: Address; next: bigint; ciphertext: Hex }): Hex =>
   wrap(TICK, encodeAbiParameters([{ type: "address" }, { type: "uint64" }, { type: "bytes" }], [input.vault, input.next, input.ciphertext]));
+
+export const encodeNoticeReport = (input: { vault: Address; id: bigint; sealed: Hex }): Hex =>
+  wrap(4, encodeAbiParameters([{ type: "address" }, { type: "uint64" }, { type: "bytes" }], [input.vault, input.id, input.sealed]));

@@ -64,16 +64,22 @@ export const decodeHead = (answer: unknown): { version: bigint; at: bigint; appl
 
 export const decodeDelegated = (result: unknown): Address[] => [...decodeFunctionResult({ abi: delegatedAbi, functionName: "delegated", data: result as Hex })];
 
+const noticeAbi = parseAbi(["function noticeCount(address vault) view returns (uint64)"]);
+export const noticeCountRequest = (state: Address, vault: Address): RpcRequest =>
+  callRequest(state, encodeFunctionData({ abi: noticeAbi, functionName: "noticeCount", args: [vault] }), "latest");
+export const decodeNoticeCount = (result: unknown): bigint => decodeFunctionResult({ abi: noticeAbi, functionName: "noticeCount", data: result as Hex });
+
 export const tickRequests = (state: Address, vault: Address): RpcRequest[] => [
   callRequest(state, encodeFunctionData({ abi: stateAbi, functionName: "head", args: [vault] }), "latest"),
   ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "boxBalance", args: [USDC, box] }), "latest")),
   ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "invested", args: [USDC, box] }), "latest")),
   callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "unallocated", args: [USDC] }), "latest"),
+  noticeCountRequest(state, vault),
 ];
 
-export function decodeTickBooks(answers: unknown[]): { version: bigint; at: bigint; applied: bigint; books: TickBooks } {
+export function decodeTickBooks(answers: unknown[]): { version: bigint; at: bigint; applied: bigint; notices: bigint; books: TickBooks } {
   const [version, at, applied] = decodeFunctionResult({ abi: stateAbi, functionName: "head", data: answers[0] as Hex });
   const word = (answer: unknown) => decodeFunctionResult({ abi: tickVaultAbi, functionName: "boxBalance", data: answer as Hex });
   const byKind = (offset: number) => Object.fromEntries(BOX_KINDS.map((kind, index) => [kind, word(answers[offset + index])])) as TickBooks["boxes"];
-  return { version, at, applied, books: { boxes: byKind(1), invested: byKind(7), unallocated: word(answers[13]) } };
+  return { version, at, applied, notices: decodeNoticeCount(answers[14]), books: { boxes: byKind(1), invested: byKind(7), unallocated: word(answers[13]) } };
 }

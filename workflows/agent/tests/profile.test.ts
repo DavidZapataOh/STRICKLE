@@ -1,6 +1,6 @@
 // workflows/agent/tests/profile.test.ts
 import { describe, expect, it } from "vitest";
-import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, decodeProfile, encodeProfile, mergeProfile, profileSchema } from "../enclave/profile.ts";
+import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, ZERO_KEY, decodeProfile, encodeProfile, mergeProfile, profileSchema } from "../enclave/profile.ts";
 
 const valid = {
   version: 1 as const,
@@ -120,6 +120,30 @@ describe("the extended profile", () => {
   ])("refuses %s", (_name, patch) => {
     expect(profileSchema.safeParse({ ...full, ...patch }).success).toBe(false);
   });
+
+  const proposal = { id: "salary-2026-11", kind: "salary-day-one" as const, amount: "1000000", payee, digest: `0x${"ab".repeat(32)}`, createdAt: 1_800_000_000, expiresAt: 1_800_604_800, status: "pending" as const, decidedAt: 0 };
+
+  it("round-trips a nonce, a user key and a proposal", () => {
+    const more = { ...full, nonce: "7", userKey: `0x${"cd".repeat(32)}`, proposals: [proposal] };
+    expect(decodeProfile(encodeProfile(more))).toEqual(more);
+  });
+
+  it("decodes an older profile with a zero nonce, no user key and no proposals", () => {
+    const decoded = decodeProfile(new TextEncoder().encode(JSON.stringify(valid)));
+    expect(decoded.nonce).toBe("0");
+    expect(decoded.userKey).toBe(ZERO_KEY);
+    expect(decoded.proposals).toEqual([]);
+  });
+
+  it.each([
+    ["a malformed user key", { userKey: "0x1234" }],
+    ["nine proposals", { proposals: Array.from({ length: 9 }, (_, i) => ({ ...proposal, id: `p-${i}` })) }],
+    ["an unknown proposal status", { proposals: [{ ...proposal, status: "done" }] }],
+    ["a proposal id with spaces", { proposals: [{ ...proposal, id: "not valid" }] }],
+    ["a negative nonce", { nonce: "-1" }],
+  ])("refuses %s", (_name, patch) => {
+    expect(profileSchema.safeParse({ ...full, ...patch }).success).toBe(false);
+  });
 });
 
 describe("mergeProfile", () => {
@@ -164,5 +188,9 @@ describe("mergeProfile", () => {
   it("takes the submitted history only while the agent has none", () => {
     const withHistory = profileSchema.parse({ ...valid, history: [["2026-09-01", "1", "import"]] });
     expect(mergeProfile(base, withHistory).history).toEqual(withHistory.history);
+  });
+  it("keeps the nonce and the proposals the agent holds", () => {
+    const kept = { id: "salary-2026-11", kind: "salary-day-one" as const, amount: "1", payee, digest: `0x${"ab".repeat(32)}`, createdAt: 1, expiresAt: 2, status: "pending" as const, decidedAt: 0 };
+    expect(mergeProfile({ ...existing, nonce: "9", proposals: [kept] }, { ...submitted, nonce: "0" })).toMatchObject({ nonce: "9", proposals: [kept] });
   });
 });

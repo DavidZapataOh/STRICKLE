@@ -6,11 +6,13 @@ import {
   decodeBooks,
   decodeDelegated,
   decodeHead,
+  decodeNoticeCount,
   decodePending,
   decodeStateLog,
   decodeTickBooks,
   delegatedRequest,
   headRequest,
+  noticeCountRequest,
   onePerVault,
   pendingRequest,
   stateLogRequest,
@@ -105,7 +107,7 @@ describe("tick reads", () => {
 
   it("asks for the head, six balances, six invested amounts and the unallocated amount in USDC", () => {
     const requests = tickRequests(state, vault);
-    expect(requests).toHaveLength(14); // plan 04 adds the notice count as a 15th request and updates this case
+    expect(requests).toHaveLength(15);
     const data = requests.slice(1).map((request) => (request.params[0] as { data: Hex }).data);
     expect(data.slice(0, 6)).toEqual([1, 2, 3, 4, 5, 6].map((box) => encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [1, box] })));
     expect(data.slice(6, 12)).toEqual([1, 2, 3, 4, 5, 6].map((box) => encodeFunctionData({ abi: vaultAbi, functionName: "invested", args: [1, box] })));
@@ -115,11 +117,30 @@ describe("tick reads", () => {
   it("decodes the answers into the planner's books", () => {
     const head = encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] });
     const word = (value: bigint) => encodeFunctionResult({ abi: vaultAbi, functionName: "boxBalance", result: value });
-    const answers = [head, ...[1n, 2n, 3n, 4n, 5n, 6n].map(word), ...[0n, 0n, 0n, 9n, 0n, 0n].map(word), word(77n)];
+    const answers = [head, ...[1n, 2n, 3n, 4n, 5n, 6n].map(word), ...[0n, 0n, 0n, 9n, 0n, 0n].map(word), word(77n), encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 0n })];
     const decoded = decodeTickBooks(answers);
     expect(decoded).toMatchObject({ version: 3n, at: 90n, applied: 2n });
     expect(decoded.books.boxes).toEqual({ taxes: 1n, payroll: 2n, salary: 3n, operating: 4n, emergency: 5n, profit: 6n });
     expect(decoded.books.invested.operating).toBe(9n);
     expect(decoded.books.unallocated).toBe(77n);
+  });
+});
+
+describe("tick reads with the notice count", () => {
+  it("has 15 requests, the last being noticeCount, and decodes the count next to the books", () => {
+    const requests = tickRequests(state, vault);
+    expect(requests).toHaveLength(15);
+    const word = (value: bigint) => encodeFunctionResult({ abi: parseAbi(["function boxBalance(uint8 asset, uint8 box) view returns (uint256)"]), functionName: "boxBalance", result: value });
+    const head = encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] });
+    const count = encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n });
+    const answers = [head, ...Array.from({ length: 13 }, () => word(0n)), count];
+    expect(decodeTickBooks(answers).notices).toBe(4n);
+  });
+});
+
+describe("notice count", () => {
+  it("reads noticeCount(vault) from the state contract", () => {
+    expect(noticeCountRequest(state, vault)).toMatchObject({ method: "eth_call", params: [{ to: state }, "latest"] });
+    expect(decodeNoticeCount(encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n }))).toBe(4n);
   });
 });
