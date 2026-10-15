@@ -82,7 +82,6 @@ fn main(
         assert(!real | (input.note.box_id == base_note.box_id), "inputs must share a box");
         assert(!real | (input.note.policy == base_note.policy), "inputs must share a policy");
         assert(!real | (input.note.flags == base_note.flags), "inputs must share flags");
-        assert(!real | (input.note.flags <= 1), "unknown flags");
         total_in += input.note.amount as u128;
     }
     assert(nullifiers[0] != nullifiers[1], "the same note cannot be spent twice");

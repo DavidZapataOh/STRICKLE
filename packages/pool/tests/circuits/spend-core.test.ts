@@ -2,6 +2,10 @@ import type { InputMap } from "@noir-lang/noir_js";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeProver, executeCircuit } from "../../src/prove.ts";
 import { type SpendSpec, buildSpendInputs } from "../../src/witness.ts";
+import { FLAG_RELEASED } from "../../src/constants.ts";
+import { toHex32 } from "../../src/field.ts";
+import { type Note, noteCommitment, noteNullifier } from "../../src/note.ts";
+import { FREE_POLICY } from "../../src/policy.ts";
 import { World, baseSpend, makeNote, user } from "./fixture.ts";
 
 afterAll(closeProver);
@@ -159,5 +163,64 @@ describe("spend core: ownership", () => {
     const input = world.add(makeNote());
     const forged = { ...input, policy: { ...input.policy, floor: 1n } };
     await expect(run(baseSpend(world, forged))).rejects.toThrow();
+  });
+});
+
+describe("spend core: forgeries a naive circuit would accept", () => {
+  it("rejects a dummy input that carries value even when its nullifier is consistent", async () => {
+    const world = new World();
+    const input = world.add(makeNote({ amount: 1_000_000n }));
+    const spec = baseSpend(world, input);
+    spec.outputs[0].note = makeNote({ amount: 1_000_000n, box: "salary", policy: input.note.policy });
+    spec.outputs[1].note = makeNote({ amount: 1_000_000n, box: "profit", policy: input.note.policy });
+    const built = buildSpendInputs(spec).inputs as {
+      nullifiers: string[];
+      inputs: { note: Record<string, string | number> }[];
+    };
+    const dummyNote: Note = makeNote({ amount: 1_000_000n, ownerPk: 0n, policy: 0n, salt: 2n });
+    built.inputs[1] = { ...built.inputs[1]!, note: { ...built.inputs[1]!.note, amount: "1000000", salt: "0x02", box_id: 4 } };
+    built.nullifiers[1] = toHex32(noteNullifier(22n, noteCommitment(dummyNote), 0));
+    await expect(executeCircuit("spend", built as never)).rejects.toThrow();
+  });
+
+  it("rejects an output in another asset than the inputs (a free conversion)", async () => {
+    const world = new World();
+    const input = world.add(makeNote({ amount: 1_000_000n }));
+    const spec = baseSpend(world, input);
+    spec.outputs[0].note = makeNote({ amount: 500_000n, box: "salary", policy: input.note.policy, asset: "EURC" });
+    await expect(run(spec)).rejects.toThrow();
+  });
+
+  it("rejects a supplied policy that is looser than the one committed in the note", async () => {
+    const world = new World();
+    const strict = { ...FREE_POLICY, floor: 600_000n };
+    const input = world.add(makeNote({ amount: 1_000_000n }, strict), strict);
+    const spec: SpendSpec = {
+      ...baseSpend(world, { ...input, policy: FREE_POLICY }),
+      publicAmount: 900_000n,
+      recipient: 0x1234n,
+      outputs: [{ note: makeNote({ amount: 100_000n, policy: input.note.policy }) }, { note: makeNote({ amount: 0n, ownerPk: 5n }) }],
+    };
+    await expect(run(spec)).rejects.toThrow();
+  });
+
+  it("rejects merging two inputs with different policies or flags in the same box", async () => {
+    const world = new World();
+    const a = world.add(makeNote({ amount: 500_000n }));
+    const looser = { ...FREE_POLICY, releaseDelay: 1 };
+    const b = world.add(makeNote({ amount: 500_000n }, looser), looser);
+    const mixedPolicy: SpendSpec = {
+      ...baseSpend(world, a),
+      inputs: [a, b],
+      outputs: [{ note: makeNote({ amount: 1_000_000n }) }, { note: makeNote({ amount: 0n, ownerPk: 5n }) }],
+    };
+    await expect(run(mixedPolicy)).rejects.toThrow();
+    const c = world.add(makeNote({ amount: 500_000n, flags: FLAG_RELEASED }));
+    const mixedFlags: SpendSpec = { ...mixedPolicy, inputs: [a, c] };
+    await expect(run(mixedFlags)).rejects.toThrow();
+  });
+
+  it("rejects a signer kind that is neither user nor agent", async () => {
+    await expect(runWith(baseSpend(new World()), { signer_kind: 2 })).rejects.toThrow();
   });
 });
