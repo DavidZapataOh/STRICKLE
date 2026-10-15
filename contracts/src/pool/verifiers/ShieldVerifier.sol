@@ -6,121 +6,121 @@ uint256 constant N = 4096;
 uint256 constant LOG_N = 12;
 uint256 constant NUMBER_OF_PUBLIC_INPUTS = 12;
 uint256 constant VK_HASH = 0x1ec130f1ea8575708ac5f83528f312ec10d289698a63ed08c09d0c4a22cc5eb2;
-library HonkVerificationKey {
-    function loadVerificationKey() internal pure returns (Honk.VerificationKey memory) {
-        Honk.VerificationKey memory vk = Honk.VerificationKey({
+library ShieldHonkVerificationKey {
+    function loadVerificationKey() internal pure returns (ShieldHonk.VerificationKey memory) {
+        ShieldHonk.VerificationKey memory vk = ShieldHonk.VerificationKey({
             circuitSize: uint256(4096),
             logCircuitSize: uint256(12),
             publicInputsSize: uint256(12),
-            ql: Honk.G1Point({ 
+            ql: ShieldHonk.G1Point({ 
                x: uint256(0x05eda0b6d90cecb2ed43ed4cf7ffe4939a56fca849a2d5e4d872b3531f2b3665),
                y: uint256(0x0ec3b65df6fb2c176c7362f1614dae22069bd5302d2e629a3ea31aac2c5b467f)
             }),
-            qr: Honk.G1Point({ 
+            qr: ShieldHonk.G1Point({ 
                x: uint256(0x10ab9e1e68d1a380f205976e9bf05ccc1baf868dcc45cbb70aff4c1f1fbb14f3),
                y: uint256(0x1021bebf03aa89c5d9bb71a54b7029d78ca5e7e1b50072b8e0c86b1e0d4ae42c)
             }),
-            qo: Honk.G1Point({ 
+            qo: ShieldHonk.G1Point({ 
                x: uint256(0x1423bf39d0a802cf1055c5df197a5ffec084d42816afe84ad6eb1f53cfa63033),
                y: uint256(0x09360b54f85d60ca22cc2572f2ea2c78eef306ea3f0ae14aaa546f9226fdac68)
             }),
-            q4: Honk.G1Point({ 
+            q4: ShieldHonk.G1Point({ 
                x: uint256(0x226a49909986b66d7af99a6d394fbcc93644cdee207a829a6458db3a476e6320),
                y: uint256(0x17069b24e6e7d3bf6213b60c9ba150b3c909ff2ac0d0e857eaa19b5cf7d5dbbc)
             }),
-            qm: Honk.G1Point({ 
+            qm: ShieldHonk.G1Point({ 
                x: uint256(0x030999c8053b32e6ea75f6bf1aaf931c753a14647036c80f68995f6c6df5b713),
                y: uint256(0x2fcfc07a44de8f942ffe2a12b10d4c1b8387ca998d1d80e1a4a7c25d0fc4e909)
             }),
-            qc: Honk.G1Point({ 
+            qc: ShieldHonk.G1Point({ 
                x: uint256(0x00a089c2caccc111ddc358d21a3ba500315f050c1c33a07442e7d9ec34f0dfea),
                y: uint256(0x01bccfa5d529fef3beb58341e9e638810c79b0dce67f0ac0daa11336d9516409)
             }),
-            qLookup: Honk.G1Point({ 
+            qLookup: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qArith: Honk.G1Point({ 
+            qArith: ShieldHonk.G1Point({ 
                x: uint256(0x069b6d32d8b3d07eb7b95fe9bcb5cae348fe0f355a50ada38d90a7f71a6504ef),
                y: uint256(0x1375d2b94ffd347ba174dad6bb2b8878a3ad0ebde2b68efdabfcac3a6911f7ae)
             }),
-            qDeltaRange: Honk.G1Point({ 
+            qDeltaRange: ShieldHonk.G1Point({ 
                x: uint256(0x261a106899c87b1b09db86890ca41fab61b0d9b585dd075e64b9a226d6a5e44a),
                y: uint256(0x0504e55e9bc3d6e9fdbf1f474aa34d6f0b194457ec625fd40fbdeff0ca5ce25d)
             }),
-            qElliptic: Honk.G1Point({ 
+            qElliptic: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qMemory: Honk.G1Point({ 
+            qMemory: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qNnf: Honk.G1Point({ 
+            qNnf: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qPoseidon2External: Honk.G1Point({ 
+            qPoseidon2External: ShieldHonk.G1Point({ 
                x: uint256(0x08b337143b795a7192ac39ea7704c42e66b1186cd1fd9ccedf3d67f6ac89199c),
                y: uint256(0x2a21ff7c64a787591e1f8486a1138408986e718ea2c83cd973a6ca9b87c2b242)
             }),
-            qPoseidon2Internal: Honk.G1Point({ 
+            qPoseidon2Internal: ShieldHonk.G1Point({ 
                x: uint256(0x0469f251971e361347913ee083220cadf6a16b5785fb984f70a4f295b6c15589),
                y: uint256(0x1edb5ccca16b47c3fbe28588ae8f211fb86988dcc8d7773d7a966f94915d999e)
             }),
-            s1: Honk.G1Point({ 
+            s1: ShieldHonk.G1Point({ 
                x: uint256(0x2cab112c3d3cacd8f07889ded422bd7ae14b672be66661a8409356015d5bc651),
                y: uint256(0x0c6e77e32bfe675fadd51203937a0b5870b04aa94e99e758a7f675572d3b841d)
             }),
-            s2: Honk.G1Point({ 
+            s2: ShieldHonk.G1Point({ 
                x: uint256(0x2c1c3df57e96d6fc73eefe6d658061e83fa87e59a9884aa2ecf4f0146a47d83a),
                y: uint256(0x11f29eb7e2eb45bff35fa739db601ad07364ed2afabb88bbb10b65bfdc77f2ba)
             }),
-            s3: Honk.G1Point({ 
+            s3: ShieldHonk.G1Point({ 
                x: uint256(0x1acf1f2bb83b3ae0c07ffdbb7179c40a05e3b32e1a42126e34e97c3e9c303e03),
                y: uint256(0x17694a20930c1b78b1c127ee80c2e281246915c78829ee613b2ab0fd5da6b40d)
             }),
-            s4: Honk.G1Point({ 
+            s4: ShieldHonk.G1Point({ 
                x: uint256(0x0ff3058aaaa2ba826f26577214394a3f79004a1b4ce3b3514a0b40aaaf4c3520),
                y: uint256(0x08b0bcb372364fb41578d69ba26203503b68b2fd329ea0d7d66af62133aca5b3)
             }),
-            t1: Honk.G1Point({ 
+            t1: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t2: Honk.G1Point({ 
+            t2: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t3: Honk.G1Point({ 
+            t3: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t4: Honk.G1Point({ 
+            t4: ShieldHonk.G1Point({ 
                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            id1: Honk.G1Point({ 
+            id1: ShieldHonk.G1Point({ 
                x: uint256(0x1e6e18b5deae8aa0fbd350d32d3e60f68adc17b4a52d6923034c10e5d5f8a892),
                y: uint256(0x01514a2672e9b80116db8f70cbf578670d00fda8e32f9aa75e3694382ab1b37b)
             }),
-            id2: Honk.G1Point({ 
+            id2: ShieldHonk.G1Point({ 
                x: uint256(0x2440634e72c62ead9e928b9e88ceefcb93bf20540bb8d14ff16c6856bf0f2e7b),
                y: uint256(0x145f9522929a73c9ef951c16087d4461498e7f2a643ea7c831fb5b52cbb6a6b5)
             }),
-            id3: Honk.G1Point({ 
+            id3: ShieldHonk.G1Point({ 
                x: uint256(0x2dbd37cc39f4d067eafb8fe59965d57d7b069ceae4a116b6768f845914f1e920),
                y: uint256(0x116994bd51e20901e875d3ba24eb6a304ee7fc0a8fbabe76344cf5d74f109564)
             }),
-            id4: Honk.G1Point({ 
+            id4: ShieldHonk.G1Point({ 
                x: uint256(0x1d94d4cd4e1283d3da2eb7f983211bfead23bc193d86d13d704787e9049754cc),
                y: uint256(0x299b76c87bef9d3e9a261c42f6a1281d621211d03db8006c4ef9c44d4509aff0)
             }),
-            lagrangeFirst: Honk.G1Point({ 
+            lagrangeFirst: ShieldHonk.G1Point({ 
                x: uint256(0x2a56ce41f6b0be13b9c26747621b821eee81b23a887f299049b14c11e98460d6),
                y: uint256(0x1aa98f2de3ddda547d8f6de4e725ded5827d6338c78656c0d12ca1aea6ef2c7c)
             }),
-            lagrangeLast: Honk.G1Point({ 
+            lagrangeLast: ShieldHonk.G1Point({ 
                x: uint256(0x16634b292b435b5287a3528ae94f9c8d49b3bbedbff6f3a54c420338c9861856),
                y: uint256(0x086feca1e1dc2cfa15c342911d03a77d54d5fc67294df288d0c2acbb3c553fe3)
             })
@@ -131,15 +131,15 @@ library HonkVerificationKey {
 
 pragma solidity ^0.8.27;
 
-interface IVerifier {
+interface ShieldIVerifier {
     function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool);
 }
 
 /**
  * @notice  Library of error codes
- * @dev     You can run `forge inspect Errors errors` to get the selectors for the optimised verifier
+ * @dev     You can run `forge inspect ShieldErrors errors` to get the selectors for the optimised verifier
  */
-library Errors {
+library ShieldErrors {
     error ValueGeLimbMax();
     error ValueGeGroupOrder();
     error ValueGeFieldOrder();
@@ -185,12 +185,12 @@ uint256 constant SMALL_IPA_BOUNDARY_OPENING_IDX = 3;
 uint256 constant NUM_SMALL_IPA_TRANSCRIPT_EVALS = 4;
 // Instantiation
 
-library FrLib {
+library ShieldFrLib {
     bytes4 internal constant FRLIB_MODEXP_FAILED_SELECTOR = 0xf8d61709;
 
     function invert(Fr value) internal view returns (Fr) {
         uint256 v = Fr.unwrap(value);
-        require(v != 0, Errors.InvertOfZero());
+        require(v != 0, ShieldErrors.InvertOfZero());
 
         uint256 result;
 
@@ -218,7 +218,7 @@ library FrLib {
     function pow(Fr base, uint256 v) internal view returns (Fr) {
         uint256 b = Fr.unwrap(base);
         // Only works for power of 2
-        require(v > 0 && (v & (v - 1)) == 0, Errors.NotPowerOfTwo());
+        require(v > 0 && (v & (v - 1)) == 0, ShieldErrors.NotPowerOfTwo());
         uint256 result;
 
         // Call the modexp precompile to invert in the field
@@ -268,7 +268,7 @@ library FrLib {
 
     function from(uint256 value) internal pure returns (Fr) {
         unchecked {
-            require(value < MODULUS, Errors.ValueGeFieldOrder());
+            require(value < MODULUS, ShieldErrors.ValueGeFieldOrder());
             return Fr.wrap(value);
         }
     }
@@ -276,7 +276,7 @@ library FrLib {
     function fromBytes32(bytes32 value) internal pure returns (Fr) {
         unchecked {
             uint256 v = uint256(value);
-            require(v < MODULUS, Errors.ValueGeFieldOrder());
+            require(v < MODULUS, ShieldErrors.ValueGeFieldOrder());
             return Fr.wrap(v);
         }
     }
@@ -384,7 +384,7 @@ enum WIRE {
     Z_PERM_SHIFT
 }
 
-library Honk {
+library ShieldHonk {
     struct G1Point {
         uint256 x;
         uint256 y;
@@ -499,7 +499,7 @@ library Honk {
 /// forge-lint: disable-next-item(pascal-case-struct)
 struct ZKTranscript {
     // Oink
-    Honk.RelationParameters relationParameters;
+    ShieldHonk.RelationParameters relationParameters;
     Fr[NUMBER_OF_ALPHAS] alphas; // Powers of alpha: [alpha, alpha^2, ..., alpha^(NUM_SUBRELATIONS-1)]
     Fr[CONST_PROOF_SIZE_LOG_N] gateChallenges;
     // Sumcheck
@@ -514,9 +514,9 @@ struct ZKTranscript {
     Fr publicInputsDelta;
 }
 
-library ZKTranscriptLib {
+library ShieldZKTranscriptLib {
     function generateTranscript(
-        Honk.ZKProof memory proof,
+        ShieldHonk.ZKProof memory proof,
         bytes32[] calldata publicInputs,
         uint256 vkHash,
         uint256 publicInputsSize,
@@ -547,24 +547,24 @@ library ZKTranscriptLib {
         // Split into two equal 127-bit chunks (254/2)
         uint256 lo = challengeU256 & 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // 127 bits
         uint256 hi = challengeU256 >> 127;
-        first = FrLib.from(lo);
-        second = FrLib.from(hi);
+        first = ShieldFrLib.from(lo);
+        second = ShieldFrLib.from(hi);
     }
 
     function generateRelationParametersChallenges(
-        Honk.ZKProof memory proof,
+        ShieldHonk.ZKProof memory proof,
         bytes32[] calldata publicInputs,
         uint256 vkHash,
         uint256 publicInputsSize,
         Fr previousChallenge
-    ) internal pure returns (Honk.RelationParameters memory rp, Fr nextPreviousChallenge) {
+    ) internal pure returns (ShieldHonk.RelationParameters memory rp, Fr nextPreviousChallenge) {
         (rp.eta, previousChallenge) = generateEtaChallenge(proof, publicInputs, vkHash, publicInputsSize);
 
         (rp.beta, rp.gamma, nextPreviousChallenge) = generateBetaGammaChallenges(previousChallenge, proof);
     }
 
     function generateEtaChallenge(
-        Honk.ZKProof memory proof,
+        ShieldHonk.ZKProof memory proof,
         bytes32[] calldata publicInputs,
         uint256 vkHash,
         uint256 publicInputsSize
@@ -574,11 +574,11 @@ library ZKTranscriptLib {
         round0[0] = bytes32(vkHash);
 
         for (uint256 i = 0; i < publicInputsSize - PAIRING_POINTS_SIZE; i++) {
-            require(uint256(publicInputs[i]) < P, Errors.ValueGeFieldOrder());
+            require(uint256(publicInputs[i]) < P, ShieldErrors.ValueGeFieldOrder());
             round0[1 + i] = publicInputs[i];
         }
         for (uint256 i = 0; i < PAIRING_POINTS_SIZE; i++) {
-            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] = FrLib.toBytes32(proof.pairingPointObject[i]);
+            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] = ShieldFrLib.toBytes32(proof.pairingPointObject[i]);
         }
 
         // For ZK flavors: hash the gemini masking poly commitment (sent right after public inputs)
@@ -594,17 +594,17 @@ library ZKTranscriptLib {
         round0[1 + publicInputsSize + 6] = bytes32(proof.w3.x);
         round0[1 + publicInputsSize + 7] = bytes32(proof.w3.y);
 
-        previousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(round0))) % P);
+        previousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(round0))) % P);
         (eta,) = splitChallenge(previousChallenge);
     }
 
-    function generateBetaGammaChallenges(Fr previousChallenge, Honk.ZKProof memory proof)
+    function generateBetaGammaChallenges(Fr previousChallenge, ShieldHonk.ZKProof memory proof)
         internal
         pure
         returns (Fr beta, Fr gamma, Fr nextPreviousChallenge)
     {
         bytes32[7] memory round1;
-        round1[0] = FrLib.toBytes32(previousChallenge);
+        round1[0] = ShieldFrLib.toBytes32(previousChallenge);
         round1[1] = bytes32(proof.lookupReadCounts.x);
         round1[2] = bytes32(proof.lookupReadCounts.y);
         round1[3] = bytes32(proof.lookupReadTags.x);
@@ -612,12 +612,12 @@ library ZKTranscriptLib {
         round1[5] = bytes32(proof.w4.x);
         round1[6] = bytes32(proof.w4.y);
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(round1))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(round1))) % P);
         (beta, gamma) = splitChallenge(nextPreviousChallenge);
     }
 
     // Alpha challenges non-linearise the gate contributions
-    function generateAlphaChallenges(Fr previousChallenge, Honk.ZKProof memory proof)
+    function generateAlphaChallenges(Fr previousChallenge, ShieldHonk.ZKProof memory proof)
         internal
         pure
         returns (Fr[NUMBER_OF_ALPHAS] memory alphas, Fr nextPreviousChallenge)
@@ -630,7 +630,7 @@ library ZKTranscriptLib {
         alpha0[3] = proof.zPerm.x;
         alpha0[4] = proof.zPerm.y;
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(alpha0))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(alpha0))) % P);
         Fr alpha;
         (alpha,) = splitChallenge(nextPreviousChallenge);
 
@@ -646,7 +646,7 @@ library ZKTranscriptLib {
         pure
         returns (Fr[CONST_PROOF_SIZE_LOG_N] memory gateChallenges, Fr nextPreviousChallenge)
     {
-        previousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
+        previousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
         (gateChallenges[0],) = splitChallenge(previousChallenge);
         for (uint256 i = 1; i < logN; i++) {
             gateChallenges[i] = gateChallenges[i - 1] * gateChallenges[i - 1];
@@ -654,7 +654,7 @@ library ZKTranscriptLib {
         nextPreviousChallenge = previousChallenge;
     }
 
-    function generateLibraChallenge(Fr previousChallenge, Honk.ZKProof memory proof)
+    function generateLibraChallenge(Fr previousChallenge, ShieldHonk.ZKProof memory proof)
         internal
         pure
         returns (Fr libraChallenge, Fr nextPreviousChallenge)
@@ -665,11 +665,11 @@ library ZKTranscriptLib {
         challengeData[1] = proof.libraCommitments[0].x;
         challengeData[2] = proof.libraCommitments[0].y;
         challengeData[3] = Fr.unwrap(proof.libraSum);
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(challengeData))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(challengeData))) % P);
         (libraChallenge,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function generateSumcheckChallenges(Honk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
+    function generateSumcheckChallenges(ShieldHonk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
         internal
         pure
         returns (Fr[CONST_PROOF_SIZE_LOG_N] memory sumcheckChallenges, Fr nextPreviousChallenge)
@@ -681,7 +681,7 @@ library ZKTranscriptLib {
             for (uint256 j = 0; j < ZK_BATCHED_RELATION_PARTIAL_LENGTH; j++) {
                 univariateChal[j + 1] = proof.sumcheckUnivariates[i][j];
             }
-            prevChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(univariateChal))) % P);
+            prevChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(univariateChal))) % P);
 
             (sumcheckChallenges[i],) = splitChallenge(prevChallenge);
         }
@@ -689,7 +689,7 @@ library ZKTranscriptLib {
     }
 
     // We add Libra claimed eval + 2 libra commitments (grand_sum, quotient)
-    function generateRhoChallenge(Honk.ZKProof memory proof, Fr prevChallenge)
+    function generateRhoChallenge(ShieldHonk.ZKProof memory proof, Fr prevChallenge)
         internal
         pure
         returns (Fr rho, Fr nextPreviousChallenge)
@@ -708,11 +708,11 @@ library ZKTranscriptLib {
         rhoChallengeElements[i] = proof.libraCommitments[2].x;
         rhoChallengeElements[i + 1] = proof.libraCommitments[2].y;
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(rhoChallengeElements))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(rhoChallengeElements))) % P);
         (rho,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function generateGeminiRChallenge(Honk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
+    function generateGeminiRChallenge(ShieldHonk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
         internal
         pure
         returns (Fr geminiR, Fr nextPreviousChallenge)
@@ -725,12 +725,12 @@ library ZKTranscriptLib {
             gR[2 + i * 2] = proof.geminiFoldComms[i].y;
         }
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(gR))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(gR))) % P);
 
         (geminiR,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function generateShplonkNuChallenge(Honk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
+    function generateShplonkNuChallenge(ShieldHonk.ZKProof memory proof, Fr prevChallenge, uint256 logN)
         internal
         pure
         returns (Fr shplonkNu, Fr nextPreviousChallenge)
@@ -748,11 +748,11 @@ library ZKTranscriptLib {
             libraIdx++;
         }
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
         (shplonkNu,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function generateShplonkZChallenge(Honk.ZKProof memory proof, Fr prevChallenge)
+    function generateShplonkZChallenge(ShieldHonk.ZKProof memory proof, Fr prevChallenge)
         internal
         pure
         returns (Fr shplonkZ, Fr nextPreviousChallenge)
@@ -763,19 +763,19 @@ library ZKTranscriptLib {
         shplonkZChallengeElements[1] = proof.shplonkQ.x;
         shplonkZChallengeElements[2] = proof.shplonkQ.y;
 
-        nextPreviousChallenge = FrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
+        nextPreviousChallenge = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
         (shplonkZ,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function loadProof(bytes calldata proof, uint256 logN) internal pure returns (Honk.ZKProof memory p) {
+    function loadProof(bytes calldata proof, uint256 logN) internal pure returns (ShieldHonk.ZKProof memory p) {
         uint256 boundary = 0x0;
 
         // Pairing point object
         for (uint256 i = 0; i < PAIRING_POINTS_SIZE; i++) {
             uint256 limb = uint256(bytes32(proof[boundary:boundary + FIELD_ELEMENT_SIZE]));
             // lo limbs (even index) < 2^136, hi limbs (odd index) < 2^120
-            require(limb < 2 ** (i % 2 == 0 ? 136 : 120), Errors.ValueGeLimbMax());
-            p.pairingPointObject[i] = FrLib.from(limb);
+            require(limb < 2 ** (i % 2 == 0 ? 136 : 120), ShieldErrors.ValueGeLimbMax());
+            p.pairingPointObject[i] = ShieldFrLib.from(limb);
             boundary += FIELD_ELEMENT_SIZE;
         }
 
@@ -855,7 +855,7 @@ library ZKTranscriptLib {
     }
 }
 
-library RelationsLib {
+library ShieldRelationsLib {
     struct EllipticParams {
         // Points
         Fr x_1;
@@ -943,13 +943,13 @@ library RelationsLib {
 
     function accumulateRelationEvaluations(
         Fr[NUMBER_OF_ENTITIES] memory purportedEvaluations,
-        Honk.RelationParameters memory rp,
+        ShieldHonk.RelationParameters memory rp,
         Fr[NUMBER_OF_ALPHAS] memory subrelationChallenges,
         Fr powPartialEval
     ) external pure returns (Fr accumulator) {
         Fr[NUMBER_OF_SUBRELATIONS] memory evaluations;
 
-        // Accumulate all relations in Ultra Honk - each with varying number of subrelations
+        // Accumulate all relations in Ultra ShieldHonk - each with varying number of subrelations
         accumulateArithmeticRelation(purportedEvaluations, evaluations, powPartialEval);
         accumulatePermutationRelation(purportedEvaluations, rp, evaluations, powPartialEval);
         accumulateLogDerivativeLookupRelation(purportedEvaluations, rp, evaluations, powPartialEval);
@@ -1009,7 +1009,7 @@ library RelationsLib {
 
     function accumulatePermutationRelation(
         Fr[NUMBER_OF_ENTITIES] memory p,
-        Honk.RelationParameters memory rp,
+        ShieldHonk.RelationParameters memory rp,
         Fr[NUMBER_OF_SUBRELATIONS] memory evals,
         Fr domainSep
     ) internal pure {
@@ -1059,7 +1059,7 @@ library RelationsLib {
 
     function accumulateLogDerivativeLookupRelation(
         Fr[NUMBER_OF_ENTITIES] memory p,
-        Honk.RelationParameters memory rp,
+        ShieldHonk.RelationParameters memory rp,
         Fr[NUMBER_OF_SUBRELATIONS] memory evals,
         Fr domainSep
     ) internal pure {
@@ -1239,7 +1239,7 @@ library RelationsLib {
 
     function accumulateMemoryRelation(
         Fr[NUMBER_OF_ENTITIES] memory p,
-        Honk.RelationParameters memory rp,
+        ShieldHonk.RelationParameters memory rp,
         Fr[NUMBER_OF_SUBRELATIONS] memory evals,
         Fr domainSep
     ) internal pure {
@@ -1532,10 +1532,10 @@ library RelationsLib {
         PoseidonInternalParams memory ip;
 
         Fr[4] memory INTERNAL_MATRIX_DIAGONAL = [
-            FrLib.from(0x10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7),
-            FrLib.from(0x0c28145b6a44df3e0149b3d0a30b3bb599df9756d4dd9b84a86b38cfb45a740b),
-            FrLib.from(0x00544b8338791518b2c7645a50392798b21f75bb60e3596170067d00141cac15),
-            FrLib.from(0x222c01175718386f2e2e82eb122789e352e105a3b8fa852613bc534433ee428b)
+            ShieldFrLib.from(0x10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7),
+            ShieldFrLib.from(0x0c28145b6a44df3e0149b3d0a30b3bb599df9756d4dd9b84a86b38cfb45a740b),
+            ShieldFrLib.from(0x00544b8338791518b2c7645a50392798b21f75bb60e3596170067d00141cac15),
+            ShieldFrLib.from(0x222c01175718386f2e2e82eb122789e352e105a3b8fa852613bc534433ee428b)
         ];
 
         // add round constants
@@ -1579,8 +1579,8 @@ library RelationsLib {
     }
 }
 
-library CommitmentSchemeLib {
-    using FrLib for Fr;
+library ShieldCommitmentSchemeLib {
+    using ShieldFrLib for Fr;
 
     // Avoid stack too deep
     struct ShpleminiIntermediates {
@@ -1647,23 +1647,23 @@ uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689
 // Fr utility
 
 function bytesToFr(bytes calldata proofSection) pure returns (Fr scalar) {
-    scalar = FrLib.fromBytes32(bytes32(proofSection));
+    scalar = ShieldFrLib.fromBytes32(bytes32(proofSection));
 }
 
 // EC Point utilities
-function bytesToG1Point(bytes calldata proofSection) pure returns (Honk.G1Point memory point) {
+function bytesToG1Point(bytes calldata proofSection) pure returns (ShieldHonk.G1Point memory point) {
     uint256 x = uint256(bytes32(proofSection[0x00:0x20]));
     uint256 y = uint256(bytes32(proofSection[0x20:0x40]));
-    require(x < Q && y < Q, Errors.ValueGeGroupOrder());
+    require(x < Q && y < Q, ShieldErrors.ValueGeGroupOrder());
 
     // (0,0) is the canonical EIP-196 encoding of the identity. It is accepted here
     // because polynomial commitments to identically-zero polynomials (e.g. unused
     // selector or table polys) are legitimately the identity. On-curve validation
     // (y² = x³ + 3) is handled by the ecAdd/ecMul precompiles per EIP-196.
-    point = Honk.G1Point({x: x, y: y});
+    point = ShieldHonk.G1Point({x: x, y: y});
 }
 
-function negateInplace(Honk.G1Point memory point) pure returns (Honk.G1Point memory) {
+function negateInplace(ShieldHonk.G1Point memory point) pure returns (ShieldHonk.G1Point memory) {
     // When y == 0 (order-2 point), negation is the same point. Q - 0 = Q which is >= Q.
     if (point.y != 0) {
         point.y = Q - point.y;
@@ -1686,7 +1686,7 @@ function negateInplace(Honk.G1Point memory point) pure returns (Honk.G1Point mem
  */
 function convertPairingPointsToG1(Fr[PAIRING_POINTS_SIZE] memory pairingPoints)
     pure
-    returns (Honk.G1Point memory lhs, Honk.G1Point memory rhs)
+    returns (ShieldHonk.G1Point memory lhs, ShieldHonk.G1Point memory rhs)
 {
     // P0 (lhs): x = lo | (hi << 136)
     uint256 lhsX = Fr.unwrap(pairingPoints[0]);
@@ -1705,7 +1705,7 @@ function convertPairingPointsToG1(Fr[PAIRING_POINTS_SIZE] memory pairingPoints)
     // Reconstructed coordinates must be < Q to prevent malleability.
     // Without this, two different limb encodings could map to the same curve point
     // (via mulmod reduction in on-curve checks) but produce different transcript hashes.
-    require(lhsX < Q && lhsY < Q && rhsX < Q && rhsY < Q, Errors.ValueGeGroupOrder());
+    require(lhsX < Q && lhsY < Q && rhsX < Q && rhsY < Q, ShieldErrors.ValueGeGroupOrder());
 
     lhs.x = lhsX;
     lhs.y = lhsY;
@@ -1723,15 +1723,15 @@ function convertPairingPointsToG1(Fr[PAIRING_POINTS_SIZE] memory pairingPoints)
  */
 function generateRecursionSeparator(
     Fr[PAIRING_POINTS_SIZE] memory proofPairingPoints,
-    Honk.G1Point memory accLhs,
-    Honk.G1Point memory accRhs
+    ShieldHonk.G1Point memory accLhs,
+    ShieldHonk.G1Point memory accRhs
 ) pure returns (Fr recursionSeparator) {
     // hash the proof aggregated X
     // hash the proof aggregated Y
     // hash the accum X
     // hash the accum Y
 
-    (Honk.G1Point memory proofLhs, Honk.G1Point memory proofRhs) = convertPairingPointsToG1(proofPairingPoints);
+    (ShieldHonk.G1Point memory proofLhs, ShieldHonk.G1Point memory proofRhs) = convertPairingPointsToG1(proofPairingPoints);
 
     uint256[8] memory recursionSeparatorElements;
 
@@ -1747,7 +1747,7 @@ function generateRecursionSeparator(
     recursionSeparatorElements[6] = accRhs.x;
     recursionSeparatorElements[7] = accRhs.y;
 
-    recursionSeparator = FrLib.from(uint256(keccak256(abi.encodePacked(recursionSeparatorElements))) % P);
+    recursionSeparator = ShieldFrLib.from(uint256(keccak256(abi.encodePacked(recursionSeparatorElements))) % P);
 }
 
 /**
@@ -1759,11 +1759,11 @@ function generateRecursionSeparator(
  * @param recursionSeperator The separator to use for the multiplication.
  * @return `(recursionSeperator * basePoint) + other`.
  */
-function mulWithSeperator(Honk.G1Point memory basePoint, Honk.G1Point memory other, Fr recursionSeperator)
+function mulWithSeperator(ShieldHonk.G1Point memory basePoint, ShieldHonk.G1Point memory other, Fr recursionSeperator)
     view
-    returns (Honk.G1Point memory)
+    returns (ShieldHonk.G1Point memory)
 {
-    Honk.G1Point memory result;
+    ShieldHonk.G1Point memory result;
 
     result = ecMul(recursionSeperator, basePoint);
     result = ecAdd(result, other);
@@ -1779,8 +1779,8 @@ function mulWithSeperator(Honk.G1Point memory basePoint, Honk.G1Point memory oth
  * @param point The point to multiply.
  * @return result The result of the multiplication.
  */
-function ecMul(Fr value, Honk.G1Point memory point) view returns (Honk.G1Point memory) {
-    Honk.G1Point memory result;
+function ecMul(Fr value, ShieldHonk.G1Point memory point) view returns (ShieldHonk.G1Point memory) {
+    ShieldHonk.G1Point memory result;
 
     assembly {
         let free := mload(0x40)
@@ -1825,8 +1825,8 @@ function ecMul(Fr value, Honk.G1Point memory point) view returns (Honk.G1Point m
  * @param rhs The right hand side of the addition.
  * @return result The result of the addition.
  */
-function ecAdd(Honk.G1Point memory lhs, Honk.G1Point memory rhs) view returns (Honk.G1Point memory) {
-    Honk.G1Point memory result;
+function ecAdd(ShieldHonk.G1Point memory lhs, ShieldHonk.G1Point memory rhs) view returns (ShieldHonk.G1Point memory) {
+    ShieldHonk.G1Point memory result;
 
     assembly {
         let free := mload(0x40)
@@ -1865,8 +1865,8 @@ function ecAdd(Honk.G1Point memory lhs, Honk.G1Point memory rhs) view returns (H
     return result;
 }
 
-function rejectPointAtInfinity(Honk.G1Point memory point) pure {
-    require((point.x | point.y) != 0, Errors.PointAtInfinity());
+function rejectPointAtInfinity(ShieldHonk.G1Point memory point) pure {
+    require((point.x | point.y) != 0, ShieldErrors.PointAtInfinity());
 }
 
 /**
@@ -1881,7 +1881,7 @@ function arePairingPointsDefault(Fr[PAIRING_POINTS_SIZE] memory pairingPoints) p
     return acc == 0;
 }
 
-function pairing(Honk.G1Point memory rhs, Honk.G1Point memory lhs) view returns (bool decodedResult) {
+function pairing(ShieldHonk.G1Point memory rhs, ShieldHonk.G1Point memory lhs) view returns (bool decodedResult) {
     bytes memory input = abi.encodePacked(
         rhs.x,
         rhs.y,
@@ -1903,12 +1903,12 @@ function pairing(Honk.G1Point memory rhs, Honk.G1Point memory lhs) view returns 
     decodedResult = success && abi.decode(result, (bool));
 }
 
-abstract contract BaseZKHonkVerifier is IVerifier {
-    using FrLib for Fr;
+abstract contract ShieldBaseZKHonkVerifier is ShieldIVerifier {
+    using ShieldFrLib for Fr;
 
     struct PairingInputs {
-        Honk.G1Point P_0;
-        Honk.G1Point P_1;
+        ShieldHonk.G1Point P_0;
+        ShieldHonk.G1Point P_1;
     }
 
     struct SmallSubgroupIpaIntermediates {
@@ -1959,17 +1959,17 @@ abstract contract BaseZKHonkVerifier is IVerifier {
 
         // Check the received proof is the expected size where each field element is 32 bytes
         require(
-            proof.length == expectedProofSize, Errors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
+            proof.length == expectedProofSize, ShieldErrors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
         );
 
-        Honk.VerificationKey memory vk = loadVerificationKey();
-        Honk.ZKProof memory p = ZKTranscriptLib.loadProof(proof, $LOG_N);
+        ShieldHonk.VerificationKey memory vk = loadVerificationKey();
+        ShieldHonk.ZKProof memory p = ShieldZKTranscriptLib.loadProof(proof, $LOG_N);
 
-        require(publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE, Errors.PublicInputsLengthWrong());
+        require(publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE, ShieldErrors.PublicInputsLengthWrong());
 
         // Generate the fiat shamir challenges for the whole protocol
         ZKTranscript memory t =
-            ZKTranscriptLib.generateTranscript(p, publicInputs, $VK_HASH, $NUM_PUBLIC_INPUTS, $LOG_N);
+            ShieldZKTranscriptLib.generateTranscript(p, publicInputs, $VK_HASH, $NUM_PUBLIC_INPUTS, $LOG_N);
 
         // Derive public input delta
         t.relationParameters.publicInputsDelta = computePublicInputDelta(
@@ -1981,8 +1981,8 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         );
 
         // Sumcheck
-        require(verifySumcheck(p, t), Errors.SumcheckFailed());
-        require(verifyShplemini(p, vk, t), Errors.ShpleminiFailed());
+        require(verifySumcheck(p, t), ShieldErrors.SumcheckFailed());
+        require(verifyShplemini(p, vk, t), ShieldErrors.ShpleminiFailed());
 
         verified = true;
     }
@@ -1997,12 +1997,12 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         Fr numerator = Fr.wrap(1);
         Fr denominator = Fr.wrap(1);
 
-        Fr numeratorAcc = gamma + (beta * FrLib.from(PERMUTATION_ARGUMENT_VALUE_SEPARATOR + offset));
-        Fr denominatorAcc = gamma - (beta * FrLib.from(offset + 1));
+        Fr numeratorAcc = gamma + (beta * ShieldFrLib.from(PERMUTATION_ARGUMENT_VALUE_SEPARATOR + offset));
+        Fr denominatorAcc = gamma - (beta * ShieldFrLib.from(offset + 1));
 
         {
             for (uint256 i = 0; i < $NUM_PUBLIC_INPUTS - PAIRING_POINTS_SIZE; i++) {
-                Fr pubInput = FrLib.fromBytes32(publicInputs[i]);
+                Fr pubInput = ShieldFrLib.fromBytes32(publicInputs[i]);
 
                 numerator = numerator * (numeratorAcc + pubInput);
                 denominator = denominator * (denominatorAcc + pubInput);
@@ -2023,10 +2023,10 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         }
 
         // Fr delta = numerator / denominator; // TOOO: batch invert later?
-        publicInputDelta = FrLib.div(numerator, denominator);
+        publicInputDelta = ShieldFrLib.div(numerator, denominator);
     }
 
-    function verifySumcheck(Honk.ZKProof memory proof, ZKTranscript memory tp) internal view returns (bool verified) {
+    function verifySumcheck(ShieldHonk.ZKProof memory proof, ZKTranscript memory tp) internal view returns (bool verified) {
         Fr roundTargetSum = tp.libraChallenge * proof.libraSum; // default 0
         Fr powPartialEvaluation = Fr.wrap(1);
 
@@ -2034,7 +2034,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         for (uint256 round; round < $LOG_N; ++round) {
             Fr[ZK_BATCHED_RELATION_PARTIAL_LENGTH] memory roundUnivariate = proof.sumcheckUnivariates[round];
             Fr totalSum = roundUnivariate[0] + roundUnivariate[1];
-            require(totalSum == roundTargetSum, Errors.SumcheckFailed());
+            require(totalSum == roundTargetSum, ShieldErrors.SumcheckFailed());
 
             Fr roundChallenge = tp.sumCheckUChallenges[round];
 
@@ -2051,7 +2051,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         for (uint256 i = 0; i < NUMBER_OF_ENTITIES; i++) {
             relationsEvaluations[i] = proof.sumcheckEvaluations[i + NUM_MASKING_POLYNOMIALS]; // Skip gemini_masking_poly at index 0
         }
-        Fr grandHonkRelationSum = RelationsLib.accumulateRelationEvaluations(
+        Fr grandHonkRelationSum = ShieldRelationsLib.accumulateRelationEvaluations(
             relationsEvaluations, tp.relationParameters, tp.alphas, powPartialEvaluation
         );
 
@@ -2095,7 +2095,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
 
         Fr[ZK_BATCHED_RELATION_PARTIAL_LENGTH] memory denominatorInverses;
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
-            denominatorInverses[i] = FrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
+            denominatorInverses[i] = ShieldFrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
         }
 
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
@@ -2106,18 +2106,18 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         targetSum = targetSum * numeratorValue;
     }
 
-    function verifyShplemini(Honk.ZKProof memory proof, Honk.VerificationKey memory vk, ZKTranscript memory tp)
+    function verifyShplemini(ShieldHonk.ZKProof memory proof, ShieldHonk.VerificationKey memory vk, ZKTranscript memory tp)
         internal
         view
         returns (bool verified)
     {
-        CommitmentSchemeLib.ShpleminiIntermediates memory mem; // stack
+        ShieldCommitmentSchemeLib.ShpleminiIntermediates memory mem; // stack
 
         // - Compute vector (r, r², ... , r²⁽ⁿ⁻¹⁾), where n = log_circuit_size
-        Fr[] memory powers_of_evaluation_challenge = CommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
+        Fr[] memory powers_of_evaluation_challenge = ShieldCommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
         // Arrays hold values that will be linearly combined for the gemini and shplonk batch openings
         Fr[] memory scalars = new Fr[]($MSMSize);
-        Honk.G1Point[] memory commitments = new Honk.G1Point[]($MSMSize);
+        ShieldHonk.G1Point[] memory commitments = new ShieldHonk.G1Point[]($MSMSize);
 
         mem.posInvertedDenominator = (tp.shplonkZ - powers_of_evaluation_challenge[0]).invert();
         mem.negInvertedDenominator = (tp.shplonkZ + powers_of_evaluation_challenge[0]).invert();
@@ -2253,7 +2253,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
 
         // Add contributions from A₀(r) and A₀(-r) to constant_term_accumulator:
         // Compute the evaluations Aₗ(r^{2ˡ}) for l = 0, ..., $LOG_N - 1
-        Fr[] memory foldPosEvaluations = CommitmentSchemeLib.computeFoldPosEvaluations(
+        Fr[] memory foldPosEvaluations = ShieldCommitmentSchemeLib.computeFoldPosEvaluations(
             tp.sumCheckUChallenges,
             mem.batchedEvaluation,
             proof.geminiAEvaluations,
@@ -2337,15 +2337,15 @@ abstract contract BaseZKHonkVerifier is IVerifier {
             commitments[boundary++] = proof.libraCommitments[i];
         }
 
-        commitments[boundary] = Honk.G1Point({x: 1, y: 2});
+        commitments[boundary] = ShieldHonk.G1Point({x: 1, y: 2});
         scalars[boundary++] = mem.constantTermAccumulator;
 
         require(
             checkEvalsConsistency(proof.libraPolyEvals, tp.geminiR, tp.sumCheckUChallenges, proof.libraEvaluation),
-            Errors.ConsistencyCheckFailed()
+            ShieldErrors.ConsistencyCheckFailed()
         );
 
-        Honk.G1Point memory quotient_commitment = proof.kzgQuotient;
+        ShieldHonk.G1Point memory quotient_commitment = proof.kzgQuotient;
 
         commitments[boundary] = quotient_commitment;
         scalars[boundary] = tp.shplonkZ; // evaluation challenge
@@ -2357,7 +2357,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         // Aggregate pairing points (skip if default/infinity — no recursive verification occurred)
         if (!arePairingPointsDefault(proof.pairingPointObject)) {
             Fr recursionSeparator = generateRecursionSeparator(proof.pairingPointObject, pair.P_0, pair.P_1);
-            (Honk.G1Point memory P_0_other, Honk.G1Point memory P_1_other) =
+            (ShieldHonk.G1Point memory P_0_other, ShieldHonk.G1Point memory P_1_other) =
                 convertPairingPointsToG1(proof.pairingPointObject);
 
             // Validate the points from the proof are on the curve
@@ -2380,7 +2380,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
     ) internal view returns (bool check) {
         Fr one = Fr.wrap(1);
         Fr vanishingPolyEval = geminiR.pow(SUBGROUP_SIZE) - one;
-        require(vanishingPolyEval != Fr.wrap(0), Errors.GeminiChallengeInSubgroup());
+        require(vanishingPolyEval != Fr.wrap(0), ShieldErrors.GeminiChallengeInSubgroup());
 
         SmallSubgroupIpaIntermediates memory mem;
         mem.challengePolyLagrange[0] = one;
@@ -2416,10 +2416,10 @@ abstract contract BaseZKHonkVerifier is IVerifier {
     }
 
     // This implementation is the same as above with different constants
-    function batchMul(Honk.G1Point[] memory base, Fr[] memory scalars)
+    function batchMul(ShieldHonk.G1Point[] memory base, Fr[] memory scalars)
         internal
         view
-        returns (Honk.G1Point memory result)
+        returns (ShieldHonk.G1Point memory result)
     {
         uint256 limit = $MSMSize;
 
@@ -2453,7 +2453,7 @@ abstract contract BaseZKHonkVerifier is IVerifier {
             mstore(add(result, 0x20), mload(add(free, 0x20)))
         }
 
-        require(success, Errors.ShpleminiFailed());
+        require(success, ShieldErrors.ShpleminiFailed());
     }
 
     // Calculate proof size based on log_n (matching UltraKeccakZKFlavor formula)
@@ -2481,11 +2481,11 @@ abstract contract BaseZKHonkVerifier is IVerifier {
         return proofLength * 32;
     }
 
-    function loadVerificationKey() internal pure virtual returns (Honk.VerificationKey memory);
+    function loadVerificationKey() internal pure virtual returns (ShieldHonk.VerificationKey memory);
 }
 
-contract ShieldVerifier is BaseZKHonkVerifier(N, LOG_N, VK_HASH, NUMBER_OF_PUBLIC_INPUTS) {
-     function loadVerificationKey() internal pure override returns (Honk.VerificationKey memory) {
-       return HonkVerificationKey.loadVerificationKey();
+contract ShieldVerifier is ShieldBaseZKHonkVerifier(N, LOG_N, VK_HASH, NUMBER_OF_PUBLIC_INPUTS) {
+     function loadVerificationKey() internal pure override returns (ShieldHonk.VerificationKey memory) {
+       return ShieldHonkVerificationKey.loadVerificationKey();
     }
 }

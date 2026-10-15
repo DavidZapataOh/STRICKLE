@@ -1,4 +1,29 @@
 {
   "chainId": 5042002,
-  "contracts": {}
+  "contracts": {
+    "RelationsLib": {
+      "address": "0xBBa0FD3e9665431133dD9086942dA36eF9911Fb3",
+      "txHash": "0x0f1535a489fe88f459162cab81dcc7fd7225b87e7ab723a407b77025c40c1dfe",
+      "blockNumber": 67301863,
+      "create2": true
+    },
+    "ZKTranscriptLib": {
+      "address": "0x725189b280203c696000fd51def1534A417101f8",
+      "txHash": "0x8d95d50ebaed9e02031f049bca3281d13eb7ff1baa39d5b133b812c53e32d050",
+      "blockNumber": 67301863,
+      "create2": true
+    },
+    "ShieldVerifier": {
+      "address": "0xD196F2EA058280894aD542529910B7c5C492CA75",
+      "txHash": "0xd271c071635f4fa8c2fdc5a7f26167b8d0dd5cbdeac8f536d2d73c994c5dc059",
+      "blockNumber": 67301864,
+      "create2": true
+    },
+    "SpendVerifier": {
+      "address": "0x5CD815b08c5188743616496b8066938C28c0f140",
+      "txHash": "0xcd22d9bb08cf5e3b759ed1004538963b0f0ba8a1fcf6e9ab840e329615107712",
+      "blockNumber": 67301864,
+      "create2": true
+    }
+  }
 }

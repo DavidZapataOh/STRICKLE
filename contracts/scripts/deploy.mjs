@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, dirname, join } from "node:path";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
+import { privateKeyToAddress } from "viem/accounts";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
 
@@ -50,7 +51,9 @@ export function deploy({
 }) {
   if (!process.env.PRIVATE_KEY) throw new Error("PRIVATE_KEY is not set");
 
-  const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--broadcast"];
+  const key = process.env.PRIVATE_KEY.startsWith("0x") ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`;
+  const sender = privateKeyToAddress(key);
+  const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--sender", sender, "--broadcast"];
   execFileSync("arc-forge", args, { cwd: contractsDir, stdio: "inherit" });
 
   const runFile = join(contractsDir, "broadcast", basename(script), String(chainId), "run-latest.json");

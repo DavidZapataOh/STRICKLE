@@ -14,7 +14,13 @@ export const CIRCUITS = [
 
 export function renameVerifier(source, contract) {
   if (!source.includes("contract HonkVerifier is")) throw new Error("generated file has no HonkVerifier declaration");
-  return source.replace("contract HonkVerifier is", `contract ${contract} is`);
+  const prefix = contract.replace(/Verifier$/, "");
+  const shared = [...source.matchAll(/^(?:abstract contract|contract|library|interface) (\w+)/gm)]
+    .map((match) => match[1])
+    .filter((name) => name !== "HonkVerifier");
+  let renamed = source.replace("contract HonkVerifier is", `contract ${contract} is`);
+  for (const name of shared) renamed = renamed.replace(new RegExp(`\\b${name}\\b`, "g"), `${prefix}${name}`);
+  return renamed;
 }
 
 export function publicInputCount(source) {
