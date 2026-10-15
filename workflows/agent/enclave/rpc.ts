@@ -58,3 +58,6 @@ export function firstLogData(result: unknown): Hex {
   if (!first || typeof first.data !== "string") throw new Error("no log");
   return first.data;
 }
+
+export const codeRequest = (address: Address): RpcRequest => ({ method: "eth_getCode", params: [address, "latest"] });
+export const isContract = (result: unknown): boolean => typeof result === "string" && result !== "0x" && result.length > 2;
