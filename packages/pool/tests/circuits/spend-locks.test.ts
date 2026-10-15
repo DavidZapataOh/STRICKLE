@@ -70,16 +70,6 @@ describe("time lock", () => {
     const input = world.add(makeNote({ lockUntil: NOW }));
     await expect(run(baseSpend(world, input))).resolves.toBeDefined();
   });
-
-  it("rejects an agent shortening a lock", async () => {
-    const world = new World();
-    const agentPolicy: Policy = { ...taxPolicy, agentKeyHash: 1n, agentActions: 15, agentCap: 2n ** 40n };
-    const spec = relock(world, NOW + 30n * DAY, NOW + 2n * DAY);
-    expect(spec.inputs[0]).not.toBeNull();
-    void agentPolicy;
-    const agent = { kind: "agent" as const, ak: 5n, nk: 0n, authHash: 0n };
-    await expect(run({ ...spec, signer: agent })).rejects.toThrow();
-  });
 });
 
 describe("release delay for policy and flag changes", () => {

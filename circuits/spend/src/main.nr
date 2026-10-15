@@ -157,5 +157,18 @@ fn main(
         compute_root(recipient_leaf, allowlist_index, allowlist_path) == base_policy.allowlist_root;
     assert(!((public_amount != 0) & restricted) | lifted | recipient_allowed, "recipient is not approved");
     // --- rules: agent role ---
+    let can_pay = (base_policy.agent_actions & ACTION_PAY) != 0;
+    let can_split = (base_policy.agent_actions & ACTION_SPLIT) != 0;
+    assert(!is_agent | !(public_amount != 0) | (can_pay & recipient_allowed), "the agent may only pay approved recipients");
+    assert(!is_agent | !any_move | can_split, "the agent may not split");
+    assert(!is_agent | !any_send, "the agent may not send to another owner");
+    assert(!is_agent | (leaving <= (base_policy.agent_cap as u128)), "above the agent cap");
+    for j in 0..2 {
+        let out = outputs[j].note;
+        let moves_j = (out.amount != 0) & (out.owner_pk == base_note.owner_pk) & (out.box_id != base_note.box_id);
+        let leaf = template_leaf(out.box_id, out.policy);
+        let template_ok = compute_root(leaf, outputs[j].template_index, outputs[j].template_path) == base_policy.template_root;
+        assert(!(is_agent & moves_j) | template_ok, "destination is not an approved template");
+    }
     // --- rules: labels and association ---
 }
