@@ -170,3 +170,13 @@ export function breachShareBps(f: Forecast, threshold: bigint, weeks: number): n
   }
   return Math.ceil((breaches * 10_000) / f.scenarios);
 }
+
+/** How many of the 13 history weeks contain at least one cash entry; sparse history must not read as calm. */
+export function populatedWeeks(history: readonly CashEntry[], asOf: PlainDate): number {
+  const weeks = new Set<number>();
+  for (const { date } of history) {
+    const ago = daysBetween(date, asOf);
+    if (ago >= 0 && ago < WINDOW_DAYS) weeks.add(Math.floor(ago / 7));
+  }
+  return weeks.size;
+}
