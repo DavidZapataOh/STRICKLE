@@ -1,13 +1,190 @@
 {
-  "meta": { "title": "Strickle", "description": "Tu agente de pagos: ingresos irregulares, un sueldo regular." },
-  "nav": { "home": "Inicio", "activity": "Actividad", "boxes": "Cajas", "settings": "Ajustes", "skip": "Saltar al contenido", "primary": "Navegación principal" },
-  "shell": { "brand": "Strickle" },
+  "meta": {
+    "title": "Strickle",
+    "description": "Tu agente de pagos: ingresos irregulares, un sueldo regular."
+  },
+  "nav": {
+    "home": "Inicio",
+    "activity": "Actividad",
+    "boxes": "Cajas",
+    "settings": "Ajustes",
+    "skip": "Saltar al contenido",
+    "primary": "Navegación principal"
+  },
+  "shell": {
+    "brand": "Strickle"
+  },
   "screens": {
-    "home": { "title": "Inicio", "emptyTitle": "Aquí aparecerá tu próximo sueldo", "emptyBody": "Cuando llegue tu primer pago, el agente muestra la fecha, el monto y la regla que hay detrás." },
-    "activity": { "title": "Actividad", "emptyTitle": "Cada movimiento tiene su recibo", "emptyBody": "Cuando el agente reparte un pago o paga tu sueldo, ves qué hizo, qué regla aplicó y qué puedes cambiar todavía." },
-    "boxes": { "title": "Cajas", "emptyTitle": "Tus cajas aún no están creadas", "emptyBody": "Impuestos, caja operativa, fondo de emergencia, sueldo y ganancia tienen su propia caja cuando terminas la configuración." },
-    "settings": { "title": "Ajustes", "emptyTitle": "Aquí viven las reglas y los límites", "emptyBody": "Desde esta pantalla podrás pausar al agente, cambiar sus reglas y compartir una vista de solo lectura con tu contador." },
-    "verify": { "title": "Verificar", "emptyTitle": "Comprueba un certificado", "emptyBody": "Todavía no se emiten certificados de ingresos. Cuando existan, podrás comprobar uno aquí." },
-    "docs": { "title": "Documentación", "emptyTitle": "La documentación aún no está publicada", "emptyBody": "Cuando lo esté, esta página enlazará a ella. Mientras tanto, cada regla que aplica el agente se muestra junto al número que produce." }
+    "home": {
+      "title": "Inicio",
+      "emptyTitle": "Aquí aparecerá tu próximo sueldo",
+      "emptyBody": "Cuando llegue tu primer pago, el agente muestra la fecha, el monto y la regla que hay detrás."
+    },
+    "activity": {
+      "title": "Actividad",
+      "emptyTitle": "Cada movimiento tiene su recibo",
+      "emptyBody": "Cuando el agente reparte un pago o paga tu sueldo, ves qué hizo, qué regla aplicó y qué puedes cambiar todavía."
+    },
+    "boxes": {
+      "title": "Cajas",
+      "emptyTitle": "Tus cajas aún no están creadas",
+      "emptyBody": "Impuestos, caja operativa, fondo de emergencia, sueldo y ganancia tienen su propia caja cuando terminas la configuración."
+    },
+    "settings": {
+      "title": "Ajustes",
+      "emptyTitle": "Aquí viven las reglas y los límites",
+      "emptyBody": "Desde esta pantalla podrás pausar al agente, cambiar sus reglas y compartir una vista de solo lectura con tu contador."
+    },
+    "verify": {
+      "title": "Verificar",
+      "emptyTitle": "Comprueba un certificado",
+      "emptyBody": "Todavía no se emiten certificados de ingresos. Cuando existan, podrás comprobar uno aquí."
+    },
+    "docs": {
+      "title": "Documentación",
+      "emptyTitle": "La documentación aún no está publicada",
+      "emptyBody": "Cuando lo esté, esta página enlazará a ella. Mientras tanto, cada regla que aplica el agente se muestra junto al número que produce."
+    }
+  },
+  "boxes": {
+    "taxes": "Impuestos",
+    "payroll": "Nómina",
+    "salary": "Tu sueldo",
+    "operating": "Caja operativa",
+    "emergency": "Fondo de emergencia",
+    "profit": "Ganancia"
+  },
+  "start": {
+    "title": "Configura Strickle",
+    "progress": "Paso {n} de {total}",
+    "testnet": "Red de prueba: sin dinero real",
+    "back": "Atrás",
+    "next": "Continuar",
+    "profile": {
+      "title": "¿Cómo cobras hoy?",
+      "stablecoin": "En dólares digitales",
+      "stablecoinHint": "USDC, USDT u otra stablecoin en dólares",
+      "bank": "Por un banco o una plataforma",
+      "bankHint": "Deel, Payoneer, Wise, Upwork o transferencia bancaria"
+    },
+    "country": {
+      "title": "¿Dónde pagas impuestos?",
+      "label": "País",
+      "choose": "Elige un país",
+      "other": "Otro país"
+    },
+    "regime": {
+      "title": "¿En qué régimen estás?",
+      "coded": "Estoy en {regime}",
+      "other": "Otro régimen, o no estoy seguro",
+      "hint": "No estar seguro está bien: usamos una estimación fija hasta que lo confirmes."
+    },
+    "income": {
+      "title": "Tus ingresos y tu sueldo",
+      "income": "Ingreso mensual típico (dólares)",
+      "goal": "Sueldo que quieres cada mes (dólares)",
+      "payday": "Día de pago (día del mes, de 1 a 28)",
+      "fromSimulator": "Tomado del simulador. Cámbialo si no es correcto."
+    },
+    "history": {
+      "title": "Tus pagos habituales",
+      "notice": "Todavía no se pueden importar doce meses de ingresos reales. Strickle aprenderá de esta estimación hasta que lleguen tus propios pagos.",
+      "perMonth": "Pagos por mes",
+      "day": "Día del pago {n}"
+    },
+    "review": {
+      "title": "Lo que hará Strickle",
+      "loading": "Calculando tu plan",
+      "failed": "No pudimos calcular tu plan en este momento.",
+      "retry": "Intentar de nuevo",
+      "taxLine": "{rate} de cada pago va a impuestos, según {regime}",
+      "taxAnnual": "{rate} de cada pago va a impuestos: {regime} no pide pagos adelantados con tus ingresos, pero el impuesto anual sí se debe",
+      "taxFixed": "Cerca de {rate} de cada pago va a impuestos: un mes típico de la cuota fija de {regime}",
+      "taxFallback": "{rate} de cada pago va a impuestos, una estimación fija hasta que se confirme tu régimen",
+      "source": "Fuente de la regla",
+      "unverified": "Una estimación, no asesoría fiscal. Aún no la verifica un contador.",
+      "reasonNoRule": "Todavía no tenemos una regla codificada para tu país.",
+      "reasonOther": "Todavía no codificamos el régimen en el que estás.",
+      "reasonRate": "El tipo de cambio no estaba disponible en este momento.",
+      "reasonExpired": "La regla de tu país ha vencido.",
+      "reasonNeedsYear": "La regla de tu país necesita las cifras fiscales del año pasado, que todavía no tenemos.",
+      "reasonOutOfRegime": "Tus ingresos quedan fuera del régimen que codificamos para tu país.",
+      "assumeAbroad": "Supone que tus clientes están fuera de tu país.",
+      "firstPayment": "Tu primer pago de {amount}",
+      "month": "Tu primer mes",
+      "monthNote": "El primer mes llena primero tu caja operativa, así que los meses siguientes se reparten distinto.",
+      "salaryLine": "{amount} el día {day}",
+      "salaryPending": "{amount} queda pendiente hasta que tus ingresos lo cubran",
+      "firstSalary": "Tu primer sueldo se puede pagar unas 24 horas después de terminar: la bóveda aplica un pagador nuevo tras un día.",
+      "approval": "Cada pago de sueldo espera tu aprobación hasta que lo cambies en Ajustes.",
+      "estimateBased": "Tu plan parte de tu propia estimación hasta que lleguen tus pagos reales.",
+      "emergency": "Meta del fondo de emergencia (meses de sueldo)",
+      "confirm": "Estos porcentajes son mi punto de partida",
+      "warning": "Revisa antes de cobrar en dólares digitales",
+      "create": "Crear mi cuenta"
+    },
+    "create": {
+      "title": "Crea tu cuenta",
+      "username": "Elige un nombre para tu passkey",
+      "usernameHint": "Solo te ayuda a reconocerla. No es una contraseña.",
+      "button": "Crear cuenta con una passkey",
+      "login": "Ya tengo una cuenta",
+      "loginTitle": "Iniciar sesión",
+      "loginHint": "Usa el nombre de passkey que elegiste al crear tu cuenta.",
+      "loginButton": "Iniciar sesión con mi passkey",
+      "newAccount": "Necesito una cuenta nueva",
+      "steps": {
+        "passkey": "Creando tu passkey",
+        "sign": "Abriendo tus cajas",
+        "agent": "Entregando tu plan al agente"
+      },
+      "errors": {
+        "unsupported": "Este navegador no puede crear passkeys. Prueba una versión reciente de Chrome, Safari o Edge.",
+        "cancelled": "No se creó la passkey. Puedes intentarlo de nuevo.",
+        "failed": "La cuenta aún no se pudo crear. Tu passkey y tu código de recuperación se conservan. Inténtalo de nuevo.",
+        "notFound": "No encontramos una cuenta con esa passkey."
+      },
+      "retry": "Intentar de nuevo"
+    },
+    "recovery": {
+      "title": "Guarda tu código de recuperación",
+      "body": "Este código abre los avisos de tu agente en un dispositivo nuevo. Strickle no puede recuperarlo por ti. Anótalo o guárdalo en un gestor de contraseñas.",
+      "label": "Tu código de recuperación",
+      "confirmTitle": "Comprueba que lo guardaste",
+      "confirmBody": "Escribe el grupo {a} y el grupo {b} del código.",
+      "group": "Grupo {n}",
+      "confirm": "Lo guardé, continuar",
+      "mismatch": "Esos grupos no coinciden con el código. Revisa e inténtalo de nuevo."
+    },
+    "restore": {
+      "title": "Recupera tus avisos",
+      "body": "Escribe el código de recuperación que guardaste al crear tu cuenta.",
+      "label": "Código de recuperación",
+      "button": "Recuperar",
+      "invalid": "Ese código no es válido. Revisa si hay errores al escribirlo.",
+      "mismatch": "Ese código no abre tus avisos. Comprueba que pertenece a esta cuenta.",
+      "unverified": "El código es válido. Se comprueba la primera vez que tu agente envíe un aviso.",
+      "done": "Tus avisos están recuperados en este dispositivo.",
+      "skip": "Continuar sin avisos"
+    },
+    "done": {
+      "title": "Tus cajas están listas",
+      "reading": "El agente está leyendo tu plan",
+      "ready": "El agente tiene tu plan",
+      "waiting": "Puede tardar unos minutos. Ya puedes ir a tu inicio.",
+      "go": "Ir a mi inicio",
+      "account": "Tu cuenta",
+      "boxes": "Cajas creadas"
+    },
+    "errors": {
+      "collection": "Elige una opción.",
+      "country": "Elige un país.",
+      "regime": "Elige una opción.",
+      "income": "Escribe un número entero de 100 a 1,000,000.",
+      "goal": "Escribe un número entero de 1 a 1,000,000.",
+      "payday": "Escribe un día de 1 a 28.",
+      "days": "Elige días distintos de 1 a 28 para cada pago.",
+      "emergency": "Escribe de 1 a 12 meses."
+    }
   }
 }

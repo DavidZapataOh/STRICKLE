@@ -1,13 +1,190 @@
 {
-  "meta": { "title": "Strickle", "description": "Seu agente de pagamentos: renda irregular, salário regular." },
-  "nav": { "home": "Início", "activity": "Atividade", "boxes": "Caixas", "settings": "Ajustes", "skip": "Ir para o conteúdo", "primary": "Navegação principal" },
-  "shell": { "brand": "Strickle" },
+  "meta": {
+    "title": "Strickle",
+    "description": "Seu agente de pagamentos: renda irregular, salário regular."
+  },
+  "nav": {
+    "home": "Início",
+    "activity": "Atividade",
+    "boxes": "Caixas",
+    "settings": "Ajustes",
+    "skip": "Ir para o conteúdo",
+    "primary": "Navegação principal"
+  },
+  "shell": {
+    "brand": "Strickle"
+  },
   "screens": {
-    "home": { "title": "Início", "emptyTitle": "Seu próximo salário aparecerá aqui", "emptyBody": "Quando seu primeiro pagamento chegar, o agente mostra a data, o valor e a regra por trás." },
-    "activity": { "title": "Atividade", "emptyTitle": "Cada movimento tem seu recibo", "emptyBody": "Quando o agente divide um pagamento ou paga seu salário, você vê o que ele fez, qual regra aplicou e o que ainda pode mudar." },
-    "boxes": { "title": "Caixas", "emptyTitle": "Suas caixas ainda não foram criadas", "emptyBody": "Impostos, caixa operacional, reserva de emergência, salário e lucro ganham cada um sua caixa quando você termina a configuração." },
-    "settings": { "title": "Ajustes", "emptyTitle": "Aqui ficam as regras e os limites", "emptyBody": "Por esta tela você poderá pausar o agente, mudar suas regras e compartilhar uma visão somente leitura com seu contador." },
-    "verify": { "title": "Verificar", "emptyTitle": "Confira um certificado", "emptyBody": "Os certificados de renda ainda não são emitidos. Quando forem, você poderá conferir um aqui." },
-    "docs": { "title": "Documentação", "emptyTitle": "A documentação ainda não foi publicada", "emptyBody": "Quando for, esta página vai levar até ela. Enquanto isso, cada regra que o agente aplica aparece ao lado do número que ela produz." }
+    "home": {
+      "title": "Início",
+      "emptyTitle": "Seu próximo salário aparecerá aqui",
+      "emptyBody": "Quando seu primeiro pagamento chegar, o agente mostra a data, o valor e a regra por trás."
+    },
+    "activity": {
+      "title": "Atividade",
+      "emptyTitle": "Cada movimento tem seu recibo",
+      "emptyBody": "Quando o agente divide um pagamento ou paga seu salário, você vê o que ele fez, qual regra aplicou e o que ainda pode mudar."
+    },
+    "boxes": {
+      "title": "Caixas",
+      "emptyTitle": "Suas caixas ainda não foram criadas",
+      "emptyBody": "Impostos, caixa operacional, reserva de emergência, salário e lucro ganham cada um sua caixa quando você termina a configuração."
+    },
+    "settings": {
+      "title": "Ajustes",
+      "emptyTitle": "Aqui ficam as regras e os limites",
+      "emptyBody": "Por esta tela você poderá pausar o agente, mudar suas regras e compartilhar uma visão somente leitura com seu contador."
+    },
+    "verify": {
+      "title": "Verificar",
+      "emptyTitle": "Confira um certificado",
+      "emptyBody": "Os certificados de renda ainda não são emitidos. Quando forem, você poderá conferir um aqui."
+    },
+    "docs": {
+      "title": "Documentação",
+      "emptyTitle": "A documentação ainda não foi publicada",
+      "emptyBody": "Quando for, esta página vai levar até ela. Enquanto isso, cada regra que o agente aplica aparece ao lado do número que ela produz."
+    }
+  },
+  "boxes": {
+    "taxes": "Impostos",
+    "payroll": "Folha",
+    "salary": "Seu salário",
+    "operating": "Caixa operacional",
+    "emergency": "Reserva de emergência",
+    "profit": "Lucro"
+  },
+  "start": {
+    "title": "Configure o Strickle",
+    "progress": "Passo {n} de {total}",
+    "testnet": "Rede de teste: sem dinheiro real",
+    "back": "Voltar",
+    "next": "Continuar",
+    "profile": {
+      "title": "Como você recebe hoje?",
+      "stablecoin": "Em dólares digitais",
+      "stablecoinHint": "USDC, USDT ou outra stablecoin em dólar",
+      "bank": "Por um banco ou plataforma",
+      "bankHint": "Deel, Payoneer, Wise, Upwork ou transferência bancária"
+    },
+    "country": {
+      "title": "Onde você paga impostos?",
+      "label": "País",
+      "choose": "Escolha um país",
+      "other": "Outro país"
+    },
+    "regime": {
+      "title": "Em qual regime você está?",
+      "coded": "Estou no {regime}",
+      "other": "Outro regime, ou não tenho certeza",
+      "hint": "Não ter certeza tudo bem: usamos uma estimativa fixa até você confirmar."
+    },
+    "income": {
+      "title": "Sua renda e seu salário",
+      "income": "Renda mensal típica (dólares)",
+      "goal": "Salário que você quer por mês (dólares)",
+      "payday": "Dia do pagamento (dia do mês, de 1 a 28)",
+      "fromSimulator": "Tirado do simulador. Mude se não estiver certo."
+    },
+    "history": {
+      "title": "Seus pagamentos habituais",
+      "notice": "Ainda não é possível importar doze meses de renda real. O Strickle vai aprender com esta estimativa até chegarem seus próprios pagamentos.",
+      "perMonth": "Pagamentos por mês",
+      "day": "Dia do pagamento {n}"
+    },
+    "review": {
+      "title": "O que o Strickle vai fazer",
+      "loading": "Calculando seu plano",
+      "failed": "Não conseguimos calcular seu plano agora.",
+      "retry": "Tentar de novo",
+      "taxLine": "{rate} de cada pagamento vai para impostos, pelo {regime}",
+      "taxAnnual": "{rate} de cada pagamento vai para impostos: o {regime} não pede antecipação com sua renda, mas o imposto anual continua devido",
+      "taxFixed": "Cerca de {rate} de cada pagamento vai para impostos: um mês típico da taxa fixa do {regime}",
+      "taxFallback": "{rate} de cada pagamento vai para impostos, uma estimativa fixa até seu regime ser confirmado",
+      "source": "Fonte da regra",
+      "unverified": "Uma estimativa, não consultoria fiscal. Ainda não verificada por um contador.",
+      "reasonNoRule": "Ainda não temos uma regra codificada para o seu país.",
+      "reasonOther": "Ainda não codificamos o regime em que você está.",
+      "reasonRate": "A taxa de câmbio não estava disponível agora.",
+      "reasonExpired": "A regra do seu país expirou.",
+      "reasonNeedsYear": "A regra do seu país precisa dos números fiscais do ano passado, que ainda não temos.",
+      "reasonOutOfRegime": "Sua renda está fora do regime que codificamos para o seu país.",
+      "assumeAbroad": "Supõe que seus clientes estão fora do seu país.",
+      "firstPayment": "Seu primeiro pagamento de {amount}",
+      "month": "Seu primeiro mês",
+      "monthNote": "O primeiro mês enche primeiro seu caixa operacional, então os meses seguintes se dividem de outro jeito.",
+      "salaryLine": "{amount} no dia {day}",
+      "salaryPending": "{amount} fica pendente até sua renda cobrir",
+      "firstSalary": "Seu primeiro salário pode ser pago cerca de 24 horas depois de você terminar: o cofre aplica um novo beneficiário depois de um dia.",
+      "approval": "Cada pagamento de salário espera sua aprovação até você mudar isso em Ajustes.",
+      "estimateBased": "Seu plano parte da sua própria estimativa até chegarem seus pagamentos reais.",
+      "emergency": "Meta da reserva de emergência (meses de salário)",
+      "confirm": "Estes percentuais são meu ponto de partida",
+      "warning": "Confira antes de receber em dólares digitais",
+      "create": "Criar minha conta"
+    },
+    "create": {
+      "title": "Crie sua conta",
+      "username": "Escolha um nome para sua passkey",
+      "usernameHint": "Serve só para você reconhecê-la. Não é uma senha.",
+      "button": "Criar conta com uma passkey",
+      "login": "Já tenho uma conta",
+      "loginTitle": "Entrar",
+      "loginHint": "Use o nome de passkey que você escolheu ao criar sua conta.",
+      "loginButton": "Entrar com minha passkey",
+      "newAccount": "Preciso de uma conta nova",
+      "steps": {
+        "passkey": "Criando sua passkey",
+        "sign": "Abrindo suas caixas",
+        "agent": "Entregando seu plano ao agente"
+      },
+      "errors": {
+        "unsupported": "Este navegador não consegue criar passkeys. Tente uma versão recente do Chrome, Safari ou Edge.",
+        "cancelled": "A passkey não foi criada. Você pode tentar de novo.",
+        "failed": "A conta ainda não pôde ser criada. Sua passkey e seu código de recuperação foram mantidos. Tente de novo.",
+        "notFound": "Nenhuma conta encontrada para essa passkey."
+      },
+      "retry": "Tentar de novo"
+    },
+    "recovery": {
+      "title": "Guarde seu código de recuperação",
+      "body": "Este código abre os avisos do seu agente em um dispositivo novo. O Strickle não consegue recuperá-lo por você. Anote ou guarde em um gerenciador de senhas.",
+      "label": "Seu código de recuperação",
+      "confirmTitle": "Confirme que você guardou",
+      "confirmBody": "Digite o grupo {a} e o grupo {b} do código.",
+      "group": "Grupo {n}",
+      "confirm": "Guardei, continuar",
+      "mismatch": "Esses grupos não batem com o código. Confira e tente de novo."
+    },
+    "restore": {
+      "title": "Recupere seus avisos",
+      "body": "Digite o código de recuperação que você guardou ao criar sua conta.",
+      "label": "Código de recuperação",
+      "button": "Recuperar",
+      "invalid": "Esse código não é válido. Confira se há erros de digitação.",
+      "mismatch": "Esse código não abre seus avisos. Confira se ele pertence a esta conta.",
+      "unverified": "O código é válido. Ele é conferido na primeira vez que seu agente enviar um aviso.",
+      "done": "Seus avisos foram recuperados neste dispositivo.",
+      "skip": "Continuar sem avisos"
+    },
+    "done": {
+      "title": "Suas caixas estão prontas",
+      "reading": "O agente está lendo seu plano",
+      "ready": "O agente tem seu plano",
+      "waiting": "Pode levar alguns minutos. Você já pode ir para o seu início.",
+      "go": "Ir para o meu início",
+      "account": "Sua conta",
+      "boxes": "Caixas criadas"
+    },
+    "errors": {
+      "collection": "Escolha uma opção.",
+      "country": "Escolha um país.",
+      "regime": "Escolha uma opção.",
+      "income": "Digite um número inteiro de 100 a 1.000.000.",
+      "goal": "Digite um número inteiro de 1 a 1.000.000.",
+      "payday": "Digite um dia de 1 a 28.",
+      "days": "Escolha dias diferentes de 1 a 28 para cada pagamento.",
+      "emergency": "Digite de 1 a 12 meses."
+    }
   }
 }

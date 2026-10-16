@@ -25,12 +25,19 @@ describe("networks", () => {
 });
 
 describe("rpcUrl", () => {
-  it("defaults to the primary public endpoint", () => {
-    expect(rpcUrl("testnet", {})).toBe("https://rpc.testnet.arc.io");
+  it("defaults to the public endpoint that tolerates batches", () => {
+    expect(rpcUrl("testnet", {})).toBe("https://rpc.blockdaemon.testnet.arc.network");
   });
 
   it("prefers the environment override and ignores an empty value", () => {
     expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "https://rpc.example" })).toBe("https://rpc.example");
     expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "" })).toBe("https://rpc.mainnet.arc.io");
+  });
+});
+
+describe("the wallet service endpoint", () => {
+  it("is one constant shared by the passkey wallet and the apps' content security policy", async () => {
+    const { MODULAR_URL } = await import("../src/networks.ts");
+    expect(new URL(MODULAR_URL).origin).toBe("https://modular-sdk.circle.com");
   });
 });
