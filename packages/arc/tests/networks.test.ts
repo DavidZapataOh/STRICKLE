@@ -35,7 +35,7 @@ describe("networks", () => {
 
 describe("rpcUrl", () => {
   it("defaults to the public endpoint that tolerates batches", () => {
-    expect(rpcUrl("testnet", {})).toBe("https://rpc.blockdaemon.testnet.arc.network");
+    expect(rpcUrl("testnet", {})).toBe("https://rpc.blockdaemon.testnet.arc.io");
   });
 
   it("prefers the environment override and ignores an empty value", () => {

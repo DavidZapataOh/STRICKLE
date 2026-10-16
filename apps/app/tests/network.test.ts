@@ -9,9 +9,9 @@ describe("the network configuration", () => {
   });
 
   it("takes the endpoint from the arc package unless an https override is given", () => {
-    expect(resolveRpc("testnet", undefined)).toBe("https://rpc.blockdaemon.testnet.arc.network");
+    expect(resolveRpc("testnet", undefined)).toBe("https://rpc.blockdaemon.testnet.arc.io");
     expect(resolveRpc("testnet", "https://rpc.example.test")).toBe("https://rpc.example.test");
-    expect(resolveRpc("testnet", "http://insecure.test")).toBe("https://rpc.blockdaemon.testnet.arc.network");
+    expect(resolveRpc("testnet", "http://insecure.test")).toBe("https://rpc.blockdaemon.testnet.arc.io");
   });
 
   it("knows the three contracts on testnet and says so when a network has none", () => {
