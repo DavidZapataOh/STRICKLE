@@ -13,7 +13,7 @@ test("the tab bar never covers the content on a phone", async ({ page, viewport 
   const last = await page.locator(".shell-main > *:last-child").boundingBox();
   expect(nav).not.toBeNull();
   expect(last).not.toBeNull();
-  await page.locator(".shell-main > *:last-child").scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const after = await page.locator(".shell-main > *:last-child").boundingBox();
   expect((after?.y ?? 0) + (after?.height ?? 0)).toBeLessThanOrEqual((nav?.y ?? 0) + 1);
 });

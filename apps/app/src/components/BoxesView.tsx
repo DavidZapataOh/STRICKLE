@@ -2,7 +2,7 @@ import { BOX_KINDS, type BoxKind } from "@strickle/core";
 import { formatMoney } from "@strickle/design/format";
 import type { Locale } from "@strickle/design/locale";
 import { describeRule } from "@/chain/rules";
-import { boxTotal, heldTotals } from "@/chain/vault";
+import { boxTotal, heldTotals } from "@/chain/totals";
 import { dateText, isoDay } from "@/home/format";
 import type { DataText } from "@/i18n/slices";
 import { fill } from "@/i18n/fill";

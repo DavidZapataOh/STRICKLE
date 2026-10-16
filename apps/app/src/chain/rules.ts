@@ -1,4 +1,4 @@
-import type { BoxRule } from "./vault.ts";
+import type { BoxRule } from "./totals.ts";
 
 export type RuleLine =
   | { key: "locked"; until: number }

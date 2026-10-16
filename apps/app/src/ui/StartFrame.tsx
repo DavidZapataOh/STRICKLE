@@ -11,7 +11,7 @@ export function StartFrame({ lang, brand, skip, progress, testnet, children }: {
         {skip}
       </a>
       <header className="start-header">
-        <Link className="brand" href={`/${lang}`} aria-label={brand}>
+        <Link className="brand" href={`/${lang}`} prefetch={false} aria-label={brand}>
           <StruckS className="brand-mark" />
         </Link>
         {progress ? <p className="start-progress">{progress}</p> : null}

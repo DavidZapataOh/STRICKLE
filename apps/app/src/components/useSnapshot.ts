@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { loadSession } from "@/account/session";
-import { type SnapshotScope, loadSnapshot } from "@/chain/snapshot";
+import type { SnapshotScope } from "@/chain/snapshot";
 import type { ScreenState } from "./HomeView";
 
 const REFRESH_MS = 30_000;
@@ -17,7 +17,8 @@ export function useSnapshot(scope: SnapshotScope): { state: ScreenState; retry: 
     const load = async () => {
       const session = loadSession();
       try {
-        const snapshot = session ? await loadSnapshot(session, scope, controller.signal) : null;
+        // the chain client is fetched only for a signed-in account: a visitor without one never downloads it
+        const snapshot = session ? await (await import("@/chain/snapshot")).loadSnapshot(session, scope, controller.signal) : null;
         if (controller.signal.aborted) return;
         setState(snapshot ? { status: "ready", snapshot } : { status: "signedOut" });
       } catch {
