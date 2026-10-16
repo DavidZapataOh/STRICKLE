@@ -1,85 +1,149 @@
+import { proposalDigest } from "@strickle/agent/proposals";
+import { noticeAad, type Notice } from "@strickle/agent/notices";
+import { generateProverKey, scalarFrom, sealWith } from "@strickle/prover/sealed";
+import { undoSummary } from "@strickle/brain";
+import { type Hex, bytesToHex, getAddress } from "viem";
 import { describe, expect, it } from "vitest";
-import { layoutTimeline } from "../src/home/timeline.ts";
+import { APPROVAL_MARGIN_SECONDS, UNDO_REASON, buildReceipts, canApprove, canReject, foldProposals, openNotices } from "../src/activity/timeline.ts";
+import type { ChainReceipt, SealedNotice } from "../src/activity/types.ts";
 
-const events = [
-  { date: "2026-11-01", kind: "salary" as const, amount: "1800000000" },
-  { date: "2026-11-17", kind: "tax" as const, amount: null },
-  { date: "2027-02-01", kind: "salary" as const, amount: "1800000000" },
-];
-const weeks = (n: number, from = 900_000_000) => Array.from({ length: n }, (_, i) => String(from + i * 50_000_000));
-const forecast = { floor: "280000000", opening: "800000000", p10: weeks(13, 500_000_000), p50: weeks(13) };
-const input = { asOf: "2026-11-01", days: 60, events, forecast };
-const numbers = (path: string) => (path.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
-const xs = (path: string) => [...path.matchAll(/[ML]([\d.]+) /g)].map((match) => Number(match[1]));
+const vault = getAddress("0x00000000000000000000000000000000000000a1");
+const payee = getAddress("0x00000000000000000000000000000000000000b2");
+const key = generateProverKey();
+const tx = (n: number): Hex => `0x${n.toString(16).padStart(64, "0")}`;
 
-describe("layoutTimeline", () => {
-  it("places stakes by day and drops the ones outside the window", () => {
-    const { stakes } = layoutTimeline(input);
-    expect(stakes.map((stake) => stake.date)).toEqual(["2026-11-01", "2026-11-17"]);
-    expect(stakes[0]?.x).toBe(0);
-    expect(stakes[1]?.x).toBeCloseTo((16 / 60) * 100, 1);
-    expect(stakes.map((stake) => stake.id)).toEqual([1, 2]);
+const seal = (id: bigint, notice: Notice | Record<string, unknown>, at = 1_800_000_000): SealedNotice => {
+  const plain = new TextEncoder().encode(JSON.stringify(notice));
+  const sealed = sealWith(plain, key.publicKey, noticeAad(vault, id), scalarFrom(new Uint8Array(64).fill(Number(id) + 1)));
+  return { id, sealed: bytesToHex(sealed), txHash: tx(Number(id)), blockNumber: 100n + id, logIndex: 0, timestamp: at };
+};
+
+// the digest the enclave computes for a salary proposal of that month
+const proposal = (id: string, expiresAt: number, month = "2026-11", digest?: Hex): Notice => ({
+  kind: "proposal",
+  proposalId: id,
+  amount: "1800000000",
+  payee,
+  digest: digest ?? proposalDigest({ payee, amount: "1800000000", month }),
+  expiresAt,
+});
+
+describe("openNotices", () => {
+  it("opens what the key can open and marks the rest unreadable", () => {
+    const other = generateProverKey();
+    const sealedOther = { ...seal(2n, proposal("salary-2026-11", 1_900_000_000)), sealed: bytesToHex(sealWith(new TextEncoder().encode("{}"), other.publicKey, noticeAad(vault, 2n), 5n)) };
+    const out = openNotices([seal(1n, proposal("salary-2026-11", 1_900_000_000)), sealedOther], vault, key);
+    expect(out[0]?.notice).toMatchObject({ kind: "proposal", proposalId: "salary-2026-11" });
+    expect(out[1]?.notice).toBeNull();
   });
 
-  it("puts stakes of the same week on different lanes so their numbers never overlap", () => {
-    const crowded = layoutTimeline({ ...input, events: [events[0]!, { date: "2026-11-02", kind: "payroll", amount: "1" }, { date: "2026-11-03", kind: "tax", amount: null }] });
-    expect(crowded.stakes.map((stake) => stake.lane)).toEqual([0, 1, 2]);
-    expect(layoutTimeline(input).stakes.map((stake) => stake.lane)).toEqual([0, 0]);
+  it("without a key nothing is readable and nothing throws", () => {
+    expect(openNotices([seal(1n, proposal("salary-2026-11", 1))], vault, null).map((item) => item.notice)).toEqual([null]);
   });
 
-  it("starts at today's balance and stops on the last day of the window, however many weeks the forecast has", () => {
-    const { p50 } = layoutTimeline(input);
-    const points = xs(p50);
-    expect(points[0]).toBe(0);
-    expect(points[points.length - 1]).toBe(100);
-    expect(points).toHaveLength(1 + 8 + 1);
-    expect(points).toEqual([...points].sort((a, b) => a - b));
+  it("refuses a notice sealed for another notice id (the id is part of the associated data)", () => {
+    const moved = { ...seal(1n, proposal("salary-2026-11", 1_900_000_000)), id: 9n };
+    expect(openNotices([moved], vault, key)[0]?.notice).toBeNull();
   });
 
-  it("interpolates the value on the last day between the two weeks that straddle it", () => {
-    const flat = layoutTimeline({ ...input, forecast: { floor: "0", opening: "0", p10: weeks(13, 0), p50: weeks(13, 0) } });
-    expect(flat.empty).toBe(false);
-    const last = flat.p50.split(" L").pop() ?? "";
-    expect(Number(last.split(" ")[0])).toBe(100);
+  it("treats a notice that opens but does not match the notice schema as unreadable", () => {
+    expect(openNotices([seal(1n, { kind: "proposal", proposalId: "x", amount: "not a number" })], vault, key)[0]?.notice).toBeNull();
+    expect(openNotices([seal(2n, { kind: "unknown-kind" })], vault, key)[0]?.notice).toBeNull();
+  });
+});
+
+describe("foldProposals", () => {
+  const now = 1_800_100_000;
+
+  it("keeps a proposal pending until it is decided or runs out", () => {
+    const opened = openNotices([seal(1n, proposal("salary-2026-11", now + 1000))], vault, key);
+    expect(foldProposals(opened, now)).toEqual([expect.objectContaining({ proposalId: "salary-2026-11", state: "pending", amount: 1_800_000_000n, payee, verified: true })]);
+    expect(foldProposals(opened, now + 2000)[0]?.state).toBe("expired");
   });
 
-  it("does not repeat the window's end when the forecast stops short of it", () => {
-    const short = layoutTimeline({ ...input, forecast: { floor: "1", opening: "1", p10: weeks(4), p50: weeks(4) } });
-    expect(xs(short.p50)).toHaveLength(1 + 4);
+  it("follows the decision notices to their final state", () => {
+    const opened = openNotices(
+      [seal(1n, proposal("salary-2026-11", now + 1000)), seal(2n, { kind: "decision", proposalId: "salary-2026-11", status: "executed" }, now - 5)],
+      vault,
+      key,
+    );
+    expect(foldProposals(opened, now)[0]).toMatchObject({ state: "executed", decidedAt: now - 5 });
+    const rejected = openNotices([seal(1n, proposal("salary-2026-11", now + 1000)), seal(2n, { kind: "decision", proposalId: "salary-2026-11", status: "rejected" })], vault, key);
+    expect(foldProposals(rejected, now)[0]?.state).toBe("rejected");
   });
 
-  it("keeps every coordinate inside the box, whatever the values", () => {
-    const wild = layoutTimeline({ ...input, forecast: { floor: "5", opening: "900000000000", p10: ["-900000000000", "7"], p50: ["900000000000", "-3"] } });
-    expect(wild.floorY).toBeGreaterThanOrEqual(0);
-    expect(wild.floorY).toBeLessThanOrEqual(40);
-    for (const path of [wild.p50, wild.p10, wild.band]) {
-      for (const number of numbers(path.replace(/[A-Z]/g, " "))) {
-        expect(number).toBeGreaterThanOrEqual(0);
-        expect(number).toBeLessThanOrEqual(100);
-      }
+  it("keeps two proposals apart and lists the newest first", () => {
+    const opened = openNotices([seal(1n, proposal("salary-2026-10", now + 1000, "2026-10"), 10), seal(2n, proposal("salary-2026-11", now + 1000), 20)], vault, key);
+    expect(foldProposals(opened, now).map((item) => item.proposalId)).toEqual(["salary-2026-11", "salary-2026-10"]);
+  });
+
+  it("ignores a decision for a proposal it never saw and the notices it cannot read", () => {
+    const opened = openNotices([seal(1n, { kind: "decision", proposalId: "ghost", status: "executed" })], vault, key);
+    expect(foldProposals([...opened, { id: 5n, timestamp: 1, txHash: tx(5), notice: null }], now)).toEqual([]);
+  });
+
+  it("recomputes the digest from the notice's own fields and flags a mismatch", () => {
+    const tampered = openNotices([seal(1n, proposal("salary-2026-11", now + 1000, "2026-11", `0x${"cd".repeat(32)}`))], vault, key);
+    expect(foldProposals(tampered, now)[0]).toMatchObject({ verified: false });
+    const wrongMonth = openNotices([seal(1n, proposal("salary-2026-12", now + 1000, "2026-11"))], vault, key);
+    expect(foldProposals(wrongMonth, now)[0]).toMatchObject({ verified: false });
+    const odd = openNotices([seal(1n, proposal("custom-id", now + 1000))], vault, key);
+    expect(foldProposals(odd, now)[0]).toMatchObject({ verified: false });
+  });
+});
+
+describe("what the user may decide", () => {
+  const now = 1_800_100_000;
+  const make = (expiresAt: number, digest?: Hex) => foldProposals(openNotices([seal(1n, proposal("salary-2026-11", expiresAt, "2026-11", digest))], vault, key), now)[0] as ReturnType<typeof foldProposals>[number];
+
+  it("approves only a pending, verified proposal with enough time left for the gateway and the enclave", () => {
+    expect(canApprove(make(now + 3600), now)).toBe(true);
+    expect(canApprove(make(now + APPROVAL_MARGIN_SECONDS), now)).toBe(false);
+    expect(canApprove(make(now + APPROVAL_MARGIN_SECONDS + 1), now)).toBe(true);
+    expect(canApprove(make(now - 1), now)).toBe(false);
+    expect(canApprove(make(now + 3600, `0x${"cd".repeat(32)}`), now)).toBe(false);
+  });
+
+  it("rejects only a proposal that is still pending and not expired", () => {
+    expect(canReject(make(now + 3600), now)).toBe(true);
+    expect(canReject(make(now + 5), now)).toBe(true);
+    expect(canReject(make(now - 1), now)).toBe(false);
+  });
+});
+
+describe("buildReceipts", () => {
+  const split: ChainReceipt = { type: "split", vault, asset: 1, total: 1_000_000_000n, byBox: { taxes: 200_000_000n, operating: 600_000_000n, profit: 200_000_000n }, txHash: tx(1), blockNumber: 100n, logIndex: 5, timestamp: 1_800_000_000 };
+  const salary: ChainReceipt = { type: "salary", vault, asset: 1, payee, amount: 1_800_000_000n, txHash: tx(2), blockNumber: 120n, logIndex: 2, timestamp: 1_800_050_000 };
+  const priv: ChainReceipt = { type: "private-spend", vault, amount: 300_000n, recipient: payee, txHash: tx(3), blockNumber: 130n, logIndex: 3, timestamp: 1_800_060_000 };
+
+  it("lists receipts newest first with the three languages' own texts", () => {
+    const en = buildReceipts([split, salary, priv], "en");
+    expect(en.map((item) => item.kind)).toEqual(["payment", "salary", "split"]);
+    expect(buildReceipts([salary], "es")[0]?.text).not.toBe(buildReceipts([salary], "en")[0]?.text);
+    expect(buildReceipts([salary], "pt-br")[0]?.text).toMatch(/1\.800,00/);
+  });
+
+  it("carries the split's amounts per box, in box order, and the cascade rule", () => {
+    const [item] = buildReceipts([split], "en");
+    expect(item?.parts).toEqual([
+      { box: "taxes", units: 200_000_000n },
+      { box: "operating", units: 600_000_000n },
+      { box: "profit", units: 200_000_000n },
+    ]);
+    expect(item).toMatchObject({ ruleId: "cascade", total: 1_000_000_000n });
+  });
+
+  it("never offers undo: the brain says none of these can be undone and so does the screen", () => {
+    for (const [kind, reason] of Object.entries(UNDO_REASON)) {
+      expect(undoSummary(kind as never).undoable).toBe(false);
+      expect(reason).toBeTruthy();
     }
+    for (const item of buildReceipts([split, salary, priv], "en")) expect(item.undo.undoable).toBe(false);
   });
 
-  it("draws the typical path above the cautious one", () => {
-    const layout = layoutTimeline(input);
-    const lastY = (path: string) => Number(path.split(" ").pop());
-    expect(lastY(layout.p50)).toBeLessThan(lastY(layout.p10));
-  });
-
-  it("reports the balances on the last day for the text alternative", () => {
-    const { end } = layoutTimeline({ ...input, forecast: { floor: "0", opening: "0", p10: weeks(13, 0), p50: weeks(13, 100_000_000) } });
-    expect(end?.low).toBeGreaterThan(0n);
-    expect(end?.mid).toBeGreaterThan(end?.low ?? 0n);
-    expect(layoutTimeline({ ...input, forecast: { floor: "0", opening: "0", p10: [], p50: [] } }).end).toBeNull();
-  });
-
-  it("handles a flat forecast and no points", () => {
-    const flat = layoutTimeline({ ...input, forecast: { floor: "100", opening: "100", p10: ["100", "100"], p50: ["100", "100"] } });
-    expect(Number.isFinite(flat.floorY)).toBe(true);
-    expect(flat.empty).toBe(false);
-    const none = layoutTimeline({ ...input, forecast: { floor: "100", opening: "100", p10: [], p50: [] } });
-    expect(none.empty).toBe(true);
-    expect(none.p50).toBe("");
-    expect(none.stakes).toHaveLength(2);
+  it("identifies a receipt by its transaction and log index, so two identical splits never collide", () => {
+    expect(buildReceipts([split], "en")[0]?.id).toBe(`${tx(1)}:5`);
+    const ids = buildReceipts([split, { ...split, logIndex: 6 }, { ...split, txHash: tx(9) }], "en").map((item) => item.id);
+    expect(new Set(ids).size).toBe(3);
   });
 });
