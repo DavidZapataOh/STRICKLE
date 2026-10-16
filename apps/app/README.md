@@ -35,3 +35,19 @@ Proven end to end on Arc testnet with a Chromium virtual passkey (`npm run test:
 - The one-day wait is real: the salary payee's approval takes effect exactly 86,400 seconds after the vault's creation block (`approvedFrom` 1792219909, block timestamp 1792133509), which is what the review and the final screens tell the user.
 - Not yet proven: that the enclave opens the delivered profile. The CRE workflow is paused between proofs and activating it is an action on a shared resource, so that check (`EXPECT_ENCLAVE=1`, `apps/app/scripts/read-state.mjs`) runs with the next activation. What a cancelled passkey prompt throws in a real browser was not recorded either; the app treats `NotAllowedError` and `AbortError` as a cancellation.
 - Found by running it live: the content security policy of the first version blocked the browser's calls to Circle's wallet service and to the RPC endpoint (`Failed to fetch`); the policy now takes both origins from the network configuration.
+
+## Agent relay
+
+`POST /api/agent-action` receives an envelope that the browser already sealed to the enclave and signed with the passkey, checks what it can check without reading it, and forwards it to the Chainlink CRE gateway. The gateway key never reaches the browser.
+
+Server environment (none of these is `NEXT_PUBLIC_`, none appears in a response or a log):
+
+- `CRE_GATEWAY_KEY`: the private key whose address is `gatewayAddress` in `workflows/agent/config.production.json`.
+- `CRE_GATEWAY_URL`: the gateway endpoint (`https://01.gateway.zone-a.cre.chain.link` for the current zone).
+- `CRE_WORKFLOW_ID`: the deployed workflow's ID. It changes at every `cre workflow deploy` and must equal `AgentExecutor.expectedWorkflowId()`; the relay refuses to run when it does not.
+- `DATABASE_URL`: a Postgres with the migrations applied. The per-address and per-vault limits live there, so they hold across instances. Without it the relay answers 503, and a database outage closes it instead of opening it.
+- `RELAY_IP_PEPPER`: a random string; client addresses are stored only as a keyed hash.
+
+`node --env-file=/Users/david/tameion/.env apps/app/scripts/check-relay-config.mjs` checks all of this against the chain and the database. Run it after every workflow redeploy.
+
+The gateway lets one request per 30 seconds through per workflow, shared by every user, so the relay admits one accepted request per vault and one per workflow in that interval and tells the caller how long to wait. Fairness between users is first come, first served; a real queue is a launch decision.

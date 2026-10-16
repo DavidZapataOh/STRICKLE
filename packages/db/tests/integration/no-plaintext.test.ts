@@ -53,6 +53,7 @@ describe("a dump of the database", () => {
   it("has exactly the reviewed columns, so a new column cannot slip in unnoticed", async () => {
     // Adding a column means adding it here on purpose: sealed values must be bytea,
     // and nothing that can hold an amount may be text, numeric or json.
+    // The rate tables hold a keyed hash of an address or a public vault address, a count and a time: no amount, no user data.
     const reviewed = [
       "agent_state.state:bytea",
       "agent_state.updated_at:timestamp with time zone",
@@ -68,6 +69,11 @@ describe("a dump of the database", () => {
       "mirror_boxes.kind:text",
       "mirror_boxes.updated_at:timestamp with time zone",
       "mirror_boxes.user_id:uuid",
+      "rate_counters.hits:integer",
+      "rate_counters.key:text",
+      "rate_counters.window_start:timestamp with time zone",
+      "rate_slots.claimed_at:timestamp with time zone",
+      "rate_slots.key:text",
       "receipts.created_at:timestamp with time zone",
       "receipts.id:uuid",
       "receipts.kind:text",

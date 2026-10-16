@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -22,11 +22,13 @@ const columns = async (sql: Sql) =>
       order by table_name, ordinal_position`
   ).map((row) => ({ ...row }));
 
+const all = readdirSync(new URL("../../migrations/", import.meta.url)).filter((name) => name.endsWith(".sql")).sort();
+
 describe("migrate", () => {
   it("applies the schema once and is idempotent", async () => {
     const db = await createTestDatabase();
     try {
-      expect(await migrate(db.sql)).toEqual(["0001_init.sql"]);
+      expect(await migrate(db.sql)).toEqual(all);
       expect(await migrate(db.sql)).toEqual([]);
     } finally {
       await db.drop();
@@ -47,7 +49,7 @@ describe("migrate", () => {
     const db = await createTestDatabase();
     try {
       const results = await Promise.all([migrate(db.sql), migrate(db.sql)]);
-      expect(results.flat()).toEqual(["0001_init.sql"]);
+      expect(results.flat()).toEqual(all);
     } finally {
       await db.drop();
     }
