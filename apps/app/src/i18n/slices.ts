@@ -29,3 +29,8 @@ export const accountantText = (t: Dictionary): AccountantText => ({ accountant: 
 export type DepositText = Pick<Dictionary, "deposit" | "screens">;
 
 export const depositText = (t: Dictionary): DepositText => ({ deposit: t.deposit, screens: t.screens });
+
+/** What the payer's page reads: its own strings, the deposit strings for the other-chain option, and the shell titles. */
+export type PayText = Pick<Dictionary, "pay" | "deposit" | "screens">;
+
+export const payText = (t: Dictionary): PayText => ({ pay: t.pay, deposit: t.deposit, screens: t.screens });

@@ -550,6 +550,41 @@
       "tx": "Transação de conversão"
     }
   },
+  "pay": {
+    "title": "Pagar {payee}",
+    "due": "Valor a pagar",
+    "paidSoFar": "Pago até agora {paid} de {amount}; faltam {remaining}",
+    "remaining": "Falta",
+    "status": {
+      "open": "Aberta",
+      "partial": "Paga em parte",
+      "paid": "Paga",
+      "void": "Encerrada"
+    },
+    "expired": "Este link expirou. Peça um novo a {payee}.",
+    "closedBody": "Não resta nada a pagar nesta fatura.",
+    "loading": "Carregando a fatura",
+    "notFound": "Este link não existe ou não está mais ativo.",
+    "error": "Não foi possível carregar a fatura. Tente de novo.",
+    "options": {
+      "arc": "Pagar na Arc com sua carteira",
+      "other": "Pagar de outra cadeia",
+      "direct": "Pagar de outra forma"
+    },
+    "connect": "Conectar carteira",
+    "needEoa": "Esta carteira não consegue anexar a referência. Use o endereço abaixo ou outra carteira.",
+    "sending": "Aguardando sua carteira",
+    "confirming": "Confirmando seu pagamento",
+    "thanks": "Pagamento recebido.",
+    "retryClaim": "Verificar de novo",
+    "directBody": "Envie exatamente {amount} USDC na Arc para {address}. {payee} confirma manualmente.",
+    "addressWarning": "Somente USDC na Arc",
+    "copy": "Copiar endereço",
+    "copied": "Endereço copiado",
+    "copyFailed": "Seu navegador bloqueou a cópia. Selecione o endereço e copie manualmente.",
+    "noWallet": "Nenhuma carteira foi encontrada neste navegador. Use o endereço abaixo.",
+    "paymentFailed": "O pagamento não foi concluído. Nada foi cobrado. Tente de novo."
+  },
   "rules": {
     "title": "Regras das suas caixas",
     "intro": "Estas regras vivem no seu cofre, então o agente não pode mudá-las. Tornar uma regra mais rígida vale a partir de agora. Torná-la mais frouxa espera pelo menos um dia, e depois você mesmo a aplica. Isso inclui a data de bloqueio: ela pode ser encurtada depois da espera, então protege você de uma decisão apressada, não de você mesmo.",

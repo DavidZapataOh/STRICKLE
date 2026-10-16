@@ -550,6 +550,41 @@
       "tx": "Transacción de conversión"
     }
   },
+  "pay": {
+    "title": "Pagar a {payee}",
+    "due": "Monto a pagar",
+    "paidSoFar": "Pagado hasta ahora {paid} de {amount}; faltan {remaining}",
+    "remaining": "Falta",
+    "status": {
+      "open": "Abierta",
+      "partial": "Pagada en parte",
+      "paid": "Pagada",
+      "void": "Cerrada"
+    },
+    "expired": "Este enlace venció. Pídele uno nuevo a {payee}.",
+    "closedBody": "No queda nada por pagar en esta factura.",
+    "loading": "Cargando la factura",
+    "notFound": "Este enlace no existe o ya no está activo.",
+    "error": "No se pudo cargar la factura. Inténtalo de nuevo.",
+    "options": {
+      "arc": "Pagar en Arc con tu billetera",
+      "other": "Pagar desde otra cadena",
+      "direct": "Pagar de otra forma"
+    },
+    "connect": "Conectar billetera",
+    "needEoa": "Esta billetera no puede adjuntar la referencia. Usa la dirección de abajo u otra billetera.",
+    "sending": "Esperando a tu billetera",
+    "confirming": "Confirmando tu pago",
+    "thanks": "Pago recibido.",
+    "retryClaim": "Revisar de nuevo",
+    "directBody": "Envía exactamente {amount} USDC en Arc a {address}. {payee} lo confirma a mano.",
+    "addressWarning": "Solo USDC en Arc",
+    "copy": "Copiar dirección",
+    "copied": "Dirección copiada",
+    "copyFailed": "Tu navegador bloqueó el copiado. Selecciona la dirección y cópiala a mano.",
+    "noWallet": "No se encontró ninguna billetera en este navegador. Usa la dirección de abajo.",
+    "paymentFailed": "El pago no se completó. No se cobró nada. Inténtalo de nuevo."
+  },
   "rules": {
     "title": "Reglas de tus cajas",
     "intro": "Estas reglas viven en tu bóveda, así que el agente no puede cambiarlas. Hacer una regla más estricta se aplica ahora. Hacerla más laxa espera al menos un día, y después la aplicas tú mismo. Eso incluye la fecha de bloqueo: se puede acortar tras la espera, así que te protege de una decisión apresurada, no de ti mismo.",

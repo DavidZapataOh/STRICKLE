@@ -1,4 +1,3 @@
-import type { InvoiceKeys } from "@strickle/db/invoice-keys";
 import { type InvoiceListItem, confirmSuggestion, createInvoice, dismissSuggestion, getCursor, listInvoices, rotateLink, setCursor, voidInvoice } from "@strickle/db/payments";
 import { createHash } from "node:crypto";
 import type { Address } from "viem";

@@ -33,7 +33,7 @@ function feeOf(quote: DepositQuote | null): bigint | null {
   return leg ? leg.fees.reduce((sum, fee) => sum + fee.amount, 0n) : null;
 }
 
-export function DepositView({ lang, t, state, wallets, vault, onEvent, actions = noActions, discovered = false }: { lang: Locale; t: DepositText; state: DepositState; wallets: InjectedWallet[]; vault: string; onEvent: (event: DepositEvent) => void; actions?: DepositActions; discovered?: boolean }) {
+export function DepositView({ lang, t, state, wallets, vault, onEvent, actions = noActions, discovered = false, lockedAmount = false }: { lang: Locale; t: DepositText; state: DepositState; wallets: InjectedWallet[]; vault: string; onEvent: (event: DepositEvent) => void; actions?: DepositActions; discovered?: boolean; lockedAmount?: boolean }) {
   const d = t.deposit;
   const chains = sourceChainsFor(state.network);
   const fee = feeOf(state.quote);
@@ -140,7 +140,7 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
           value={state.sourceId}
           onChange={(id) => onEvent({ type: "chain", id })}
         />
-        {state.sourceId && usdtChainsFor(state.network).some((chain) => chain.id === state.sourceId) ? (
+        {!lockedAmount && state.sourceId && usdtChainsFor(state.network).some((chain) => chain.id === state.sourceId) ? (
           <ChoiceGroup
             name="deposit-token"
             legend={d.token.label}
@@ -152,7 +152,13 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
             onChange={(value) => onEvent({ type: "token", value })}
           />
         ) : null}
-        <AmountField id="deposit-amount" initial={state.amount !== null ? formatUnits(state.amount, 6) : ""} label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
+        {lockedAmount ? (
+          state.amount !== null ? (
+            <p className="amount">{formatMoney(state.amount, lang)}</p>
+          ) : null
+        ) : (
+          <AmountField id="deposit-amount" initial={state.amount !== null ? formatUnits(state.amount, 6) : ""} label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
+        )}
         <ChoiceGroup
           name="deposit-speed"
           legend={d.speed.label}

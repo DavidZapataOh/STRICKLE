@@ -18,17 +18,17 @@ export interface PendingDeposit {
   sourceId?: string;
 }
 
-export function savePending(id: string, hashes: { burnTx?: Hex; swapTx?: Hex }, storage: Store | null = browserStorage(), extra: { speed?: "fast" | "slow"; sourceId?: string; swapOut?: string } = {}): void {
+function save(key: string, id: string, hashes: { burnTx?: Hex; swapTx?: Hex }, storage: Store | null, extra: { speed?: "fast" | "slow"; sourceId?: string; swapOut?: string }): void {
   try {
-    storage?.setItem(PENDING_KEY, JSON.stringify({ id, ...hashes, ...extra }));
+    storage?.setItem(key, JSON.stringify({ id, ...hashes, ...extra }));
   } catch {
     // a browser that refuses storage cannot resume after a reload; the deposit itself is unaffected
   }
 }
 
-export function loadPending(storage: Store | null = browserStorage()): PendingDeposit | null {
+function load(key: string, storage: Store | null): PendingDeposit | null {
   try {
-    const raw = storage?.getItem(PENDING_KEY);
+    const raw = storage?.getItem(key);
     if (!raw) return null;
     const value: unknown = JSON.parse(raw);
     if (typeof value !== "object" || value === null) return null;
@@ -43,10 +43,24 @@ export function loadPending(storage: Store | null = browserStorage()): PendingDe
   }
 }
 
-export function clearPending(storage: Store | null = browserStorage()): void {
+function clear(key: string, storage: Store | null): void {
   try {
-    storage?.removeItem(PENDING_KEY);
+    storage?.removeItem(key);
   } catch {
     // nothing to clear in a browser without storage
   }
+}
+
+export const savePending = (id: string, hashes: { burnTx?: Hex; swapTx?: Hex }, storage: Store | null = browserStorage(), extra: { speed?: "fast" | "slow"; sourceId?: string; swapOut?: string } = {}): void => save(PENDING_KEY, id, hashes, storage, extra);
+export const loadPending = (storage: Store | null = browserStorage()): PendingDeposit | null => load(PENDING_KEY, storage);
+export const clearPending = (storage: Store | null = browserStorage()): void => clear(PENDING_KEY, storage);
+
+/** A pending deposit of its own for a place that has more than one (each payment link keeps its own), so one screen never resumes another's. */
+export function pendingStore(scope?: string) {
+  const key = scope ? `${PENDING_KEY}:${scope}` : PENDING_KEY;
+  return {
+    save: (id: string, hashes: { burnTx?: Hex; swapTx?: Hex }, extra: { speed?: "fast" | "slow"; sourceId?: string; swapOut?: string } = {}) => save(key, id, hashes, browserStorage(), extra),
+    load: () => load(key, browserStorage()),
+    clear: () => clear(key, browserStorage()),
+  };
 }

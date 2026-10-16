@@ -550,6 +550,41 @@
       "tx": "Conversion transaction"
     }
   },
+  "pay": {
+    "title": "Pay {payee}",
+    "due": "Amount due",
+    "paidSoFar": "Paid so far {paid} of {amount}; {remaining} left",
+    "remaining": "Remaining",
+    "status": {
+      "open": "Open",
+      "partial": "Partly paid",
+      "paid": "Paid",
+      "void": "Closed"
+    },
+    "expired": "This link has expired. Ask {payee} for a new one.",
+    "closedBody": "There is nothing left to pay on this invoice.",
+    "loading": "Loading the invoice",
+    "notFound": "This link does not exist or is no longer active.",
+    "error": "The invoice could not be loaded. Try again.",
+    "options": {
+      "arc": "Pay on Arc with your wallet",
+      "other": "Pay from another chain",
+      "direct": "Pay another way"
+    },
+    "connect": "Connect wallet",
+    "needEoa": "This wallet cannot attach the reference. Use the address below, or another wallet.",
+    "sending": "Waiting for your wallet",
+    "confirming": "Confirming your payment",
+    "thanks": "Payment received.",
+    "retryClaim": "Check again",
+    "directBody": "Send exactly {amount} USDC on Arc to {address}. {payee} confirms it by hand.",
+    "addressWarning": "USDC on Arc only",
+    "copy": "Copy address",
+    "copied": "Address copied",
+    "copyFailed": "Your browser blocked copying. Select the address and copy it by hand.",
+    "noWallet": "No wallet was found in this browser. Use the address below.",
+    "paymentFailed": "The payment did not go through. Nothing was charged. Try again."
+  },
   "rules": {
     "title": "Rules of your boxes",
     "intro": "These rules live in your vault, so the agent cannot change them. Making a rule stricter applies now. Making it looser waits at least a day, and you apply it yourself afterwards. That includes a lock date: it can be shortened after the wait, so it protects you from a hasty decision, not from yourself.",

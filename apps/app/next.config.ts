@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { appNetwork, connectOrigins } from "./src/config/network.ts";
 import { depositConnectOrigins } from "./src/deposit/csp.ts";
+import { payHeaders } from "./src/payments/headers.ts";
 import { securityHeaders } from "./src/security-headers.ts";
 
 const nextConfig: NextConfig = {
@@ -16,6 +17,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders(base) },
       // listed after the global entry: for the same header the more specific route wins
       { source: "/:lang/deposit", headers: securityHeaders([...base, ...depositConnectOrigins(appNetwork())]) },
+      { source: "/:lang/pay/:token", headers: payHeaders(appNetwork()) },
     ];
   },
 };

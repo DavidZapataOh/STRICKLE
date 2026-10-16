@@ -3,12 +3,13 @@
 import { sourceChain } from "@strickle/arc/bridge/chains";
 import type { DepositProgress } from "@strickle/arc/bridge";
 import { bridgeLegOf } from "@strickle/arc/bridge/types";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { type Hex, createPublicClient, getAddress, http, parseAbi } from "viem";
 import { appNetwork } from "@/config/network";
+import { amountToSend } from "@/payments/amounts";
 import { depositReducer, initialDeposit, needsRequote } from "@/deposit/flow";
 import { errorOf } from "@/deposit/messages";
-import { clearPending, loadPending, savePending } from "@/deposit/pending";
+import { pendingStore } from "@/deposit/pending";
 import type { Locale } from "@/i18n/config";
 import type { DepositText } from "@/i18n/slices";
 import type { Account } from "@/settings/account";
@@ -26,7 +27,9 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 /** The wallet and kit work of the deposit screen. The bridge code is imported only after a wallet is chosen. */
-export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositText; account: Account }) {
+/** `endpoint`, `scope` and `target` let a payment link reuse the whole flow: its own routes, its own pending record, and the amount due as the amount (USDC only). */
+export function DepositActive({ lang, t, account, endpoint = "/api/deposits", scope, target }: { lang: Locale; t: DepositText; account: Pick<Account, "vault">; endpoint?: string; scope?: string; target?: bigint }) {
+  const store = useMemo(() => pendingStore(scope), [scope]);
   const [state, dispatch] = useReducer(depositReducer, undefined, () => initialDeposit(appNetwork()));
   const [wallets, setWallets] = useState<InjectedWallet[]>([]);
   const [discovered, setDiscovered] = useState(false);
@@ -58,12 +61,12 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       try {
         // the burn is only accepted once the conversion it carries is on record
         if (swap && !swapRegistered) {
-          const response = await fetch(`/api/deposits/${id}`, json(swap));
+          const response = await fetch(`${endpoint}/${id}`, json(swap));
           const body = (await response.json()) as { status?: string };
           if (body.status === "ok") swapRegistered = true;
         }
         if (swapRegistered && !registered) {
-          const response = await fetch(`/api/deposits/${id}`, json({ burnTx }));
+          const response = await fetch(`${endpoint}/${id}`, json({ burnTx }));
           const body = (await response.json()) as { status?: string; retryAfterSeconds?: number };
           if (body.status === "ok") registered = true;
           else if (body.status === "rejected" && body.retryAfterSeconds) wait = body.retryAfterSeconds * 1000;
@@ -73,13 +76,13 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
           }
         }
         if (registered) {
-          const response = await fetch(`/api/deposits/${id}`, { cache: "no-store" });
+          const response = await fetch(`${endpoint}/${id}`, { cache: "no-store" });
           const body = (await response.json()) as { status: string; deposit?: { state: string; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } };
           if (body.status === "ok" && body.deposit) {
             if (body.deposit.appliedSpeed && live()) dispatch({ type: "speed-applied", value: body.deposit.appliedSpeed });
             if (body.deposit.state === "arrived" && body.deposit.received) {
               if (live()) {
-                clearPending();
+                store.clear();
                 dispatch({ type: "arrived", received: BigInt(body.deposit.received), ...(body.deposit.forwardTx ? { forwardTx: body.deposit.forwardTx as Hex } : {}) });
               }
               return;
@@ -95,7 +98,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       }
       await sleep(wait);
     }
-  }, []);
+  }, [endpoint, store]);
 
   const resume = useCallback(
     (pending: { id: string; burnTx: Hex; speed?: "fast" | "slow"; sourceId?: string; swapTx?: Hex | null; swapOut?: string }) => {
@@ -111,7 +114,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
 
   // a deposit whose burn was sent before the page closed is followed again, not forgotten
   useEffect(() => {
-    const pending = loadPending();
+    const pending = store.load();
     if (!pending) return;
     if (pending.burnTx) {
       resume({ ...pending, burnTx: pending.burnTx });
@@ -121,9 +124,24 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     heldFrom.current = pending.swapTx;
     heldCap.current = pending.swapOut ? BigInt(pending.swapOut) : null;
     if (pending.sourceId) dispatch({ type: "chain", id: pending.sourceId });
-  }, [resume]);
+  }, [resume, store]);
 
   const { sourceId, amount, speed, account: sender, network, inputToken } = state;
+
+  // a payment link fixes the amount: what is due is what must reach the vault
+  const adjusted = useRef(0);
+  useEffect(() => {
+    if (target !== undefined) dispatch({ type: "amount", value: target });
+  }, [target]);
+  useEffect(() => {
+    const quote = state.quote;
+    if (target === undefined || !quote || quote.exact || quote.amountReceivedMin >= target) return;
+    // fees come out of the amount: ask once more for enough to cover them, and refuse if even that falls short
+    if (adjusted.current < 1) {
+      adjusted.current += 1;
+      dispatch({ type: "amount", value: amountToSend(target, quote) });
+    } else dispatch({ type: "refused", code: "below-minimum" });
+  }, [state.quote, target]);
 
   // ask for a quote whenever what is being deposited changes; an older answer never overwrites a newer one
   useEffect(() => {
@@ -203,7 +221,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       }
       connection.module.assertConfirmable(quote);
       const usdt = state.inputToken === "USDT";
-      const created = await fetch("/api/deposits", json({ vault: account.vault, sourceChain: chosen, sourceAddress: from, amount: quote.amountSent.toString(), speed: chosenSpeed, feeMode: usdt ? "destination" : leg.feeMode, intent: "income", inputToken: state.inputToken }));
+      const created = await fetch(endpoint, json({ vault: account.vault, sourceChain: chosen, sourceAddress: from, amount: quote.amountSent.toString(), speed: chosenSpeed, feeMode: usdt ? "destination" : leg.feeMode, intent: "income", inputToken: state.inputToken }));
       const record = (await created.json()) as { status: string; id?: string };
       if (record.status !== "created" || !record.id) throw new Error(`the deposit was not recorded: ${record.status}`);
       const id = record.id;
@@ -213,7 +231,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       const onBurn = (burnTx: Hex) => {
         burned = true;
         confirming.current = false;
-        savePending(id, { burnTx, ...(swapped ? { swapTx: swapped } : {}) }, undefined, { speed: chosenSpeed, sourceId: chosen, ...(swapRecord ? { swapOut: swapRecord.swapOut } : {}) });
+        store.save(id, { burnTx, ...(swapped ? { swapTx: swapped } : {}) }, { speed: chosenSpeed, sourceId: chosen, ...(swapRecord ? { swapOut: swapRecord.swapOut } : {}) });
         const ticket = ++run.current;
         dispatch({ type: "burned", burnTx });
         void follow(id, burnTx, ticket, swapRecord);
@@ -224,11 +242,11 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
         if (progress.stage === "swap" && progress.state === "done" && progress.txHash && progress.amount && !swapped) {
           swapped = progress.txHash;
           const swapOut = progress.amount.toString();
-          savePending(id, { swapTx: progress.txHash }, undefined, { speed: chosenSpeed, sourceId: chosen, swapOut });
+          store.save(id, { swapTx: progress.txHash }, { speed: chosenSpeed, sourceId: chosen, swapOut });
           dispatch({ type: "swapped", swapTx: progress.txHash, credited: progress.amount });
           swapRecord = { swapTx: progress.txHash, swapOut };
           // told to the server right away and again with the burn, until it is accepted: a lost request must not strand the burn
-          void fetch(`/api/deposits/${id}`, json(swapRecord)).catch(() => {});
+          void fetch(`${endpoint}/${id}`, json(swapRecord)).catch(() => {});
         }
         if (progress.stage === "burn" && progress.state === "done" && progress.txHash && !burned) onBurn(progress.txHash);
       };
@@ -250,7 +268,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   }
 
   function check() {
-    const pending = loadPending();
+    const pending = store.load();
     if (pending?.burnTx) resume({ ...pending, burnTx: pending.burnTx });
   }
 
@@ -261,11 +279,12 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       state={state}
       wallets={wallets}
       discovered={discovered}
+      lockedAmount={target !== undefined}
       vault={account.vault}
       onEvent={(event) => {
         if (event.type === "reset" || event.type === "resume-held") {
           run.current++;
-          clearPending();
+          store.clear();
         }
         dispatch(event);
       }}
