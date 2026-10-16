@@ -16,7 +16,8 @@ test("a mainnet deploy uses only MAINNET_PRIVATE_KEY", () => {
 });
 
 test("the testnet key can never be the mainnet key", () => {
-  assert.throws(() => resolveDeployer({ network: "mainnet", env: { PRIVATE_KEY: TESTNET_KEY, MAINNET_PRIVATE_KEY: TESTNET_KEY.slice(2) } }), /same key/);
+  const unprefixed = TESTNET_KEY.slice(2);
+  assert.throws(() => resolveDeployer({ network: "mainnet", env: { PRIVATE_KEY: TESTNET_KEY, MAINNET_PRIVATE_KEY: unprefixed } }), /same key/);
 });
 
 test("other networks keep using PRIVATE_KEY", () => {

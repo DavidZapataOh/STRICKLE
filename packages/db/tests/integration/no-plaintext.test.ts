@@ -105,6 +105,10 @@ describe("a dump of the database", () => {
       "users.home_country:character",
       "users.id:uuid",
       "users.locale:text",
+      "wave_events.at:timestamp with time zone",
+      "wave_events.id:bigint",
+      "wave_events.kind:text",
+      "wave_events.tranche:integer",
     ];
     const columns = await db.sql<{ column: string }[]>`
       select table_name || '.' || column_name || ':' || data_type as column

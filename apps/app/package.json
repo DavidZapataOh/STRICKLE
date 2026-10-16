@@ -15,7 +15,9 @@
     "test:e2e:live": "playwright test --config playwright.live.config.ts --pass-with-no-tests",
     "predev": "node scripts/sync-deployments.mjs",
     "prebuild": "node scripts/sync-deployments.mjs",
-    "test:integration": "vitest run --config vitest.integration.config.mts"
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "wave": "node --env-file-if-exists=../../../.env scripts/wave.ts",
+    "record-metrics": "node --env-file-if-exists=../../../.env scripts/record-metrics.ts"
   },
   "dependencies": {
     "@noble/curves": "2.4.0",
