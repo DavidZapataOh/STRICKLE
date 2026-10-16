@@ -31,8 +31,22 @@ export interface BridgeLeg {
   gas: { token: string; amount: string } | null;
 }
 
-/** Later legs (a swap in front of the bridge) join this union; the quote itself never changes shape. */
-export type QuoteLeg = BridgeLeg;
+export interface SwapLeg {
+  kind: "swap";
+  source: SourceChain;
+  tokenIn: { symbol: "USDT"; address: Address };
+  amountIn: bigint;
+  estimatedOut: bigint;
+  minOut: bigint;
+  providerFee: bigint;
+  slippageBps: number;
+  gas: { token: string; amount: string } | null;
+  route: string;
+}
+
+export type QuoteLeg = SwapLeg | BridgeLeg;
+
+export const bridgeLegOf = (quote: { legs: readonly QuoteLeg[] }): BridgeLeg | undefined => quote.legs.find((leg): leg is BridgeLeg => leg.kind === "bridge");
 
 export interface DepositQuote {
   network: ArcNetworkName;

@@ -1,6 +1,7 @@
 "use client";
 
 import { sourceChain } from "@strickle/arc/bridge/chains";
+import { bridgeLegOf } from "@strickle/arc/bridge/types";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { type Hex, getAddress } from "viem";
 import { appNetwork } from "@/config/network";
@@ -156,7 +157,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   async function confirm() {
     const { quote, sourceId: chosen, speed: chosenSpeed, account: from } = state;
     const connection = bridge.current;
-    const leg = quote?.legs[0];
+    const leg = quote ? bridgeLegOf(quote) : undefined;
     if (!quote || !chosen || !from || !connection || !leg || confirming.current) return;
     confirming.current = true;
     let burned = false;

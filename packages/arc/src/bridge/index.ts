@@ -7,3 +7,5 @@ export * from "./kit.ts";
 export * from "./quote.ts";
 export * from "./track.ts";
 export * from "./types.ts";
+export * from "./swap-kit.ts";
+export * from "./swap.ts";
