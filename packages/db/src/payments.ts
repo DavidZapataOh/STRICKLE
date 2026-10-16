@@ -6,7 +6,6 @@ import { open, seal } from "./seal.ts";
 
 export type InvoiceStatus = "open" | "partial" | "paid" | "void";
 export type PaymentState = "credited" | "extra" | "suggested" | "dismissed";
-type Tx = TransactionSql | Sql;
 type Hex = `0x${string}`;
 
 export interface NewInvoice {
@@ -115,8 +114,6 @@ const toView = (keys: InvoiceKeys, row: LinkRow): LinkView => ({
   expiresAt: row.expires_at,
   revoked: row.revoked,
 });
-
-const linkSelect = (sql: Sql) => sql<LinkRow[]>`select i.id as invoice_id, l.id as link_id, i.vault, l.memo_id, i.sealed, i.amount, i.paid, i.status, i.expires_at, l.revoked from payment_links l join invoices i on i.id = l.invoice_id`;
 
 export async function getLinkByToken(sql: Sql, keys: InvoiceKeys, token: string): Promise<LinkView | null> {
   if (!/^[A-Za-z0-9_-]{22}$/.test(token)) return null;
