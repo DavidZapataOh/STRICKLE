@@ -1,0 +1,54 @@
+:root {
+  --night: #22141a;
+  --blush: #fbf3ef;
+  --hibiscus: #a3214f;
+  --hibiscus-deep: #861a41;
+  --hibiscus-light: #e2779b;
+  --marigold: #e9a23b;
+  --calyx: #2e6a4f;
+  --calyx-tint: #e7eee8;
+  --clay: #6e4a3e;
+  --ember: #9a3412;
+  --amber: #b45309;
+  --husk: #f3e5dd;
+  --line: #eadbd2;
+  --card: #fdf8f5;
+
+  /* fixed rem scale, ratio about 1.2 */
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.1875rem;
+  --fs-xl: 1.4375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.125rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.375rem;
+  --radius-pill: 999px;
+
+  --hairline: 1.5px;
+  --tap: 2.75rem;
+  --focus-width: 3px;
+  --focus-offset: 2px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur: 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+  }
+}
