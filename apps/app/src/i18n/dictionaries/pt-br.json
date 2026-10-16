@@ -459,5 +459,23 @@
     "pending": "Mudança aguardando até {date}: {rule}",
     "apply": "Aplicar agora",
     "cancel": "Cancelar a mudança"
+  },
+  "view": {
+    "title": "Visão da conta",
+    "loading": "Lendo a conta",
+    "publicBanner": "Tudo nesta página é público na rede Arc. Qualquer pessoa com este endereço pode ver. O plano do agente e as notas privadas não aparecem.",
+    "total": "Nas caixas",
+    "payments": "Pagamentos recentes",
+    "noPayments": "Nenhum pagamento chegou a esta conta ainda.",
+    "historyUnavailable": "O histórico de pagamentos não está disponível agora. Os saldos acima são lidos direto da rede.",
+    "error": "Não conseguimos ler esta conta. Tente de novo em instantes.",
+    "notFound": "Este endereço não é uma conta Strickle.",
+    "retry": "Tentar de novo",
+    "shareTitle": "Contador",
+    "shareIntro": "Seu contador pode ler suas caixas, as regras delas e os pagamentos do agente com este link. Ele mostra o que já é público na rede Arc. Não mostra seu plano, e o link não esconde nada: qualquer pessoa com o endereço da sua conta vê os mesmos dados. Ele não pode ser revogado.",
+    "keysIntro": "Notas privadas podem ser compartilhadas com um contador por uma chave de leitura que só ele tem. Isso ainda não está ativo para contas comuns.",
+    "copy": "Copiar link",
+    "copied": "Copiado",
+    "copyFailed": "Selecione o link e copie."
   }
 }

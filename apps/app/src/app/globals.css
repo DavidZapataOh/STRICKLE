@@ -431,3 +431,12 @@ body {
 .rule-pending { display: grid; gap: var(--space-2); padding: var(--space-3); border: var(--hairline) solid var(--line); border-radius: var(--radius-md); background: var(--husk); }
 .rule-pending p { margin: 0; font-size: var(--fs-sm); }
 .rule-edit summary { min-height: var(--tap); display: inline-flex; align-items: center; color: var(--hibiscus); font-weight: 600; cursor: pointer; }
+
+.public-view { display: grid; gap: var(--space-4); }
+.public-view h2 { margin: 0; font: 600 var(--fs-lg)/1.2 var(--font-manrope), system-ui, sans-serif; }
+.public-view .card { display: grid; gap: var(--space-3); }
+.public-view .card > p { margin: 0; }
+.share { display: grid; gap: var(--space-2); }
+.share p { margin: 0; font-size: var(--fs-sm); color: var(--clay); }
+.share p:empty { display: none; }
+.share-field { min-height: var(--tap); padding: 0 var(--space-3); border: var(--hairline) solid var(--line); border-radius: var(--radius-md); background: var(--card); font: 500 var(--fs-sm)/1.2 var(--font-geist-mono), ui-monospace, monospace; width: 100%; }

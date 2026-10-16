@@ -22,6 +22,7 @@ import { useAdjust } from "@/settings/use-adjust";
 import { isPasskeyCancelled } from "@/wallet/errors";
 import { EditRow } from "./EditRow";
 import { RulesPanel } from "./RulesPanel";
+import { ShareLink } from "./ShareLink";
 import { type SettingsState, SettingsView } from "./SettingsView";
 
 const dollars = (units: bigint): string => String(units / 1_000_000n);
@@ -222,6 +223,13 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
           return { rule: (vaultState.boxes[box - 1] as BoxState).rule, pending: chain.pending[box - 1] ?? null };
         }}
       />
+    ),
+    accountant: (
+      <>
+        <p>{t.view.shareIntro}</p>
+        <ShareLink href={`${window.location.origin}/${lang}/view/${vault}`} t={t} />
+        <p>{t.view.keysIntro}</p>
+      </>
     ),
   };
 

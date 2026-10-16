@@ -21,8 +21,8 @@ test.describe("signed in, on a device that holds no reading key", () => {
   });
 
   for (const locale of ["en", "es", "pt-br"]) {
-    for (const screen of ["", "/boxes", "/activity", "/settings"]) {
-      test(`${locale}${screen || "/"} fits every viewport`, async ({ page }) => {
+    for (const screen of ["", "/boxes", "/activity", "/settings", `/view/${VAULT}`]) {
+      test(`${locale}${screen.replace(VAULT, "<vault>") || "/"} fits every viewport`, async ({ page }) => {
         await page.goto(`/${locale}${screen}`, { waitUntil: "networkidle" });
         await page.evaluate(() => document.fonts.ready);
         await expect(page.locator(".shell-main")).not.toContainText(/NaN|undefined/);

@@ -1,17 +1,16 @@
-import { BOX_KINDS, type BoxKind } from "@strickle/core";
+import type { BoxKind } from "@strickle/core";
 import { formatMoney } from "@strickle/design/format";
 import type { Locale } from "@strickle/design/locale";
 import { boxTotal, heldTotals } from "@/chain/totals";
 import { ruleWords } from "@/home/rule-words";
-import { dateText, isoDay } from "@/home/format";
 import type { DataText } from "@/i18n/slices";
 import { fill } from "@/i18n/fill";
 import { EmptyState } from "@/ui/EmptyState";
 import { ListRow } from "@/ui/ListRow";
 import { Progress } from "@/ui/Progress";
-import { SplitBar } from "@/ui/SplitBar";
 import { type ScreenState, Unready } from "./HomeView";
 import { MeasuresShelf } from "./MeasuresShelf";
+import { PaymentCard } from "./PaymentCard";
 
 export function fillRatio(balance: bigint, target: bigint): number | null {
   if (target <= 0n) return null;
@@ -70,19 +69,7 @@ export function BoxesView({ lang, t, state, onRetry }: { lang: Locale; t: DataTe
           <EmptyState title={t.boxesPage.payments.empty.title} body={t.boxesPage.payments.empty.body} />
         ) : (
           payments.slice(0, 10).map((payment) => (
-            <article key={`${payment.txHash}-${payment.asset}`} className="payment">
-              <p className="payment-head">
-                <span>{dateText(isoDay(payment.at), lang)}</span>
-                <span className="note">{payment.byAgent ? t.boxesPage.payments.agent : t.boxesPage.payments.manual}</span>
-                <span className="amount">{formatMoney(payment.total, lang, { asset: payment.asset })}</span>
-              </p>
-              <SplitBar
-                total={payment.total}
-                locale={lang}
-                asset={payment.asset}
-                parts={BOX_KINDS.filter((kind) => (payment.byBox[kind] ?? 0n) > 0n).map((kind) => ({ key: kind, label: t.boxes[kind], units: payment.byBox[kind] ?? 0n }))}
-              />
-            </article>
+            <PaymentCard key={`${payment.txHash}-${payment.asset}`} payment={payment} lang={lang} t={t} />
           ))
         )}
         {olderPayments ? <p className="note">{t.boxesPage.older}</p> : null}

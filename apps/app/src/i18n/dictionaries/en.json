@@ -459,5 +459,23 @@
     "pending": "Change waiting for {date}: {rule}",
     "apply": "Apply now",
     "cancel": "Cancel the change"
+  },
+  "view": {
+    "title": "Account view",
+    "loading": "Reading the account",
+    "publicBanner": "Everything on this page is public on the Arc network. Anyone with this address can see it. The agent's plan and private notes are not shown.",
+    "total": "Held in the boxes",
+    "payments": "Recent payments",
+    "noPayments": "No payments have arrived in this account yet.",
+    "historyUnavailable": "The payment history is not available right now. The balances above are read straight from the network.",
+    "error": "This account could not be read. Try again in a moment.",
+    "notFound": "This address is not a Strickle account.",
+    "retry": "Try again",
+    "shareTitle": "Accountant",
+    "shareIntro": "Your accountant can read your boxes, their rules and the agent's payments with this link. It shows what is already public on the Arc network. It does not show your plan, and the link does not hide anything: anyone who has your account address can see the same data. It cannot be revoked.",
+    "keysIntro": "Private notes can be shared with an accountant through a view key that only they hold. That is not active for ordinary accounts yet.",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "copyFailed": "Select the link and copy it."
   }
 }
