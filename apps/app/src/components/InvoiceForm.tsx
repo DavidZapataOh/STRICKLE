@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatUnits } from "viem";
+import { formatUnits6 } from "@/deposit/amount";
 import type { InvoicesText } from "@/i18n/slices";
 import { Card } from "@/ui/Card";
 import { AmountField } from "./AmountField";
@@ -32,7 +32,7 @@ export function InvoiceForm({ t, busy, onCreate }: { t: InvoicesText; busy: bool
         className="deposit"
         onSubmit={(event) => {
           event.preventDefault();
-          if (valid && amount !== null) onCreate({ label: label.trim(), payeeName: payeeName.trim(), note: note.trim(), amount: formatUnits(amount, 6), expiresInDays });
+          if (valid && amount !== null) onCreate({ label: label.trim(), payeeName: payeeName.trim(), note: note.trim(), amount: formatUnits6(amount), expiresInDays });
         }}
       >
         <div className="field">

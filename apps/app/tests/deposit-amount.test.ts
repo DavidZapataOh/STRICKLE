@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTokenAmount, parseAmountInput } from "../src/deposit/amount.ts";
+import { formatTokenAmount, formatUnits6, parseAmountInput } from "../src/deposit/amount.ts";
 
 describe("parseAmountInput", () => {
   it("reads whole and decimal amounts as six-decimal units", () => {
@@ -24,5 +24,14 @@ describe("formatTokenAmount", () => {
     expect(formatTokenAmount(99_346_534n, "USDT", "es")).toBe("99.35 USDT");
     expect(formatTokenAmount(1_000_000_000n, "USDC", "en")).toBe("1,000.00 USDC");
     expect(formatTokenAmount(5_000n, "USDC", "en")).toBe("0.01 USDC");
+  });
+});
+
+describe("formatUnits6", () => {
+  it("prints base units the way parseAmountInput reads them", () => {
+    expect(formatUnits6(25_000_000n)).toBe("25");
+    expect(formatUnits6(99_400_000n)).toBe("99.4");
+    expect(formatUnits6(10_000n)).toBe("0.01");
+    for (const units of [10_000n, 1n * 1_000_000n, 25_123_456n]) expect(parseAmountInput(formatUnits6(units))).toBe(units);
   });
 });
