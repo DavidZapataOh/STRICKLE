@@ -1,1 +1,7 @@
-{ "addresses": [] }
+{
+  "addresses": [
+    "0x5Bb738955aa5E5cAc67BF7C074c23dce7A8b1BB4",
+    "0xf747e660ca41417e61fe849cba9c7a3c8711a36b",
+    "0x4f26e8f9273d74f3dce85a1a81c3243e3a1804a4"
+  ]
+}
