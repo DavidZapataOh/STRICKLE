@@ -29,7 +29,8 @@
     "pool:abi": "node scripts/pool-abi.mjs",
     "pool:live": "npm run live -w @strickle/pool",
     "pool:private-mode": "npm run private-mode -w @strickle/pool",
-    "mainnet:preflight": "node --env-file-if-exists=.env scripts/mainnet-preflight.mjs"
+    "mainnet:preflight": "node --env-file-if-exists=.env scripts/mainnet-preflight.mjs",
+    "approve": "node scripts/record-approval.mjs"
   },
   "devDependencies": {
     "@types/node": "^24",
