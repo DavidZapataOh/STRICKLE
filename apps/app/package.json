@@ -14,7 +14,8 @@
     "test:live": "vitest run --config vitest.live.config.mts --passWithNoTests",
     "test:e2e:live": "playwright test --config playwright.live.config.ts --pass-with-no-tests",
     "predev": "node scripts/sync-deployments.mjs",
-    "prebuild": "node scripts/sync-deployments.mjs"
+    "prebuild": "node scripts/sync-deployments.mjs",
+    "test:integration": "vitest run --config vitest.integration.config.mts"
   },
   "dependencies": {
     "@noble/curves": "2.4.0",

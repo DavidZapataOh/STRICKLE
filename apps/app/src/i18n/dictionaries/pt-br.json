@@ -495,5 +495,16 @@
     "retry": "Tentar de novo",
     "limits": "Você vê o valor, o ativo, a caixa e o bloqueio de cada nota no momento em que foi criada. Você não vê de quem é, a quem foi paga nem se já foi gasta. O identificador curto da sua chave é público na rede, então qualquer pessoa pode saber quais notas foram seladas para a mesma chave. Use uma chave por cliente.",
     "lockedUntil": "Bloqueada até {date}"
+  },
+  "access": {
+    "title": "Acesso antecipado",
+    "body": "A Strickle está aberta a pessoas convidadas enquanto está em acesso antecipado.",
+    "label": "Código de convite",
+    "submit": "Entrar",
+    "invalid": "Esse código não é válido ou já foi usado.",
+    "slow": "Tentativas demais. Espere alguns minutos e tente de novo.",
+    "error": "Algo deu errado do nosso lado. Seu código não foi usado; tente de novo em instantes.",
+    "closedTitle": "Voltamos em breve",
+    "closedBody": "A Strickle está em pausa para manutenção. Seu dinheiro continua no seu próprio cofre."
   }
 }

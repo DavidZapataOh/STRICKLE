@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./limiter": "./src/limiter.ts"
+    "./limiter": "./src/limiter.ts",
+    "./access": "./src/access.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "lint": "eslint .",

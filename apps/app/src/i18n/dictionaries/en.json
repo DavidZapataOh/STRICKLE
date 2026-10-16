@@ -495,5 +495,16 @@
     "retry": "Try again",
     "limits": "You see the amount, asset, box and lock of each note at the moment it was created. You do not see who owns it, who it was paid to or whether it has been spent. The short identifier of your key is public on the network, so anyone can tell which notes were sealed for the same key. Use one key per client.",
     "lockedUntil": "Locked until {date}"
+  },
+  "access": {
+    "title": "Early access",
+    "body": "Strickle is open to invited people while it is in early access.",
+    "label": "Invitation code",
+    "submit": "Enter",
+    "invalid": "That code is not valid or was already used.",
+    "slow": "Too many tries. Wait a few minutes and try again.",
+    "error": "Something went wrong on our side. Your code was not used; try again in a moment.",
+    "closedTitle": "Back soon",
+    "closedBody": "Strickle is paused for maintenance. Your money stays in your own vault."
   }
 }

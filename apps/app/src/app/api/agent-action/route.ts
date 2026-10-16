@@ -1,8 +1,8 @@
 import { getPublicClient } from "@/chain/client";
 import { deploymentsFor } from "@/config/network";
-import { openGate } from "@/server/access-gate";
+import { cookieGate } from "@/server/cookie-gate";
 import { createChainGuard } from "@/server/chain-guard";
-import { relayLimiter } from "@/server/db";
+import { relayLimiter, sessionChecker } from "@/server/db";
 import { postToGateway } from "@/server/forward";
 import { type RelayResult, handleRelay } from "@/server/relay";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
     limiter,
     chain: chainGuard(),
     gateway: (envelope) => postToGateway({ url: env.CRE_GATEWAY_URL ?? "", workflowId: env.CRE_WORKFLOW_ID ?? "", privateKey: (env.CRE_GATEWAY_KEY ?? "0x") as `0x${string}`, envelope }),
-    access: openGate,
+    access: cookieGate(process.env, sessionChecker()),
   });
   return reply(result.body, result.status);
 }
