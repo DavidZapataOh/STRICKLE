@@ -1,5 +1,5 @@
 import { getPublicClient } from "@/chain/client";
-import { deploymentsFor } from "@/config/network";
+import { agentDeploymentsFor } from "@/config/network";
 import { cookieGate } from "@/server/cookie-gate";
 import { createChainGuard } from "@/server/chain-guard";
 import { relayLimiter, sessionChecker } from "@/server/db";
@@ -8,7 +8,7 @@ import { type RelayResult, handleRelay } from "@/server/relay";
 
 // Built on first use: a build for a network whose contracts are not deployed must still compile.
 let guard: ReturnType<typeof createChainGuard> | undefined;
-const chainGuard = () => (guard ??= createChainGuard(getPublicClient(), deploymentsFor()));
+const chainGuard = () => (guard ??= createChainGuard(getPublicClient(), agentDeploymentsFor()));
 
 const reply = (body: RelayResult, status: number) =>
   Response.json(body, { status, headers: { "cache-control": "no-store", ...(body.retryAfterSeconds ? { "retry-after": String(body.retryAfterSeconds) } : {}) } });

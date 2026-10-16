@@ -2,7 +2,7 @@ import { type Address, getAddress } from "viem";
 import { factoryAbi } from "../../../chain/abi.ts";
 import { getPublicClient } from "../../../chain/client.ts";
 import { vaultReadAbi } from "../../../chain/read-abi.ts";
-import { appNetwork, deploymentsFor, networkInfo } from "../../../config/network.ts";
+import { agentDeploymentsFor, appNetwork, deploymentsFor, networkInfo } from "../../../config/network.ts";
 import { createLogsHandler } from "./handler.ts";
 import { explorerApiFor } from "./upstream.ts";
 
@@ -11,7 +11,7 @@ let handle: ((request: Request) => Promise<Response>) | undefined;
 // Built on first use: a build for a network whose contracts are not deployed yet must still compile, and the route then answers "unavailable".
 function build() {
   const network = appNetwork();
-  const deployments = deploymentsFor(network);
+  const deployments = { ...deploymentsFor(network), ...agentDeploymentsFor(network) };
   const apiKey = process.env.BLOCKSCOUT_API_KEY || undefined;
   const info = networkInfo(network);
   return createLogsHandler({

@@ -3,7 +3,7 @@ import { type Address, type Hex, bytesToHex, getAddress, zeroAddress } from "vie
 import { saveSession } from "../account/session.ts";
 import { agentStateAbi, factoryAbi } from "../chain/abi.ts";
 import { getPublicClient } from "../chain/client.ts";
-import { deploymentsFor } from "../config/network.ts";
+import { agentDeploymentsFor, deploymentsFor } from "../config/network.ts";
 import { type NoticeKey, saveNoticeKey } from "../keys/notice-key.ts";
 import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { type PasskeyWallet, connectWallet } from "../wallet/passkey.ts";
@@ -62,7 +62,7 @@ export async function connectAccount(args: { mode: "register" | "login"; usernam
 export async function finishCreate(args: { connected: Connected; answers: Ready; diagnosis: Diagnosis; userKey: NoticeKey; onStep: (step: CreateStep) => void }): Promise<Outcome> {
   const { wallet, owner, vault, username } = args.connected;
   const chain = getPublicClient();
-  const deployed = deploymentsFor();
+  const deployed = { ...deploymentsFor(), ...agentDeploymentsFor() };
 
   // The key is kept before the transaction, under the vault the transaction creates: if it lands and the reply is lost, the user can still read their notices.
   await saveNoticeKey(vault, args.userKey.secret);
@@ -90,7 +90,7 @@ export async function finishCreate(args: { connected: Connected; answers: Ready;
 /** Polls the agent's state until the enclave has applied the profile, for up to ten minutes. */
 export async function watchAgent(vault: Address, signal: AbortSignal): Promise<"ready" | "waiting"> {
   const chain = getPublicClient();
-  const { AgentState } = deploymentsFor();
+  const { AgentState } = agentDeploymentsFor();
   for (let waited = 0; waited < 600 && !signal.aborted; waited += 10) {
     const [, , applied] = await chain.readContract({ address: AgentState, abi: agentStateAbi, functionName: "head", args: [vault] });
     if (applied >= 1n) return "ready";

@@ -3,15 +3,27 @@ import { fileURLToPath } from "node:url";
 
 const manifest = (name) => JSON.parse(readFileSync(new URL(`../../../contracts/deployments/arc-${name}.json`, import.meta.url), "utf8"));
 const target = new URL("../src/chain/deployments.generated.json", import.meta.url);
-const NEEDED = ["BoxVaultFactory", "AgentState", "AgentExecutor", "PolicyPool"];
+const AGENT = ["AgentState", "AgentExecutor", "PolicyPool"];
 
-// A network that does not list every contract is null: the app refuses to run against it instead of guessing an address.
-export function build() {
+// The core contract is required: a network without it is null and the app refuses to run against it instead of guessing an address.
+// The agent contracts exist only where an agent does (never on mainnet while CRE is testnet-only): where one is missing they are null.
+export function build(read = manifest) {
   return Object.fromEntries(
     ["testnet", "mainnet"].map((name) => {
-      const { chainId, contracts } = manifest(name);
-      if (!NEEDED.every((contract) => contracts[contract]?.address)) return [name, null];
-      return [name, { chainId, ...Object.fromEntries(NEEDED.map((contract) => [contract, contracts[contract].address])), blocks: { AgentState: contracts.AgentState.blockNumber, AgentExecutor: contracts.AgentExecutor.blockNumber } }];
+      const { chainId, contracts } = read(name);
+      if (!contracts.BoxVaultFactory?.address) return [name, null];
+      const agent = AGENT.every((contract) => contracts[contract]?.address);
+      return [
+        name,
+        {
+          chainId,
+          BoxVaultFactory: contracts.BoxVaultFactory.address,
+          AgentState: agent ? contracts.AgentState.address : null,
+          AgentExecutor: agent ? contracts.AgentExecutor.address : null,
+          PolicyPool: agent ? contracts.PolicyPool.address : null,
+          blocks: agent ? { AgentState: contracts.AgentState.blockNumber, AgentExecutor: contracts.AgentExecutor.blockNumber } : null,
+        },
+      ];
     }),
   );
 }

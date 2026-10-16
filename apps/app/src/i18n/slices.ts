@@ -6,14 +6,14 @@ export type DataText = Pick<Dictionary, "home" | "boxes" | "boxesPage" | "screen
 export const dataText = (t: Dictionary): DataText => ({ home: t.home, boxes: t.boxes, boxesPage: t.boxesPage, screens: t.screens });
 
 /** What the Activity screen reads. */
-export type ActivityText = Pick<Dictionary, "activity" | "boxes" | "screens"> & { start: { restore: Dictionary["start"]["restore"] } };
+export type ActivityText = Pick<Dictionary, "activity" | "boxes" | "agent" | "screens"> & { start: { restore: Dictionary["start"]["restore"] } };
 
-export const activityText = (t: Dictionary): ActivityText => ({ activity: t.activity, boxes: t.boxes, screens: t.screens, start: { restore: t.start.restore } });
+export const activityText = (t: Dictionary): ActivityText => ({ activity: t.activity, boxes: t.boxes, agent: t.agent, screens: t.screens, start: { restore: t.start.restore } });
 
 /** What the Settings screen reads. */
-export type SettingsText = Pick<Dictionary, "settings" | "pause" | "boxes" | "boxesPage" | "rules" | "view" | "screens">;
+export type SettingsText = Pick<Dictionary, "settings" | "pause" | "boxes" | "boxesPage" | "rules" | "view" | "agent" | "screens">;
 
-export const settingsText = (t: Dictionary): SettingsText => ({ settings: t.settings, pause: t.pause, boxes: t.boxes, boxesPage: t.boxesPage, rules: t.rules, view: t.view, screens: t.screens });
+export const settingsText = (t: Dictionary): SettingsText => ({ settings: t.settings, pause: t.pause, boxes: t.boxes, boxesPage: t.boxesPage, rules: t.rules, view: t.view, agent: t.agent, screens: t.screens });
 
 /** What the public account view reads. */
 export type ViewText = Pick<Dictionary, "view" | "rules" | "boxes" | "boxesPage" | "screens">;

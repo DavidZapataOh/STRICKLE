@@ -2,8 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { NEXT_COOKIE, accessMode, decide, isApiPath, readAccess, type SessionState } from "@/server/access";
 import { localeRedirect } from "@/proxy-locale";
 import { sessionChecker } from "@/server/db";
+import type { AgentMode } from "@/lib/agent-mode";
+import { unavailableResponse } from "@/lib/app-gate";
+import { currentAgentMode } from "@/lib/current-mode";
 
-export async function proxy(request: NextRequest, options: { env?: Record<string, string | undefined>; checker?: { state(sid: string): Promise<"active" | "revoked" | "unknown"> } } = {}) {
+export async function proxy(request: NextRequest, options: { env?: Record<string, string | undefined>; checker?: { state(sid: string): Promise<"active" | "revoked" | "unknown"> }; agentMode?: AgentMode } = {}) {
   const { pathname, search } = request.nextUrl;
   if (!isApiPath(pathname)) {
     const redirect = localeRedirect(request);
@@ -18,7 +21,7 @@ export async function proxy(request: NextRequest, options: { env?: Record<string
     session = !cookie ? "missing" : !parsed ? "invalid" : await (options.checker ?? sessionChecker()).state(parsed.sid);
   }
   const decision = decide({ pathname, mode, session });
-  if (decision.kind === "allow") return;
+  if (decision.kind === "allow") return unavailableResponse(request, options.agentMode ?? currentAgentMode());
   if (decision.kind === "api") return NextResponse.json({ error: decision.error }, { status: decision.status, headers: { "cache-control": "no-store" } });
   const lang = pathname.split("/")[1] ?? "en";
   const response = NextResponse.redirect(new URL(`/${lang}/${decision.page}`, request.url));

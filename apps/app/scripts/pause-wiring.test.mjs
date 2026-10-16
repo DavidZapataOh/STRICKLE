@@ -7,6 +7,6 @@ const pages = ["page.tsx", "activity/page.tsx", "boxes/page.tsx", "settings/page
 for (const page of pages) {
   test(`the ${page} route mounts the Pause control in the shell`, () => {
     const source = readFileSync(new URL(`../src/app/[lang]/${page}`, import.meta.url), "utf8");
-    assert.match(source, /actions=\{<PauseControl /);
+    assert.match(source, /actions=\{<AgentOnly capability="agentPause" t=\{t\}><PauseControl /);
   });
 }

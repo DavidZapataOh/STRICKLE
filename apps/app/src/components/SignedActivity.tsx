@@ -12,6 +12,7 @@ import { sendAgentAction } from "@/agent/send";
 import { getPublicClient } from "@/chain/client";
 import { readVault } from "@/chain/vault";
 import { executorFirstBlock } from "@/config/network";
+import { AgentOnly } from "@/lib/agent-only";
 import { EmptyState } from "@/ui/EmptyState";
 import { fill } from "@/i18n/fill";
 import type { ActivityText } from "@/i18n/slices";
@@ -94,6 +95,7 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
       {unverified ? <p className="activity-note">{t.start.restore.unverified}</p> : null}
       {key && activity.unreadable > 0 ? <p className="activity-note">{fill(copy.key.unreadable, { count: activity.unreadable })}</p> : null}
       {activity.truncated ? <p className="activity-note">{copy.truncated}</p> : null}
+      <AgentOnly capability="enclaveProposals" t={t}>
       {pending.length > 0 ? (
         <section aria-labelledby="pending-title">
           <h2 id="pending-title" className="section-title">{copy.pendingHeading}</h2>
@@ -118,6 +120,7 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
           })}
         </section>
       ) : null}
+      </AgentOnly>
       <section aria-labelledby="history-title">
         <h2 id="history-title" className="section-title">{copy.historyHeading}</h2>
         {activity.receipts.length === 0 ? (

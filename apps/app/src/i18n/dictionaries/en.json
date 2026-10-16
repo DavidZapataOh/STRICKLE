@@ -525,5 +525,35 @@
       "earlyPayments": "Early payments",
       "invariantBreaches": "Safety checks that failed"
     }
+  },
+  "agent": {
+    "modes": {
+      "none": {
+        "title": "No agent on this network yet",
+        "body": "The agent runs on Chainlink CRE, which is not available on Arc mainnet yet. The app opens here when it is."
+      },
+      "cre-testnet": {
+        "title": "Acts on its own on testnet",
+        "body": "On testnet the agent acts by itself inside the limits you set."
+      }
+    },
+    "unavailable": {
+      "agentPause": "There is no agent on this network, so there is nothing to pause.",
+      "agentSettings": "The agent's settings appear where an agent exists.",
+      "enclaveProposals": "Proposals come from the agent, and there is no agent on this network.",
+      "plan": "Your pay plan comes from the agent, and there is no agent on this network."
+    }
+  },
+  "unavailable": {
+    "title": "Not available on this network yet",
+    "body": "Strickle's agent runs on Chainlink CRE, which is not available on Arc mainnet yet. The app opens here when the agent can run.",
+    "numbers": "See the live numbers"
+  },
+  "disclosures": {
+    "limits": "Early access runs with low limits. Keep only what you can afford to leave here while we learn.",
+    "testnet": "This is a test network: its money has no real value and nobody compensates losses.",
+    "pool": "The private mode is a contract that has not been audited. It runs on testnet only and is off on mainnet.",
+    "tax": "Tax figures are estimates and reserves, not tax advice.",
+    "freeze": "USDC is issued by Circle, which can freeze it."
   }
 }

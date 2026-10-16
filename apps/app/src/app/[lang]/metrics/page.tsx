@@ -2,7 +2,6 @@ import { latestSnapshot } from "@strickle/db/snapshots";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { PauseControl } from "@/components/PauseControl";
 import { Skeleton } from "@/components/Skeleton";
 import { appNetwork } from "@/config/network";
 import { type Locale, hasLocale } from "@/i18n/config";
@@ -20,7 +19,7 @@ export default async function MetricsPage({ params }: PageProps<"/[lang]/metrics
   if (!hasLocale(lang)) notFound();
   const t = await getDictionary(lang);
   return (
-    <AppShell lang={lang} current="verify" t={t} actions={<PauseControl lang={lang} labels={t.pause} />}>
+    <AppShell lang={lang} current="verify" t={t}>
       <h1 className="screen-title">{t.metrics.title}</h1>
       <Suspense fallback={<Skeleton label={t.metrics.title} />}>
         <MetricsContent lang={lang} t={t} />

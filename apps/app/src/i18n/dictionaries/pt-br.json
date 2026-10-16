@@ -525,5 +525,35 @@
       "earlyPayments": "Pagamentos antecipados",
       "invariantBreaches": "Verificações de segurança que falharam"
     }
+  },
+  "agent": {
+    "modes": {
+      "none": {
+        "title": "Ainda não há agente nesta rede",
+        "body": "O agente funciona sobre a Chainlink CRE, que ainda não está disponível na Arc mainnet. O app abrirá aqui quando estiver."
+      },
+      "cre-testnet": {
+        "title": "Age sozinho na testnet",
+        "body": "Na testnet o agente age por conta própria dentro dos limites que você define."
+      }
+    },
+    "unavailable": {
+      "agentPause": "Nesta rede não há um agente, então não há nada para pausar.",
+      "agentSettings": "As configurações do agente aparecem onde há um agente.",
+      "enclaveProposals": "As propostas vêm do agente e nesta rede não há agente.",
+      "plan": "O seu plano de pagamento vem do agente e nesta rede não há agente."
+    }
+  },
+  "unavailable": {
+    "title": "Ainda não disponível nesta rede",
+    "body": "O agente da Strickle funciona sobre a Chainlink CRE, que ainda não está disponível na Arc mainnet. O app abrirá aqui quando o agente puder funcionar.",
+    "numbers": "Ver os números ao vivo"
+  },
+  "disclosures": {
+    "limits": "O acesso antecipado funciona com limites baixos. Deixe aqui só o que você pode se permitir enquanto aprendemos.",
+    "testnet": "Esta é uma rede de testes: o dinheiro dela não tem valor real e ninguém compensa perdas.",
+    "pool": "O modo privado é um contrato que não foi auditado. Funciona só na testnet e fica desligado na mainnet.",
+    "tax": "Os valores de impostos são estimativas e reservas, não consultoria fiscal.",
+    "freeze": "O USDC é emitido pela Circle, que pode congelá-lo."
   }
 }

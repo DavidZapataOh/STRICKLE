@@ -6,7 +6,7 @@ const call = (url: string, acceptLanguage?: string) =>
   proxy(new NextRequest(url, { headers: acceptLanguage ? { "accept-language": acceptLanguage } : {} }), { env: {} });
 
 // A gate test names its environment and has no session store, so every session reads as unknown.
-const callWith = (env: Record<string, string | undefined>, url: string) => proxy(new NextRequest(url), { env, checker: { state: async () => "unknown" as const } });
+const callWith = (env: Record<string, string | undefined>, url: string, options: { agentMode?: "cre-testnet" | "none" } = {}) => proxy(new NextRequest(url), { env, checker: { state: async () => "unknown" as const }, ...options });
 
 describe("the locale redirect", () => {
   it("sends a bare visit to the preferred locale", async () => {
@@ -67,6 +67,18 @@ describe("the access gate", () => {
     expect(response?.headers.get("set-cookie")).toContain(`strickle_next=${encodeURIComponent("/en/start?amount=3200")}`);
   });
 
+  it("answers the unavailable page for the app's screens where no agent exists, in the visitor's language, and leaves everything else alone", async () => {
+    const response = await callWith({}, "http://app.test/pt-br/boxes", { agentMode: "none" });
+    expect(response?.headers.get("x-middleware-rewrite")).toBe("http://app.test/pt-br/unavailable");
+    expect(await callWith({}, "http://app.test/pt-br/metrics", { agentMode: "none" })).toBeUndefined();
+    expect(await callWith({}, "http://app.test/api/logs", { agentMode: "none" })).toBeUndefined();
+    expect(await callWith({}, "http://app.test/pt-br/boxes", { agentMode: "cre-testnet" })).toBeUndefined();
+  });
+
+  it("still asks an uninvited visitor for a code before showing the unavailable page", async () => {
+    const response = await callWith({ ACCESS_MODE: "invite", ACCESS_COOKIE_SECRET: "s".repeat(40) }, "http://app.test/en/boxes", { agentMode: "none" });
+    expect(response?.headers.get("location")).toBe("http://app.test/en/access");
+  });
 });
 
 describe("the account view path", () => {

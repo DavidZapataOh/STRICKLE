@@ -2,7 +2,7 @@ import type { Action } from "@strickle/agent/signed";
 import type { Address } from "viem";
 import { agentStateAbi } from "../chain/abi.ts";
 import { getPublicClient } from "../chain/client.ts";
-import { deploymentsFor } from "../config/network.ts";
+import { agentDeploymentsFor, deploymentsFor } from "../config/network.ts";
 import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { type Outcome, type Phase, runSend } from "./outcome.ts";
 import { createNonceStore } from "./nonce-store.ts";
@@ -11,7 +11,7 @@ import type { RelayResult } from "../server/relay-types.ts";
 
 export async function sendAgentAction(args: { wallet: Signer; vault: Address; action: Action; onPhase: (phase: Phase) => void; confirm: () => Promise<boolean> }): Promise<Outcome> {
   const client = getPublicClient();
-  const deployments = deploymentsFor();
+  const deployments = { ...deploymentsFor(), ...agentDeploymentsFor() };
   const nonces = createNonceStore();
   return runSend(
     {

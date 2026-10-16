@@ -5,7 +5,7 @@ import { createLogsHandler } from "../../src/app/api/logs/handler.ts";
 import { parseLogsResponse } from "../../src/chain/logs.ts";
 import { paymentsFrom } from "../../src/chain/payments.ts";
 import { readVault } from "../../src/chain/vault.ts";
-import { deploymentsFor } from "../../src/config/network.ts";
+import { agentDeploymentsFor, deploymentsFor } from "../../src/config/network.ts";
 
 // The shared test vault; any vault created by the current factory works.
 const VAULT = (process.env.E2E_VAULT ?? "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8") as `0x${string}`;
@@ -44,7 +44,7 @@ describe("reading a real vault on Arc testnet", () => {
     const handler = createLogsHandler({
       explorerApi: "http://127.0.0.1:1/api",
       apiKey: "SECRET-KEY-123",
-      deployments: deploymentsFor("testnet"),
+      deployments: { ...deploymentsFor("testnet"), ...agentDeploymentsFor("testnet") },
       isVault: async () => true,
       headBlock: async () => 67_000_000,
       timeoutMs: 1_000,
