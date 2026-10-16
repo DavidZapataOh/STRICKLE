@@ -3,12 +3,12 @@ import { expect, test } from "@playwright/test";
 import { http, bytesToHex, createPublicClient } from "viem";
 import { networks } from "@strickle/arc/networks";
 import { executorAbi, vaultAbi } from "../../src/chain/abi.ts";
-import { deploymentsFor } from "../../src/config/network.ts";
+import { agentDeploymentsFor, deploymentsFor } from "../../src/config/network.ts";
 import { decodeRecoveryCode, noticePublicKey } from "../../src/keys/recovery-code.ts";
 import { SKIP_REASON, completeOnboarding, liveEnabled } from "./support.ts";
 
 const chain = createPublicClient({ transport: http(networks.testnet.rpcUrl) });
-const deployed = deploymentsFor("testnet");
+const deployed = { ...deploymentsFor("testnet"), ...agentDeploymentsFor("testnet") };
 
 test.skip(!liveEnabled, SKIP_REASON);
 

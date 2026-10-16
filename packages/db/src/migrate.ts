@@ -36,3 +36,14 @@ export async function migrate(sql: Sql, dir: URL = MIGRATIONS_DIR): Promise<stri
     return applied;
   });
 }
+
+export async function pendingMigrations(sql: Sql, dir: URL = MIGRATIONS_DIR): Promise<string[]> {
+  const files = readdirSync(dir)
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
+  const [table] = await sql<{ present: boolean }[]>`select to_regclass('public.schema_migrations') is not null as present`;
+  if (!table?.present) return files;
+  const rows = await sql<{ name: string }[]>`select name from schema_migrations`;
+  const done = new Set(rows.map((row) => row.name));
+  return files.filter((file) => !done.has(file));
+}

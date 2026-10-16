@@ -1,6 +1,6 @@
 import type { Address, Hex, PublicClient } from "viem";
 import { type LogKind, type RawLog, fetchLogsFrom } from "../chain/logs.ts";
-import { deploymentsFor } from "../config/network.ts";
+import { agentDeploymentsFor } from "../config/network.ts";
 import { decodeActivity, spentFrom } from "./events.ts";
 import type { Activity } from "./types.ts";
 
@@ -36,7 +36,7 @@ export async function readActivity(args: { client: PublicClient; vault: Address;
   for (const log of byKind["private-spend"]) {
     if (spent.has(log.transactionHash)) continue;
     const receipt = await withRetry(() => client.getTransactionReceipt({ hash: log.transactionHash }));
-    const paid = spentFrom(receipt.logs, deploymentsFor().PolicyPool);
+    const paid = spentFrom(receipt.logs, agentDeploymentsFor().PolicyPool);
     if (paid) spent.set(log.transactionHash, paid);
   }
 

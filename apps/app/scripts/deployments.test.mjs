@@ -13,3 +13,11 @@ test("testnet lists every contract the onboarding calls and mainnet is honestly 
   for (const name of ["BoxVaultFactory", "AgentState", "AgentExecutor", "PolicyPool"]) assert.match(testnet[name], /^0x[0-9a-fA-F]{40}$/);
   assert.ok(mainnet === null || /^0x[0-9a-fA-F]{40}$/.test(mainnet.BoxVaultFactory));
 });
+
+test("a network with only the core contracts has no agent entries instead of being refused", () => {
+  const core = { chainId: 5042, contracts: { BoxVaultFactory: { address: "0x00000000000000000000000000000000000000a1", blockNumber: 7 } } };
+  const none = { chainId: 5042002, contracts: {} };
+  const { mainnet, testnet } = build((name) => (name === "mainnet" ? core : none));
+  assert.deepEqual(mainnet, { chainId: 5042, BoxVaultFactory: "0x00000000000000000000000000000000000000a1", AgentState: null, AgentExecutor: null, PolicyPool: null, blocks: null });
+  assert.equal(testnet, null);
+});

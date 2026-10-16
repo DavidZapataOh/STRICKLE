@@ -20,6 +20,7 @@ import { sendOwnerCalls } from "@/settings/send";
 import { type TxPhase, runTx } from "@/settings/tx";
 import { useAdjust } from "@/settings/use-adjust";
 import { isPasskeyCancelled } from "@/wallet/errors";
+import { AgentOnly } from "@/lib/agent-only";
 import { EditRow } from "./EditRow";
 import { RulesPanel } from "./RulesPanel";
 import { ShareLink } from "./ShareLink";
@@ -106,9 +107,11 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
 
   const slots = {
     resume: (
-      <button type="button" className="btn" data-variant="primary" disabled={working} onClick={() => void adjust.run({ kind: "resume" }, (plan) => !plan.settings.halted)}>
-        {s.agent.resumeInAgent}
-      </button>
+      <AgentOnly capability="agentSettings" t={t}>
+        <button type="button" className="btn" data-variant="primary" disabled={working} onClick={() => void adjust.run({ kind: "resume" }, (plan) => !plan.settings.halted)}>
+          {s.agent.resumeInAgent}
+        </button>
+      </AgentOnly>
     ),
     agentEdit:
       model.agent.state === "none" ? null : (
@@ -141,6 +144,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         </EditRow>
       ),
     autonomy: (
+      <AgentOnly capability="agentSettings" t={t}>
       <EditRow {...rowText} label={s.autonomy.title} value={model.autonomy === "ask" ? s.autonomy.ask : s.autonomy.auto} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(presetChange(field(form, "preset") === "auto" ? "auto" : "ask", field(form, "upTo")))}>
         <label>
           <input type="radio" name="preset" value="ask" defaultChecked={model.autonomy === "ask"} /> {s.autonomy.ask}
@@ -150,9 +154,10 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         </label>
         <input name="upTo" inputMode="numeric" aria-label={s.autonomy.auto} defaultValue={model.salary ? dollars(model.salary.proposed) : "0"} />
       </EditRow>
+      </AgentOnly>
     ),
     salary: model.salary ? (
-      <>
+      <AgentOnly capability="agentSettings" t={t}>
         <EditRow {...rowText} label={s.salary.amount} value={dollars(model.salary.proposed)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(salaryChange({ proposedDollars: field(form, "amount") }))}>
           <input name="amount" inputMode="numeric" aria-label={s.salary.amount} defaultValue={dollars(model.salary.proposed)} />
         </EditRow>
@@ -196,17 +201,17 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         >
           <input name="who" aria-label={s.salary.use} placeholder="0x…" />
         </EditRow>
-      </>
+      </AgentOnly>
     ) : null,
     cushion: model.cushion ? (
-      <>
+      <AgentOnly capability="agentSettings" t={t}>
         <EditRow {...rowText} label={fill(s.cushion.floor, { max: ranges.floor[1] })} value={String(current.floorDays)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(cushionChange({ floorDays: field(form, "floor"), current }))}>
           <input name="floor" inputMode="numeric" aria-label={s.cushion.floor} defaultValue={String(current.floorDays)} />
         </EditRow>
         <EditRow {...rowText} label={fill(s.cushion.target, { min: ranges.target[0] })} value={String(current.targetDays)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(cushionChange({ targetDays: field(form, "target"), current }))}>
           <input name="target" inputMode="numeric" aria-label={s.cushion.target} defaultValue={String(current.targetDays)} />
         </EditRow>
-      </>
+      </AgentOnly>
     ) : null,
     rules: (
       <RulesPanel

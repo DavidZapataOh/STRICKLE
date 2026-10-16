@@ -1,4 +1,4 @@
-import { appNetwork, deploymentsFor, networkInfo } from "../../../config/network.ts";
+import { agentDeploymentsFor, appNetwork, networkInfo } from "../../../config/network.ts";
 import { ttlCache } from "../logs/cache.ts";
 import { explorerApiFor } from "../logs/upstream.ts";
 import { POOL_PAGE_SIZE, buildPoolUpstream } from "./upstream.ts";
@@ -17,7 +17,7 @@ export async function GET(request: Request): Promise<Response> {
     const apiKey = process.env.BLOCKSCOUT_API_KEY || undefined;
     const info = networkInfo(appNetwork());
     const base = explorerApiFor(info.chain.id, info.explorerUrl, apiKey);
-    const upstream = await fetch(buildPoolUpstream(deploymentsFor().PolicyPool, apiKey, base, page), { signal: AbortSignal.timeout(8_000) });
+    const upstream = await fetch(buildPoolUpstream(agentDeploymentsFor().PolicyPool, apiKey, base, page), { signal: AbortSignal.timeout(8_000) });
     if (!upstream.ok) return unavailable();
     const body = (await upstream.json()) as { status?: string; result?: unknown };
     const result = Array.isArray(body.result) ? body.result : body.status === "0" ? [] : null;

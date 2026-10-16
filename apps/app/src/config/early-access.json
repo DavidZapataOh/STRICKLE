@@ -1,0 +1,9 @@
+{
+  "totalUsd": "10000",
+  "teamMaxSharePercent": 20,
+  "tranches": [
+    { "id": 1, "maxUsers": 5, "perUserUsd": "250", "holdDays": 14 },
+    { "id": 2, "maxUsers": 15, "perUserUsd": "500", "holdDays": 14 },
+    { "id": 3, "maxUsers": 30, "perUserUsd": "500", "holdDays": null }
+  ]
+}

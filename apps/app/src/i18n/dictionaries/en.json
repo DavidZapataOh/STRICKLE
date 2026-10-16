@@ -495,5 +495,65 @@
     "retry": "Try again",
     "limits": "You see the amount, asset, box and lock of each note at the moment it was created. You do not see who owns it, who it was paid to or whether it has been spent. The short identifier of your key is public on the network, so anyone can tell which notes were sealed for the same key. Use one key per client.",
     "lockedUntil": "Locked until {date}"
+  },
+  "access": {
+    "title": "Early access",
+    "body": "Strickle is open to invited people while it is in early access.",
+    "label": "Invitation code",
+    "submit": "Enter",
+    "invalid": "That code is not valid or was already used.",
+    "slow": "Too many tries. Wait a few minutes and try again.",
+    "error": "Something went wrong on our side. Your code was not used; try again in a moment.",
+    "closedTitle": "Back soon",
+    "closedBody": "Strickle is paused for maintenance. Your money stays in your own vault."
+  },
+  "metrics": {
+    "title": "Numbers, live",
+    "vaults": "Vaults",
+    "team": "From the team",
+    "organic": "From everyone else",
+    "held": "USDC held",
+    "allocated": "USDC split into boxes, in total",
+    "block": "As of block",
+    "notMeasured": "Not measured yet",
+    "empty": "No snapshot recorded yet",
+    "unavailable": "The numbers could not be read right now.",
+    "names": {
+      "taxesCoveredOnTime": "Taxes covered on time",
+      "cushionDays": "Days of cushion",
+      "yield": "Yield",
+      "earlyPayments": "Early payments",
+      "invariantBreaches": "Safety checks that failed"
+    }
+  },
+  "agent": {
+    "modes": {
+      "none": {
+        "title": "No agent on this network yet",
+        "body": "The agent runs on Chainlink CRE, which is not available on Arc mainnet yet. The app opens here when it is."
+      },
+      "cre-testnet": {
+        "title": "Acts on its own on testnet",
+        "body": "On testnet the agent acts by itself inside the limits you set."
+      }
+    },
+    "unavailable": {
+      "agentPause": "There is no agent on this network, so there is nothing to pause.",
+      "agentSettings": "The agent's settings appear where an agent exists.",
+      "enclaveProposals": "Proposals come from the agent, and there is no agent on this network.",
+      "plan": "Your pay plan comes from the agent, and there is no agent on this network."
+    }
+  },
+  "unavailable": {
+    "title": "Not available on this network yet",
+    "body": "Strickle's agent runs on Chainlink CRE, which is not available on Arc mainnet yet. The app opens here when the agent can run.",
+    "numbers": "See the live numbers"
+  },
+  "disclosures": {
+    "limits": "Early access runs with low limits. Keep only what you can afford to leave here while we learn.",
+    "testnet": "This is a test network: its money has no real value and nobody compensates losses.",
+    "pool": "The private mode is a contract that has not been audited. It runs on testnet only and is off on mainnet.",
+    "tax": "Tax figures are estimates and reserves, not tax advice.",
+    "freeze": "USDC is issued by Circle, which can freeze it."
   }
 }

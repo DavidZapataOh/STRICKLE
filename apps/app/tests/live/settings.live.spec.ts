@@ -4,7 +4,7 @@ import { networks, transferSponsored, walletsClient } from "@strickle/arc";
 import { encodeSplitReport } from "../../../../workflows/agent/enclave/split-report.ts";
 import { latestPlan } from "../../src/chain/plan.ts";
 import { parseLogsResponse } from "../../src/chain/logs.ts";
-import { deploymentsFor } from "../../src/config/network.ts";
+import { agentDeploymentsFor } from "../../src/config/network.ts";
 import { noticeKeyFromSecret } from "../../src/keys/notice-key.ts";
 import { decodeRecoveryCode } from "../../src/keys/recovery-code.ts";
 import { SKIP_REASON, completeOnboarding, liveEnabled } from "./support.ts";
@@ -13,7 +13,7 @@ test.skip(!liveEnabled, SKIP_REASON);
 
 const network = networks.testnet;
 const chain = createPublicClient({ transport: http(network.rpcUrl) });
-const deployed = deploymentsFor("testnet");
+const deployed = agentDeploymentsFor("testnet");
 const vaultAbi = parseAbi([
   "function agentPaused() view returns (bool)",
   "function agentCap() view returns (uint128)",

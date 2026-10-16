@@ -1,13 +1,31 @@
 import { type ArcNetwork, type ArcNetworkName, MODULAR_URL, networks } from "@strickle/arc/networks";
 import generated from "../chain/deployments.generated.json" with { type: "json" };
 
-export interface Deployments {
+export interface CoreDeployments {
   chainId: number;
   BoxVaultFactory: `0x${string}`;
+}
+
+export interface AgentDeployments {
   AgentState: `0x${string}`;
   AgentExecutor: `0x${string}`;
   PolicyPool: `0x${string}`;
   blocks: { AgentState: number; AgentExecutor: number };
+}
+
+export type Deployments = CoreDeployments & AgentDeployments;
+
+type Generated = Record<
+  string,
+  { chainId: number; BoxVaultFactory: `0x${string}` | null; AgentState: `0x${string}` | null; AgentExecutor: `0x${string}` | null; PolicyPool: `0x${string}` | null; blocks: { AgentState: number; AgentExecutor: number } | null } | null
+>;
+
+/** The core contracts are required; the agent contracts exist only where an agent does (never on mainnet while CRE is testnet-only). */
+export function resolveDeployments(generated: Generated, name: ArcNetworkName): { core: CoreDeployments; agent: AgentDeployments | null } {
+  const found = generated[name];
+  if (!found || !found.BoxVaultFactory) throw new Error(`the contracts are not deployed on ${name}`);
+  const agent = found.AgentState && found.AgentExecutor && found.PolicyPool && found.blocks ? { AgentState: found.AgentState, AgentExecutor: found.AgentExecutor, PolicyPool: found.PolicyPool, blocks: found.blocks } : null;
+  return { core: { chainId: found.chainId, BoxVaultFactory: found.BoxVaultFactory }, agent };
 }
 
 export function resolveNetwork(value: string | undefined): ArcNetworkName {
@@ -28,13 +46,15 @@ export function resolveRpc(name: ArcNetworkName, override: string | undefined): 
 
 export const rpcEndpoint = (name: ArcNetworkName = appNetwork()): string => resolveRpc(name, process.env.NEXT_PUBLIC_ARC_RPC_URL);
 
-export function deploymentsFor(name: ArcNetworkName = appNetwork()): Deployments {
-  const found = (generated as Record<string, Deployments | null>)[name];
-  if (!found) throw new Error(`the contracts are not deployed on ${name}`);
-  return found;
+export const deploymentsFor = (name: ArcNetworkName = appNetwork()): CoreDeployments => resolveDeployments(generated as Generated, name).core;
+
+export function agentDeploymentsFor(name: ArcNetworkName = appNetwork()): AgentDeployments {
+  const { agent } = resolveDeployments(generated as Generated, name);
+  if (!agent) throw new Error(`there is no agent on ${name}`);
+  return agent;
 }
 
-export const executorFirstBlock = (name: ArcNetworkName = appNetwork()): bigint => BigInt(deploymentsFor(name).blocks.AgentExecutor);
+export const executorFirstBlock = (name: ArcNetworkName = appNetwork()): bigint => BigInt(agentDeploymentsFor(name).blocks.AgentExecutor);
 
 export function explorerLink(kind: "address" | "tx", value: string, name: ArcNetworkName = appNetwork()): string {
   return `${networks[name].explorerUrl}/${kind}/${value}`;

@@ -22,6 +22,15 @@ describe("networks", () => {
     expect(networks.testnet.circleBlockchain).toBe("ARC-TESTNET");
     expect(networks.mainnet.circleBlockchain).toBe("ARC");
   });
+
+  it("defaults each network to an HTTPS endpoint that tolerates batches", () => {
+    for (const name of ["testnet", "mainnet"] as const) {
+      expect(networks[name].rpcUrl).toMatch(/^https:\/\//);
+      expect(networks[name].rpcUrl).not.toBe(`https://rpc.${name}.arc.io`);
+    }
+    expect(networks.mainnet.rpcUrl).toBe("https://rpc.blockdaemon.mainnet.arc.io");
+    expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "https://override.example" })).toBe("https://override.example");
+  });
 });
 
 describe("rpcUrl", () => {
@@ -31,7 +40,7 @@ describe("rpcUrl", () => {
 
   it("prefers the environment override and ignores an empty value", () => {
     expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "https://rpc.example" })).toBe("https://rpc.example");
-    expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "" })).toBe("https://rpc.mainnet.arc.io");
+    expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "" })).toBe("https://rpc.blockdaemon.mainnet.arc.io");
   });
 });
 

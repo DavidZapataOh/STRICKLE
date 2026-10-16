@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./networks": "./src/networks.ts",
     "./passkey": "./src/passkey.ts",
-    "./sponsorship": "./src/sponsorship.ts"
+    "./sponsorship": "./src/sponsorship.ts",
+    "./probe": "./src/probe.ts",
+    "./usdc": "./src/usdc.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -16,7 +18,8 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "status": "node --env-file-if-exists=../../../.env src/status-cli.ts",
     "register-entity-secret": "node --env-file-if-exists=../../../.env src/register-entity-secret-cli.ts",
-    "setup-gas-station-wallets": "node --env-file-if-exists=../../../.env src/setup-gas-station-wallets-cli.ts"
+    "setup-gas-station-wallets": "node --env-file-if-exists=../../../.env src/setup-gas-station-wallets-cli.ts",
+    "probe": "node --env-file-if-exists=../../../.env src/probe-cli.ts"
   },
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^10.8.1",

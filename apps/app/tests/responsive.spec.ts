@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { responsiveSuite } from "@strickle/gates";
 
 const locales = ["en", "es", "pt-br"];
-const screens = ["", "/activity", "/boxes", "/settings", "/accountant", "/verify", "/docs", "/start", "/start?mode=login"];
+const screens = ["", "/activity", "/boxes", "/settings", "/accountant", "/verify", "/docs", "/start", "/start?mode=login", "/access", "/access/invalid", "/closed", "/metrics", "/unavailable"];
 
 responsiveSuite(locales.flatMap((locale) => screens.map((screen) => `/${locale}${screen}`)));
 

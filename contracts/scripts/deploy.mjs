@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { createInterface } from "node:readline/promises";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
@@ -100,6 +101,44 @@ function verifyContract({ contractName, entry, manifest, network, chainId, rpc, 
   }
 }
 
+/** What may be broadcast to mainnet: the core contracts only. The private pool and the agent contracts wait for an audit and for an agent that can run there. */
+const MAINNET_SCRIPTS = ["DeployVault.s.sol"];
+
+export const withPrefix = (key) => (key.startsWith("0x") ? key : `0x${key}`);
+
+export function resolveDeployer({ network, env = process.env }) {
+  const testnetKey = env.PRIVATE_KEY ? withPrefix(env.PRIVATE_KEY) : undefined;
+  if (network !== "mainnet") {
+    if (!testnetKey) throw new Error("PRIVATE_KEY is not set");
+    return { key: testnetKey, address: privateKeyToAddress(testnetKey) };
+  }
+  if (!env.MAINNET_PRIVATE_KEY) throw new Error("MAINNET_PRIVATE_KEY is not set: mainnet never uses the testnet key");
+  const key = withPrefix(env.MAINNET_PRIVATE_KEY);
+  const address = privateKeyToAddress(key);
+  if (testnetKey && privateKeyToAddress(testnetKey) === address) throw new Error("MAINNET_PRIVATE_KEY is the same key as PRIVATE_KEY: use a separate mainnet key");
+  return { key, address };
+}
+
+export const confirmationPhrase = ({ script, address }) => `deploy ${basename(script)} to arc mainnet from ${address.slice(0, 10)}`;
+
+const ask = async (question) => {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    return await rl.question(question);
+  } finally {
+    rl.close();
+  }
+};
+
+export async function confirmMainnet({ script, address, phrase: given, isTTY = process.stdin.isTTY, env = process.env, ask: prompt = ask }) {
+  if (env.CI) throw new Error("mainnet deployments are refused in CI");
+  if (!isTTY) throw new Error("mainnet deployments need a terminal: the confirmation is typed by a person");
+  const phrase = given ?? confirmationPhrase({ script, address });
+  const typed = await prompt(`This spends real money on Arc mainnet.\nType exactly: ${phrase}\n> `);
+  if (typed.trim() !== phrase) throw new Error("confirmation phrase did not match: nothing was deployed");
+  return phrase;
+}
+
 export function deploy({
   network,
   script,
@@ -107,13 +146,22 @@ export function deploy({
   chainId,
   manifestDir = join(contractsDir, "deployments"),
   verifyRetries = 5,
+  exec = execFileSync,
+  env = process.env,
+  confirmed,
 }) {
-  if (!process.env.PRIVATE_KEY) throw new Error("PRIVATE_KEY is not set");
+  if (network === "mainnet" && !MAINNET_SCRIPTS.includes(basename(script))) throw new Error(`${basename(script)} is not deployed to mainnet: only the core contracts go there until an agent and an audit exist`);
+  const { key, address: sender } = resolveDeployer({ network, env });
+  if (network === "mainnet" && confirmed !== confirmationPhrase({ script, address: sender })) {
+    throw new Error("a mainnet deploy needs the typed confirmation phrase");
+  }
+  const reported = String(exec("arc-cast", ["chain-id", "--rpc-url", rpc], { encoding: "utf8" })).trim();
+  if (reported !== String(chainId)) throw new Error(`chain id mismatch: the endpoint answered ${reported}, expected ${chainId}`);
 
-  const key = process.env.PRIVATE_KEY.startsWith("0x") ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`;
-  const sender = privateKeyToAddress(key);
+  // The script reads one key, PRIVATE_KEY; no other signing key reaches the child process.
+  const { MAINNET_PRIVATE_KEY: _mainnet, ...rest } = env;
   const args = ["script", script, "--network", "arc", "--rpc-url", rpc, "--chain-id", String(chainId), "--sender", sender, "--broadcast"];
-  execFileSync("arc-forge", args, { cwd: contractsDir, stdio: "inherit" });
+  exec("arc-forge", args, { cwd: contractsDir, stdio: "inherit", env: { ...rest, PRIVATE_KEY: key } });
 
   const runFile = join(contractsDir, "broadcast", basename(script), String(chainId), "run-latest.json");
   const manifest = recordDeployment({ runFile, manifestFile: join(manifestDir, `arc-${network}.json`), chainId });
@@ -137,5 +185,6 @@ if (import.meta.main) {
     console.error("usage: npm run deploy -w @strickle/contracts -- <testnet|mainnet> <script path>");
     process.exit(1);
   }
-  deploy({ network, script, rpc: rpcUrl(network), chainId: networks[network].chain.id });
+  const confirmed = network === "mainnet" ? await confirmMainnet({ script, address: resolveDeployer({ network }).address }) : undefined;
+  deploy({ network, script, rpc: rpcUrl(network), chainId: networks[network].chain.id, confirmed });
 }

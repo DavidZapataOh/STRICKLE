@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deploymentsFor, executorFirstBlock, explorerLink, resolveNetwork, resolveRpc } from "../src/config/network.ts";
+import { agentDeploymentsFor, deploymentsFor, executorFirstBlock, explorerLink, resolveNetwork, resolveRpc } from "../src/config/network.ts";
 
 describe("the network configuration", () => {
   it("defaults to testnet and accepts only the two networks", () => {
@@ -15,7 +15,7 @@ describe("the network configuration", () => {
   });
 
   it("knows the three contracts on testnet and says so when a network has none", () => {
-    const deployed = deploymentsFor("testnet");
+    const deployed = { ...deploymentsFor("testnet"), ...agentDeploymentsFor("testnet") };
     for (const address of [deployed.BoxVaultFactory, deployed.AgentState, deployed.AgentExecutor]) expect(address).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(() => deploymentsFor("mainnet")).toThrow(/not deployed on mainnet/);
   });
@@ -26,7 +26,7 @@ describe("the network configuration", () => {
   });
 
   it("carries the pool and the deployment blocks the activity reader needs", () => {
-    const testnet = deploymentsFor("testnet");
+    const testnet = agentDeploymentsFor("testnet");
     expect(testnet.PolicyPool).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(testnet.blocks.AgentExecutor).toBeGreaterThan(0);
     expect(executorFirstBlock("testnet")).toBe(BigInt(testnet.blocks.AgentExecutor));

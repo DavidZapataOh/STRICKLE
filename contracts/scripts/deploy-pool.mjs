@@ -15,10 +15,17 @@ export function verifierEnv(manifest) {
   return { POSEIDON2_HASHER: hasher, SHIELD_VERIFIER: shield, SPEND_VERIFIER: spend, SCREENING_REGISTRY: screening, ASSOCIATION_REGISTRY: association };
 }
 
+export function assertPoolNotOnMainnet(network) {
+  if (network === "mainnet") throw new Error("the private pool is testnet only: it is not audited and stays off on mainnet");
+}
+
 if (import.meta.main) {
   const network = process.argv[2];
-  if (network !== "testnet") throw new Error("usage: deploy-pool.mjs testnet (mainnet deployments are made deliberately by hand)");
+  if (network !== "testnet" && network !== "mainnet") {
+    console.error("usage: npm run deploy-pool -w @strickle/contracts -- testnet");
+    process.exit(1);
+  }
+  assertPoolNotOnMainnet(network);
   const manifest = JSON.parse(readFileSync(join(contractsDir, "deployments", `arc-${network}.json`), "utf8"));
-  Object.assign(process.env, verifierEnv(manifest));
-  deploy({ network, script: "script/DeployPool.s.sol", rpc: rpcUrl(network), chainId: networks[network].chain.id });
+  deploy({ network, script: "script/DeployPool.s.sol", rpc: rpcUrl(network), chainId: networks[network].chain.id, env: { ...process.env, ...verifierEnv(manifest) } });
 }

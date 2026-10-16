@@ -444,3 +444,8 @@ body {
 .accountant { display: grid; gap: var(--space-4); }
 .accountant h2 { margin: 0; font: 600 var(--fs-lg)/1.2 var(--font-manrope), system-ui, sans-serif; }
 .accountant p { margin: 0; }
+
+.access-form { display: grid; gap: var(--space-4); max-width: 28rem; }
+.access-form input[name="code"] { text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-geist-mono), ui-monospace, monospace; }
+
+.agent-note { margin: 0; padding: var(--space-3) var(--space-4); color: var(--clay); font-size: var(--fs-sm); border-inline-start: var(--hairline) solid var(--line); }

@@ -29,7 +29,7 @@ export const networks = {
   mainnet: {
     name: "mainnet",
     chain: arc,
-    rpcUrl: "https://rpc.mainnet.arc.io",
+    rpcUrl: "https://rpc.blockdaemon.mainnet.arc.io",
     explorerUrl: "https://explorer.arc.io",
     circleBlockchain: "ARC",
     usdc: "0x3600000000000000000000000000000000000000",
