@@ -477,5 +477,23 @@
     "copy": "Copy link",
     "copied": "Copied",
     "copyFailed": "Select the link and copy it."
+  },
+  "accountant": {
+    "title": "Accountant view key",
+    "intro": "A view key lets you read the notes a client's private account has sealed for accountants. The key stays in this browser, and so does its backup unless you download it. Create one key per client.",
+    "create": "Create a view key",
+    "import": "I already have a key",
+    "importLabel": "Key (64 characters)",
+    "useKey": "Use this key",
+    "badKey": "That is not a valid key.",
+    "publicKey": "Give this key to the person whose notes you review",
+    "backup": "Download key backup",
+    "forget": "Forget this key",
+    "notes": "Notes shared with this key",
+    "empty": "No private notes have been shared with this key yet.",
+    "unavailable": "The notes could not be loaded right now. Try again in a moment.",
+    "retry": "Try again",
+    "limits": "You see the amount, asset, box and lock of each note at the moment it was created. You do not see who owns it, who it was paid to or whether it has been spent. The short identifier of your key is public on the network, so anyone can tell which notes were sealed for the same key. Use one key per client.",
+    "lockedUntil": "Locked until {date}"
   }
 }

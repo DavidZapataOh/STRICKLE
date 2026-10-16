@@ -477,5 +477,23 @@
     "copy": "Copiar link",
     "copied": "Copiado",
     "copyFailed": "Selecione o link e copie."
+  },
+  "accountant": {
+    "title": "Chave de leitura do contador",
+    "intro": "Uma chave de leitura permite ler as notas que a conta privada de um cliente selou para contadores. A chave fica neste navegador, e o backup dela também, a menos que você o baixe. Crie uma chave por cliente.",
+    "create": "Criar uma chave de leitura",
+    "import": "Já tenho uma chave",
+    "importLabel": "Chave (64 caracteres)",
+    "useKey": "Usar esta chave",
+    "badKey": "Essa chave não é válida.",
+    "publicKey": "Entregue esta chave à pessoa cujas notas você revisa",
+    "backup": "Baixar backup da chave",
+    "forget": "Esquecer esta chave",
+    "notes": "Notas compartilhadas com esta chave",
+    "empty": "Nenhuma nota privada foi compartilhada com esta chave ainda.",
+    "unavailable": "Não foi possível carregar as notas agora. Tente de novo em instantes.",
+    "retry": "Tentar de novo",
+    "limits": "Você vê o valor, o ativo, a caixa e o bloqueio de cada nota no momento em que foi criada. Você não vê de quem é, a quem foi paga nem se já foi gasta. O identificador curto da sua chave é público na rede, então qualquer pessoa pode saber quais notas foram seladas para a mesma chave. Use uma chave por cliente.",
+    "lockedUntil": "Bloqueada até {date}"
   }
 }

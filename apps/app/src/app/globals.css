@@ -440,3 +440,7 @@ body {
 .share p { margin: 0; font-size: var(--fs-sm); color: var(--clay); }
 .share p:empty { display: none; }
 .share-field { min-height: var(--tap); padding: 0 var(--space-3); border: var(--hairline) solid var(--line); border-radius: var(--radius-md); background: var(--card); font: 500 var(--fs-sm)/1.2 var(--font-geist-mono), ui-monospace, monospace; width: 100%; }
+
+.accountant { display: grid; gap: var(--space-4); }
+.accountant h2 { margin: 0; font: 600 var(--fs-lg)/1.2 var(--font-manrope), system-ui, sans-serif; }
+.accountant p { margin: 0; }

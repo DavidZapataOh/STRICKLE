@@ -477,5 +477,23 @@
     "copy": "Copiar enlace",
     "copied": "Copiado",
     "copyFailed": "Selecciona el enlace y cópialo."
+  },
+  "accountant": {
+    "title": "Llave de lectura del contador",
+    "intro": "Una llave de lectura te permite leer las notas que la cuenta privada de un cliente selló para contadores. La llave se queda en este navegador, y su copia de seguridad también, salvo que la descargues. Crea una llave por cliente.",
+    "create": "Crear una llave de lectura",
+    "import": "Ya tengo una llave",
+    "importLabel": "Llave (64 caracteres)",
+    "useKey": "Usar esta llave",
+    "badKey": "Esa llave no es válida.",
+    "publicKey": "Entrega esta llave a la persona cuyas notas revisas",
+    "backup": "Descargar copia de la llave",
+    "forget": "Olvidar esta llave",
+    "notes": "Notas compartidas con esta llave",
+    "empty": "Todavía no se ha compartido ninguna nota privada con esta llave.",
+    "unavailable": "No se pudieron cargar las notas ahora. Inténtalo de nuevo en un momento.",
+    "retry": "Intentar de nuevo",
+    "limits": "Ves el monto, el activo, la caja y el bloqueo de cada nota en el momento en que se creó. No ves a quién pertenece, a quién se pagó ni si ya se gastó. El identificador corto de tu llave es público en la red, así que cualquiera puede saber qué notas se sellaron para la misma llave. Usa una llave por cliente.",
+    "lockedUntil": "Bloqueada hasta el {date}"
   }
 }

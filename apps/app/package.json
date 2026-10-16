@@ -25,6 +25,7 @@
     "@strickle/core": "*",
     "@strickle/db": "*",
     "@strickle/design": "*",
+    "@strickle/pool": "*",
     "@strickle/prover": "*",
     "@strickle/tax-engine": "*",
     "next": "16.4.1",

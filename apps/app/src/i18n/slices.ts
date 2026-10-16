@@ -19,3 +19,8 @@ export const settingsText = (t: Dictionary): SettingsText => ({ settings: t.sett
 export type ViewText = Pick<Dictionary, "view" | "rules" | "boxes" | "boxesPage" | "screens">;
 
 export const viewText = (t: Dictionary): ViewText => ({ view: t.view, rules: t.rules, boxes: t.boxes, boxesPage: t.boxesPage, screens: t.screens });
+
+/** What the accountant's view-key reader reads. */
+export type AccountantText = Pick<Dictionary, "accountant" | "boxes">;
+
+export const accountantText = (t: Dictionary): AccountantText => ({ accountant: t.accountant, boxes: t.boxes });
