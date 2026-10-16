@@ -506,5 +506,24 @@
     "error": "Algo deu errado do nosso lado. Seu código não foi usado; tente de novo em instantes.",
     "closedTitle": "Voltamos em breve",
     "closedBody": "A Strickle está em pausa para manutenção. Seu dinheiro continua no seu próprio cofre."
+  },
+  "metrics": {
+    "title": "Números ao vivo",
+    "vaults": "Cofres",
+    "team": "Da equipe",
+    "organic": "De todos os outros",
+    "held": "USDC nos cofres",
+    "allocated": "USDC dividido em caixas, no total",
+    "block": "No bloco",
+    "notMeasured": "Ainda não medido",
+    "empty": "Ainda não há nenhuma medição",
+    "unavailable": "Não foi possível ler os números agora.",
+    "names": {
+      "taxesCoveredOnTime": "Impostos cobertos no prazo",
+      "cushionDays": "Dias de reserva",
+      "yield": "Rendimento",
+      "earlyPayments": "Pagamentos antecipados",
+      "invariantBreaches": "Verificações de segurança que falharam"
+    }
   }
 }

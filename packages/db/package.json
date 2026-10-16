@@ -8,7 +8,8 @@
     "./limiter": "./src/limiter.ts",
     "./access": "./src/access.ts",
     "./testing": "./src/testing.ts",
-    "./connect": "./src/connect.ts"
+    "./connect": "./src/connect.ts",
+    "./snapshots": "./src/snapshots.ts"
   },
   "scripts": {
     "lint": "eslint .",

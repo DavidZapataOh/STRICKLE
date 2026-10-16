@@ -53,6 +53,8 @@ describe("a dump of the database", () => {
   it("has exactly the reviewed columns, so a new column cannot slip in unnoticed", async () => {
     // Adding a column means adding it here on purpose: sealed values must be bytea,
     // and nothing that can hold an amount may be text, numeric or json.
+    // metric_snapshots holds public, chain-derived aggregates (what /api/metrics serves) and the collector's resume state: vault and owner addresses that
+    // are already public through the factory's events and two running totals, never an amount per user. It is the one deliberate exception to "no json".
     // The access tables hold only the hash of an invitation code, its label and times, and a random session id.
     // The rate tables hold a keyed hash of an address or a public vault address, a count and a time: no amount, no user data.
     const reviewed = [
@@ -74,6 +76,12 @@ describe("a dump of the database", () => {
       "invites.id:bigint",
       "invites.label:text",
       "invites.redeemed_at:timestamp with time zone",
+      "metric_snapshots.as_of_block:bigint",
+      "metric_snapshots.id:bigint",
+      "metric_snapshots.network:text",
+      "metric_snapshots.payload:jsonb",
+      "metric_snapshots.state:jsonb",
+      "metric_snapshots.taken_at:timestamp with time zone",
       "mirror_boxes.asset:text",
       "mirror_boxes.balance:bytea",
       "mirror_boxes.id:uuid",

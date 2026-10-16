@@ -506,5 +506,24 @@
     "error": "Algo falló de nuestra parte. Tu código no se usó; vuelve a probar en un momento.",
     "closedTitle": "Volvemos pronto",
     "closedBody": "Strickle está en pausa por mantenimiento. Tu dinero sigue en tu propia bóveda."
+  },
+  "metrics": {
+    "title": "Cifras en vivo",
+    "vaults": "Bóvedas",
+    "team": "Del equipo",
+    "organic": "De todos los demás",
+    "held": "USDC en custodia de las bóvedas",
+    "allocated": "USDC repartido en cajas, en total",
+    "block": "Al bloque",
+    "notMeasured": "Aún no se mide",
+    "empty": "Todavía no hay ninguna medición",
+    "unavailable": "No se pudieron leer las cifras ahora.",
+    "names": {
+      "taxesCoveredOnTime": "Impuestos cubiertos a tiempo",
+      "cushionDays": "Días de colchón",
+      "yield": "Rendimiento",
+      "earlyPayments": "Pagos anticipados",
+      "invariantBreaches": "Revisiones de seguridad que fallaron"
+    }
   }
 }

@@ -506,5 +506,24 @@
     "error": "Something went wrong on our side. Your code was not used; try again in a moment.",
     "closedTitle": "Back soon",
     "closedBody": "Strickle is paused for maintenance. Your money stays in your own vault."
+  },
+  "metrics": {
+    "title": "Numbers, live",
+    "vaults": "Vaults",
+    "team": "From the team",
+    "organic": "From everyone else",
+    "held": "USDC held",
+    "allocated": "USDC split into boxes, in total",
+    "block": "As of block",
+    "notMeasured": "Not measured yet",
+    "empty": "No snapshot recorded yet",
+    "unavailable": "The numbers could not be read right now.",
+    "names": {
+      "taxesCoveredOnTime": "Taxes covered on time",
+      "cushionDays": "Days of cushion",
+      "yield": "Yield",
+      "earlyPayments": "Early payments",
+      "invariantBreaches": "Safety checks that failed"
+    }
   }
 }
