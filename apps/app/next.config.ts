@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
-  transpilePackages: ["@strickle/design", "@strickle/core", "@strickle/tax-engine", "@strickle/arc", "@strickle/prover"],
+  transpilePackages: ["@strickle/design", "@strickle/core", "@strickle/tax-engine", "@strickle/arc", "@strickle/prover", "@strickle/agent"],
   outputFileTracingIncludes: { "/**": ["../../packages/tax-engine/rules/**/*", "../../packages/tax-engine/calendars/**/*", "../../packages/tax-engine/fx/**/*"] },
   turbopack: { rules: { "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" } } },
   async headers() {

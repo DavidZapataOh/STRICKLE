@@ -23,5 +23,9 @@
   "devDependencies": {
     "vitest": "^5.0.4",
     "fast-check": "^4.10.2"
+  },
+  "exports": {
+    "./profile": "./enclave/profile.ts",
+    "./keys": "./enclave/keys.ts"
   }
 }
