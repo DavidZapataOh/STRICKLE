@@ -51,3 +51,13 @@ Server environment (none of these is `NEXT_PUBLIC_`, none appears in a response 
 `node --env-file=/Users/david/tameion/.env apps/app/scripts/check-relay-config.mjs` checks all of this against the chain and the database. Run it after every workflow redeploy.
 
 The gateway lets one request per 30 seconds through per workflow, shared by every user, so the relay admits one accepted request per vault and one per workflow in that interval and tells the caller how long to wait. Fairness between users is first come, first served; a real queue is a launch decision.
+
+## Activity on testnet
+
+The Activity tab shows the agent's receipts (read from the vault's and the executor's events through the cached `/api/logs` route, with the private payment's public amount read from its own transaction receipt), the proposals waiting for the user (sealed notices opened with the notice key on this device, each one re-checked against its own digest) and lets the user approve or reject with their passkey. Approving signs the exact request with the smart account (ERC-1271), seals it to the enclave and sends it through the relay. Only a decision notice on chain confirms an action: the relay and the gateway only say that a request was taken.
+
+The live proof takes two sittings a day apart (a new payee approval applies after a day), so it needs the shared workflow to be active and a proof vault with funds. It is never part of a default run:
+
+1. `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-prepare.mjs` reports what is missing (relay variables, database, workflow binding, the five-minute daily schedule).
+2. Day one: `RUN_LIVE=1 LIVE_PHASE=onboard npm run test:e2e:live -w app`, then `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-fund.mjs <vault>` to send the proof vault 2 USDC from the shared wallet. Both the funding and activating the workflow need the owner's go-ahead.
+3. On the payday set in step 2 (tomorrow's day of the month): `RUN_LIVE=1 LIVE_PHASE=approve npm run test:e2e:live -w app`. It waits for the agent's proposal, approves it with the replayed passkey, waits for the decision and the salary receipt, checks the relay's refusals and saves screenshots at ten viewports.
