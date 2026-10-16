@@ -1,0 +1,44 @@
+{
+  "token": "USDC",
+  "amount": "100.0",
+  "source": {
+    "address": "0x1F29d19bDd3E8dAC1cA03CB53F600c696d2c9860",
+    "chain": "Base_Sepolia"
+  },
+  "destination": {
+    "address": "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8",
+    "chain": "Arc_Testnet",
+    "recipientAddress": "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8"
+  },
+  "gasFees": [],
+  "fees": [
+    {
+      "type": "forwarder",
+      "token": "USDC",
+      "amount": "0.015638"
+    }
+  ],
+  "amountReceived": "100.0",
+  "feeTotal": "0.015638",
+  "feeItems": [
+    {
+      "type": "FORWARD",
+      "amount": "0.015638",
+      "args": [
+        "0x8745d906d67c346e5eb1aeeed38eb87f34df0c0a",
+        "26",
+        "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x636374702d666f72776172640000000000000000000000000000000000000000"
+      ],
+      "argsHash": "0x6cea1d25ab9b4b9edfc5c788082c28c6669c6fc2f35fa8e047c7774e60c66d4c"
+    }
+  ],
+  "totalDebit": "100.015638",
+  "quoteExpiry": {
+    "mode": "BLOCK_NUMBER",
+    "expiresAtBlock": 48204734,
+    "blockEstimatedAt": 1792177757
+  },
+  "quote": "<opaque>"
+}

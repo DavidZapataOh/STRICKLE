@@ -14,6 +14,7 @@ The Strickle web app: a mobile-first Next.js app (App Router, React 19, Tailwind
 - `npm run dev -w app` serves on port 3200.
 - `npm test -w app` runs the offline unit and node tests; `npm run test:responsive -w app` runs the responsive gate at ten viewports; `npm run test:perf -w app` runs the Lighthouse budgets. All three run in CI.
 - `npm run test:live -w app` and `npm run test:e2e:live -w app` run the tests that touch the network and are never part of the default run.
+- `tests/live/deposit.live.test.ts` and `tests/live/deposit.live.spec.ts` send real testnet USDC from Avalanche Fuji and Base Sepolia into a vault. They are skipped unless `DEPOSIT_TEST_KEY` (a throwaway key funded from faucet.circle.com with USDC and native gas on both chains) and, for the API-level one, `DATABASE_URL` are set; the browser one also needs `RUN_LIVE=1` and the Circle client key.
 
 ## Deployment
 

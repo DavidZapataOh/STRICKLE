@@ -449,3 +449,15 @@ body {
 .access-form input[name="code"] { text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-geist-mono), ui-monospace, monospace; }
 
 .agent-note { margin: 0; padding: var(--space-3) var(--space-4); color: var(--clay); font-size: var(--fs-sm); border-inline-start: var(--hairline) solid var(--line); }
+
+.deposit { display: grid; gap: var(--space-4); max-width: 40rem; }
+.deposit .card { display: grid; gap: var(--space-3); }
+.deposit h2 { margin: 0; font: 600 var(--fs-lg)/1.2 var(--font-manrope), system-ui, sans-serif; }
+.deposit .card > p { margin: 0; overflow-wrap: anywhere; }
+.quote-rows { display: grid; gap: var(--space-2); margin: 0; }
+.quote-row { display: flex; justify-content: space-between; gap: var(--space-4); }
+.quote-row dt { color: var(--clay); }
+.quote-row dd { margin: 0; text-align: end; }
+.wallet-list { display: grid; gap: var(--space-2); }
+.wallet-list .btn { justify-content: flex-start; }
+.wallet-list img { flex: none; border-radius: var(--radius-sm); }

@@ -44,6 +44,9 @@
       "title": "Documentação",
       "emptyTitle": "A documentação ainda não foi publicada",
       "emptyBody": "Quando for, esta página vai levar até ela. Enquanto isso, cada regra que o agente aplica aparece ao lado do número que ela produz."
+    },
+    "deposit": {
+      "title": "Adicionar dinheiro"
     }
   },
   "boxes": {
@@ -260,7 +263,8 @@
       },
       "activityDown": "Sua atividade está indisponível agora. Os saldos estão em dia.",
       "paused": "Seu agente está em pausa."
-    }
+    },
+    "addMoney": "Adicionar dinheiro"
   },
   "boxesPage": {
     "total": "Nas suas caixas",
@@ -443,6 +447,84 @@
       "unconfirmed": "Ainda sem confirmação. Nada aparece como mudado até que o agente confirme. Você pode conferir de novo.",
       "failed": "Isso não foi concluído. Nada foi mudado.",
       "cancelled": "Cancelado. Nada foi mudado."
+    }
+  },
+  "deposit": {
+    "title": "Adicionar dinheiro",
+    "chainLabel": "Onde está seu dinheiro agora?",
+    "chains": {
+      "Ethereum": "Ethereum",
+      "Base": "Base",
+      "Avalanche": "Avalanche",
+      "Arbitrum": "Arbitrum",
+      "Optimism": "Optimism",
+      "Polygon": "Polygon"
+    },
+    "amountLabel": "Valor (USDC)",
+    "amountHint": "Dígitos e um ponto decimal, até seis casas decimais.",
+    "speed": {
+      "label": "Velocidade",
+      "fast": "Rápida",
+      "standard": "Padrão",
+      "feeFrom": "Taxa de {fee}",
+      "appliedNote": "A Circle entregou isto como uma transferência {speed}",
+      "names": {
+        "fast": "rápida",
+        "slow": "padrão"
+      }
+    },
+    "wallet": {
+      "connect": "Conectar carteira",
+      "choose": "Escolha uma carteira",
+      "none": "Nenhuma carteira encontrada",
+      "noneBody": "Abra esta página em um navegador com uma extensão de carteira, ou envie USDC na Arc para o endereço do seu cofre abaixo.",
+      "connected": "Conectada: {address}"
+    },
+    "quote": {
+      "send": "Você envia",
+      "fees": "Taxas",
+      "total": "Total saindo da sua carteira",
+      "forwarder": "Encaminhamento da Circle",
+      "fast": "Transferência rápida",
+      "receives": "Chega ao seu cofre",
+      "exactly": "exatamente",
+      "atLeast": "pelo menos",
+      "network": "Taxa de rede",
+      "walletShowsNetworkFee": "Sua carteira mostra a taxa de rede",
+      "modeSource": "As taxas são somadas: sua carteira paga o valor mais as taxas e seu cofre recebe o valor completo.",
+      "modeDestination": "As taxas saem do valor: seu cofre recebe o que sobra depois das taxas.",
+      "expires": "Cotação válida até {time}",
+      "refresh": "Atualizar cotação"
+    },
+    "confirm": "Confirmar e enviar",
+    "states": {
+      "sending": "Aguardando sua carteira",
+      "waiting": "Enviado. Aguardando a Circle entregar",
+      "arrived": "Chegou. Seu agente divide nas suas caixas",
+      "arrivedBody": "O dinheiro está no seu cofre. O agente distribui nas suas caixas na próxima passada.",
+      "viewTx": "Ver a transação",
+      "failed": "Este depósito não terminou",
+      "failedBody": "Se a transferência já saiu da sua carteira, ela ainda pode chegar. Verifique de novo em instantes.",
+      "retry": "Verificar de novo",
+      "another": "Adicionar mais dinheiro"
+    },
+    "direct": {
+      "title": "Enviar diretamente",
+      "body": "Você também pode enviar USDC na Arc para o endereço do seu cofre: {address}",
+      "warning": "Somente USDC, somente na Arc",
+      "copy": "Copiar endereço",
+      "copied": "Endereço copiado",
+      "copyFailed": "Seu navegador bloqueou a cópia. Selecione o endereço e copie manualmente."
+    },
+    "errors": {
+      "no-wallet": "Nenhuma carteira foi encontrada neste navegador.",
+      "rejected": "Sua carteira recusou o pedido. Nada foi enviado.",
+      "wrong-chain": "Sua carteira está em outra rede. Troque e tente de novo.",
+      "insufficient-funds": "Sua carteira não tem USDC suficiente ou o suficiente para a taxa de rede.",
+      "quote-refused": "Esta transferência não pode ser cotada agora. Tente outro valor ou outra cadeia.",
+      "quote-expired": "A cotação expirou. Peça uma nova.",
+      "unavailable": "Algo deu errado ao acessar a rede. Tente de novo.",
+      "timeout": "A transferência ainda não chegou. Ela pode estar a caminho: verifique de novo."
     }
   },
   "rules": {

@@ -113,6 +113,23 @@ jobs:
 
   gates:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: strickle
+          POSTGRES_PASSWORD: strickle
+          POSTGRES_DB: strickle
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U strickle"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://strickle:strickle@localhost:54329/strickle
+      RELAY_IP_PEPPER: gates-run-pepper-0123456789abcdef0123456789
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -120,6 +137,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run migrate -w @strickle/db
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:responsive -w apps/landing
       - run: npm run test:perf -w apps/landing

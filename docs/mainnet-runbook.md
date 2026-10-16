@@ -48,6 +48,18 @@ npm run record-metrics -w app -- mainnet
 
 records a snapshot from the last one onward (`--rebuild` rereads everything, which is needed after the team list changes). The team is the listed addresses plus whoever received USDC or EURC directly from them. `/api/metrics` and the metrics page show the latest snapshot and name what is not measured.
 
+## Deposit route
+
+`/[lang]/deposit` and `/api/deposits` let a person bring USDC from another chain into their vault through Circle's CCTP with the forwarding service. What they depend on:
+
+- Circle's Iris API reachable (`iris-api-sandbox.circle.com` on testnet, `iris-api.circle.com` on mainnet). The route reads the burn message from it and never trusts the browser's claim about a burn.
+- The pinned `@circle-fin/bridge-kit` and `@circle-fin/adapter-viem-v2` versions in `packages/arc/package.json`; a bump needs the quote tests and the funded live proof again.
+- The source-chain endpoints in `packages/arc/src/bridge/chains.ts` (the page's policy allows exactly these origins on this route and no others).
+- Circle's forwarding fee, which the quote shows before the person confirms, and the fast-transfer allowance: when it is exhausted Circle delivers a fast request as a standard transfer, and the screen says so afterwards.
+- `DATABASE_URL` (the deposit records and the per-address and per-vault limits) and `RELAY_IP_PEPPER`. Without either the routes answer 503.
+
+The route is served only where an agent runs: on a network without one the page answers the unavailable screen, and `/api/deposits` is closed by the same access rules as the rest of the app. The funded live proof (`DEPOSIT_TEST_KEY`, see the app README) is not part of any default run.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
