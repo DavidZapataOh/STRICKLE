@@ -1,6 +1,6 @@
 // workflows/agent/tests/rpc.test.ts
 import { describe, expect, it } from "vitest";
-import { batchBody, callRequest, decodeOwner, decodeVaultOf, firstLogData, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
+import { batchBody, callRequest, codeRequest, decodeOwner, decodeVaultOf, firstLogData, isContract, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
 
 const to = "0x00000000000000000000000000000000000000aa";
 const decode = (body: string) => JSON.parse(Buffer.from(body, "base64").toString("utf8"));
@@ -84,5 +84,13 @@ describe("firstLogData", () => {
   it("refuses an empty or malformed result", () => {
     expect(() => firstLogData([])).toThrow(/^no log$/);
     expect(() => firstLogData("0x")).toThrow(/^no log$/);
+  });
+});
+
+describe("code", () => {
+  it("asks for the code at latest and tells contracts from plain addresses", () => {
+    expect(codeRequest(to)).toEqual({ method: "eth_getCode", params: [to, "latest"] });
+    expect(isContract("0x6080")).toBe(true);
+    expect(isContract("0x")).toBe(false);
   });
 });

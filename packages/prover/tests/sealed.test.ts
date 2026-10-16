@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateProverKey, open, seal } from "../src/sealed.ts";
+import { generateProverKey, open, scalarFrom, seal, sealWith } from "../src/sealed.ts";
 
 const aad = new TextEncoder().encode("strickle-prover/v1:spend");
 const message = new TextEncoder().encode(JSON.stringify({ secret: "do not leak" }));
@@ -45,5 +45,35 @@ describe("sealed box", () => {
     const b = generateProverKey();
     expect(a.publicKey).toHaveLength(32);
     expect(a.publicKey).not.toEqual(b.publicKey);
+  });
+});
+
+describe("sealWith", () => {
+  const aad = new TextEncoder().encode("aad");
+  const message = new TextEncoder().encode("hello");
+
+  it("is deterministic for a fixed ephemeral secret and opens like any sealed box", () => {
+    const key = generateProverKey();
+    const secret = scalarFrom(Uint8Array.from({ length: 64 }, (_, i) => i + 1));
+    const a = sealWith(message, key.publicKey, aad, secret);
+    expect(sealWith(message, key.publicKey, aad, secret)).toEqual(a);
+    expect(open(a, key.secret, key.publicKey, aad)).toEqual(message);
+  });
+
+  it("differs for a different ephemeral secret", () => {
+    const key = generateProverKey();
+    const a = sealWith(message, key.publicKey, aad, scalarFrom(new Uint8Array(64).fill(1)));
+    const b = sealWith(message, key.publicKey, aad, scalarFrom(new Uint8Array(64).fill(2)));
+    expect(a).not.toEqual(b);
+  });
+
+  it("keeps seal random", () => {
+    const key = generateProverKey();
+    expect(seal(message, key.publicKey, aad)).not.toEqual(seal(message, key.publicKey, aad));
+  });
+
+  it("maps any bytes to a usable scalar, including all zeros", () => {
+    expect(scalarFrom(new Uint8Array(64)) > 0n).toBe(true);
+    expect(scalarFrom(new Uint8Array(64).fill(255)) > 0n).toBe(true);
   });
 });

@@ -8,5 +8,7 @@
   "stateAddress": "0xc8224D78e864476258785646a93a6884967b3973",
   "executorAddress": "0x9bC52AF7a9D13B8923AA220Ab574f1065cd94644",
   "sandboxClock": true,
-  "dailySchedule": "0 0 * * * *"
+  "dailySchedule": "0 0 * * * *",
+  "chainId": 5042002,
+  "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01"
 }

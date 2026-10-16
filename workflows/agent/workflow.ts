@@ -1,6 +1,7 @@
 // workflows/agent/workflow.ts
 import {
   CronCapability,
+  HTTPCapability,
   EVMClient,
   LAST_FINALIZED_BLOCK_NUMBER,
   Runner,
@@ -16,6 +17,7 @@ import {
 import { EVM_PB } from "@chainlink/cre-sdk/pb";
 import { decodeFunctionResult, encodeFunctionData, getAddress, keccak256, toBytes, zeroAddress } from "viem";
 import { type Config, configSchema } from "./config.ts";
+import { onUserAction } from "./enclave/action-handler.ts";
 import { onDepositPoll } from "./enclave/deposit-handler.ts";
 import { onProfileSubmitted } from "./enclave/profile-handler.ts";
 import { onDailyTick } from "./enclave/tick-handler.ts";
@@ -57,7 +59,7 @@ const onCron = (runtime: Runtime<Config>): string => {
   return bytesToHex(written.txHash ?? new Uint8Array(32));
 };
 
-export const HANDLER_NAMES = ["heartbeat", "profile", "deposits", "daily"] as const;
+export const HANDLER_NAMES = ["heartbeat", "profile", "deposits", "daily", "actions"] as const;
 
 export const initWorkflow = (config: Config) => {
   const cron = new CronCapability();
@@ -76,6 +78,7 @@ export const initWorkflow = (config: Config) => {
     ),
     handlerInTee(cron.trigger({ schedule: "0 * * * * *" }), onDepositPoll, {}),
     handlerInTee(cron.trigger({ schedule: config.dailySchedule }), onDailyTick, {}),
+    handlerInTee(new HTTPCapability().trigger({ authorizedKeys: [{ type: "KEY_TYPE_ECDSA_EVM", publicKey: config.gatewayAddress }] }), onUserAction, {}),
   ];
 };
 

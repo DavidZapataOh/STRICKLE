@@ -37,4 +37,14 @@ describe("enclave sources", () => {
     expect(handler).toMatch(/sort\(/);
     expect(handler).toContain("catch");
   });
+
+  it("the action handler checks the owner's signature, the nonce and the deadline before applying anything", () => {
+    const handler = readFileSync(new URL("action-handler.ts", dir), "utf8");
+    expect(handler.indexOf("actionDigest")).toBeGreaterThan(-1);
+    expect(handler.indexOf("applyAction(")).toBeGreaterThan(handler.indexOf("erc1271Accepts("));
+    expect(handler.indexOf("open(")).toBeLessThan(handler.indexOf("requestSchema.safeParse"));
+    expect(handler).not.toMatch(/return `rejected/);
+    expect(handler).toMatch(/nonce/);
+    expect(handler).toMatch(/deadline/);
+  });
 });

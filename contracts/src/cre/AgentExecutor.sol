@@ -20,6 +20,7 @@ interface IFactory {
 
 interface IStateStore {
     function store(address vault, uint64 next, bytes calldata ciphertext) external;
+    function notify(address vault, uint64 id, bytes calldata sealedData) external;
 }
 
 /// @notice The only contract users delegate the agent role to. It can allocate what arrived in a vault and
@@ -93,6 +94,7 @@ contract AgentExecutor is CreReceiver {
 
     uint8 public constant PAY_SALARY = 2;
     uint8 public constant TICK = 3;
+    uint8 public constant NOTICE = 4;
     uint8 public constant SALARY_BOX = 3;
 
     event SalaryPaid(address indexed vault, uint8 indexed asset, address indexed payee, uint256 amount);
@@ -119,6 +121,7 @@ contract AgentExecutor is CreReceiver {
         if (action == SPLIT) _split(args);
         else if (action == PAY_SALARY) _paySalary(args);
         else if (action == TICK) _tick(args);
+        else if (action == NOTICE) _notice(args);
         else revert UnknownAction(action);
     }
 
@@ -143,6 +146,12 @@ contract AgentExecutor is CreReceiver {
         IVault(vault).payAllowlisted(asset, SALARY_BOX, payee, amount);
         state.store(vault, next, ciphertext);
         emit SalaryPaid(vault, asset, payee, amount);
+    }
+
+    function _notice(bytes memory args) private {
+        (address vault, uint64 id, bytes memory sealedData) = abi.decode(args, (address, uint64, bytes));
+        if (!registered[vault]) revert NotAVault();
+        state.notify(vault, id, sealedData);
     }
 
     function _tick(bytes memory args) private {

@@ -10,6 +10,21 @@ const signed = z.string().regex(/^-?[0-9]{1,30}$/);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const maybeDate = z.union([date, z.literal("")]);
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const ZERO_KEY = `0x${"0".repeat(64)}`;
+const hash32 = z.string().regex(/^0x[0-9a-f]{64}$/);
+const proposalSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]{1,24}$/),
+    kind: z.literal("salary-day-one"),
+    amount: units,
+    payee: address,
+    digest: hash32,
+    createdAt: z.number().int().min(0),
+    expiresAt: z.number().int().min(0),
+    status: z.enum(["pending", "approved", "rejected", "expired", "executed"]),
+    decidedAt: z.number().int().min(0).default(0),
+  })
+  .strict();
 const bps = (min: number, max: number) => z.number().int().min(min).max(max);
 
 export const profileSchema = z
@@ -25,6 +40,9 @@ export const profileSchema = z
     salaryOwed: units,
     emergencyTarget: units,
     taxesDue: units.default("0"),
+    nonce: units.default("0"),
+    userKey: hash32.default(ZERO_KEY),
+    proposals: z.array(proposalSchema).max(8).default([]),
     salary: z
       .object({ proposed: units, pending: units, payee: address, day: bps(1, 28), lastPaid: z.string().regex(/^(\d{4}-\d{2})?$/) })
       .strict()
@@ -81,6 +99,8 @@ export function mergeProfile(existing: Profile | undefined, submitted: Profile):
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
     tick: existing.tick,
+    nonce: BigInt(existing.nonce) > BigInt(submitted.nonce) ? existing.nonce : submitted.nonce,
+    proposals: existing.proposals,
     breaker: existing.breaker,
     // Until the agent has ticked once, or when the owner changes the salary, the funding target is still the owner's.
     salaryOwed: existing.tick.lastDay === "" || existing.salary.proposed !== submitted.salary.proposed ? submitted.salaryOwed : existing.salaryOwed,

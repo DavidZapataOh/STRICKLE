@@ -12,6 +12,8 @@ export const configSchema = z.object({
   executorAddress: address,
   rpcUrl: z.string().regex(/^https:\/\//),
   dailySchedule: z.string().min(1),
+  gatewayAddress: address,
+  chainId: z.number().int(),
   sandboxClock: z.boolean(),
   gasLimit: z.string().regex(/^[0-9]+$/),
 });

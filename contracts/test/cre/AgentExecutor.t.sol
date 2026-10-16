@@ -365,4 +365,38 @@ contract AgentExecutorTest is Test {
         assertEq(tv, address(uint160(0xa1)));
         assertEq(tnext, 3);
     }
+
+    function test_aNoticeIsPublishedForARegisteredVault() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        vm.expectEmit(true, true, false, true, address(state));
+        emit AgentState.Notice(address(vault), 1, hex"aa");
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+        assertEq(state.noticeCount(address(vault)), 1);
+    }
+
+    function test_aNoticeForAnUnregisteredVaultIsRefused() public {
+        vm.expectRevert(AgentExecutor.NotAVault.selector);
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+    }
+
+    function test_noticeIdsMustFollowTheChainsCount() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"aa"));
+        vm.expectRevert(abi.encodeWithSelector(AgentState.StaleNotice.selector, uint64(2), uint64(1)));
+        deliverAction(4, abi.encode(address(vault), uint64(1), hex"bb"));
+        deliverAction(4, abi.encode(address(vault), uint64(2), hex"bb"));
+    }
+
+    function test_decodesTheNoticeReportTheWorkflowEncodes() public view {
+        (uint8 action, bytes memory args) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/notice-report.hex"))), (uint8, bytes)
+        );
+        assertEq(action, executor.NOTICE());
+        (address v, uint64 id, bytes memory sealedData) = abi.decode(args, (address, uint64, bytes));
+        assertEq(v, address(uint160(0xa1)));
+        assertEq(id, 5);
+        assertEq(sealedData, hex"abcd");
+    }
 }

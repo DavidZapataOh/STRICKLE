@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { decodeAbiParameters } from "viem";
 import { describe, expect, it } from "vitest";
-import { encodeSalaryReport, encodeTickReport } from "../enclave/reports.ts";
+import { encodeNoticeReport, encodeSalaryReport, encodeTickReport } from "../enclave/reports.ts";
 
 const vault = "0x00000000000000000000000000000000000000a1" as const;
 const payee = "0x00000000000000000000000000000000000000b2" as const;
@@ -31,5 +31,13 @@ describe("reports", () => {
   it("matches the fixtures the Solidity executor decodes", () => {
     expect(encodeSalaryReport(salary)).toBe(fixture("salary-report.hex"));
     expect(encodeTickReport(tick)).toBe(fixture("tick-report.hex"));
+  });
+  it("encodes NOTICE as (4, args) and matches the fixture", () => {
+    const input = { vault, id: 5n, sealed: "0xabcd" as const };
+    const [action, args] = decodeAbiParameters([{ type: "uint8" }, { type: "bytes" }], encodeNoticeReport(input));
+    expect(action).toBe(4);
+    const [v, id, sealed] = decodeAbiParameters([{ type: "address" }, { type: "uint64" }, { type: "bytes" }], args);
+    expect([v.toLowerCase(), id, sealed]).toEqual([vault, 5n, "0xabcd"]);
+    expect(encodeNoticeReport(input)).toBe(fixture("notice-report.hex"));
   });
 });
