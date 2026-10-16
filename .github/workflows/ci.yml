@@ -139,6 +139,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: echo "INVOICE_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - run: npm run migrate -w @strickle/db
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:responsive -w apps/landing
