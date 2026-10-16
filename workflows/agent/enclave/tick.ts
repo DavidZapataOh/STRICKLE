@@ -1,8 +1,10 @@
 // workflows/agent/enclave/tick.ts
-import { type CashEntry, type InvariantPolicy, PROPOSAL_TTL_SECONDS, type Snapshot, cascadeSalaryOwed, decideSalary, forecast, guard } from "@strickle/brain";
-import { BOX_KINDS, type BoxKind, type PlainDate, daysBetween, formatPlainDate, parsePlainDate, toEpochDay } from "@strickle/core";
+import { type InvariantPolicy, PROPOSAL_TTL_SECONDS, type Snapshot, cascadeSalaryOwed, decideSalary, forecast, guard } from "@strickle/brain";
+import { BOX_KINDS, type BoxKind, type PlainDate, formatPlainDate, parsePlainDate } from "@strickle/core";
 import type { Address } from "viem";
-import type { Notice } from "./notices.ts";
+import { historyOf, historyWeeksOf, seedOf } from "./history.ts";
+import type { Notice } from "./notice-schema.ts";
+import { buildPlanNotice } from "./plan.ts";
 import { type Profile, ZERO_ADDRESS } from "./profile.ts";
 import { proposalDigest } from "./proposals.ts";
 
@@ -17,7 +19,6 @@ export type TickPlan =
   | { kind: "tick"; next: Profile; notices: Notice[] }
   | { kind: "salary"; next: Profile; payee: Address; amount: bigint; seen: bigint; notices: Notice[] };
 
-const seedOf = (vault: Address, today: PlainDate): number => (Number.parseInt(vault.slice(2, 10), 16) ^ toEpochDay(today)) >>> 0;
 const sum = (record: Record<BoxKind, bigint>) => BOX_KINDS.reduce((total, kind) => total + record[kind], 0n);
 
 export const invariantPolicy = (profile: Profile): InvariantPolicy => ({
@@ -38,7 +39,20 @@ export const snapshotOf = (profile: Profile, books: TickBooks, today: PlainDate)
   outflowsToday: 0n,
 });
 
+type Ticked = Exclude<TickPlan, { kind: "skip" }>;
+
+/** The day's plan notice is a convenience for the user's screen: if building it ever fails, the tick and the salary still go through without it. */
+function withPlanNotice<T extends Ticked>(plan: T, books: TickBooks, paid: bigint, today: PlainDate, vault: Address, nowSeconds: number): T {
+  try {
+    const after = { ...books, boxes: { ...books.boxes, salary: books.boxes.salary - paid } };
+    return { ...plan, notices: [...plan.notices, buildPlanNotice({ profile: plan.next, books: after, today, vault, nowSeconds })] };
+  } catch {
+    return plan;
+  }
+}
+
 export function planTick(profile: Profile, books: TickBooks, today: PlainDate, vault: Address, nowSeconds: number): TickPlan {
+  const conclude = <T extends Ticked>(plan: T, paid = 0n): T => withPlanNotice(plan, books, paid, today, vault, nowSeconds);
   const day = formatPlainDate(today);
   if (profile.tick.lastDay === day) return { kind: "skip" };
 
@@ -46,7 +60,7 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
   const salaryBox = books.boxes.salary;
   const buffer = books.boxes.operating + salaryBox;
   const dailySpend = BigInt(profile.dailySpend);
-  const history: CashEntry[] = profile.history.map(([date, amount, source]) => ({ date: parsePlainDate(date), amount: BigInt(amount), source }));
+  const history = historyOf(profile);
   const outlook = forecast({ asset: "USDC", asOf: today, openingBalance: buffer, history, seed: seedOf(vault, today) });
   const last = outlook.weeks - 1;
   const refreshed = { lastDay: day, p10: String(outlook.p10[last]), p50: String(outlook.p50[last]) };
@@ -61,9 +75,8 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
   });
 
   const due = today.day === profile.salary.day && profile.salary.lastPaid !== month && !profile.breaker.halted;
-  if (!due || owed === 0n) return { kind: "tick", next: finish(BigInt(profile.salary.pending), 0n, profile.salary.lastPaid), notices: [] };
+  if (!due || owed === 0n) return conclude({ kind: "tick", next: finish(BigInt(profile.salary.pending), 0n, profile.salary.lastPaid), notices: [] });
 
-  const oldest = history.reduce<PlainDate | undefined>((first, entry) => (first === undefined || daysBetween(entry.date, first) > 0 ? entry.date : first), undefined);
   const decision = decideSalary({
     proposed,
     pending: BigInt(profile.salary.pending),
@@ -72,7 +85,7 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
     taxesFunded: books.boxes.taxes,
     taxesDue: BigInt(profile.taxesDue),
     dailySpend,
-    historyWeeks: oldest === undefined ? 0 : Math.floor(daysBetween(oldest, today) / 7),
+    historyWeeks: historyWeeksOf(history, today),
     forecast: outlook,
     policy: { floorDays: Math.max(1, profile.floorDays) },
   });
@@ -80,14 +93,17 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
   if (decision.payNow > 0n && profile.salary.payee !== ZERO_ADDRESS) {
     const verdict = guard({ status: "running" }, snapshotOf(profile, books, today), { kind: "salary", amount: decision.payNow }, invariantPolicy(profile));
     if (verdict.allow) {
-      return {
-        kind: "salary",
-        next: finish(decision.pending, decision.payNow, month),
-        payee: profile.salary.payee as Address,
-        amount: decision.payNow,
-        seen: salaryBox,
-        notices: [{ kind: "salary", month, paid: String(decision.payNow), pending: String(decision.pending) }],
-      };
+      return conclude(
+        {
+          kind: "salary",
+          next: finish(decision.pending, decision.payNow, month),
+          payee: profile.salary.payee as Address,
+          amount: decision.payNow,
+          seen: salaryBox,
+          notices: [{ kind: "salary", month, paid: String(decision.payNow), pending: String(decision.pending) }],
+        },
+        decision.payNow,
+      );
     }
     const onlyNeedsASignature = verdict.reason === "violations" && verdict.violations.every((violation) => violation.code === "signature-required");
     const id = `salary-${month}`;
@@ -104,12 +120,12 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
         status: "pending" as const,
         decidedAt: 0,
       };
-      return {
+      return conclude({
         kind: "tick",
         next: { ...finish(owed, 0n, month), proposals: [...profile.proposals, proposal] },
         notices: [{ kind: "proposal", proposalId: id, amount, payee: proposal.payee, digest: proposal.digest, expiresAt: proposal.expiresAt }],
-      };
+      });
     }
   }
-  return { kind: "tick", next: finish(owed, 0n, month), notices: [] };
+  return conclude({ kind: "tick", next: finish(owed, 0n, month), notices: [] });
 }

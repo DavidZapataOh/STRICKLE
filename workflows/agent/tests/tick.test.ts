@@ -110,6 +110,8 @@ describe("planTick", () => {
   });
 });
 
+const visible = (notices: readonly { kind: string }[]) => notices.filter((notice) => notice.kind !== "plan");
+
 describe("proposals and notices", () => {
   const sign = { ...base, limits: { dailyCap: "100000000", signatureThreshold: "10" } };
 
@@ -120,7 +122,7 @@ describe("proposals and notices", () => {
     expect(plan.next.proposals[0]).toMatchObject({ id: "salary-2026-11", kind: "salary-day-one", amount: "1000000", payee, status: "pending", createdAt: NOW });
     expect(plan.next.proposals[0].expiresAt).toBe(NOW + 604_800);
     expect(plan.next.salary.pending).toBe("1000000");
-    expect(plan.notices).toEqual([expect.objectContaining({ kind: "proposal", proposalId: "salary-2026-11", amount: "1000000", payee })]);
+    expect(visible(plan.notices)).toEqual([expect.objectContaining({ kind: "proposal", proposalId: "salary-2026-11", amount: "1000000", payee })]);
   });
 
   it("does not repeat a proposal for the same month", () => {
@@ -129,7 +131,7 @@ describe("proposals and notices", () => {
     const again = planTick({ ...first.next, tick: { ...first.next.tick, lastDay: "" }, salary: { ...first.next.salary, lastPaid: "" } }, books(), today, vault, NOW + 60);
     if (again.kind !== "tick") throw new Error("expected a tick");
     expect(again.next.proposals).toHaveLength(1);
-    expect(again.notices).toEqual([]);
+    expect(visible(again.notices)).toEqual([]);
   });
 
   it("does not propose when another invariant holds the payment", () => {
@@ -140,11 +142,54 @@ describe("proposals and notices", () => {
 
   it("announces a paid salary", () => {
     const plan = planTick(base, books(), today, vault, NOW);
-    expect(plan.kind === "salary" && plan.notices).toEqual([{ kind: "salary", month: "2026-11", paid: "1000000", pending: "0" }]);
+    expect(plan.kind === "salary" && visible(plan.notices)).toEqual([{ kind: "salary", month: "2026-11", paid: "1000000", pending: "0" }]);
   });
 
   it("says nothing on an ordinary day", () => {
     const plan = planTick(base, books(), plainDate(2026, 11, 2), vault, NOW);
-    expect(plan.kind === "tick" && plan.notices).toEqual([]);
+    expect(plan.kind === "tick" && visible(plan.notices)).toEqual([]);
+  });
+});
+
+describe("the daily plan notice", () => {
+  const plans = (notices: readonly { kind: string }[]) => notices.filter((notice) => notice.kind === "plan");
+
+  it("is published on an ordinary day, on a salary day and on a proposal day, never on a skipped day", () => {
+    const ordinary = planTick(base, books(), plainDate(2026, 11, 2), vault, NOW);
+    expect(ordinary.kind === "tick" && plans(ordinary.notices)).toHaveLength(1);
+    const salaryDay = planTick(base, books(), today, vault, NOW);
+    expect(salaryDay.kind === "salary" && plans(salaryDay.notices)).toHaveLength(1);
+    const proposalDay = planTick({ ...base, limits: { dailyCap: "100000000", signatureThreshold: "10" } }, books(), today, vault, NOW);
+    expect(proposalDay.kind === "tick" && plans(proposalDay.notices)).toHaveLength(1);
+    const ticked = { ...base, tick: { ...base.tick, lastDay: formatPlainDate(today) } };
+    expect(planTick(ticked, books(), today, vault, NOW)).toEqual({ kind: "skip" });
+  });
+
+  it("describes the state after today's payment, not before it", () => {
+    const plan = planTick(base, books(), today, vault, NOW);
+    if (plan.kind !== "salary") throw new Error("expected a salary");
+    expect(plan.notices.find((entry) => entry.kind === "plan")).toMatchObject({ kind: "plan", salary: { lastPaid: "2026-11", next: "2026-12-01" } });
+  });
+
+  it("lists the proposal it just created as open and asks for approval", () => {
+    const plan = planTick({ ...base, limits: { dailyCap: "100000000", signatureThreshold: "10" } }, books(), today, vault, NOW);
+    if (plan.kind !== "tick") throw new Error("expected a tick");
+    expect(plans(plan.notices)[0]).toMatchObject({ salary: { needsApproval: true }, proposals: [{ id: "salary-2026-11", amount: "1000000", expiresAt: NOW + 604_800 }] });
+  });
+
+  it("never lets a failure while building the notice stop the tick", () => {
+    const hostile = { ...base, limits: { dailyCap: "1", signatureThreshold: "not a number" } } as Profile;
+    const plan = planTick(hostile, books(), plainDate(2026, 11, 2), vault, NOW);
+    expect(plan.kind).toBe("tick");
+    expect(plan.kind === "tick" && plans(plan.notices)).toEqual([]);
+    expect(plan.kind === "tick" && plan.next.tick.lastDay).toBe("2026-11-02");
+  });
+
+  it("does not count the onboarding estimate as history: the salary waits for real weeks", () => {
+    const estimated = { ...base, history: base.history.map(([date, amount]) => [date, amount, "estimate"] as [string, string, string]) };
+    const plan = planTick(estimated, books(), today, vault, NOW);
+    expect(plan.kind).toBe("tick");
+    if (plan.kind !== "tick") return;
+    expect(plans(plan.notices)[0]).toMatchObject({ salary: { binding: "insufficient-history" }, forecast: { basis: "estimate" } });
   });
 });

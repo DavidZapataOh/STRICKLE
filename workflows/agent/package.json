@@ -26,6 +26,8 @@
   },
   "exports": {
     "./profile": "./enclave/profile.ts",
-    "./keys": "./enclave/keys.ts"
+    "./keys": "./enclave/keys.ts",
+    "./notices": "./enclave/notices.ts",
+    "./notice-schema": "./enclave/notice-schema.ts"
   }
 }
