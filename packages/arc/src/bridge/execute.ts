@@ -5,7 +5,7 @@ import type { DepositAdapter, DepositKit } from "./kit.ts";
 import { assertConfirmable } from "./quote.ts";
 import { type DepositQuote, bridgeLegOf } from "./types.ts";
 
-export type DepositProgress = { stage: "approve" | "burn" | "attestation" | "arrival"; state: "pending" | "done" | "failed"; txHash?: Hex };
+export type DepositProgress = { stage: "swap" | "approve" | "burn" | "attestation" | "arrival"; state: "pending" | "done" | "failed"; txHash?: Hex; amount?: bigint };
 
 const STAGES: Record<string, DepositProgress["stage"]> = { approve: "approve", burn: "burn", fetchAttestation: "attestation", mint: "arrival" };
 const STATES: Record<string, DepositProgress["state"] | undefined> = { pending: "pending", success: "done", error: "failed" };
