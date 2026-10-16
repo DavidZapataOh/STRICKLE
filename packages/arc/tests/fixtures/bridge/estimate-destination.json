@@ -1,0 +1,47 @@
+{
+  "token": "USDC",
+  "amount": "100.0",
+  "source": {
+    "address": "0x2eb96aCf6B91F0E8c15484A8A4DF4BC83C20fcef",
+    "chain": "Base_Sepolia"
+  },
+  "destination": {
+    "address": "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8",
+    "chain": "Arc_Testnet",
+    "recipientAddress": "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8"
+  },
+  "gasFees": [
+    {
+      "name": "Approve",
+      "token": "ETH",
+      "blockchain": "Base_Sepolia",
+      "fees": {
+        "gas": "150000",
+        "gasPrice": "6000000",
+        "fee": "0.000000945"
+      }
+    },
+    {
+      "name": "Burn",
+      "token": "ETH",
+      "blockchain": "Base_Sepolia",
+      "fees": {
+        "gas": "500000",
+        "gasPrice": "6000000",
+        "fee": "0.00000315"
+      }
+    }
+  ],
+  "fees": [
+    {
+      "type": "provider",
+      "token": "USDC",
+      "amount": "0.0143"
+    },
+    {
+      "type": "forwarder",
+      "token": "USDC",
+      "amount": "0.015763"
+    }
+  ]
+}

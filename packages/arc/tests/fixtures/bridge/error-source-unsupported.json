@@ -1,0 +1,3 @@
+{
+  "message": "Validation failed for 'config.feePayment': 'source' - Source-paid (\"receive-exact\") fees are not supported from Avalanche Fuji. Use the default destination-paid fees for this source chain."
+}
