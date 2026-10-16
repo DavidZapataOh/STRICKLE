@@ -1,0 +1,13 @@
+{
+  "meta": { "title": "Strickle", "description": "Seu agente de pagamentos: renda irregular, salário regular." },
+  "nav": { "home": "Início", "activity": "Atividade", "boxes": "Caixas", "settings": "Ajustes", "skip": "Ir para o conteúdo", "primary": "Navegação principal" },
+  "shell": { "brand": "Strickle" },
+  "screens": {
+    "home": { "title": "Início", "emptyTitle": "Seu próximo salário aparecerá aqui", "emptyBody": "Quando seu primeiro pagamento chegar, o agente mostra a data, o valor e a regra por trás." },
+    "activity": { "title": "Atividade", "emptyTitle": "Cada movimento tem seu recibo", "emptyBody": "Quando o agente divide um pagamento ou paga seu salário, você vê o que ele fez, qual regra aplicou e o que ainda pode mudar." },
+    "boxes": { "title": "Caixas", "emptyTitle": "Suas caixas ainda não foram criadas", "emptyBody": "Impostos, caixa operacional, reserva de emergência, salário e lucro ganham cada um sua caixa quando você termina a configuração." },
+    "settings": { "title": "Ajustes", "emptyTitle": "Aqui ficam as regras e os limites", "emptyBody": "Por esta tela você poderá pausar o agente, mudar suas regras e compartilhar uma visão somente leitura com seu contador." },
+    "verify": { "title": "Verificar", "emptyTitle": "Confira um certificado", "emptyBody": "Os certificados de renda ainda não são emitidos. Quando forem, você poderá conferir um aqui." },
+    "docs": { "title": "Documentação", "emptyTitle": "A documentação ainda não foi publicada", "emptyBody": "Quando for, esta página vai levar até ela. Enquanto isso, cada regra que o agente aplica aparece ao lado do número que ela produz." }
+  }
+}

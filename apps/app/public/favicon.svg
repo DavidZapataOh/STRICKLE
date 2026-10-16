@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"><title>Strickle</title><g transform="translate(-23.3 -25.86) scale(1.182)">
+  
+  <!-- Final C: the struck s. Verticals 32u, top/bottom bars 30u, strike 28u (optical thinning of horizontals). -->
+  <path fill="#A3214F" d="M200 42 L88 42 Q56 42 56 74 L56 114 L24 114 L24 142 L168 142 L168 184 L56 184 L56 214 L168 214 Q200 214 200 182 L200 142 L232 142 L232 114 L88 114 L88 72 L200 72 Z"/>
+</g></svg>

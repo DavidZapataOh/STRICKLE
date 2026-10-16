@@ -1,0 +1,13 @@
+{
+  "meta": { "title": "Strickle", "description": "Your pay agent: irregular income, a regular salary." },
+  "nav": { "home": "Home", "activity": "Activity", "boxes": "Boxes", "settings": "Settings", "skip": "Skip to content", "primary": "Main navigation" },
+  "shell": { "brand": "Strickle" },
+  "screens": {
+    "home": { "title": "Home", "emptyTitle": "Your next salary will appear here", "emptyBody": "Once your first payment arrives, the agent shows the date, the amount and the rule behind it." },
+    "activity": { "title": "Activity", "emptyTitle": "Every move gets a receipt", "emptyBody": "When the agent splits a payment or pays your salary, you see what it did, which rule applied and what you can still change." },
+    "boxes": { "title": "Boxes", "emptyTitle": "Your boxes are not set up yet", "emptyBody": "Taxes, cash, emergency fund, salary and profit each get their own box once you finish setup." },
+    "settings": { "title": "Settings", "emptyTitle": "Rules and limits live here", "emptyBody": "You will pause the agent, change its rules and share a read-only view with your accountant from this screen." },
+    "verify": { "title": "Verify", "emptyTitle": "Check a certificate", "emptyBody": "Certificates of income are not issued yet. When they are, you will be able to check one here." },
+    "docs": { "title": "Docs", "emptyTitle": "Documentation is not published yet", "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces." }
+  }
+}

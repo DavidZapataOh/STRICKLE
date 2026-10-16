@@ -1,0 +1,13 @@
+{
+  "meta": { "title": "Strickle", "description": "Tu agente de pagos: ingresos irregulares, un sueldo regular." },
+  "nav": { "home": "Inicio", "activity": "Actividad", "boxes": "Cajas", "settings": "Ajustes", "skip": "Saltar al contenido", "primary": "Navegación principal" },
+  "shell": { "brand": "Strickle" },
+  "screens": {
+    "home": { "title": "Inicio", "emptyTitle": "Aquí aparecerá tu próximo sueldo", "emptyBody": "Cuando llegue tu primer pago, el agente muestra la fecha, el monto y la regla que hay detrás." },
+    "activity": { "title": "Actividad", "emptyTitle": "Cada movimiento tiene su recibo", "emptyBody": "Cuando el agente reparte un pago o paga tu sueldo, ves qué hizo, qué regla aplicó y qué puedes cambiar todavía." },
+    "boxes": { "title": "Cajas", "emptyTitle": "Tus cajas aún no están creadas", "emptyBody": "Impuestos, caja operativa, fondo de emergencia, sueldo y ganancia tienen su propia caja cuando terminas la configuración." },
+    "settings": { "title": "Ajustes", "emptyTitle": "Aquí viven las reglas y los límites", "emptyBody": "Desde esta pantalla podrás pausar al agente, cambiar sus reglas y compartir una vista de solo lectura con tu contador." },
+    "verify": { "title": "Verificar", "emptyTitle": "Comprueba un certificado", "emptyBody": "Todavía no se emiten certificados de ingresos. Cuando existan, podrás comprobar uno aquí." },
+    "docs": { "title": "Documentación", "emptyTitle": "La documentación aún no está publicada", "emptyBody": "Cuando lo esté, esta página enlazará a ella. Mientras tanto, cada regla que aplica el agente se muestra junto al número que produce." }
+  }
+}

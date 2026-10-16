@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "@strickle/design/tokens.css";
+
+@theme inline {
+  --color-night: var(--night);
+  --color-blush: var(--blush);
+  --color-hibiscus: var(--hibiscus);
+  --color-hibiscus-deep: var(--hibiscus-deep);
+  --color-hibiscus-light: var(--hibiscus-light);
+  --color-marigold: var(--marigold);
+  --color-calyx: var(--calyx);
+  --color-calyx-tint: var(--calyx-tint);
+  --color-clay: var(--clay);
+  --color-ember: var(--ember);
+  --color-amber: var(--amber);
+  --color-husk: var(--husk);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  background: var(--blush);
+  color: var(--night);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--hibiscus);
+  outline-offset: var(--focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 50;
+  padding: var(--space-3) var(--space-4);
+  background: var(--night);
+  color: var(--blush);
+  border-radius: var(--radius-md);
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible {
+  transform: none;
+}
