@@ -1,9 +1,12 @@
 // workflows/agent/enclave/cascade.ts
-import { type Asset, type BoxKind, BOX_KINDS, allocatePayment, money } from "@strickle/core";
+import { type Asset, type BoxKind, BOX_KINDS, type PlainDate, allocatePayment, daysBetween, formatPlainDate, money, parsePlainDate } from "@strickle/core";
 import type { Profile } from "./profile.ts";
 
 export const BOX_ID = Object.fromEntries(BOX_KINDS.map((box, index) => [box, index + 1])) as Record<BoxKind, number>;
 export const ASSET_ID: Record<Asset, number> = { USDC: 1, EURC: 2 };
+
+const WINDOW_DAYS = 91;
+const MAX_HISTORY = 200;
 
 export interface VaultBooks {
   asset: Asset;
@@ -13,7 +16,7 @@ export interface VaultBooks {
   emergency: bigint;
 }
 
-export function planSplit(profile: Profile, books: VaultBooks): { boxes: number[]; amounts: bigint[]; next: Profile } {
+export function planSplit(profile: Profile, books: VaultBooks, today: PlainDate): { boxes: number[]; amounts: bigint[]; next: Profile } {
   const result = allocatePayment(money(books.asset, books.unallocated), {
     asset: books.asset,
     taxRateBps: profile.taxRateBps,
@@ -38,5 +41,7 @@ export function planSplit(profile: Profile, books: VaultBooks): { boxes: number[
       amounts.push(amount);
     }
   }
-  return { boxes, amounts, next: { ...profile, salaryOwed: result.salaryPending.units.toString() } };
+  const recent = profile.history.filter(([date]) => daysBetween(parsePlainDate(date), today) < WINDOW_DAYS);
+  const history = [...recent, [formatPlainDate(today), books.unallocated.toString(), "deposit"] as [string, string, string]].slice(-MAX_HISTORY);
+  return { boxes, amounts, next: { ...profile, history, salaryOwed: result.salaryPending.units.toString() } };
 }

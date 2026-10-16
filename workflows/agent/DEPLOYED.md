@@ -10,3 +10,4 @@
 - A simulator broadcast is not used as proof of a write: its mock forwarder carries no workflow metadata, so receivers bound to a workflow ID never see it.
 - Executor `AgentExecutor`: `0x62a31CAFaeff7CEc4944dc4DeDa5b88e34aBCd19`, set as `AgentState.executor` and bound to the workflow ID. The deposit poll runs every minute inside the enclave.
 - Live proof: a real 1 USDC deposit into a delegated vault was split by the agent with no human step (operating +840000, profit +160000, state v3), transaction `0xb99a33a213ac47eb6fe07f12baf393cb2be67212dc40f2941bc4dc6c594c61c1`; the script then revoked the agent and returned the funds.
+- Salary and tick: the executor with the `PAY_SALARY` and `TICK` actions is deployed and the daily handler runs in the enclave simulator; the live salary-day proof waits for the vault's one-day payee approval and is recorded here when it runs.

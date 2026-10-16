@@ -3,9 +3,10 @@ import { type EVMLog, type TeeRuntime, bytesToHex } from "@chainlink/cre-sdk";
 import { open } from "@strickle/prover/sealed";
 import { type Address, decodeEventLog, decodeFunctionResult, encodeAbiParameters, encodeFunctionData, getAddress, hexToBytes, parseAbi } from "viem";
 import type { Config } from "../config.ts";
+import { decodeStateLog, stateLogRequest } from "./books.ts";
 import { deliver } from "./deliver.ts";
-import { deriveSealKey, encryptState, parseMaster, profileAad } from "./keys.ts";
-import { decodeProfile, encodeProfile } from "./profile.ts";
+import { decryptState, deriveSealKey, encryptState, parseMaster, profileAad } from "./keys.ts";
+import { decodeProfile, encodeProfile, mergeProfile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
 import { callRequest, decodeOwner, decodeVaultOf, ownerRequest, stateAbi, vaultOfRequest } from "./rpc.ts";
 
@@ -24,14 +25,18 @@ export const onProfileSubmitted = (runtime: TeeRuntime<Config>, log: EVMLog): st
   const [headAnswer, ownerAnswer] = ethBatch(runtime, [callRequest(state, encodeFunctionData({ abi: stateAbi, functionName: "head", args: [vault] }), "latest"), ownerRequest(vault)]);
   const [vaultOfAnswer] = ethBatch(runtime, [vaultOfRequest(runtime.config.factoryAddress as Address, decodeOwner(ownerAnswer))]);
   if (decodeVaultOf(vaultOfAnswer) !== vault) return "ok";
-  const [version, , applied] = decodeFunctionResult({ abi: stateAbi, functionName: "head", data: headAnswer as `0x${string}` });
+  const [version, updatedAt, applied] = decodeFunctionResult({ abi: stateAbi, functionName: "head", data: headAnswer as `0x${string}` });
   if (applied >= args.profileId) return "ok";
 
   const master = parseMaster(runtime.getSecret({ id: "AGENT_MASTER" }).result().value);
   const key = deriveSealKey(master);
   const opened = open(hexToBytes(args.sealed), key.secret, key.publicKey, profileAad(vault));
   if (!opened) throw new Error("profile did not open");
-  const profile = decodeProfile(opened);
+  const existing =
+    version === 0n
+      ? undefined
+      : decodeProfile(decryptState(master, vault, version, decodeStateLog(ethBatch(runtime, [stateLogRequest(state, vault, version, updatedAt)])[0])));
+  const profile = mergeProfile(existing, decodeProfile(opened));
 
   const next = version + 1n;
   const ciphertext = encryptState(master, vault, next, encodeProfile(profile));

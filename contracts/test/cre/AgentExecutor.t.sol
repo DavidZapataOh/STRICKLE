@@ -230,4 +230,139 @@ contract AgentExecutorTest is Test {
         assertEq(amounts[0] + amounts[1], seen);
         assertEq(next, 1);
     }
+
+    address payee = makeAddr("payee");
+
+    function deliverAction(uint8 action, bytes memory args) internal {
+        bytes memory meta = new bytes(64);
+        bytes32 id = workflow;
+        assembly ("memory-safe") {
+            mstore(add(meta, 32), id)
+        }
+        vm.prank(forwarder);
+        executor.onReport(meta, abi.encode(action, args));
+    }
+
+    function fundSalaryBox(uint256 amount) internal {
+        vm.prank(user);
+        executor.register(address(vault));
+        delegate();
+        usdc.mint(address(vault), amount);
+        uint8[] memory boxes = new uint8[](1);
+        boxes[0] = 3;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+        deliver(abi.encode(address(vault), USDC, amount, boxes, amounts, uint64(1), hex"01"));
+    }
+
+    function approvePayee() internal {
+        vm.prank(user);
+        vault.approveRecipient(3, payee);
+        vm.warp(block.timestamp + 2 days);
+    }
+
+    function salaryArgs(uint256 amount, uint256 seen, uint64 next) internal view returns (bytes memory) {
+        return abi.encode(address(vault), USDC, payee, amount, seen, next, hex"5a1a");
+    }
+
+    function test_paysTheSalaryToTheApprovedPayeeAndStoresTheState() public {
+        fundSalaryBox(1_000_000);
+        approvePayee();
+        deliverAction(2, salaryArgs(1_000_000, 1_000_000, 2));
+        assertEq(usdc.balanceOf(payee), 1_000_000);
+        assertEq(vault.boxBalance(USDC, 3), 0);
+        (uint64 version,,) = state.head(address(vault));
+        assertEq(version, 2);
+    }
+
+    function test_refusesAPayeeTheOwnerNeverApproved() public {
+        fundSalaryBox(1_000_000);
+        vm.expectRevert(BoxVault.RecipientNotApproved.selector);
+        deliverAction(2, salaryArgs(1_000_000, 1_000_000, 2));
+    }
+
+    function test_refusesWhenTheSalaryBoxChangedSinceTheRead() public {
+        fundSalaryBox(1_000_000);
+        approvePayee();
+        vm.expectRevert(abi.encodeWithSelector(AgentExecutor.Stale.selector, uint256(900_000), uint256(1_000_000)));
+        deliverAction(2, salaryArgs(900_000, 900_000, 2));
+    }
+
+    function test_theVaultsRollingCapStillBindsTheSalary() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        vm.prank(user);
+        vault.setAgent(address(executor), 500_000, 1 days);
+        usdc.mint(address(vault), 1_000_000);
+        uint8[] memory boxes = new uint8[](1);
+        boxes[0] = 3;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 1_000_000;
+        deliver(abi.encode(address(vault), USDC, uint256(1_000_000), boxes, amounts, uint64(1), hex"01"));
+        approvePayee();
+        vm.expectRevert(BoxVault.CapExceeded.selector);
+        deliverAction(2, salaryArgs(1_000_000, 1_000_000, 2));
+    }
+
+    function test_aTickStoresTheStateAndMovesNoMoney() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        delegate();
+        usdc.mint(address(vault), 5);
+        deliverAction(3, abi.encode(address(vault), uint64(1), hex"7171"));
+        (uint64 version,,) = state.head(address(vault));
+        assertEq(version, 1);
+        assertEq(vault.unallocated(USDC), 5);
+    }
+
+    function test_aTickOnAPausedOrUndelegatedVaultIsRefused() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        vm.expectRevert(AgentExecutor.NotDelegated.selector);
+        deliverAction(3, abi.encode(address(vault), uint64(1), hex"01"));
+        delegate();
+        vm.prank(user);
+        vault.pauseAgent();
+        vm.expectRevert(AgentExecutor.NotDelegated.selector);
+        deliverAction(3, abi.encode(address(vault), uint64(1), hex"01"));
+    }
+
+    function test_delegatedListsOnlyActiveDelegations() public {
+        address second = makeAddr("second");
+        BoxVault other = BoxVault(factory.create(second));
+        vm.prank(user);
+        executor.register(address(vault));
+        vm.prank(second);
+        executor.register(address(other));
+        delegate();
+        assertEq(executor.delegated(0, 10).length, 1);
+        assertEq(executor.delegated(0, 10)[0], address(vault));
+        vm.prank(user);
+        vault.pauseAgent();
+        assertEq(executor.delegated(0, 10).length, 0);
+        assertEq(executor.delegated(5, 1).length, 0);
+    }
+
+    function test_decodesTheSalaryAndTickReportsTheWorkflowEncodes() public view {
+        (uint8 salaryAction, bytes memory salaryArgs_) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/salary-report.hex"))), (uint8, bytes)
+        );
+        assertEq(salaryAction, executor.PAY_SALARY());
+        (address v, uint8 asset, address p, uint256 amount, uint256 seen, uint64 next,) =
+            abi.decode(salaryArgs_, (address, uint8, address, uint256, uint256, uint64, bytes));
+        assertEq(v, address(uint160(0xa1)));
+        assertEq(p, address(uint160(0xb2)));
+        assertEq(asset, USDC);
+        assertEq(amount, 1_000_000);
+        assertEq(seen, 1_000_000);
+        assertEq(next, 2);
+
+        (uint8 tickAction, bytes memory tickArgs) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/tick-report.hex"))), (uint8, bytes)
+        );
+        assertEq(tickAction, executor.TICK());
+        (address tv, uint64 tnext,) = abi.decode(tickArgs, (address, uint64, bytes));
+        assertEq(tv, address(uint160(0xa1)));
+        assertEq(tnext, 3);
+    }
 }

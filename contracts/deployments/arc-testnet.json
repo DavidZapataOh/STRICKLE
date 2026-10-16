@@ -86,9 +86,9 @@
       "create2": true
     },
     "AgentExecutor": {
-      "address": "0x62a31CAFaeff7CEc4944dc4DeDa5b88e34aBCd19",
-      "txHash": "0xa5fa8bc497ab093f994b733abeb893e919ef414fc215efb8fb5b09057c9f7aba",
-      "blockNumber": 67401621,
+      "address": "0x9bC52AF7a9D13B8923AA220Ab574f1065cd94644",
+      "txHash": "0xea935e157f6f396d98bf629872c544e20a2993ef20beafc5d872c969f5d6108e",
+      "blockNumber": 67403688,
       "create2": true
     }
   }
