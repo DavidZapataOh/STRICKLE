@@ -60,6 +60,17 @@ records a snapshot from the last one onward (`--rebuild` rereads everything, whi
 
 The route is served only where an agent runs: on a network without one the page answers the unavailable screen, and `/api/deposits` is closed by the same access rules as the rest of the app. The funded live proof (`DEPOSIT_TEST_KEY`, see the app README) is not part of any default run.
 
+## USDT deposits
+
+A person holding USDT on Ethereum, Base, Arbitrum, Optimism, Polygon or Avalanche can convert it to USDC and carry it to their vault in one confirmation. How it works and what it depends on:
+
+- Circle's Swap Kit converts on the source chain. Its swap service routes through LI.FI, a third party chosen by Circle, not by Strickle; the quote names the route. The converted USDC goes only to the signer's own wallet, and the forwarded CCTP transfer then carries what the swap really delivered to the vault.
+- The quote shows the conversion fee, the network fee, the worst case (a stop limit of 0.5%) and every fee of the transfer. A conversion that costs more than 1% of the amount is refused.
+- If the conversion succeeds but the transfer can no longer keep the quoted amount, the person keeps the USDC in their wallet, is told so, and can send it with one action. A reload finds the held USDC again by reading the wallet's balance.
+- The USDT addresses per chain are in `packages/arc/src/bridge/chains.ts` and are checked against the swap service's own route by the keyless live test `usdt-quote.live.test.ts` (run by the `arc-live` job). Base uses a bridged USDT and Arbitrum's is USDT0.
+- No swap quote exists on testnet, so the option never appears there, and the deposit screen is served only where an agent runs; until an agent runs on mainnet the path cannot be reached by a real user. The conversion has not been executed on mainnet: only its quotes are verified against the live service.
+- Public copy does not mention USDT until an execution on mainnet has been proven.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
