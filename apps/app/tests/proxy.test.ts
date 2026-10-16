@@ -18,8 +18,14 @@ describe("the locale redirect", () => {
   });
 
   it("lets the landing's lang parameter win over the browser's language", () => {
-    const response = call("http://app.test/?amount=3200&country=CO&goal=salary&lang=es", "en");
-    expect(response?.headers.get("location")).toBe("http://app.test/es?amount=3200&country=CO&goal=salary&lang=es");
+    expect(call("http://app.test/?lang=es", "en")?.headers.get("location")).toBe("http://app.test/es?lang=es");
+  });
+
+  it("sends the landing simulator's hand-off straight to the flow, with every value and its language", () => {
+    const response = call("http://app.test/?amount=3200&country=CO&goal=2000&lang=es", "en");
+    expect(response?.headers.get("location")).toBe("http://app.test/es/start?amount=3200&country=CO&goal=2000&lang=es");
+    expect(call("http://app.test/?country=MX", "pt-BR")?.headers.get("location")).toBe("http://app.test/pt-br/start?country=MX");
+    expect(call("http://app.test/verify?amount=1", "en")?.headers.get("location")).toBe("http://app.test/en/verify?amount=1");
   });
 
   it("ignores a lang parameter that is not a supported locale", () => {
@@ -42,4 +48,3 @@ describe("the locale redirect", () => {
     expect(matcher.test("/apiary")).toBe(true);
   });
 });
-

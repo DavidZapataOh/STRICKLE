@@ -1,13 +1,190 @@
 {
-  "meta": { "title": "Strickle", "description": "Your pay agent: irregular income, a regular salary." },
-  "nav": { "home": "Home", "activity": "Activity", "boxes": "Boxes", "settings": "Settings", "skip": "Skip to content", "primary": "Main navigation" },
-  "shell": { "brand": "Strickle" },
+  "meta": {
+    "title": "Strickle",
+    "description": "Your pay agent: irregular income, a regular salary."
+  },
+  "nav": {
+    "home": "Home",
+    "activity": "Activity",
+    "boxes": "Boxes",
+    "settings": "Settings",
+    "skip": "Skip to content",
+    "primary": "Main navigation"
+  },
+  "shell": {
+    "brand": "Strickle"
+  },
   "screens": {
-    "home": { "title": "Home", "emptyTitle": "Your next salary will appear here", "emptyBody": "Once your first payment arrives, the agent shows the date, the amount and the rule behind it." },
-    "activity": { "title": "Activity", "emptyTitle": "Every move gets a receipt", "emptyBody": "When the agent splits a payment or pays your salary, you see what it did, which rule applied and what you can still change." },
-    "boxes": { "title": "Boxes", "emptyTitle": "Your boxes are not set up yet", "emptyBody": "Taxes, cash, emergency fund, salary and profit each get their own box once you finish setup." },
-    "settings": { "title": "Settings", "emptyTitle": "Rules and limits live here", "emptyBody": "You will pause the agent, change its rules and share a read-only view with your accountant from this screen." },
-    "verify": { "title": "Verify", "emptyTitle": "Check a certificate", "emptyBody": "Certificates of income are not issued yet. When they are, you will be able to check one here." },
-    "docs": { "title": "Docs", "emptyTitle": "Documentation is not published yet", "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces." }
+    "home": {
+      "title": "Home",
+      "emptyTitle": "Your next salary will appear here",
+      "emptyBody": "Once your first payment arrives, the agent shows the date, the amount and the rule behind it."
+    },
+    "activity": {
+      "title": "Activity",
+      "emptyTitle": "Every move gets a receipt",
+      "emptyBody": "When the agent splits a payment or pays your salary, you see what it did, which rule applied and what you can still change."
+    },
+    "boxes": {
+      "title": "Boxes",
+      "emptyTitle": "Your boxes are not set up yet",
+      "emptyBody": "Taxes, cash, emergency fund, salary and profit each get their own box once you finish setup."
+    },
+    "settings": {
+      "title": "Settings",
+      "emptyTitle": "Rules and limits live here",
+      "emptyBody": "You will pause the agent, change its rules and share a read-only view with your accountant from this screen."
+    },
+    "verify": {
+      "title": "Verify",
+      "emptyTitle": "Check a certificate",
+      "emptyBody": "Certificates of income are not issued yet. When they are, you will be able to check one here."
+    },
+    "docs": {
+      "title": "Docs",
+      "emptyTitle": "Documentation is not published yet",
+      "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces."
+    }
+  },
+  "boxes": {
+    "taxes": "Taxes",
+    "payroll": "Payroll",
+    "salary": "Your salary",
+    "operating": "Operating cash",
+    "emergency": "Emergency fund",
+    "profit": "Profit"
+  },
+  "start": {
+    "title": "Set up Strickle",
+    "progress": "Step {n} of {total}",
+    "testnet": "Test network: no real money",
+    "back": "Back",
+    "next": "Continue",
+    "profile": {
+      "title": "How do you get paid today?",
+      "stablecoin": "In digital dollars",
+      "stablecoinHint": "USDC, USDT or another dollar stablecoin",
+      "bank": "Through a bank or a platform",
+      "bankHint": "Deel, Payoneer, Wise, Upwork or a bank transfer"
+    },
+    "country": {
+      "title": "Where do you pay taxes?",
+      "label": "Country",
+      "choose": "Choose a country",
+      "other": "Another country"
+    },
+    "regime": {
+      "title": "Which regime are you in?",
+      "coded": "I am in {regime}",
+      "other": "Another regime, or I am not sure",
+      "hint": "Not sure is fine: we use a flat estimate until you confirm it."
+    },
+    "income": {
+      "title": "Your income and your salary",
+      "income": "Typical monthly income (US dollars)",
+      "goal": "Salary you want each month (US dollars)",
+      "payday": "Payday (day of the month, 1 to 28)",
+      "fromSimulator": "Taken from the simulator. Change it if it is not right."
+    },
+    "history": {
+      "title": "Your usual payments",
+      "notice": "Importing twelve months of real income is not available yet. Strickle will learn from this estimate until your own payments arrive.",
+      "perMonth": "Payments per month",
+      "day": "Day of payment {n}"
+    },
+    "review": {
+      "title": "What Strickle will do",
+      "loading": "Working out your plan",
+      "failed": "We could not work out your plan just now.",
+      "retry": "Try again",
+      "taxLine": "{rate} of each payment goes to taxes, by {regime}",
+      "taxAnnual": "{rate} of each payment goes to taxes: {regime} asks for no payment in advance at your income, but the yearly tax is still owed",
+      "taxFixed": "About {rate} of each payment goes to taxes: a typical month of the fixed fee of {regime}",
+      "taxFallback": "{rate} of each payment goes to taxes, a flat estimate until your regime is confirmed",
+      "source": "Rule source",
+      "unverified": "An estimate, not tax advice. Not yet verified by an accountant.",
+      "reasonNoRule": "We have no coded rule for your country yet.",
+      "reasonOther": "You are not in a regime we code yet.",
+      "reasonRate": "The exchange rate was not available just now.",
+      "reasonExpired": "The rule for your country has expired.",
+      "reasonNeedsYear": "Your country's rule needs last year's tax figures, which we do not have yet.",
+      "reasonOutOfRegime": "Your income is outside the regime we code for your country.",
+      "assumeAbroad": "Assumes your clients are outside your country.",
+      "firstPayment": "Your first payment of {amount}",
+      "month": "Your first month",
+      "monthNote": "The first month fills your operating cash first, so later months split differently.",
+      "salaryLine": "{amount} on day {day}",
+      "salaryPending": "{amount} stays pending until your income covers it",
+      "firstSalary": "Your first salary can be paid about 24 hours after you finish: the vault applies a new payee after one day.",
+      "approval": "Each salary payment waits for your approval until you change that in Settings.",
+      "estimateBased": "Your plan starts from your own estimate until your real payments arrive.",
+      "emergency": "Emergency fund target (months of salary)",
+      "confirm": "These percentages are my starting point",
+      "warning": "Check before you collect in digital dollars",
+      "create": "Create my account"
+    },
+    "create": {
+      "title": "Create your account",
+      "username": "Choose a name for your passkey",
+      "usernameHint": "It only helps you recognize it. It is not a password.",
+      "button": "Create account with a passkey",
+      "login": "I already have an account",
+      "loginTitle": "Sign in",
+      "loginHint": "Use the passkey name you chose when you created your account.",
+      "loginButton": "Sign in with my passkey",
+      "newAccount": "I need a new account",
+      "steps": {
+        "passkey": "Creating your passkey",
+        "sign": "Opening your boxes",
+        "agent": "Handing your plan to the agent"
+      },
+      "errors": {
+        "unsupported": "This browser cannot create passkeys. Try a recent version of Chrome, Safari or Edge.",
+        "cancelled": "The passkey was not created. You can try again.",
+        "failed": "The account could not be created yet. Your passkey and your recovery code are kept. Try again.",
+        "notFound": "No account found for that passkey."
+      },
+      "retry": "Try again"
+    },
+    "recovery": {
+      "title": "Save your recovery code",
+      "body": "This code opens your agent's notices on a new device. Strickle cannot recover it for you. Write it down or keep it in a password manager.",
+      "label": "Your recovery code",
+      "confirmTitle": "Check that you saved it",
+      "confirmBody": "Type group {a} and group {b} of the code.",
+      "group": "Group {n}",
+      "confirm": "I saved it, continue",
+      "mismatch": "Those groups do not match the code. Check and try again."
+    },
+    "restore": {
+      "title": "Restore your notices",
+      "body": "Enter the recovery code you saved when you created your account.",
+      "label": "Recovery code",
+      "button": "Restore",
+      "invalid": "That code is not valid. Check it for typing mistakes.",
+      "mismatch": "That code does not open your notices. Check that it belongs to this account.",
+      "unverified": "The code is valid. It is checked the first time your agent sends a notice.",
+      "done": "Your notices are restored on this device.",
+      "skip": "Continue without notices"
+    },
+    "done": {
+      "title": "Your boxes are ready",
+      "reading": "The agent is reading your plan",
+      "ready": "The agent has your plan",
+      "waiting": "This can take a few minutes. You can go to your home now.",
+      "go": "Go to my home",
+      "account": "Your account",
+      "boxes": "Boxes created"
+    },
+    "errors": {
+      "collection": "Choose one.",
+      "country": "Choose a country.",
+      "regime": "Choose one.",
+      "income": "Enter a whole number from 100 to 1,000,000.",
+      "goal": "Enter a whole number from 1 to 1,000,000.",
+      "payday": "Enter a day from 1 to 28.",
+      "days": "Pick different days from 1 to 28 for each payment.",
+      "emergency": "Enter from 1 to 12 months."
+    }
   }
 }
