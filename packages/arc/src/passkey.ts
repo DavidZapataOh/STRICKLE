@@ -32,12 +32,21 @@ export function assertRegistrationName(mode: "register" | "login", username: str
 
 export { isSponsorshipError } from "./sponsorship.ts";
 
+export interface TypedDataRequest {
+  domain: { name: string; version: string; chainId: number; verifyingContract: Address };
+  types: Record<string, readonly { name: string; type: string }[]>;
+  primaryType: string;
+  message: Record<string, unknown>;
+}
+
 export interface PasskeyWallet {
   address: Address;
   /** Sends the calls as one user operation, sponsored unless `sponsored` is false; resolves with the transaction hash and throws if the operation failed. */
   sendCalls(calls: readonly PasskeyCall[], options?: { sponsored?: boolean }): Promise<Hex>;
   /** Sends USDC with gas sponsored by Circle's paymaster; resolves with the transaction hash. */
   transfer(to: Address, amount: string): Promise<Hex>;
+  /** Signs EIP-712 data with the passkey through the smart account (ERC-1271 compatible). */
+  signTypedData(typed: TypedDataRequest): Promise<Hex>;
 }
 
 /** Registers a new passkey (`register`) or signs a returning user in (`login`) and opens their smart account on Arc testnet. */
@@ -74,6 +83,10 @@ export async function openPasskeyWallet(args: {
     async transfer(to, amount) {
       const { to: token, data } = encodeTransfer(to, ContractAddress.ArcTestnet_USDC, parseUnits(amount, 6));
       return sendCalls([{ to: token, data }]);
+    },
+    async signTypedData(typed) {
+      // the SDK's account wraps the digest with its replay-safe hash and the passkey signs it
+      return account.signTypedData(typed as never);
     },
   };
 }

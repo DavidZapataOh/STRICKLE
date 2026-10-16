@@ -1,6 +1,6 @@
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
-import { createPublicClient, encodeFunctionData, erc20Abi, http, type Address, type Hex } from "viem";
+import { createPublicClient, encodeFunctionData, erc20Abi, hashTypedData, http, parseAbi, type Address, type Hex } from "viem";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { networks, rpcUrl, transferSponsored, walletsClient } from "../../src/index.ts";
 
@@ -12,6 +12,7 @@ interface Harness {
   open(mode: "register" | "login", username?: string): Promise<Address>;
   sendCalls(calls: { to: Address; data: Hex; value?: string }[], options?: { sponsored?: boolean }): Promise<Hex>;
   transfer(to: Address, amount: string): Promise<Hex>;
+  signTypedData(typed: unknown): Promise<Hex>;
 }
 
 describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => {
@@ -104,5 +105,36 @@ describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => 
     const username = `strickle-login-${Date.now()}`;
     const address = await harness("open", "register", username);
     expect(await harness("open", "login")).toBe(address);
+  });
+
+  it("signs typed data that the deployed account accepts through ERC-1271", async () => {
+    const username = `strickle-sig-${Date.now()}`;
+    const address = await harness("open", "register", username);
+    const circle = walletsClient("testnet");
+    const funder = (await circle.getWallet({ id: walletId as string })).data?.wallet?.address as Address;
+    await transferSponsored({ circle, network, walletAddress: funder, to: address, token: network.usdc, amount: "0.1" });
+    await harness("transfer", funder, "0.05"); // the first user operation deploys the account
+
+    const typed = {
+      domain: { name: "Strickle Agent", version: "1", chainId: network.chain.id, verifyingContract: "0x00000000000000000000000000000000000000dd" },
+      types: { Action: [{ name: "vault", type: "address" }, { name: "actionHash", type: "bytes32" }, { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" }] },
+      primaryType: "Action",
+      message: { vault: "0x00000000000000000000000000000000000000a1", actionHash: `0x${"ab".repeat(32)}`, nonce: "1", deadline: "1800000300" },
+    };
+    const signature = await harness("signTypedData", typed);
+    const MAGIC = "0x1626ba7e";
+    const isValid = parseAbi(["function isValidSignature(bytes32 hash, bytes signature) view returns (bytes4)"]);
+    // an account may revert instead of answering 0xffffffff for a signature it refuses: both count as "not accepted"
+    const accepts = async (hash: Hex): Promise<boolean> => {
+      try {
+        return (await publicClient.readContract({ address, abi: isValid, functionName: "isValidSignature", args: [hash, signature] })) === MAGIC;
+      } catch {
+        return false;
+      }
+    };
+    const digest = hashTypedData({ ...typed, message: { ...typed.message, nonce: 1n, deadline: 1_800_000_300n } } as never);
+    const other = hashTypedData({ ...typed, message: { ...typed.message, nonce: 2n, deadline: 1_800_000_300n } } as never);
+    expect(await accepts(digest)).toBe(true);
+    expect(await accepts(other)).toBe(false);
   });
 });
