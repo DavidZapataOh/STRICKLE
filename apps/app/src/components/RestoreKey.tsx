@@ -5,7 +5,7 @@ import type { NoticeKey } from "@/keys/notice-key";
 import { restoreFromCode } from "@/keys/restore";
 
 /** Gives a device that lost the notice key its key back from the recovery code. `verify` tries it on a real notice when the caller can read one. */
-export function RestoreKey({ vault, t, verify, onRestored, onSkip }: { vault: Address; t: Dictionary; verify?: (key: NoticeKey) => Promise<boolean | "unknown">; onRestored: (verified: boolean) => void; onSkip?: () => void }) {
+export function RestoreKey({ vault, t, verify, onRestored, onSkip }: { vault: Address; t: { start: { restore: Dictionary["start"]["restore"] } }; verify?: (key: NoticeKey) => Promise<boolean | "unknown">; onRestored: (verified: boolean) => void; onSkip?: () => void }) {
   const r = t.start.restore;
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);

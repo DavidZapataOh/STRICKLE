@@ -4,6 +4,10 @@ import { ChoiceGroup } from "../src/ui/ChoiceGroup.tsx";
 import { NumberField } from "../src/ui/NumberField.tsx";
 import { SplitBar } from "../src/ui/SplitBar.tsx";
 import { StartFrame } from "../src/ui/StartFrame.tsx";
+import en from "../src/i18n/dictionaries/en.json";
+import { ReceiptStrip } from "../src/components/ReceiptStrip.tsx";
+import type { TimelineProposal } from "../src/activity/timeline.ts";
+import { ProposalCard } from "../src/components/ProposalCard.tsx";
 
 const html = (node: React.ReactElement) => renderToStaticMarkup(node);
 
@@ -82,5 +86,87 @@ describe("StartFrame", () => {
 
   it("omits the notice on a network with real money", () => {
     expect(html(<StartFrame lang="en" brand="Strickle" skip="s" progress={null} testnet={null}>x</StartFrame>)).not.toContain("Test network");
+  });
+});
+
+describe("ReceiptStrip", () => {
+  const receipt = {
+    type: "receipt" as const,
+    id: "0xabc:5",
+    at: 1_800_000_000,
+    kind: "split" as const,
+    ruleId: "cascade" as const,
+    text: "US$1,000.00 struck level",
+    parts: [{ box: "taxes" as const, units: 200_000_000n }, { box: "operating" as const, units: 800_000_000n }],
+    total: 1_000_000_000n,
+    txHash: `0x${"11".repeat(32)}` as const,
+    undo: { undoable: false as const, reason: "split" as const },
+  };
+
+  it("shows what happened, the split by box with amounts as text, the rule and why it cannot be undone", () => {
+    const out = renderToStaticMarkup(<ReceiptStrip receipt={receipt} locale="en" t={en} />);
+    expect(out).toContain("US$1,000.00 struck level");
+    expect(out).toContain("US$200.00");
+    expect(out).toContain("US$800.00");
+    expect(out).toContain(en.activity.receipt.rules.cascade);
+    expect(out).toContain(en.activity.receipt.undo.split);
+    expect(out).not.toMatch(/>Undo</);
+  });
+
+  it("explains that the percentage in a split is this payment's share, not the user's tax rate", () => {
+    // React escapes the apostrophe in markup
+    expect(renderToStaticMarkup(<ReceiptStrip receipt={receipt} locale="en" t={en} />)).toContain(en.activity.receipt.rateNote.replaceAll("'", "&#x27;"));
+  });
+
+  it("links to the transaction on the network's explorer", () => {
+    expect(renderToStaticMarkup(<ReceiptStrip receipt={receipt} locale="en" t={en} />)).toContain(`/tx/${"0x" + "11".repeat(32)}`);
+  });
+});
+
+describe("ProposalCard", () => {
+  const now = 1_800_000_000;
+  const proposal = { type: "proposal" as const, proposalId: "salary-2026-11", amount: 1_800_000_000n, payee: "0x00000000000000000000000000000000000000b2" as const, payeeRaw: "0x00000000000000000000000000000000000000b2", amountRaw: "1800000000", digest: `0x${"ab".repeat(32)}` as const, verified: true, createdAt: 1_799_990_000, expiresAt: 1_800_604_800, state: "pending" as TimelineProposal["state"], decidedAt: null };
+  const render = (patch: Partial<typeof proposal> = {}, props: { phase?: "idle" | "waiting"; paused?: boolean; reason?: undefined } = {}) =>
+    renderToStaticMarkup(<ProposalCard proposal={{ ...proposal, ...patch }} locale="en" t={en} phase={props.phase ?? "idle"} paused={props.paused ?? false} now={now} onApprove={() => {}} onReject={() => {}} />);
+
+  it("shows the exact payment and the fingerprint the signature covers, with both decisions enabled", () => {
+    const out = render();
+    expect(out).toContain("US$1,800.00");
+    expect(out).toContain("abababab…abababab");
+    expect(out).toContain(en.activity.proposal.approve);
+    expect(out).toContain(en.activity.proposal.reject);
+    expect(out).not.toContain("disabled");
+  });
+
+  it("disables both decisions while a request is in flight and announces the phase politely", () => {
+    const out = render({}, { phase: "waiting" });
+    expect(out.match(/disabled/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(out).toContain('aria-live="polite"');
+    expect(out).toContain(en.activity.phase.waiting);
+  });
+
+  it("offers no decision button at all on an expired or decided proposal", () => {
+    for (const state of ["expired", "rejected", "executed"] as const) {
+      expect(render({ state })).not.toMatch(/<button/);
+    }
+  });
+
+  it("does not let a proposal whose digest does not match be approved, and says so", () => {
+    const out = render({ verified: false });
+    expect(out).toContain(en.activity.proposal.unverified);
+    expect(out).not.toContain(en.activity.proposal.approve);
+  });
+
+  it("does not offer approval when too little time is left, but still allows rejecting", () => {
+    const out = render({ expiresAt: now + 60 });
+    expect(out).toContain(en.activity.proposal.tooLate);
+    expect(out).not.toContain(`>${en.activity.proposal.approve}<`);
+    expect(out).toContain(en.activity.proposal.reject);
+  });
+
+  it("disables both decisions while the agent is paused and says how to resume", () => {
+    const out = render({}, { paused: true });
+    expect(out.match(/disabled/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(out).toContain(en.activity.proposal.paused);
   });
 });

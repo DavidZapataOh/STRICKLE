@@ -16,12 +16,12 @@ test.describe("signed in, on a device that holds no reading key", () => {
     await page.addInitScript(([key, owner, vault]) => window.localStorage.setItem(key as string, JSON.stringify({ owner, vault, username: "", createdAt: 0 })), [SESSION_KEY, OWNER, VAULT]);
     await page.route(/\/api\/logs\?/, async (route) => {
       const kind = new URL(route.request().url()).searchParams.get("kind");
-      await route.fulfill({ json: kind === "allocated" ? fixture("allocated.json") : kind === "split" ? fixture("split.json") : { logs: [], truncated: false } });
+      await route.fulfill({ json: kind === "allocated" ? fixture("allocated.json") : kind === "split" ? fixture("split.json") : kind === "private-spend" ? fixture("private-spend.json") : { logs: [], truncated: false } });
     });
   });
 
   for (const locale of ["en", "es", "pt-br"]) {
-    for (const screen of ["", "/boxes"]) {
+    for (const screen of ["", "/boxes", "/activity"]) {
       test(`${locale}${screen || "/"} fits every viewport`, async ({ page }) => {
         await page.goto(`/${locale}${screen}`, { waitUntil: "networkidle" });
         await page.evaluate(() => document.fonts.ready);
@@ -36,6 +36,16 @@ test.describe("signed in, on a device that holds no reading key", () => {
     await expect(page.locator(".box-row")).toHaveCount(6);
     await expect(page.locator(".payment").first()).toBeVisible();
     await expect(page.locator(".payment .split-bar").first()).toBeVisible();
+  });
+
+  test("Activity shows the vault's real private payment as a receipt and offers the key restore when the device has no key", async ({ page }) => {
+    await page.goto("/en/activity", { waitUntil: "networkidle" });
+    // the pool's Spent event is read from the real receipt of that transaction on the network
+    await expect(page.locator(".strip").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator(".strip .strip-link").first()).toHaveAttribute("href", /\/tx\/0x[0-9a-f]{64}$/);
+    await expect(page.getByText("This device cannot read your agent's notices")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Restore" })).toBeVisible();
+    await expect(page.locator(".strip").first()).not.toContainText(/NaN|undefined/);
   });
 
   test("Home without a reading key says so and keeps the navigation", async ({ page }) => {

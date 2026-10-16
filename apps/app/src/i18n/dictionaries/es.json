@@ -285,5 +285,78 @@
         "body": "Cuando llegue dinero, verás aquí cómo se repartió entre tus cajas."
       }
     }
+  },
+  "activity": {
+    "signedOutTitle": "Inicia sesión para ver tu actividad",
+    "signedOutBody": "Tus recibos se leen de la red con tu propia cuenta.",
+    "signIn": "Iniciar sesión con passkey",
+    "signInFailed": "No pudimos abrir tu passkey. Inténtalo de nuevo.",
+    "noAccount": "Esta passkey todavía no tiene una cuenta.",
+    "createAccount": "Crear cuenta",
+    "loading": "Leyendo tu actividad",
+    "loadFailed": "No pudimos leer tu actividad en este momento.",
+    "retry": "Intentar de nuevo",
+    "since": "Mostrando la actividad desde el bloque {block}",
+    "truncated": "Hay más historial del que podemos mostrar de una vez. Los recibos más antiguos no aparecen.",
+    "pendingHeading": "Esperan tu decisión",
+    "historyHeading": "Lo que hizo el agente",
+    "noProposals": "Esta cuenta no tiene la llave de avisos en este dispositivo, así que aquí no se pueden mostrar las propuestas del agente. Restaura tu código de recuperación para verlas.",
+    "proposal": {
+      "title": "Pagar tu sueldo: {amount}",
+      "to": "A {payee}",
+      "rule": "Regla: tu sueldo, una vez al mes",
+      "expires": "Válida hasta {date}",
+      "fingerprint": "Apruebas exactamente esto: {digest}",
+      "confirm": "Tu passkey confirma este pago exacto.",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "expired": "Esta propuesta venció. El agente vuelve a proponer en el próximo día de sueldo.",
+      "rejected": "Rechazaste esta propuesta. No se pagó nada.",
+      "executed": "Aprobada y pagada.",
+      "unverified": "Esta propuesta no coincide con su propia huella, así que no se puede aprobar. No se pagó nada.",
+      "tooLate": "Queda muy poco tiempo para aprobar esto con seguridad. El agente vuelve a proponer en el próximo día de sueldo. Todavía puedes rechazarla.",
+      "paused": "Tu agente está en pausa, así que no puede actuar sobre una decisión. Reanúdalo primero en Ajustes.",
+      "anotherTab": "Otra pestaña está decidiendo sobre esta propuesta."
+    },
+    "phase": {
+      "signing": "Confirma con tu passkey",
+      "sending": "Enviando al agente",
+      "busy": "El agente está atendiendo otra solicitud. Reintentando en un momento",
+      "waiting": "Enviado. Esperando que el agente confirme",
+      "confirmedApprove": "Listo. El recibo aparece abajo",
+      "confirmedReject": "Listo. La propuesta fue rechazada",
+      "unconfirmed": "Todavía sin confirmación. Si la solicitud llegó al agente, el resultado aparece aquí. Revisa de nuevo o inténtalo otra vez.",
+      "failed": "Esto no se completó. No lo enviamos.",
+      "cancelled": "Cancelado. No se envió nada."
+    },
+    "failure": {
+      "signing": "No pudimos firmar con tu passkey. No se envió nada.",
+      "refused": "El agente no pudo aceptar esta solicitud. No se envió nada.",
+      "paused": "Tu agente está en pausa. Reanúdalo en Ajustes para decidir sobre las propuestas.",
+      "unknown-vault": "No reconocemos esta cuenta en la red. No se envió nada.",
+      "closed": "El acceso está cerrado por ahora. No se envió nada.",
+      "busy-too-long": "El agente estuvo ocupado demasiado tiempo. No se envió nada. Inténtalo de nuevo en un minuto.",
+      "misconfigured": "El servicio no está listo para esta solicitud. No se envió nada."
+    },
+    "receipt": {
+      "rule": "Regla: {rule}",
+      "rateNote": "El porcentaje que se muestra es la parte de este pago para esa caja, no tu tasa de impuestos.",
+      "rules": {
+        "cascade": "primero impuestos, luego efectivo, luego tus metas",
+        "salary-day": "tu sueldo en su día",
+        "private-spend": "un pago privado desde una nota blindada"
+      },
+      "tx": "Ver transacción",
+      "undo": {
+        "split": "El agente no puede revertir este reparto: el dinero está en sus cajas bajo sus bloqueos.",
+        "salary": "Un sueldo pagado ya salió de tus cuentas y no se puede recuperar.",
+        "payment": "Un pago ya salió de tus cuentas y no se puede recuperar."
+      }
+    },
+    "key": {
+      "missingTitle": "Este dispositivo no puede leer los avisos de tu agente",
+      "missingBody": "Los recibos de abajo se siguen mostrando. Para ver propuestas, restaura el código de recuperación que guardaste al crear tu cuenta.",
+      "unreadable": "{count} avisos no se pudieron leer con esta llave."
+    }
   }
 }

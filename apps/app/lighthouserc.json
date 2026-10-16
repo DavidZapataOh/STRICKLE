@@ -7,7 +7,8 @@
         "http://localhost:3200/en",
         "http://localhost:3200/pt-br/boxes",
         "http://localhost:3200/en/start",
-        "http://localhost:3200/en/boxes"
+        "http://localhost:3200/en/boxes",
+        "http://localhost:3200/en/activity"
       ],
       "numberOfRuns": 5
     },
