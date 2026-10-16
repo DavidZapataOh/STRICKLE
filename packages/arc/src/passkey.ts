@@ -11,7 +11,9 @@ import { createPublicClient, parseUnits, type Address, type Hex, type Transport 
 import { createBundlerClient, toWebAuthnAccount } from "viem/account-abstraction";
 import { arcTestnet } from "viem/chains";
 
-export const MODULAR_URL = "https://modular-sdk.circle.com/v1/rpc/w3s/buidl";
+import { MODULAR_URL } from "./networks.ts";
+
+export { MODULAR_URL };
 
 export interface PasskeyCall {
   to: Address;

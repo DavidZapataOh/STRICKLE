@@ -15,13 +15,24 @@ interface Stored {
 
 const utf8 = (value: string) => new TextEncoder().encode(value);
 
-function open(): Promise<IDBDatabase> {
+function openAt(version?: number): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = version === undefined ? indexedDB.open(DB) : indexedDB.open(DB, version);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+
+// A database that exists without its store (storage partly cleared, or created by something else) is repaired by opening it one version up.
+async function open(): Promise<IDBDatabase> {
+  const db = await openAt();
+  if (db.objectStoreNames.contains(STORE)) return db;
+  const next = db.version + 1;
+  db.close();
+  return openAt(next);
 }
 
 async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {

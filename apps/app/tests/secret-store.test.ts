@@ -29,4 +29,22 @@ describe("wrappedSecretStore", () => {
     db.close();
     expect(await wrappedSecretStore.get("to")).toBeNull();
   });
+
+  it("repairs a database that exists without its store", async () => {
+    await new Promise<void>((resolve, reject) => {
+      const wipe = indexedDB.deleteDatabase("strickle-keys");
+      wipe.onsuccess = () => resolve();
+      wipe.onerror = () => reject(wipe.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open("strickle-keys", 1);
+      request.onsuccess = () => {
+        request.result.close();
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+    await wrappedSecretStore.set("repair", "value");
+    expect(await wrappedSecretStore.get("repair")).toBe("value");
+  });
 });

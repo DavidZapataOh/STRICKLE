@@ -34,3 +34,10 @@ describe("rpcUrl", () => {
     expect(rpcUrl("mainnet", { ARC_MAINNET_RPC_URL: "" })).toBe("https://rpc.mainnet.arc.io");
   });
 });
+
+describe("the wallet service endpoint", () => {
+  it("is one constant shared by the passkey wallet and the apps' content security policy", async () => {
+    const { MODULAR_URL } = await import("../src/networks.ts");
+    expect(new URL(MODULAR_URL).origin).toBe("https://modular-sdk.circle.com");
+  });
+});

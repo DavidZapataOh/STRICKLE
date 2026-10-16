@@ -1,4 +1,4 @@
-import { type ArcNetwork, type ArcNetworkName, networks } from "@strickle/arc/networks";
+import { type ArcNetwork, type ArcNetworkName, MODULAR_URL, networks } from "@strickle/arc/networks";
 import generated from "../chain/deployments.generated.json" with { type: "json" };
 
 export interface Deployments {
@@ -34,4 +34,9 @@ export function deploymentsFor(name: ArcNetworkName = appNetwork()): Deployments
 
 export function explorerLink(kind: "address" | "tx", value: string, name: ArcNetworkName = appNetwork()): string {
   return `${networks[name].explorerUrl}/${kind}/${value}`;
+}
+
+/** The origins the browser may connect to besides this app: Circle's wallet service and the network's RPC endpoint. They feed the Content Security Policy. */
+export function connectOrigins(name: ArcNetworkName = appNetwork()): string[] {
+  return [...new Set([new URL(MODULAR_URL).origin, new URL(rpcEndpoint(name)).origin])];
 }

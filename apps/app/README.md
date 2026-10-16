@@ -24,3 +24,14 @@ Verified on the live deployment: `/en` answers 200; `/?amount=3200&country=CO&go
 ## Passkeys
 
 Passkey wallets need the app's domain allowed for the Circle Modular Wallets client key. The key lives in the environment (`NEXT_PUBLIC_CIRCLE_CLIENT_KEY`), never in the repository.
+
+## Onboarding on testnet
+
+Proven end to end on Arc testnet with a Chromium virtual passkey (`npm run test:e2e:live -w app`, Playwright headless Chromium, the default viewport): a brand-new user walks the wizard, creates a passkey, sees the recovery code **before** anything is sent and types two groups back, and ends with their vault created, the salary payee approved, the agent delegated and registered, and the sealed profile submitted, all in **one sponsored batch of five calls** signed with the passkey.
+
+- Account `0x4ec30E719B6a50Bb229a3911822Ea67FC9CC3514` ([explorer](https://explorer.testnet.arc.io/address/0x4ec30E719B6a50Bb229a3911822Ea67FC9CC3514)), vault `0x339b096EFf707b37978140f63530e2Bbc32e6D2b` ([explorer](https://explorer.testnet.arc.io/address/0x339b096EFf707b37978140f63530e2Bbc32e6D2b)), creation transaction `0x6ff5820c6a64f5c89d70f7f9542e8bc83f27c3c978225e652f895838e398aa2f`.
+- The whole run, from the first page to the restored key, took 16 seconds.
+- The notice key sits wrapped in IndexedDB (the wrapped bytes do not contain the secret); after wiping the storage, signing in with the passkey offers the restore form and the recovery code brings the key back.
+- The one-day wait is real: the salary payee's approval takes effect exactly 86,400 seconds after the vault's creation block (`approvedFrom` 1792219909, block timestamp 1792133509), which is what the review and the final screens tell the user.
+- Not yet proven: that the enclave opens the delivered profile. The CRE workflow is paused between proofs and activating it is an action on a shared resource, so that check (`EXPECT_ENCLAVE=1`, `apps/app/scripts/read-state.mjs`) runs with the next activation. What a cancelled passkey prompt throws in a real browser was not recorded either; the app treats `NotAllowedError` and `AbortError` as a cancellation.
+- Found by running it live: the content security policy of the first version blocked the browser's calls to Circle's wallet service and to the RPC endpoint (`Failed to fetch`); the policy now takes both origins from the network configuration.

@@ -43,3 +43,6 @@ export function rpcUrl(
 ): string {
   return env[`ARC_${name.toUpperCase()}_RPC_URL`] || networks[name].rpcUrl;
 }
+
+/** Circle's modular wallet service, which a passkey wallet talks to from the browser. */
+export const MODULAR_URL = "https://modular-sdk.circle.com/v1/rpc/w3s/buidl";
