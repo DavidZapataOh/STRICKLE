@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { type Chain, type Hex, createPublicClient, createWalletClient, http, numberToHex } from "viem";
+import { arbitrumSepolia, avalancheFuji, baseSepolia, optimismSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
 const ICON = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=";
@@ -14,14 +15,15 @@ class WalletError extends Error {
 }
 
 /** A real EIP-1193 wallet in Node: it signs with viem and talks to each chain's own RPC. With `signing: false` it refuses every signature and never touches a chain, so a responsive spec cannot move funds. */
-export function createHeadlessWallet(options: { privateKey: Hex; chains: readonly Chain[]; signing?: boolean }) {
+export function createHeadlessWallet(options: { privateKey: Hex; chains?: readonly Chain[]; signing?: boolean }) {
   const account = privateKeyToAccount(options.privateKey);
   const signing = options.signing ?? true;
-  let active = options.chains[0];
+  const chains = options.chains ?? [baseSepolia, avalancheFuji, sepolia, arbitrumSepolia, optimismSepolia];
+  let active = chains[0];
   if (!active) throw new Error("a headless wallet needs at least one chain");
 
   const chainFor = (id: number) => {
-    const found = options.chains.find((chain) => chain.id === id);
+    const found = chains.find((chain) => chain.id === id);
     if (!found) throw new WalletError(4902, `chain ${id} is not configured`);
     return found;
   };

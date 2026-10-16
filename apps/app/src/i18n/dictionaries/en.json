@@ -518,7 +518,7 @@
     },
     "errors": {
       "no-wallet": "No wallet was found in this browser.",
-      "rejected": "Your wallet declined the request. Nothing was sent.",
+      "rejected": "Your wallet rejected the request. Nothing was sent.",
       "wrong-chain": "Your wallet is on another network. Switch it and try again.",
       "insufficient-funds": "Your wallet does not have enough USDC or enough for the network fee.",
       "quote-refused": "This transfer cannot be quoted right now. Try another amount or chain.",

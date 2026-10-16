@@ -21,7 +21,7 @@ export function DepositQuoteCard({ lang, t, quote }: { lang: Locale; t: DepositT
   return (
     <Card as="section" aria-labelledby="deposit-quote">
       <h2 id="deposit-quote" className="sr-only">
-        {q.send}
+        {t.deposit.confirm}
       </h2>
       <dl className="quote-rows">
         <Row label={q.send}>

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
-import { connectOrigins } from "./src/config/network.ts";
+import { appNetwork, connectOrigins } from "./src/config/network.ts";
+import { depositConnectOrigins } from "./src/deposit/csp.ts";
 import { securityHeaders } from "./src/security-headers.ts";
 
 const nextConfig: NextConfig = {
@@ -10,7 +11,12 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: { "/**": ["../../packages/tax-engine/rules/**/*", "../../packages/tax-engine/calendars/**/*", "../../packages/tax-engine/fx/**/*"] },
   turbopack: { rules: { "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" } } },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders(connectOrigins()) }];
+    const base = connectOrigins();
+    return [
+      { source: "/:path*", headers: securityHeaders(base) },
+      // listed after the global entry: for the same header the more specific route wins
+      { source: "/:lang/deposit", headers: securityHeaders([...base, ...depositConnectOrigins(appNetwork())]) },
+    ];
   },
 };
 

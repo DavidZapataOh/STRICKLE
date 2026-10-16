@@ -22,4 +22,12 @@ describe("the security headers", () => {
     const names = securityHeaders().map((header) => header.key);
     expect(names).toEqual(["Content-Security-Policy", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy"]);
   });
+
+  it("gives the deposit route its own, wider connect-src and every other route the base one", async () => {
+    const { default: config } = await import("../next.config.ts");
+    const entries = (await config.headers?.()) ?? [];
+    const policy = (source: string) => entries.find((entry) => entry.source === source)?.headers.find((header) => header.key === "Content-Security-Policy")?.value ?? "";
+    expect(policy("/:lang/deposit")).toContain("iris-api");
+    expect(policy("/:path*")).not.toContain("iris-api");
+  });
 });
