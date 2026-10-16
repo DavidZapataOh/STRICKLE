@@ -14,10 +14,11 @@
   "dependencies": {
     "@noble/curves": "2.4.0",
     "@noir-lang/noir_js": "1.0.0-rc.3",
-    "@strickle/prover": "*"
+    "@strickle/prover": "*",
+    "@strickle/pool": "*",
+    "viem": "^2.57.7"
   },
   "devDependencies": {
-    "@strickle/pool": "*",
     "playwright-core": "^1.64.1",
     "vite": "^8.3.4",
     "vitest": "^5.0.4"

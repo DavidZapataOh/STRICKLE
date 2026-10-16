@@ -70,6 +70,8 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
         ],
       };
     }
+    case "pay":
+      return fail("not-applicable");
     case "adjust": {
       const { changes } = action;
       let next = { ...profile };

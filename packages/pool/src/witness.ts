@@ -37,6 +37,8 @@ export interface SpendSpec {
   /** Both default to fresh random values: a dummy input reused across transactions would repeat its nullifier. */
   dummyNk?: [bigint, bigint];
   dummySalt?: [bigint, bigint];
+  /** Delivery values for outputs the owner does not keep; default fresh random. */
+  enc?: [bigint, bigint];
 }
 
 const ZERO_POLICY: Policy = {
@@ -113,7 +115,7 @@ function signerKeys(signer: Signer): { nk: bigint; auth: bigint; secret: bigint 
     : { nk: signer.nk, auth: signer.authHash, secret: signer.ak };
 }
 
-function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }) {
+function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }, withPath = true) {
   const asset = spec.asset ?? "USDC";
   const real = spec.inputs.find((input) => input !== null);
   const { nk } = signerKeys(spec.signer);
@@ -126,7 +128,7 @@ function inputSlots(spec: SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [b
           note: noteToInputs(input.note),
           policy: policyToInputs(input.policy),
           leaf_index: input.leafIndex.toString(),
-          path: spec.tree.path(input.leafIndex).map(toHex32),
+          path: withPath ? spec.tree.path(input.leafIndex).map(toHex32) : [],
           dummy: false,
         },
       };
@@ -162,7 +164,7 @@ function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
   const inheritedDelay = spec.inputs.reduce((max, input) => (input ? Math.max(max, input.policy.releaseDelay, input.note.delayFloor) : max), 0);
   return spec.outputs.map((output, j) => {
     const isSelf = output.note.amount > 0n && real !== undefined && output.note.ownerPk === real.note.ownerPk;
-    if (!isSelf) return { output, note: output.note, enc: randomField() };
+    if (!isSelf) return { output, note: output.note, enc: spec.enc?.[j] ?? randomField() };
     const key = deliveryKey(nk, nullifier0, j);
     const note: Note = { ...output.note, delayFloor: Math.max(output.note.delayFloor, inheritedDelay), salt: deliverySalt(key) };
     return { output, note, enc: encryptDelivery(packDelivery(note), key) };
@@ -172,7 +174,8 @@ function finalOutputs(spec: SpendSpec, nullifier0: bigint) {
 /** The notes a spend will actually commit and their delivery values; call `withDummies` first so the answer is stable. */
 export function deriveOutputNotes(spec: SpendSpec): { notes: Note[]; enc: bigint[]; nullifiers: bigint[] } {
   if (!spec.dummyNk || !spec.dummySalt) throw new Error("call withDummies(spec) first");
-  const nullifiers = inputSlots(spec as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }).map((slot) => slot.nullifier);
+  // The Merkle path is only needed by the circuit, so deriving the notes does not require the ledger tree.
+  const nullifiers = inputSlots(spec as SpendSpec & { dummyNk: [bigint, bigint]; dummySalt: [bigint, bigint] }, false).map((slot) => slot.nullifier);
   const finals = finalOutputs(spec, nullifiers[0] as bigint);
   return { notes: finals.map((final) => final.note), enc: finals.map((final) => final.enc), nullifiers };
 }

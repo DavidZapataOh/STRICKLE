@@ -60,6 +60,13 @@ describe("requests", () => {
     expect(requestSchema.safeParse({ ...request, ...patch }).success).toBe(false);
   });
 
+  it("parses a pay action and refuses a zero amount or a malformed address", () => {
+    const pay = { kind: "pay", box: "payroll", to: "0x00000000000000000000000000000000000000b2", amount: "300000" };
+    expect(actionSchema.safeParse(pay).success).toBe(true);
+    expect(actionSchema.safeParse({ ...pay, amount: "0" }).success).toBe(false);
+    expect(actionSchema.safeParse({ ...pay, to: "0x1" }).success).toBe(false);
+  });
+
   it("parses every action kind", () => {
     for (const action of [{ kind: "pause" }, { kind: "resume" }, approve, { kind: "reject", proposalId: "x" }, { kind: "adjust", changes: { floorDays: 14 } }]) {
       expect(actionSchema.safeParse(action).success).toBe(true);

@@ -4,11 +4,14 @@
   "factoryAddress": "0xec5F22F869F2fcbF9fFb26cb40c30Db2521bDa80",
   "heartbeatAddress": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
   "gasLimit": "900000",
-  "rpcUrl": "https://rpc.testnet.arc.io",
+  "rpcUrl": "https://rpc.blockdaemon.testnet.arc.network",
   "stateAddress": "0xc8224D78e864476258785646a93a6884967b3973",
-  "executorAddress": "0x9bC52AF7a9D13B8923AA220Ab574f1065cd94644",
+  "executorAddress": "0xB4FcFEfcDA83D274Aa466eacDB44095C50665262",
   "sandboxClock": true,
   "dailySchedule": "0 0 * * * *",
   "chainId": 5042002,
-  "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01"
+  "gatewayAddress": "0x2dBE8E7053A1B7e1f315A91a60A9b04EF1641b01",
+  "proverUrl": "https://prover-production-9f66.up.railway.app",
+  "proverKey": "0x12b8177b57bf905efd6a75b4337869d6d63b2f3ba1f69f6daf450ca719a0ab73",
+  "privateSpendGas": "6500000"
 }

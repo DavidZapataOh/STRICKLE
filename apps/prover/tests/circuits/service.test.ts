@@ -4,8 +4,12 @@ import { createProver, encodeRequest, type Prover } from "@strickle/prover";
 import { proveRemote } from "@strickle/prover/client";
 import { nodeCircuitLoader } from "@strickle/prover/node";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { noteCommitment } from "@strickle/pool/note";
+import { specToWire } from "@strickle/pool/spec-wire";
+import { createSpecResolver } from "../../src/spec.ts";
 import { createService, type Service } from "../../src/server.ts";
 import { TOKEN, TOKEN_HASH, OWNER_SK, shieldWitness, spendWitness } from "../helpers.ts";
+import { liteSpec } from "../spec-fixture.ts";
 
 const circuitsDir = new URL("../../../../circuits/target/", import.meta.url);
 const real = createProver({ loadCircuit: nodeCircuitLoader(circuitsDir), backend: { threads: 1 } });
@@ -231,3 +235,42 @@ describe("prover client", () => {
   });
 });
 
+describe("prover service: proving a sealed spec", () => {
+  const { ledger, lite, input } = liteSpec();
+  const noteCommitmentHex = (note: typeof input) => noteCommitment(note).toString(16);
+  let specService: Service;
+  let specBase: string;
+
+  beforeAll(async () => {
+    specService = createService({
+      circuits: ["shield", "spend", "spend_spec"],
+      prover: real,
+      tokenHashes: [TOKEN_HASH],
+      specs: createSpecResolver({ sync: async () => undefined, ledger }),
+      now: () => clock,
+    });
+    specBase = `http://127.0.0.1:${await specService.listen(0)}`;
+  });
+
+  afterAll(() => specService.close());
+
+  it("proves an agent payment from the spec and the proof verifies", async () => {
+    const answer = await proveRemote({ url: specBase, token: TOKEN, publicKey: specService.publicKey, circuit: "spend_spec", inputs: JSON.parse(JSON.stringify(specToWire(lite))), now: () => clock });
+    expect(answer.publicInputs).toHaveLength(13);
+    expect(await real.verify("spend", { proof: Uint8Array.from(Buffer.from(answer.proof.slice(2), "hex")), publicInputs: answer.publicInputs })).toBe(true);
+    expect(BigInt(answer.publicInputs[5] as string)).toBe(300_000n);
+  });
+
+  it("answers the leaf of a commitment, with the token only", async () => {
+    const commitment = `0x${noteCommitmentHex(input)}`;
+    expect((await fetch(`${specBase}/v1/leaf?c=${commitment}`)).status).toBe(401);
+    const answer = await fetch(`${specBase}/v1/leaf?c=${commitment}`, { headers: { authorization: `Bearer ${TOKEN}` } });
+    expect(await answer.json()).toEqual({ index: 0, size: 2 });
+  });
+
+  it("does not offer the spec circuit when no resolver is configured", async () => {
+    const response = await post(request(901, "spend_spec", {}));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "unknown-circuit" });
+  });
+});

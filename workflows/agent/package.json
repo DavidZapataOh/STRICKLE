@@ -17,7 +17,8 @@
     "@noble/hashes": "2.4.0",
     "@strickle/prover": "*",
     "@strickle/core": "*",
-    "@strickle/brain": "*"
+    "@strickle/brain": "*",
+    "@strickle/pool": "*"
   },
   "devDependencies": {
     "vitest": "^5.0.4",

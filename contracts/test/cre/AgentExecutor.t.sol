@@ -9,6 +9,14 @@ import {AgentState} from "../../src/cre/AgentState.sol";
 import {BoxVault} from "../../src/vault/BoxVault.sol";
 import {BoxVaultFactory} from "../../src/vault/BoxVaultFactory.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
+import {PolicyPool} from "../../src/pool/PolicyPool.sol";
+import {Poseidon2Hasher} from "../../src/pool/Poseidon2Hasher.sol";
+import {ScreeningRegistry} from "../../src/pool/ScreeningRegistry.sol";
+import {AssociationRegistry} from "../../src/pool/AssociationRegistry.sol";
+import {FalseVerifier} from "../fixtures/FalseVerifier.sol";
+import {IPoseidon2} from "../../src/pool/Poseidon2Hasher.sol";
+import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
+import {IScreening, IAssociation} from "../../src/pool/PolicyPool.sol";
 
 contract FakeVault {
     address public owner;
@@ -33,13 +41,30 @@ contract AgentExecutorTest is Test {
     AgentState state;
     AgentExecutor executor;
     BoxVault vault;
+    PolicyPool pool;
 
     function setUp() public {
         usdc = new TestToken();
         TestToken eurc = new TestToken();
         factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(eurc))));
         state = new AgentState(forwarder, deployer);
-        executor = new AgentExecutor(forwarder, deployer, address(factory), address(state));
+        pool = new PolicyPool(
+            PolicyPool.Config({
+                hasher: IPoseidon2(address(new Poseidon2Hasher())),
+                usdc: address(usdc),
+                eurc: address(eurc),
+                shieldVerifier: IHonkVerifier(address(new FalseVerifier())),
+                spendVerifier: IHonkVerifier(address(new FalseVerifier())),
+                screening: IScreening(address(new ScreeningRegistry(deployer, 30 days))),
+                association: IAssociation(address(new AssociationRegistry(deployer))),
+                elevatedCapBps: 2_500,
+                owner: deployer,
+                guardian: deployer,
+                perUserCaps: [uint128(1_000e6), uint128(500e6)],
+                globalCaps: [uint128(10_000e6), uint128(5_000e6)]
+            })
+        );
+        executor = new AgentExecutor(forwarder, deployer, address(factory), address(state), address(pool));
         vm.startPrank(deployer);
         state.setExpectedWorkflowId(workflow);
         state.setExecutor(address(executor));
@@ -398,5 +423,51 @@ contract AgentExecutorTest is Test {
         assertEq(v, address(uint160(0xa1)));
         assertEq(id, 5);
         assertEq(sealedData, hex"abcd");
+    }
+
+    function privateArgs(uint64 next) internal view returns (bytes memory) {
+        PolicyPool.SpendInputs memory p = PolicyPool.SpendInputs({
+            root: pool.currentRoot(),
+            nullifiers: [uint256(1), uint256(2)],
+            commitments: [uint256(3), uint256(4)],
+            publicAmount: 0,
+            recipient: 0,
+            asset: 1,
+            timestamp: uint64(block.timestamp),
+            associationRoot: 0,
+            enc: [uint256(5), uint256(6)]
+        });
+        return abi.encode(address(vault), hex"c0ffee", p, hex"e17e", next, hex"5747");
+    }
+
+    function test_aProofThePoolRefusesRevertsTheWholeReportAndLeavesTheStateAlone() public {
+        vm.prank(user);
+        executor.register(address(vault));
+        bytes memory args = privateArgs(1); // built before expectRevert: its own external call would consume the expectation
+        vm.expectRevert(PolicyPool.InvalidProof.selector);
+        deliverAction(5, args);
+        (uint64 version,,) = state.head(address(vault));
+        assertEq(version, 0);
+    }
+
+    function test_aPrivateSpendNeedsARegisteredVault() public {
+        bytes memory args = privateArgs(1);
+        vm.expectRevert(AgentExecutor.NotAVault.selector);
+        deliverAction(5, args);
+    }
+
+    function test_decodesThePrivateSpendReportTheWorkflowEncodes() public view {
+        (uint8 action, bytes memory args) = abi.decode(
+            vm.parseBytes(vm.trim(vm.readFile("../workflows/agent/tests/fixtures/private-spend-report.hex"))),
+            (uint8, bytes)
+        );
+        assertEq(action, executor.PRIVATE_SPEND());
+        (address v, bytes memory proof, PolicyPool.SpendInputs memory p,, uint64 next,) =
+            abi.decode(args, (address, bytes, PolicyPool.SpendInputs, bytes, uint64, bytes));
+        assertEq(v, address(uint160(0xa1)));
+        assertEq(proof, hex"c0ffee");
+        assertEq(p.asset, 1);
+        assertEq(p.publicAmount, 300_000);
+        assertEq(next, 4);
     }
 }

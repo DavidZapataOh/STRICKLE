@@ -10,6 +10,9 @@ const signed = z.string().regex(/^-?[0-9]{1,30}$/);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const maybeDate = z.union([date, z.literal("")]);
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+const dec = z.string().regex(/^[0-9]{1,80}$/);
+const wireNote = z.object({ amount: dec, ownerPk: dec, policy: dec, label: dec, box: z.enum(["taxes", "payroll", "salary", "operating", "emergency", "profit"]), asset: z.enum(["USDC", "EURC"]), flags: z.number().int().min(0).max(1), lockUntil: dec, delayFloor: z.number().int().min(0), salt: dec }).strict();
+const wirePolicy = z.object({ floor: dec, allowlistRoot: dec, restricted: z.boolean(), agentKeyHash: dec, agentCap: dec, agentActions: z.number().int().min(0).max(15), releaseDelay: z.number().int().min(0), templateRoot: dec }).strict();
 export const ZERO_KEY = `0x${"0".repeat(64)}`;
 const hash32 = z.string().regex(/^0x[0-9a-f]{64}$/);
 const proposalSchema = z
@@ -43,6 +46,15 @@ export const profileSchema = z
     nonce: units.default("0"),
     userKey: hash32.default(ZERO_KEY),
     proposals: z.array(proposalSchema).max(8).default([]),
+    privateMode: z
+      .object({
+        enabled: z.boolean(),
+        ak: dec, nk: dec, authHash: dec, ownerPk: dec,
+        viewers: z.array(z.object({ tier: z.enum(["owner", "accountant", "authority"]), publicKey: hash32 }).strict()).max(3),
+        notes: z.array(z.object({ note: wireNote, policy: wirePolicy, allowlist: z.array(address).max(8), leafIndex: z.number().int().min(0).nullable() }).strict()).max(6),
+      })
+      .strict()
+      .default({ enabled: false, ak: "0", nk: "0", authHash: "0", ownerPk: "0", viewers: [], notes: [] }),
     salary: z
       .object({ proposed: units, pending: units, payee: address, day: bps(1, 28), lastPaid: z.string().regex(/^(\d{4}-\d{2})?$/) })
       .strict()
@@ -101,6 +113,7 @@ export function mergeProfile(existing: Profile | undefined, submitted: Profile):
     tick: existing.tick,
     nonce: BigInt(existing.nonce) > BigInt(submitted.nonce) ? existing.nonce : submitted.nonce,
     proposals: existing.proposals,
+    privateMode: { ...submitted.privateMode, notes: existing.privateMode.notes.length > 0 ? existing.privateMode.notes : submitted.privateMode.notes },
     breaker: existing.breaker,
     // Until the agent has ticked once, or when the owner changes the salary, the funding target is still the owner's.
     salaryOwed: existing.tick.lastDay === "" || existing.salary.proposed !== submitted.salary.proposed ? submitted.salaryOwed : existing.salaryOwed,

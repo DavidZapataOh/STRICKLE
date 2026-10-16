@@ -39,4 +39,16 @@ describe("service configuration", () => {
     expect(a.token.length).toBeGreaterThanOrEqual(43);
     expect(a.hash).toBe(createHash("sha256").update(a.token).digest("hex"));
   });
+
+  it("reads the pool settings together and refuses a partial set", () => {
+    const pool = { POOL_ADDRESS: "0x00000000000000000000000000000000000000dd", POOL_DEPLOY_BLOCK: "123", RPC_URL: "https://rpc.testnet.arc.io" };
+    expect(parseConfig({ PROVER_TOKENS: hash, ...pool }).pool).toEqual({ address: pool.POOL_ADDRESS, deployBlock: 123n, rpcUrl: pool.RPC_URL });
+    expect(parseConfig({ PROVER_TOKENS: hash }).pool).toBeUndefined();
+    expect(() => parseConfig({ PROVER_TOKENS: hash, POOL_ADDRESS: pool.POOL_ADDRESS })).toThrow(/POOL_/);
+  });
+
+  it("listens on localhost unless told otherwise", () => {
+    expect(parseConfig({ PROVER_TOKENS: hash }).host).toBe("127.0.0.1");
+    expect(parseConfig({ PROVER_TOKENS: hash, HOST: "0.0.0.0" }).host).toBe("0.0.0.0");
+  });
 });

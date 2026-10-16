@@ -3,6 +3,7 @@
 pragma solidity ^0.8.30;
 
 import {CreReceiver} from "./CreReceiver.sol";
+import {PolicyPool} from "../pool/PolicyPool.sol";
 
 interface IVault {
     function owner() external view returns (address);
@@ -50,9 +51,16 @@ contract AgentExecutor is CreReceiver {
     address[] public vaults;
     mapping(address vault => bool) public registered;
 
-    constructor(address forwarder_, address owner_, address factory_, address state_) CreReceiver(forwarder_, owner_) {
+    PolicyPool public immutable pool;
+
+    event PrivateSpend(address indexed vault, uint256 nullifier0);
+
+    constructor(address forwarder_, address owner_, address factory_, address state_, address pool_)
+        CreReceiver(forwarder_, owner_)
+    {
         factory = IFactory(factory_);
         state = IStateStore(state_);
+        pool = PolicyPool(pool_);
     }
 
     function count() external view returns (uint256) {
@@ -95,6 +103,7 @@ contract AgentExecutor is CreReceiver {
     uint8 public constant PAY_SALARY = 2;
     uint8 public constant TICK = 3;
     uint8 public constant NOTICE = 4;
+    uint8 public constant PRIVATE_SPEND = 5;
     uint8 public constant SALARY_BOX = 3;
 
     event SalaryPaid(address indexed vault, uint8 indexed asset, address indexed payee, uint256 amount);
@@ -122,6 +131,7 @@ contract AgentExecutor is CreReceiver {
         else if (action == PAY_SALARY) _paySalary(args);
         else if (action == TICK) _tick(args);
         else if (action == NOTICE) _notice(args);
+        else if (action == PRIVATE_SPEND) _privateSpend(args);
         else revert UnknownAction(action);
     }
 
@@ -152,6 +162,21 @@ contract AgentExecutor is CreReceiver {
         (address vault, uint64 id, bytes memory sealedData) = abi.decode(args, (address, uint64, bytes));
         if (!registered[vault]) revert NotAVault();
         state.notify(vault, id, sealedData);
+    }
+
+    function _privateSpend(bytes memory args) private {
+        (
+            address vault,
+            bytes memory proof,
+            PolicyPool.SpendInputs memory p,
+            bytes memory poolCiphertext,
+            uint64 next,
+            bytes memory stateCiphertext
+        ) = abi.decode(args, (address, bytes, PolicyPool.SpendInputs, bytes, uint64, bytes));
+        if (!registered[vault]) revert NotAVault();
+        pool.spend(proof, p, poolCiphertext);
+        state.store(vault, next, stateCiphertext);
+        emit PrivateSpend(vault, p.nullifiers[0]);
     }
 
     function _tick(bytes memory args) private {
