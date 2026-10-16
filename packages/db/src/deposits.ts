@@ -23,15 +23,16 @@ export interface DepositRow {
   inputToken: InputToken;
   swapTx: string | null;
   swapOut: bigint | null;
+  linkId: string | null;
   createdAt: Date;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function createDeposit(sql: Sql, input: { vault: string; sourceChain: string; sourceAddress: string; amount: bigint; speed: Speed; feeMode: FeeMode; intent: DepositIntent; inputToken?: InputToken }): Promise<string> {
+export async function createDeposit(sql: Sql, input: { vault: string; sourceChain: string; sourceAddress: string; amount: bigint; speed: Speed; feeMode: FeeMode; intent: DepositIntent; inputToken?: InputToken; linkId?: string }): Promise<string> {
   const [row] = await sql<{ id: string }[]>`
-    insert into deposit_intents (vault, source_chain, source_address, amount, speed, fee_mode, intent, input_token)
-    values (${input.vault.toLowerCase()}, ${input.sourceChain}, ${input.sourceAddress.toLowerCase()}, ${input.amount.toString()}, ${input.speed}, ${input.feeMode}, ${input.intent}, ${input.inputToken ?? "USDC"})
+    insert into deposit_intents (vault, source_chain, source_address, amount, speed, fee_mode, intent, input_token, link_id)
+    values (${input.vault.toLowerCase()}, ${input.sourceChain}, ${input.sourceAddress.toLowerCase()}, ${input.amount.toString()}, ${input.speed}, ${input.feeMode}, ${input.intent}, ${input.inputToken ?? "USDC"}, ${input.linkId ?? null})
     returning id`;
   if (!row) throw new Error("deposit: no row returned");
   return row.id;
@@ -81,6 +82,7 @@ export async function getDeposit(sql: Sql, id: string): Promise<DepositRow | nul
     inputToken: row.input_token as InputToken,
     swapTx: row.swap_tx as string | null,
     swapOut: row.swap_out === null ? null : BigInt(row.swap_out as string),
+    linkId: row.link_id as string | null,
     createdAt: row.created_at as Date,
   };
 }
