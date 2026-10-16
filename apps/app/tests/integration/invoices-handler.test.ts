@@ -99,6 +99,19 @@ describe("listing and acting", () => {
   });
 });
 
+describe("reconcile covers a backlog in one press", () => {
+  it("walks several windows until it reaches the head", async () => {
+    const vault = `0x${"b8".repeat(20)}`;
+    await create(vault);
+    await db.sql`update payment_cursors set block = 0 where vault = ${vault}`;
+    const seen: bigint[] = [];
+    const wide = { ...deps, chain: { ...deps.chain, head: async () => 12_000n, transfersTo: async (_v: string, from: bigint, to: bigint) => (seen.push(to), []) } };
+    const result = await handleReconcile(call("/api/invoices/reconcile", "POST", vault), wide as never);
+    expect(result.status).toBe(200);
+    expect(seen.at(-1)).toBe(12_000n);
+  });
+});
+
 describe("reconcile", () => {
   it("runs a scan for the owner's vault and then makes the owner wait", async () => {
     const vault = `0x${"b9".repeat(20)}`;

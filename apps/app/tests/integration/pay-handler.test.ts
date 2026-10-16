@@ -127,6 +127,14 @@ describe("POST /api/pay/[token]/claim", () => {
   });
 });
 
+describe("a claim for a transaction the owner dismissed", () => {
+  it("is not answered as already credited: it is looked up and credited", async () => {
+    await db.sql`insert into payments (chain_id, tx_hash, log_index, vault, invoice_id, payer, amount, rail, state, at) values (5042002, ${receipt.hash}, ${real.transferLogIndex}, ${real.vault.toLowerCase()}, ${created.id}, ${real.payer.toLowerCase()}, ${real.amount.toString()}, 'direct', 'dismissed', now())`;
+    const result = await handlePayClaim(post({ txHash: receipt.hash }, { ...origin, "x-forwarded-for": "10.7.9.9" }), created.token, deps());
+    expect(result.body).not.toEqual({ status: "claimed", result: "duplicate" });
+  });
+});
+
 describe("POST /api/pay/[token]/deposits", () => {
   const body = (over: Record<string, unknown> = {}) => ({ vault: `0x${"99".repeat(20)}`, sourceChain: "Base_Sepolia", sourceAddress: `0x${"34".repeat(20)}`, amount: "25000000", speed: "fast", feeMode: "source", intent: "own", inputToken: "USDC", ...over });
   const dep = (token: string, payload: unknown, ip: string) => handlePayDeposit(new Request(`http://localhost:3200/api/pay/${token}/deposits`, { method: "POST", headers: { "content-type": "application/json", origin: "http://localhost:3200", "x-forwarded-for": ip }, body: JSON.stringify(payload) }), token, { ...deps(), ...depositBoundary }, { kind: "create" });

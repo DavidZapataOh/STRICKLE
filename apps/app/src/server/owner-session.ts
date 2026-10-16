@@ -62,7 +62,7 @@ export interface OwnerSessionDeps {
   keys: InvoiceKeys;
   sql: Sql;
   limiter: Pick<ReturnType<typeof createLimiter>, "count">;
-  chain: { ownerOf(vault: Address): Promise<Address>; accepts(owner: Address, digest: Hex, signature: Hex): Promise<boolean> };
+  chain: { registered(vault: Address): Promise<boolean>; ownerOf(vault: Address): Promise<Address>; accepts(owner: Address, digest: Hex, signature: Hex): Promise<boolean> };
   network: ArcNetworkName;
   now?: () => number;
 }
@@ -104,11 +104,13 @@ export async function handleOwnerSession(request: Request, deps: OwnerSessionDep
   const { vault, nonce, deadline, signature } = parsed.data;
   if (deadline <= now || deadline > now + MAX_DEADLINE_AHEAD) return reject(401);
   try {
+    // any contract can answer owner(): only a vault the agent knows may bill, or the page becomes a phishing form on this domain
+    if (!(await deps.chain.registered(vault as Address))) return reject(401);
     const owner = await deps.chain.ownerOf(vault as Address);
     const digest = hashTypedData(ownerTypedData({ chainId: networks[deps.network].chain.id, vault: vault as Address, nonce: BigInt(nonce), deadline }));
     if (!(await deps.chain.accepts(owner, digest, signature as Hex))) return reject(401);
     // the nonce is spent only by a signature the chain accepted, so a failed attempt cannot burn an honest one
-    if (!(await spendNonce(deps.sql, vault, nonce, new Date(deadline * 1000)))) return reject(401);
+    if (!(await spendNonce(deps.sql, vault, BigInt(nonce).toString(), new Date(deadline * 1000)))) return reject(401);
   } catch {
     return reject(502, "unavailable");
   }

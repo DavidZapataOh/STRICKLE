@@ -21,6 +21,8 @@ interface Deps {
 }
 
 const DEFAULT_WINDOW = 5_000n;
+// below the smallest invoice a transfer can match nothing; counting it would only let dust inflate a window
+const DUST = 10_000n;
 
 /** A payer says "I paid in this transaction": the chain, not the payer, decides whether that is true. */
 export async function claimPayment(deps: Deps, link: LinkView, txHash: Hex): Promise<{ result: "credited" | "extra" | "duplicate" | "none" | "pending" }> {
@@ -51,11 +53,27 @@ export async function scanVault(deps: Deps & { maxBlocks?: bigint }, vault: Addr
   let suggested = 0;
   const byTx = new Map<Hex, typeof transfers>();
   for (const transfer of transfers) byTx.set(transfer.txHash, [...(byTx.get(transfer.txHash) ?? []), transfer]);
+  const times = new Map<bigint, Date>();
+  const timeOf = async (block: bigint) => {
+    const known = times.get(block);
+    if (known) return known;
+    const read = await deps.chain.blockTime(block);
+    times.set(block, read);
+    return read;
+  };
   for (const [txHash, group] of byTx) {
     const receipt = await deps.chain.receipt(txHash);
     const memos: MemoPayment[] = receipt?.status === "success" ? readMemoPayments(receipt, deps.usdc) : [];
     for (const transfer of group) {
-      const at = await deps.chain.blockTime(transfer.blockNumber);
+      if (transfer.amount < DUST) continue;
+      const at = await timeOf(transfer.blockNumber);
+      // a bridged payment bound to a link settles from its forward transaction, whether or not the payer's page ever saw it arrive
+      const [bound] = await deps.sql<{ link_id: string }[]>`select link_id from deposit_intents where forward_tx = ${txHash.toLowerCase()} and link_id is not null and vault = ${vault.toLowerCase()} limit 1`;
+      if (bound) {
+        const settled = await settlePayment(deps.sql, { chainId: deps.chainId, txHash, logIndex: transfer.logIndex, vault, payer: transfer.payer, amount: transfer.amount, rail: "cctp", linkId: bound.link_id, at });
+        if (settled.outcome === "credited" || settled.outcome === "extra") credited++;
+        continue;
+      }
       const memo = memos.find((payment) => payment.transferLogIndex === transfer.logIndex && payment.vault.toLowerCase() === vault.toLowerCase());
       const link = memo ? await getLinkByMemoId(deps.sql, deps.keys, vault, memo.memoId) : null;
       if (memo && link) {
@@ -70,7 +88,7 @@ export async function scanVault(deps: Deps & { maxBlocks?: bigint }, vault: Addr
   return { scanned: to - from, credited, suggested };
 }
 
-/** What plan 01's deposit handler calls when a bridged payment arrives: the link the page bound the burn to decides the invoice. */
+/** What the deposit handler calls when a bridged payment arrives: the link the page bound the burn to decides the invoice. */
 export function settleBoundDeposit(deps: Pick<Deps, "sql" | "chainId">, row: DepositRow, arrival: { forwardTx: Hex; received: bigint; payer: Address; logIndex: number; at: Date }): Promise<SettleResult> {
   return settlePayment(deps.sql, { chainId: deps.chainId, txHash: arrival.forwardTx, logIndex: arrival.logIndex, vault: row.vault, payer: arrival.payer, amount: arrival.received, rail: "cctp", linkId: row.linkId, at: arrival.at });
 }

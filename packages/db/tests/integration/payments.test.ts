@@ -118,7 +118,7 @@ describe("suggestions for payments nobody reported", () => {
   });
 
   it("proposes nothing when no open invoice has that amount, and never twice for the same log", async () => {
-    expect(await suggestMatch(db.sql, { chainId: 5042002, txHash: TX(21), logIndex: 2, vault: VAULT, payer: PAYER, amount: 12_345n, at: new Date() })).toEqual({ suggested: false });
+    expect(await suggestMatch(db.sql, { chainId: 5042002, txHash: TX(21), logIndex: 2, vault: VAULT, payer: PAYER, amount: 1_234n, at: new Date() })).toEqual({ suggested: false });
     const created = await invoice(55_000_000n);
     const input = { chainId: 5042002, txHash: TX(22), logIndex: 2, vault: VAULT, payer: PAYER, amount: 55_000_000n, at: new Date() };
     expect((await suggestMatch(db.sql, input)).suggested).toBe(true);
@@ -139,6 +139,26 @@ describe("suggestions for payments nobody reported", () => {
     const [row] = await db.sql<{ id: string }[]>`select id from payments where tx_hash = ${TX(24)}`;
     expect(await dismissSuggestion(db.sql, OTHER, row?.id as string)).toBe(false);
     expect(await dismissSuggestion(db.sql, VAULT, row?.id as string)).toBe(true);
+  });
+});
+
+describe("races and edges found in review", () => {
+  it("credits a payment the scan only suggested, when the payer's claim arrives second", async () => {
+    const created = await invoice(66_000_000n);
+    await suggestMatch(db.sql, { chainId: 5042002, txHash: TX(30), logIndex: 2, vault: VAULT, payer: PAYER, amount: 66_000_000n, at: new Date() });
+    expect(await pay(created.id, created.memoId, 66_000_000n, 30, { logIndex: 2 })).toMatchObject({ outcome: "credited", status: "paid" });
+  });
+
+  it("does not rotate the link of a void invoice", async () => {
+    const created = await invoice();
+    await voidInvoice(db.sql, VAULT, created.id);
+    expect(await rotateLink(db.sql, keys, VAULT, created.id)).toBeNull();
+  });
+
+  it("offers a transfer a cent over the remaining amount, because fees are rounded up to the cent", async () => {
+    await invoice(88_000_000n);
+    expect(await suggestMatch(db.sql, { chainId: 5042002, txHash: TX(31), logIndex: 2, vault: VAULT, payer: PAYER, amount: 88_004_000n, at: new Date() })).toEqual({ suggested: true });
+    expect(await suggestMatch(db.sql, { chainId: 5042002, txHash: TX(32), logIndex: 2, vault: VAULT, payer: PAYER, amount: 88_020_000n, at: new Date() })).toEqual({ suggested: false });
   });
 });
 

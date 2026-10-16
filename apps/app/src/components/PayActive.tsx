@@ -2,7 +2,7 @@
 
 import { MEMO_ADDRESS, encodeMemoPayment } from "@strickle/arc/memo";
 import { networks } from "@strickle/arc/networks";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type Address, type Hex, numberToHex } from "viem";
 import { appNetwork } from "@/config/network";
 import type { Locale } from "@/i18n/config";
@@ -18,10 +18,10 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 /** The wallet side of the payer's page: pay on Arc with a memo, pay from another chain through the deposit flow, or copy the address. */
-export function PayActive({ lang, t, token, invoice, onPaid }: { lang: Locale; t: PayText; token: string; invoice: PublicInvoice; onPaid: () => void }) {
+export function PayActive({ lang, t, token, invoice, start, onPaid }: { lang: Locale; t: PayText; token: string; invoice: PublicInvoice; start: "arc" | "other"; onPaid: () => void }) {
   const [phase, setPhase] = useState<PayPhase>("idle");
   const [wallets, setWallets] = useState<InjectedWallet[]>([]);
-  const [otherOpen, setOtherOpen] = useState(false);
+  const [otherOpen, setOtherOpen] = useState(start === "other");
   const [copyNote, setCopyNote] = useState("");
   const busy = useRef(false);
   const remaining = BigInt(invoice.remaining);
@@ -88,6 +88,15 @@ export function PayActive({ lang, t, token, invoice, onPaid }: { lang: Locale; t
       setPhase("choose");
     }
   }
+
+  // the payer already pressed the button that loaded this code: do what they asked
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current || start !== "arc") return;
+    started.current = true;
+    void connect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  }, []);
 
   async function copy() {
     try {

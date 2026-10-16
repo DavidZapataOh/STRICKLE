@@ -112,7 +112,7 @@ export async function handlePayClaim(request: Request, token: string, deps: PayD
     const link = await getLinkByToken(deps.sql, deps.keys, token);
     if (!link) return NOT_FOUND();
     // a payment already on record is answered from the database: nobody can spend the budgets below to stop an honest confirmation
-    const known = await deps.sql`select 1 from payments p join payment_links l on l.invoice_id = p.invoice_id where l.id = ${link.linkId} and p.tx_hash = ${txHash} limit 1`;
+    const known = await deps.sql`select 1 from payments p join payment_links l on l.invoice_id = p.invoice_id where l.id = ${link.linkId} and p.tx_hash = ${txHash} and p.state in ('credited', 'extra') limit 1`;
     if (known.length > 0) return done({ status: "claimed", result: "duplicate" });
     const perHash = await deps.limiter.count(keyed("pay-claim-hash", pepper, `${link.linkId}:${txHash}`), 60, 6);
     if (!perHash.allowed) return done({ status: "rate-limited", retryAfterSeconds: perHash.retryAfterSeconds });
@@ -128,7 +128,7 @@ export async function handlePayClaim(request: Request, token: string, deps: PayD
 const DEPOSIT_STATUS: Record<DepositApiResult["status"], number> = { created: 201, ok: 200, rejected: 400, conflict: 409, "rate-limited": 429, "unknown-vault": 404, "not-found": 404, closed: 503, unavailable: 502, misconfigured: 503 };
 const depositDone = (body: DepositApiResult) => ({ status: DEPOSIT_STATUS[body.status], body });
 
-/** The bridge deposit of plan one, reached through a link: the vault comes from the link, the deposit is bound to it, and no invite is asked for. */
+/** The bridge deposit flow, reached through a link: the vault comes from the link, the deposit is bound to it, and no invite is asked for. */
 export async function handlePayDeposit(request: Request, token: string, deps: PayDeps & DepositDeps, part: { kind: "create" } | { kind: "update" | "read"; id: string }): Promise<{ status: number; body: DepositApiResult }> {
   const pepper = deps.env.RELAY_IP_PEPPER;
   if (!pepper) return depositDone({ status: "misconfigured" });

@@ -12,7 +12,7 @@ describe("the pay page and its API under the invite gate", () => {
     expect(decide({ pathname: "/en/pay/abc", mode: "invite", session: "missing" })).toEqual({ kind: "allow" });
     expect(decide({ pathname: "/api/invoices", mode: "invite", session: "missing" })).toMatchObject({ kind: "api", status: 401 });
   });
-  it("is still closed by the emergency switch", () => {
+  it("stays open under the emergency switch on purpose: a client with a link can still pay", () => {
     expect(decide({ pathname: "/en/pay/abc", mode: "closed", session: "missing" })).toEqual({ kind: "allow" });
   });
 });

@@ -2,7 +2,8 @@ import "server-only";
 import { type Address, type Hex, type PublicClient, parseAbi, parseAbiItem } from "viem";
 import { invoiceKeys } from "@strickle/db/invoice-keys";
 import { getPublicClient } from "../chain/client.ts";
-import { appNetwork, networkInfo } from "../config/network.ts";
+import { agentDeploymentsFor, appNetwork, networkInfo } from "../config/network.ts";
+import { createChainGuard } from "./chain-guard.ts";
 import { relayLimiter, sql } from "./db.ts";
 import type { OwnerSessionDeps } from "./owner-session.ts";
 import type { PayDeps } from "./pay.ts";
@@ -32,6 +33,7 @@ export function chainReader(client: PublicClient, usdc: Address): ChainReader {
 }
 
 let reader: ChainReader | undefined;
+let guard: ReturnType<typeof createChainGuard> | undefined;
 
 /** Built on first use: a build for a network without these services must still compile. Without INVOICE_SECRET or a database every route answers misconfigured. */
 export function paymentDeps(): PayDeps | undefined {
@@ -53,6 +55,7 @@ export function ownerSessionDeps(): OwnerSessionDeps | undefined {
   const deps = paymentDeps();
   if (!deps) return undefined;
   const client = getPublicClient();
+  const vaults = (guard ??= createChainGuard(client, agentDeploymentsFor()));
   return {
     env: deps.env,
     keys: deps.keys,
@@ -60,6 +63,7 @@ export function ownerSessionDeps(): OwnerSessionDeps | undefined {
     limiter: deps.limiter,
     network: deps.network,
     chain: {
+      registered: async (vault) => (await vaults.vault(vault)).registered,
       ownerOf: (vault) => client.readContract({ address: vault, abi: ownerAbi, functionName: "owner" }),
       accepts: (owner, digest, signature) => client.verifyHash({ address: owner, hash: digest, signature }),
     },

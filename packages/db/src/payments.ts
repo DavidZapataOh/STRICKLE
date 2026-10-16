@@ -143,7 +143,8 @@ async function credit(tx: TransactionSql, invoiceId: string, payment: Credit): P
   if (!invoice) return { outcome: "unmatched" };
   const key = { chain: payment.chainId, hash: lower(payment.txHash), index: payment.logIndex };
   const [existing] = await tx<{ id: string; state: string }[]>`select id, state from payments where chain_id = ${key.chain} and tx_hash = ${key.hash} and log_index = ${key.index} for update`;
-  if (existing && existing.state !== "suggested") return { outcome: "duplicate" };
+  // a suggestion or a dismissal is not a payment on record: the payer's own claim, or the owner's confirmation, may still credit it
+  if (existing && existing.state !== "suggested" && existing.state !== "dismissed") return { outcome: "duplicate" };
   const full = BigInt(invoice.paid) >= BigInt(invoice.amount) || invoice.status === "void";
   const state = full ? "extra" : "credited";
   const late = invoice.expires_at !== null && payment.at > invoice.expires_at;
@@ -152,7 +153,7 @@ async function credit(tx: TransactionSql, invoiceId: string, payment: Credit): P
   } else {
     const inserted = await tx`insert into payments (chain_id, tx_hash, log_index, vault, invoice_id, payer, amount, rail, state, late, at)
       values (${key.chain}, ${key.hash}, ${key.index}, ${lower(payment.vault)}, ${invoice.id}, ${lower(payment.payer)}, ${payment.amount.toString()}, ${payment.rail}, ${state}, ${late}, ${payment.at})
-      on conflict (chain_id, tx_hash, log_index) do nothing returning id`;
+      on conflict (chain_id, tx_hash, log_index) do update set state = excluded.state, invoice_id = excluded.invoice_id, rail = excluded.rail, late = excluded.late where payments.state in ('suggested', 'dismissed') returning id`;
     if (inserted.length === 0) return { outcome: "duplicate" };
   }
   const paid = BigInt(invoice.paid) + payment.amount;
@@ -179,7 +180,7 @@ export async function suggestMatch(sql: Sql, input: { chainId: number; txHash: s
     const key = { hash: lower(input.txHash) };
     const [existing] = await tx`select id from payments where chain_id = ${input.chainId} and tx_hash = ${key.hash} and log_index = ${input.logIndex}`;
     if (existing) return { suggested: false };
-    const [candidate] = await tx<{ id: string }[]>`select id from invoices where vault = ${lower(input.vault)} and status in ('open', 'partial') and created_at <= ${input.at}::timestamptz + interval '5 seconds' and (amount = ${input.amount.toString()} or amount - paid = ${input.amount.toString()}) order by created_at desc limit 1`;
+    const [candidate] = await tx<{ id: string }[]>`select id from invoices where vault = ${lower(input.vault)} and status in ('open', 'partial') and created_at <= ${input.at}::timestamptz + interval '5 seconds' and (amount = ${input.amount.toString()} or amount - paid between ${(input.amount - 9_999n).toString()} and ${input.amount.toString()}) order by created_at desc limit 1`;
     if (!candidate) return { suggested: false };
     const inserted = await tx`insert into payments (chain_id, tx_hash, log_index, vault, invoice_id, payer, amount, rail, state, at)
       values (${input.chainId}, ${key.hash}, ${input.logIndex}, ${lower(input.vault)}, ${candidate.id}, ${lower(input.payer)}, ${input.amount.toString()}, 'direct', 'suggested', ${input.at})
@@ -203,7 +204,7 @@ export async function dismissSuggestion(sql: Sql, vault: string, paymentId: stri
 
 export async function rotateLink(sql: Sql, keys: InvoiceKeys, vault: string, invoiceId: string): Promise<{ token: string } | null> {
   return sql.begin(async (tx) => {
-    const [row] = await tx<{ id: string; version: number }[]>`select l.id, l.version from payment_links l join invoices i on i.id = l.invoice_id where i.id = ${invoiceId} and i.vault = ${lower(vault)} for update of l`;
+    const [row] = await tx<{ id: string; version: number }[]>`select l.id, l.version from payment_links l join invoices i on i.id = l.invoice_id where i.id = ${invoiceId} and i.vault = ${lower(vault)} and i.status <> 'void' for update of l`;
     if (!row) return null;
     const version = row.version + 1;
     const token = linkToken(keys, invoiceId, version);

@@ -7,7 +7,7 @@ import { requireOwner } from "./owner-session.ts";
 import type { PayDeps } from "./pay.ts";
 import { scanVault } from "./reconcile.ts";
 
-export type InvoiceDeps = PayDeps;
+export type InvoiceDeps = PayDeps & { maxBlocks?: bigint };
 
 export interface SerializedInvoice {
   id: string;
@@ -28,6 +28,8 @@ type Outcome<T> = { status: number; body: T };
 type Failure = { status: "rejected" | "unauthorized" | "not-found" | "rate-limited" | "unavailable" | "misconfigured" };
 
 const MAX_BODY = 4_000;
+const MAX_WINDOWS = 8;
+const DEFAULT_SCAN_WINDOW = 5_000n;
 const MAX_AMOUNT = 1_000_000_000_000n;
 const fail = (status: number, kind: Failure["status"]): Outcome<Failure> => ({ status, body: { status: kind } });
 const keyed = (scope: string, pepper: string, value: string) => `${scope}:${createHash("sha256").update(`${pepper}:${value}`).digest("hex")}`;
@@ -128,8 +130,18 @@ export async function handleReconcile(request: Request, deps: InvoiceDeps): Prom
   try {
     const wait = await deps.limiter.count(keyed("reconcile", pepper, vault), 10, 1);
     if (!wait.allowed) return fail(429, "rate-limited");
-    const result = await scanVault(deps, vault as Address);
-    return { status: 200, body: { status: "ok", scanned: result.scanned.toString(), credited: result.credited, suggested: result.suggested } };
+    // a backlog of several windows is covered in one press, so a payer who closed the tab is found without pressing again and again
+    let scanned = 0n;
+    let credited = 0;
+    let suggested = 0;
+    for (let round = 0; round < MAX_WINDOWS; round++) {
+      const result = await scanVault(deps, vault as Address);
+      scanned += result.scanned;
+      credited += result.credited;
+      suggested += result.suggested;
+      if (result.scanned < (deps.maxBlocks ?? DEFAULT_SCAN_WINDOW)) break;
+    }
+    return { status: 200, body: { status: "ok", scanned: scanned.toString(), credited, suggested } };
   } catch {
     return fail(502, "unavailable");
   }

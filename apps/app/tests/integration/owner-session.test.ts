@@ -11,6 +11,7 @@ import { OWNER_COOKIE, handleOwnerSession, mintOwnerCookie, ownerTypedData, read
 const keys = invoiceKeys(randomBytes(32).toString("base64"));
 const owner = privateKeyToAccount(generatePrivateKey());
 const VAULT = `0x${"ab".repeat(20)}` as const;
+const UNREGISTERED = `0x${"ee".repeat(20)}`;
 const OTHER_VAULT = `0x${"cd".repeat(20)}` as const;
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 beforeAll(async () => {
@@ -20,6 +21,7 @@ beforeAll(async () => {
 afterAll(async () => db.drop());
 
 const chain = {
+  registered: async (vault: string) => vault.toLowerCase() !== UNREGISTERED,
   ownerOf: async (vault: string) => (vault.toLowerCase() === VAULT ? owner.address : privateKeyToAccount(generatePrivateKey()).address),
   accepts: async (signer: `0x${string}`, digest: `0x${string}`, signature: `0x${string}`) => (await recoverAddress({ hash: digest, signature })) === signer,
 };
@@ -28,7 +30,8 @@ const sign = async (vault = VAULT, nonce = 7n, deadline = Math.floor(Date.now() 
   const typed = ownerTypedData({ chainId: 5042002, vault, nonce, deadline });
   return { vault, nonce: nonce.toString(), deadline, signature: await owner.signTypedData(typed as never) };
 };
-const post = (body: unknown, origin = "http://localhost:3200") => new Request("http://localhost:3200/api/owner-session", { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify(body) });
+let ipCounter = 0;
+const post = (body: unknown, origin = "http://localhost:3200") => new Request("http://localhost:3200/api/owner-session", { method: "POST", headers: { "content-type": "application/json", origin, "x-forwarded-for": `10.20.0.${++ipCounter}` }, body: JSON.stringify(body) });
 
 describe("the owner session", () => {
   it("starts from a valid signature of the vault's owner and gives a cookie for that vault", async () => {
@@ -44,6 +47,18 @@ describe("the owner session", () => {
     const body = await sign(VAULT, 12n);
     expect((await handleOwnerSession(post(body), deps())).status).toBe(200);
     expect((await handleOwnerSession(post(body), deps())).status).toBe(401);
+  });
+
+  it("refuses the same signature again with the nonce written differently", async () => {
+    const body = await sign(VAULT, 18n);
+    expect((await handleOwnerSession(post(body), deps())).status).toBe(200);
+    expect((await handleOwnerSession(post({ ...body, nonce: `000${body.nonce}` }), deps())).status).toBe(401);
+  });
+
+  it("refuses a contract that is not a registered vault, even when its owner signs", async () => {
+    const chainForFake = { ...chain, ownerOf: async () => owner.address };
+    const fake = await sign(UNREGISTERED as `0x${string}`, 19n);
+    expect((await handleOwnerSession(post(fake), { ...deps(), chain: chainForFake })).status).toBe(401);
   });
 
   it("refuses an expired deadline and one too far in the future", async () => {

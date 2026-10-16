@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/config";
 import type { PayText } from "@/i18n/slices";
 import type { PublicInvoice } from "@/server/pay";
 import { EmptyState } from "@/ui/EmptyState";
+import { PayView } from "./PayView";
 import { Skeleton } from "./Skeleton";
 
 // the wallet and bridge code load only when the payer presses a button
@@ -16,6 +17,8 @@ type State = { status: "loading" } | { status: "notFound" } | { status: "error" 
 export function PayScreen({ lang, t, token }: { lang: Locale; t: PayText; token: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [round, setRound] = useState(0);
+  const [start, setStart] = useState<"arc" | "other" | null>(null);
+  const [copyNote, setCopyNote] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,5 +48,16 @@ export function PayScreen({ lang, t, token }: { lang: Locale; t: PayText; token:
       </EmptyState>
     );
   }
-  return <PayActive lang={lang} t={t} token={token} invoice={state.invoice} onPaid={refresh} />;
+  // no wallet or bridge code until the payer presses a way to pay
+  if (start) return <PayActive lang={lang} t={t} token={token} invoice={state.invoice} start={start} onPaid={refresh} />;
+  const { invoice } = state;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(invoice.vault);
+      setCopyNote(t.pay.copied);
+    } catch {
+      setCopyNote(t.pay.copyFailed);
+    }
+  }
+  return <PayView lang={lang} t={t} invoice={invoice} phase="idle" otherOpen={false} copyNote={copyNote} actions={{ arc: () => setStart("arc"), other: () => setStart("other"), copy: () => void copy() }} />;
 }

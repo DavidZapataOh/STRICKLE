@@ -93,3 +93,32 @@ describe("scanVault", () => {
     expect(second.scanned).toBe(5_000n);
   });
 });
+
+
+describe("scan robustness", () => {
+  it("ignores dust below the smallest invoice and reads each block time once", async () => {
+    const vault = `0x${"78".repeat(20)}` as const;
+    await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 1_000_000n, expiresAt: null });
+    await setCursor(db.sql, vault, 0n);
+    let blockReads = 0;
+    const transfers = Array.from({ length: 6 }, (_, i) => ({ txHash: `0x${(i + 1).toString(16).padStart(64, "0")}` as `0x${string}`, logIndex: 1, payer: `0x${"34".repeat(20)}` as `0x${string}`, amount: i < 4 ? 1n : 1_000_000n, blockNumber: 100n }));
+    const chain = reader({ transfersTo: async () => transfers, blockTime: async () => (blockReads++, new Date()), receipt: async () => ({ status: "success", logs: [], blockNumber: 100n }) });
+    const out = await scanVault(deps(chain), vault);
+    expect(out.suggested).toBe(2);
+    expect((await db.sql`select 1 from payments where vault = ${vault.toLowerCase()}`).length).toBe(2);
+    expect(blockReads).toBeLessThanOrEqual(1);
+  });
+
+  it("credits a bridged payment bound to a link from its forward transaction, even when the page never saw it arrive", async () => {
+    const vault = `0x${"79".repeat(20)}` as const;
+    const created = await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 50_000_000n, expiresAt: null });
+    const link = await getLinkByToken(db.sql, keys, created.token);
+    const forwardTx = `0x${"c1".repeat(32)}` as `0x${string}`;
+    await db.sql`insert into deposit_intents (vault, source_chain, source_address, amount, speed, fee_mode, intent, status, burn_tx, forward_tx, received, link_id) values (${vault.toLowerCase()}, 'Base_Sepolia', ${`0x${"34".repeat(20)}`}, 50000000, 'fast', 'source', 'income', 'arrived', ${`0x${"c2".repeat(32)}`}, ${forwardTx}, 50000000, ${link?.linkId ?? null})`;
+    await setCursor(db.sql, vault, 0n);
+    const chain = reader({ transfersTo: async () => [{ txHash: forwardTx, logIndex: 5, payer: `0x${"56".repeat(20)}` as `0x${string}`, amount: 50_000_000n, blockNumber: 110n }], receipt: async () => ({ status: "success", logs: [], blockNumber: 110n }) });
+    const out = await scanVault(deps(chain), vault);
+    expect(out.credited).toBe(1);
+    expect((await getLinkByToken(db.sql, keys, created.token))?.status).toBe("paid");
+  });
+});
