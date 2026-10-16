@@ -71,6 +71,20 @@ A person holding USDT on Ethereum, Base, Arbitrum, Optimism, Polygon or Avalanch
 - No swap quote exists on testnet, so the option never appears there, and the deposit screen is served only where an agent runs; until an agent runs on mainnet the path cannot be reached by a real user. The conversion has not been executed on mainnet: only its quotes are verified against the live service.
 - Public copy does not mention USDT until an execution on mainnet has been proven.
 
+## Payment links
+
+A freelancer creates an invoice in `/[lang]/invoices` and shares a private link, `/[lang]/pay/<token>`. A client pays it in USDC on Arc (a call to the predeployed Memo contract that carries the invoice's reference), from another chain through the deposit flow bound to the link, or by sending USDC to the vault address, which the freelancer confirms by hand.
+
+Dependencies and rules:
+
+- The Memo contract (`0x5294E9927c3306DcBaDb03fe70b92e01cCede505` on Arc testnet) must be reachable. A Memo is only a claim: the server credits it when the same transaction holds a USDC transfer from the memo's sender whose call data matches the Memo's hash. A Circle passkey smart account cannot use Memo (the contract refuses it); such a payer is told to use the address.
+- Arc's RPC must serve `getLogs` over the scan window (`maxBlocks` in `payment-deps.ts`); the live payment test prints what a 5,000- and a 50,000-block window return.
+- `INVOICE_SECRET` (32 random bytes, base64) seals what a freelancer typed (label, payee name, note) and derives the link tokens. Generate it with `openssl rand -base64 32`, keep it in `.env`, and upload it to the Vercel project and to GitHub only through stdin, never on a command line. Rotating it is a migration, not a rotation: every issued link changes and every sealed text becomes unreadable.
+- The payer's page reveals the payee name, label, note, amounts, status and vault address, never a client name or any client data. It is `noindex`, `no-store` and `no-referrer`, and an unknown or rotated token answers one uniform 404.
+- A leaked link is closed from the invoices screen: "New link" kills the old URL, "Void" closes the invoice. Payments already on their way still credit (as extra once void). Neither action touches the payments already recorded.
+- The page and its API stay reachable when access is `closed`: a client who received a link must still be able to pay, and a transfer to a vault cannot be refused on chain anyway.
+- Invoices are denominated in USDC only.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.

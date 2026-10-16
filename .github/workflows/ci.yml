@@ -108,6 +108,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium-headless-shell
+      - run: npm run build -w app
       - run: npm run test:integration -w @strickle/db
       - run: npm run test:integration -w app
 
