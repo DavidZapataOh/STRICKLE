@@ -36,13 +36,15 @@ export function readAccess(secret: string, value: string | undefined, now: numbe
   return expected.length === actual.length && timingSafeEqual(expected, actual) ? { sid, expiresAt } : undefined;
 }
 
-const PUBLIC_PAGES = ["access", "closed", "unavailable", "verify", "docs", "metrics", "view", "accountant"];
+const PUBLIC_PAGES = ["access", "closed", "unavailable", "verify", "docs", "metrics", "view", "accountant", "pay"];
 const PUBLIC_API = ["/api/access", "/api/metrics", "/api/logs", "/api/pool-notes"];
 
 export const isApiPath = (pathname: string): boolean => pathname === "/api" || pathname.startsWith("/api/");
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_API.includes(pathname)) return true;
+  // the payer a freelancer sent a link to has no invite, and a payment cannot be refused on chain anyway; the segment match keeps /api/payroll closed
+  if (pathname.startsWith("/api/pay/")) return true;
   const [, lang, page] = pathname.split("/");
   return lang !== undefined && hasLocale(lang) && page !== undefined && PUBLIC_PAGES.includes(page);
 }
