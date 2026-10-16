@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProtocolError, ReplayCache, aadFor, decodeRequest, encodeRequest, encodeRequestWith } from "../src/protocol.ts";
+import { ProtocolError, ReplayCache, aadFor, decodeRequest, encodeRequest, encodeRequestWith, toBase64 } from "../src/protocol.ts";
 import { generateProverKey, scalarFrom, seal } from "../src/sealed.ts";
 
 const key = generateProverKey();
@@ -83,5 +83,12 @@ describe("prove request protocol", () => {
     const secret = scalarFrom(new Uint8Array(64).fill(7));
     expect(encodeRequestWith(request, key.publicKey, secret)).toEqual(encodeRequestWith(request, key.publicKey, secret));
     expect(decodeRequest(encodeRequestWith(request, key.publicKey, secret), key, 1_000, new ReplayCache(600))).toEqual(request);
+  });
+
+  it("encodes base64 like the platform for every remainder length", () => {
+    for (let length = 0; length < 70; length++) {
+      const bytes = Uint8Array.from({ length }, (_, i) => (i * 37 + 11) & 255);
+      expect(toBase64(bytes)).toBe(Buffer.from(bytes).toString("base64"));
+    }
   });
 });

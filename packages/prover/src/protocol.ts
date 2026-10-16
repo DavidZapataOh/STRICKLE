@@ -31,10 +31,18 @@ const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
 
 export const aadFor = (circuit: string): Uint8Array => new TextEncoder().encode(`strickle-prover/v1:${circuit}`);
 
-function toBase64(bytes: Uint8Array): string {
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+// Written out because the confidential runtime has no btoa.
+export function toBase64(bytes: Uint8Array): string {
   let text = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(text);
+  for (let i = 0; i < bytes.length; i += 3) {
+    const chunk = ((bytes[i] as number) << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
+    text += ALPHABET.charAt((chunk >> 18) & 63) + ALPHABET.charAt((chunk >> 12) & 63);
+    text += i + 1 < bytes.length ? ALPHABET.charAt((chunk >> 6) & 63) : "=";
+    text += i + 2 < bytes.length ? ALPHABET.charAt(chunk & 63) : "=";
+  }
+  return text;
 }
 
 function fromBase64(text: string): Uint8Array {
