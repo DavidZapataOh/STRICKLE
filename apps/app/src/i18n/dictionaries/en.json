@@ -444,5 +444,20 @@
       "failed": "This did not go through. Nothing was changed.",
       "cancelled": "Cancelled. Nothing was changed."
     }
+  },
+  "rules": {
+    "title": "Rules of your boxes",
+    "intro": "These rules live in your vault, so the agent cannot change them. Making a rule stricter applies now. Making it looser waits at least a day, and you apply it yourself afterwards. That includes a lock date: it can be shortened after the wait, so it protects you from a hasty decision, not from yourself.",
+    "hours": "Withdrawals wait (hours)",
+    "always": "Always wait before a withdrawal",
+    "restricted": "Only to approved recipients",
+    "floor": "Floor, in dollars",
+    "lock": "Locked until",
+    "stricter": "Stricter: applies now.",
+    "looser": "Looser: waits {hours} h. After that you apply it yourself.",
+    "same": "This is already the rule.",
+    "pending": "Change waiting for {date}: {rule}",
+    "apply": "Apply now",
+    "cancel": "Cancel the change"
   }
 }

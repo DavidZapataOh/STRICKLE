@@ -444,5 +444,20 @@
       "failed": "Isso não foi concluído. Nada foi mudado.",
       "cancelled": "Cancelado. Nada foi mudado."
     }
+  },
+  "rules": {
+    "title": "Regras das suas caixas",
+    "intro": "Estas regras vivem no seu cofre, então o agente não pode mudá-las. Tornar uma regra mais rígida vale a partir de agora. Torná-la mais frouxa espera pelo menos um dia, e depois você mesmo a aplica. Isso inclui a data de bloqueio: ela pode ser encurtada depois da espera, então protege você de uma decisão apressada, não de você mesmo.",
+    "hours": "As retiradas esperam (horas)",
+    "always": "Sempre esperar antes de uma retirada",
+    "restricted": "Só para destinatários aprovados",
+    "floor": "Piso, em dólares",
+    "lock": "Bloqueada até",
+    "stricter": "Mais rígida: vale a partir de agora.",
+    "looser": "Mais frouxa: espera {hours} h. Depois você mesmo a aplica.",
+    "same": "Esta já é a regra.",
+    "pending": "Mudança aguardando até {date}: {rule}",
+    "apply": "Aplicar agora",
+    "cancel": "Cancelar a mudança"
   }
 }

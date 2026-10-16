@@ -444,5 +444,20 @@
       "failed": "Esto no se completó. No se cambió nada.",
       "cancelled": "Cancelado. No se cambió nada."
     }
+  },
+  "rules": {
+    "title": "Reglas de tus cajas",
+    "intro": "Estas reglas viven en tu bóveda, así que el agente no puede cambiarlas. Hacer una regla más estricta se aplica ahora. Hacerla más laxa espera al menos un día, y después la aplicas tú mismo. Eso incluye la fecha de bloqueo: se puede acortar tras la espera, así que te protege de una decisión apresurada, no de ti mismo.",
+    "hours": "Los retiros esperan (horas)",
+    "always": "Esperar siempre antes de un retiro",
+    "restricted": "Solo a destinatarios aprobados",
+    "floor": "Piso, en dólares",
+    "lock": "Bloqueada hasta",
+    "stricter": "Más estricta: se aplica ahora.",
+    "looser": "Más laxa: espera {hours} h. Después la aplicas tú mismo.",
+    "same": "Esta ya es la regla.",
+    "pending": "Cambio en espera hasta el {date}: {rule}",
+    "apply": "Aplicar ahora",
+    "cancel": "Cancelar el cambio"
   }
 }

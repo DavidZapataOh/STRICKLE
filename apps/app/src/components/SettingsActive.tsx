@@ -21,6 +21,7 @@ import { type TxPhase, runTx } from "@/settings/tx";
 import { useAdjust } from "@/settings/use-adjust";
 import { isPasskeyCancelled } from "@/wallet/errors";
 import { EditRow } from "./EditRow";
+import { RulesPanel } from "./RulesPanel";
 import { type SettingsState, SettingsView } from "./SettingsView";
 
 const dollars = (units: bigint): string => String(units / 1_000_000n);
@@ -206,6 +207,22 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         </EditRow>
       </>
     ) : null,
+    rules: (
+      <RulesPanel
+        lang={lang}
+        t={t}
+        vault={vault}
+        boxes={extras.boxes}
+        pending={extras.pending}
+        now={extras.now}
+        busy={txPhase === "signing" || txPhase === "confirming"}
+        onRun={ownerTx}
+        readBox={async (box) => {
+          const [vaultState, chain] = await Promise.all([readVault(vault), readSettingsChain(getPublicClient(), vault)]);
+          return { rule: (vaultState.boxes[box - 1] as BoxState).rule, pending: chain.pending[box - 1] ?? null };
+        }}
+      />
+    ),
   };
 
   return <SettingsView lang={lang} t={t} state={state} slots={slots} />;

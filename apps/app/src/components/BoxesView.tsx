@@ -1,8 +1,8 @@
 import { BOX_KINDS, type BoxKind } from "@strickle/core";
 import { formatMoney } from "@strickle/design/format";
 import type { Locale } from "@strickle/design/locale";
-import { describeRule } from "@/chain/rules";
 import { boxTotal, heldTotals } from "@/chain/totals";
+import { ruleWords } from "@/home/rule-words";
 import { dateText, isoDay } from "@/home/format";
 import type { DataText } from "@/i18n/slices";
 import { fill } from "@/i18n/fill";
@@ -27,18 +27,7 @@ export function BoxesView({ lang, t, state, onRetry }: { lang: Locale; t: DataTe
   const held = heldTotals(vault);
   const money = (units: bigint) => formatMoney(units, lang);
   const shelf = vault.boxes.map((box) => ({ kind: box.kind, ratio: fillRatio(boxTotal(box), targets[box.kind] ?? 0n), share: held.usdc > 0n ? Number((boxTotal(box) * 10_000n) / held.usdc) / 10_000 : 0 }));
-  const ruleText = (box: (typeof vault.boxes)[number]) =>
-    describeRule(box.rule, vault.now)
-      .map((line) => {
-        switch (line.key) {
-          case "locked": return fill(t.boxesPage.locked, { date: dateText(isoDay(line.until), lang) });
-          case "always": return fill(t.boxesPage.always, { hours: line.hours });
-          case "below": return fill(t.boxesPage.below, { floor: money(line.floor), hours: line.hours });
-          case "restricted": return t.boxesPage.restricted;
-          case "free": return t.boxesPage.free;
-        }
-      })
-      .join(" · ");
+  const ruleText = (box: (typeof vault.boxes)[number]) => ruleWords(box.rule, vault.now, lang, t.boxesPage);
 
   return (
     <div className="boxes">
