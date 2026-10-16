@@ -9,7 +9,11 @@
     "./passkey": "./src/passkey.ts",
     "./sponsorship": "./src/sponsorship.ts",
     "./probe": "./src/probe.ts",
-    "./usdc": "./src/usdc.ts"
+    "./usdc": "./src/usdc.ts",
+    "./bridge": "./src/bridge/index.ts",
+    "./bridge/chains": "./src/bridge/chains.ts",
+    "./bridge/types": "./src/bridge/types.ts",
+    "./bridge/iris": "./src/bridge/iris.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -22,6 +26,8 @@
     "probe": "node --env-file-if-exists=../../../.env src/probe-cli.ts"
   },
   "dependencies": {
+    "@circle-fin/adapter-viem-v2": "1.19.1",
+    "@circle-fin/bridge-kit": "1.15.3",
     "@circle-fin/developer-controlled-wallets": "^10.8.1",
     "@circle-fin/modular-wallets-core": "^1.0.16",
     "viem": "^2.57.7"
