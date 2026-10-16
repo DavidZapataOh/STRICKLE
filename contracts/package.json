@@ -7,7 +7,8 @@
     "lint": "arc-forge fmt --check",
     "typecheck": "arc-forge build",
     "test": "arc-forge test --network arc && node --test \"scripts/*.test.mjs\"",
-    "deploy": "node --env-file-if-exists=../../.env scripts/deploy.mjs"
+    "deploy": "node --env-file-if-exists=../../.env scripts/deploy.mjs",
+    "deploy-pool": "node --env-file-if-exists=../../.env scripts/deploy-pool.mjs"
   },
   "dependencies": {
     "@strickle/arc": "*",
