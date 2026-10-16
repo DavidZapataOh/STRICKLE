@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate } from "../../src/migrate.ts";
-import { createDeposit, failDeposit, getDeposit, recordArrival, recordBurn } from "../../src/deposits.ts";
+import { createDeposit, failDeposit, getDeposit, recordArrival, recordBurn, recordSwap } from "../../src/deposits.ts";
 import { createTestDatabase } from "../../src/testing.ts";
 
 const VAULT = `0x${"ab".repeat(20)}`;
@@ -62,5 +62,43 @@ describe("deposit records", () => {
   it("returns null for an unknown id and never throws on a malformed one", async () => {
     expect(await getDeposit(db.sql, "00000000-0000-0000-0000-000000000000")).toBeNull();
     expect(await getDeposit(db.sql, "not-a-uuid")).toBeNull();
+  });
+});
+
+describe("deposits that start as USDT", () => {
+  const usdt = { ...input, inputToken: "USDT" as const, feeMode: "destination" as const };
+
+  it("move created, swapped, burned, arrived", async () => {
+    const id = await createDeposit(db.sql, usdt);
+    expect((await getDeposit(db.sql, id))?.inputToken).toBe("USDT");
+    expect(await recordSwap(db.sql, id, { swapTx: TX(20), swapOut: 24_900_000n })).toBe(true);
+    expect(await recordSwap(db.sql, id, { swapTx: TX(20), swapOut: 24_900_000n })).toBe(false);
+    expect(await recordBurn(db.sql, id, TX(21))).toBe(true);
+    expect(await recordArrival(db.sql, id, { forwardTx: TX(22), received: 24_880_000n })).toBe(true);
+    expect(await getDeposit(db.sql, id)).toMatchObject({ status: "arrived", swapTx: TX(20), swapOut: 24_900_000n, burnTx: TX(21) });
+  });
+
+  it("cannot be burned before the conversion is recorded", async () => {
+    const id = await createDeposit(db.sql, usdt);
+    expect(await recordBurn(db.sql, id, TX(23))).toBe(false);
+  });
+
+  it("a USDC deposit cannot record a swap", async () => {
+    const id = await createDeposit(db.sql, input);
+    expect(await recordSwap(db.sql, id, { swapTx: TX(24), swapOut: 1n })).toBe(false);
+  });
+
+  it("one swap belongs to one deposit, and a converted deposit that fails is still readable", async () => {
+    const a = await createDeposit(db.sql, usdt);
+    const b = await createDeposit(db.sql, usdt);
+    await recordSwap(db.sql, a, { swapTx: TX(25), swapOut: 1n });
+    await expect(recordSwap(db.sql, b, { swapTx: TX(25), swapOut: 1n })).rejects.toThrow(/deposit_intents_swap_once|unique/);
+    expect(await failDeposit(db.sql, a, "bridge-quote")).toBe(true);
+    expect((await getDeposit(db.sql, a))?.status).toBe("failed");
+  });
+
+  it("old USDC deposits keep reading as USDC", async () => {
+    const id = await createDeposit(db.sql, input);
+    expect(await getDeposit(db.sql, id)).toMatchObject({ inputToken: "USDC", swapTx: null, swapOut: null });
   });
 });
