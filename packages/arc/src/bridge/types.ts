@@ -15,6 +15,8 @@ export interface SourceChain {
   explorerUrl: string;
   /** Endpoints we read this chain through, in order of preference. */
   rpc: readonly string[];
+  /** Mainnet entries only: no swap quotes exist on testnet. */
+  usdt?: { address: Address };
 }
 
 export type Fee = { kind: "provider" | "forwarder"; amount: bigint };
@@ -29,8 +31,22 @@ export interface BridgeLeg {
   gas: { token: string; amount: string } | null;
 }
 
-/** Later legs (a swap in front of the bridge) join this union; the quote itself never changes shape. */
-export type QuoteLeg = BridgeLeg;
+export interface SwapLeg {
+  kind: "swap";
+  source: SourceChain;
+  tokenIn: { symbol: "USDT"; address: Address };
+  amountIn: bigint;
+  estimatedOut: bigint;
+  minOut: bigint;
+  providerFee: bigint;
+  slippageBps: number;
+  gas: { token: string; amount: string } | null;
+  route: string;
+}
+
+export type QuoteLeg = SwapLeg | BridgeLeg;
+
+export const bridgeLegOf = (quote: { legs: readonly QuoteLeg[] }): BridgeLeg | undefined => quote.legs.find((leg): leg is BridgeLeg => leg.kind === "bridge");
 
 export interface DepositQuote {
   network: ArcNetworkName;
@@ -50,7 +66,7 @@ export interface DepositQuote {
   opaque: unknown;
 }
 
-export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable";
+export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable" | "cost-too-high" | "stale" | "insufficient-balance";
 
 export class QuoteRefusal extends Error {
   readonly code: QuoteRefusalCode;
@@ -60,4 +76,14 @@ export class QuoteRefusal extends Error {
     this.name = "QuoteRefusal";
     this.code = code;
   }
+}
+
+/** What the conversion is expected to deliver after the bridge fees; the floor is what is promised. */
+export function expectedReceived(quote: DepositQuote): bigint {
+  const swap = quote.legs.find((leg): leg is SwapLeg => leg.kind === "swap");
+  const bridge = bridgeLegOf(quote);
+  if (!swap || !bridge) return quote.amountReceivedMin;
+  const fees = bridge.fees.reduce((sum, fee) => sum + fee.amount, 0n);
+  const expected = swap.estimatedOut - fees;
+  return expected < quote.amountReceivedMin ? quote.amountReceivedMin : expected > quote.amountSent ? quote.amountSent : expected;
 }

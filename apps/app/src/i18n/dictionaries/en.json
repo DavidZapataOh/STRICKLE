@@ -506,7 +506,8 @@
       "failed": "This deposit did not finish",
       "failedBody": "If the transfer already left your wallet it can still arrive. Check again in a moment.",
       "retry": "Check again",
-      "another": "Add more money"
+      "another": "Add more money",
+      "converting": "Converting your USDT"
     },
     "direct": {
       "title": "Send directly",
@@ -524,7 +525,29 @@
       "quote-refused": "This transfer cannot be quoted right now. Try another amount or chain.",
       "quote-expired": "The quote expired. Ask for a new one.",
       "unavailable": "Something went wrong reaching the network. Try again.",
-      "timeout": "The transfer has not arrived yet. It may still be on its way: check again."
+      "timeout": "The transfer has not arrived yet. It may still be on its way: check again.",
+      "cost-too-high": "Converting this amount costs too much of it. Try a larger amount.",
+      "stale": "The quote is old. Ask for a new one."
+    },
+    "token": {
+      "label": "What are you sending?",
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "usdtNote": "Converted to USDC first, then sent to your vault"
+    },
+    "swap": {
+      "title": "Convert USDT to USDC",
+      "fee": "Conversion fee",
+      "route": "Route: {route}",
+      "floor": "The conversion only goes through if you would receive at least {amount}, even if the price moves up to {percent}.",
+      "expected": "Expected: {amount}",
+      "network": "Network fee ({token})"
+    },
+    "held": {
+      "title": "Your USDT is now USDC in your wallet",
+      "body": "The conversion went through, but the transfer to Arc could not keep the amount you were shown. Nothing is lost: {amount} is in your wallet.",
+      "send": "Send it to your vault",
+      "tx": "Conversion transaction"
     }
   },
   "rules": {

@@ -12,6 +12,7 @@
     "./usdc": "./src/usdc.ts",
     "./bridge": "./src/bridge/index.ts",
     "./bridge/chains": "./src/bridge/chains.ts",
+    "./bridge/usdt": "./src/bridge/usdt.ts",
     "./bridge/types": "./src/bridge/types.ts",
     "./bridge/iris": "./src/bridge/iris.ts"
   },
@@ -30,6 +31,7 @@
     "@circle-fin/bridge-kit": "1.15.3",
     "@circle-fin/developer-controlled-wallets": "^10.8.1",
     "@circle-fin/modular-wallets-core": "^1.0.16",
+    "@circle-fin/swap-kit": "1.8.0",
     "viem": "^2.57.7",
     "zod": "3.25.76"
   },

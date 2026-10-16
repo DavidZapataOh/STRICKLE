@@ -1,0 +1,56 @@
+{
+  "tokenIn": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  "tokenOut": "USDC",
+  "amountIn": "0.01",
+  "chainIn": "Ethereum",
+  "chainOut": "Ethereum",
+  "chain": "Ethereum",
+  "fromAddress": "0xbaADA9683b662861d80B31A149D3fEfB46278031",
+  "toAddress": "0xbaADA9683b662861d80B31A149D3fEfB46278031",
+  "stopLimit": {
+    "amount": "0.009934",
+    "token": "USDC"
+  },
+  "estimatedOutput": {
+    "amount": "0.009984",
+    "token": "USDC"
+  },
+  "fees": [
+    {
+      "token": "USDT",
+      "amount": "0.000002",
+      "type": "provider",
+      "chain": "Ethereum"
+    },
+    {
+      "token": "ETH",
+      "amount": "0.000067434929235355",
+      "type": "gas"
+    }
+  ],
+  "route": {
+    "provider": "lifi",
+    "steps": [
+      {
+        "type": "swap",
+        "tool": "sushiswap",
+        "toolName": "SushiSwap Aggregator",
+        "fromToken": {
+          "symbol": "USDT",
+          "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "decimals": 6
+        },
+        "toToken": {
+          "symbol": "USDC",
+          "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "decimals": 6
+        },
+        "estimate": {
+          "fromAmount": "9998",
+          "toAmount": "9984",
+          "gasCostUSD": "0.0071"
+        }
+      }
+    ]
+  }
+}

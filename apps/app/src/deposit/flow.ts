@@ -3,13 +3,18 @@ import type { ArcNetworkName } from "@strickle/arc/networks";
 import type { Address, Hex } from "viem";
 import type { InjectedWallet } from "../wallet/injected.ts";
 
-export type DepositStep = "chain" | "wallet" | "quote" | "sending" | "waiting" | "arrived" | "failed";
-export type DepositError = "no-wallet" | "rejected" | "wrong-chain" | "insufficient-funds" | "quote-refused" | "quote-expired" | "unavailable" | "timeout";
+export type DepositStep = "chain" | "wallet" | "quote" | "sending" | "waiting" | "arrived" | "failed" | "held";
+export type InputToken = "USDC" | "USDT";
+export type DepositError = "no-wallet" | "rejected" | "wrong-chain" | "insufficient-funds" | "quote-refused" | "quote-expired" | "unavailable" | "timeout" | "cost-too-high" | "stale";
 
 export interface DepositState {
   step: DepositStep;
   network: ArcNetworkName;
   sourceId: string | null;
+  inputToken: InputToken;
+  swapTx: Hex | null;
+  /** What the conversion credited to the wallet, from its receipt. */
+  converted: bigint | null;
   amount: bigint | null;
   speed: TransferSpeed;
   appliedSpeed: TransferSpeed | null;
@@ -25,7 +30,11 @@ export interface DepositState {
 
 export type DepositEvent =
   | { type: "chain"; id: string }
+  | { type: "token"; value: InputToken }
   | { type: "amount"; value: bigint | null }
+  | { type: "swapped"; swapTx: Hex; credited: bigint }
+  | { type: "held"; amount: bigint; swapTx: Hex }
+  | { type: "resume-held" }
   | { type: "speed"; value: TransferSpeed }
   | { type: "speed-applied"; value: TransferSpeed | null }
   | { type: "wallet"; wallet: InjectedWallet; account: Address }
@@ -41,6 +50,9 @@ export const initialDeposit = (network: ArcNetworkName): DepositState => ({
   step: "chain",
   network,
   sourceId: null,
+  inputToken: "USDC",
+  swapTx: null,
+  converted: null,
   amount: null,
   speed: "fast",
   appliedSpeed: null,
@@ -68,6 +80,14 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
   switch (event.type) {
     case "chain":
       return EDITABLE.includes(state.step) && event.id !== state.sourceId ? edited(state, { sourceId: event.id }) : state;
+    case "token":
+      return EDITABLE.includes(state.step) && event.value !== state.inputToken ? edited(state, { inputToken: event.value }) : state;
+    case "swapped":
+      return { ...state, swapTx: event.swapTx, converted: event.credited };
+    case "held":
+      return { ...state, step: "held", amount: event.amount, swapTx: event.swapTx, error: null };
+    case "resume-held":
+      return { ...initialDeposit(state.network), step: "wallet", sourceId: state.sourceId, wallet: state.wallet, account: state.account, inputToken: "USDC", amount: state.amount };
     case "amount":
       return EDITABLE.includes(state.step) && event.value !== state.amount ? edited(state, { amount: event.value }) : state;
     case "speed":
@@ -89,8 +109,10 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
       return { ...state, step: "arrived", received: event.received, forwardTx: event.forwardTx ?? null, error: null };
     case "failed": {
       if (state.burnTx !== null) return event.error === "timeout" ? { ...state, step: "waiting", error: event.error } : { ...state, step: "failed", error: event.error };
+      // the conversion mined but nothing was sent on: the USDC is in the wallet, so say so instead of offering a USDT quote the wallet can no longer fill
+      if (state.swapTx !== null && state.converted !== null) return { ...state, step: "held", amount: state.converted, error: null };
       // nothing has left the wallet: every failure returns to the form, with the wallet still connected
-      const quote = event.error === "quote-expired" ? null : state.quote;
+      const quote = event.error === "quote-expired" || event.error === "stale" ? null : state.quote;
       const step = event.error === "no-wallet" ? (hasInput(state) ? "wallet" : "chain") : quote ? "quote" : hasInput(state) ? "wallet" : "chain";
       return { ...state, quote, step, depositId: null, error: event.error };
     }
@@ -98,3 +120,6 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
       return initialDeposit(state.network);
   }
 }
+
+/** A quote close to its end is asked for again before any wallet prompt, not merely refused at the end. */
+export const needsRequote = (quote: DepositQuote | null, now: number, marginMs = 10_000): boolean => quote === null || (quote.expiresAt !== null && quote.expiresAt - now < marginMs);

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { sourceChain } from "../src/bridge/chains.ts";
 import { assertConfirmable, isFeeModeUnsupported, normalizeEstimate } from "../src/bridge/quote.ts";
-import { QuoteRefusal } from "../src/bridge/types.ts";
+import { QuoteRefusal, bridgeLegOf } from "../src/bridge/types.ts";
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/bridge/${name}`, import.meta.url), "utf8"));
 const input = (speed: "fast" | "slow" = "fast") => ({
@@ -18,7 +18,7 @@ describe("destination-paid estimates", () => {
   const quote = normalizeEstimate(fixture("estimate-destination.json"), input());
 
   it("subtract every fee from what is sent and say the figure is a floor", () => {
-    const fees = quote.legs[0]?.fees ?? [];
+    const fees = bridgeLegOf(quote)?.fees ?? [];
     expect(fees.map((fee) => fee.kind).sort()).toEqual(["forwarder", "provider"]);
     const total = fees.reduce((sum, fee) => sum + fee.amount, 0n);
     expect(quote.exact).toBe(false);
@@ -27,7 +27,7 @@ describe("destination-paid estimates", () => {
   });
 
   it("carry the network fee of the source chain when the kit estimates it", () => {
-    expect(quote.legs[0]?.gas?.token).toBe("ETH");
+    expect(bridgeLegOf(quote)?.gas?.token).toBe("ETH");
   });
 });
 
@@ -37,7 +37,7 @@ describe("source-paid estimates (receive-exact)", () => {
   it("deliver exactly what was typed and debit it plus the fees", () => {
     expect(quote.exact).toBe(true);
     expect(quote.amountReceivedMin).toBe(100_000_000n);
-    expect(quote.totalDebit).toBe(100_000_000n + (quote.legs[0]?.fees.reduce((sum, fee) => sum + fee.amount, 0n) ?? 0n));
+    expect(quote.totalDebit).toBe(100_000_000n + (bridgeLegOf(quote)?.fees.reduce((sum, fee) => sum + fee.amount, 0n) ?? 0n));
   });
 
   it("expire at the time the kit estimates for the quoted block", () => {
@@ -59,7 +59,7 @@ describe("source-paid estimates (receive-exact)", () => {
   });
 
   it("have no gas figure, because the kit gives none here", () => {
-    expect(quote.legs[0]?.gas).toBeNull();
+    expect(bridgeLegOf(quote)?.gas).toBeNull();
   });
 });
 

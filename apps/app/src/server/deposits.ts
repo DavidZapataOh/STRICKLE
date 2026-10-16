@@ -1,6 +1,6 @@
 import { ARC_DOMAIN, type IrisMessage, type SourceChain, type trackDeposit, sourceChain } from "@strickle/arc/bridge";
 import type { ArcNetworkName } from "@strickle/arc/networks";
-import { type DepositRow, createDeposit, getDeposit, recordArrival, recordBurn } from "@strickle/db/deposits";
+import { type DepositRow, createDeposit, getDeposit, recordArrival, recordBurn, recordSwap } from "@strickle/db/deposits";
 import type { createLimiter } from "@strickle/db/limiter";
 import { createHash } from "node:crypto";
 import type { Sql } from "postgres";
@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export type DepositApiResult =
   | { status: "created"; id: string }
-  | { status: "ok"; deposit: { id: string; state: DepositRow["status"]; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } }
+  | { status: "ok"; deposit: { id: string; state: DepositRow["status"]; inputToken?: "USDC" | "USDT"; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } }
   | { status: "rejected" | "conflict" | "rate-limited" | "unknown-vault" | "not-found" | "closed" | "unavailable" | "misconfigured"; retryAfterSeconds?: number };
 
 export interface DepositDeps {
@@ -40,8 +40,10 @@ const createBody = z.object({
   speed: z.enum(["fast", "slow"]),
   feeMode: z.enum(["source", "destination"]),
   intent: z.enum(["income", "own", "unsure"]),
+  inputToken: z.enum(["USDC", "USDT"]).default("USDC"),
 });
-const updateBody = z.object({ burnTx: z.string().regex(/^0x[0-9a-fA-F]{64}$/) });
+const hash = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
+const updateBody = z.union([z.object({ burnTx: hash }), z.object({ swapTx: hash, swapOut: z.string().regex(/^[1-9][0-9]{0,15}$/) })]);
 
 const STATUS: Record<DepositApiResult["status"], number> = { created: 201, ok: 200, rejected: 400, conflict: 409, "rate-limited": 429, "unknown-vault": 404, "not-found": 404, closed: 503, unavailable: 502, misconfigured: 503 };
 const done = (body: DepositApiResult) => ({ status: STATUS[body.status], body });
@@ -77,6 +79,8 @@ export async function handleCreateDeposit(request: Request, deps: DepositDeps): 
   } catch {
     return done({ status: "rejected" });
   }
+  // no swap quote exists on a network whose registry lists no USDT
+  if (input.inputToken === "USDT" && !source.usdt) return done({ status: "rejected" });
 
   const access = await deps.access(request);
   if (access === "closed") return done({ status: "closed" });
@@ -90,7 +94,7 @@ export async function handleCreateDeposit(request: Request, deps: DepositDeps): 
     if (!(await deps.guard.vault(input.vault as Address)).registered) return done({ status: "unknown-vault" });
     const vault = await deps.limiter.count(`deposit-vault:${input.vault.toLowerCase()}`, 3_600, 10);
     if (!vault.allowed) return done({ status: "rate-limited", retryAfterSeconds: vault.retryAfterSeconds });
-    const id = await createDeposit(deps.sql, { ...input, sourceChain: source.id, amount });
+    const id = await createDeposit(deps.sql, { ...input, sourceChain: source.id, amount, feeMode: input.inputToken === "USDT" ? "destination" : input.feeMode });
     return done({ status: "created", id });
   } catch {
     return done({ status: "unavailable" });
@@ -101,7 +105,7 @@ export async function handleDepositUpdate(request: Request, id: string, deps: De
   if (!sameOrigin(request)) return done({ status: "rejected" });
   const parsed = updateBody.safeParse(await readJson(request));
   if (!parsed.success) return done({ status: "rejected" });
-  const burnTx = parsed.data.burnTx.toLowerCase() as Hex;
+  const update = parsed.data;
 
   const access = await deps.access(request);
   if (access === "closed") return done({ status: "closed" });
@@ -114,14 +118,29 @@ export async function handleDepositUpdate(request: Request, id: string, deps: De
     if (!ip.allowed) return done({ status: "rate-limited", retryAfterSeconds: ip.retryAfterSeconds });
     const row = await getDeposit(deps.sql, id);
     if (!row) return done({ status: "not-found" });
+    if ("swapTx" in update) {
+      const swapTx = update.swapTx.toLowerCase();
+      if (row.swapTx) return row.swapTx === swapTx ? done(okBody(row)) : done({ status: "rejected" });
+      try {
+        if (!(await recordSwap(deps.sql, id, { swapTx, swapOut: BigInt(update.swapOut) }))) return done({ status: "rejected" });
+      } catch (error) {
+        if ((error as { code?: string }).code === UNIQUE_VIOLATION) return done({ status: "conflict" });
+        throw error;
+      }
+      const swapped = await getDeposit(deps.sql, id);
+      return swapped ? done(okBody(swapped)) : done({ status: "not-found" });
+    }
+    const burnTx = update.burnTx.toLowerCase() as Hex;
+    // the swap record may still be on its way: the client keeps asking until it lands
+    if (row.inputToken === "USDT" && row.swapOut === null && !row.burnTx) return done({ status: "rejected", retryAfterSeconds: IRIS_RETRY_SECONDS });
     if (row.burnTx) return row.burnTx === burnTx ? done(okBody(row)) : done({ status: "rejected" });
-    if (row.status !== "created") return done({ status: "rejected" });
+    if (row.status !== "created" && row.status !== "swapped") return done({ status: "rejected" });
 
     const source = sourceChain(deps.network, row.sourceChain);
     const message = await deps.burn(source.domain, burnTx);
     // a pending message has no decoded body yet, so there is nothing to compare: the client asks again
     if (!message || message.destinationDomain === null || message.amount === null) return done({ status: "rejected", retryAfterSeconds: IRIS_RETRY_SECONDS });
-    if (message.destinationDomain !== ARC_DOMAIN || message.amount !== row.amount) return done({ status: "rejected" });
+    if (message.destinationDomain !== ARC_DOMAIN || message.amount !== (row.inputToken === "USDT" ? row.swapOut : row.amount)) return done({ status: "rejected" });
     const sender = await deps.burnSender(source.chainId, burnTx);
     if (!sender) return done({ status: "rejected", retryAfterSeconds: IRIS_RETRY_SECONDS });
     if (sender.toLowerCase() !== row.sourceAddress.toLowerCase()) return done({ status: "rejected" });
@@ -167,5 +186,5 @@ export async function handleDepositRead(request: Request, id: string, deps: Depo
 }
 
 function okBody(row: DepositRow, appliedSpeed?: "fast" | "slow"): DepositApiResult {
-  return { status: "ok", deposit: { id: row.id, state: row.status, ...(row.received !== null ? { received: row.received.toString() } : {}), ...(row.forwardTx ? { forwardTx: row.forwardTx } : {}), ...(appliedSpeed ? { appliedSpeed } : {}) } };
+  return { status: "ok", deposit: { id: row.id, state: row.status, ...(row.inputToken === "USDT" ? { inputToken: row.inputToken } : {}), ...(row.received !== null ? { received: row.received.toString() } : {}), ...(row.forwardTx ? { forwardTx: row.forwardTx } : {}), ...(appliedSpeed ? { appliedSpeed } : {}) } };
 }

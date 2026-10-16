@@ -1,3 +1,4 @@
+import type { Address } from "viem";
 import type { ArcNetworkName } from "../networks.ts";
 import type { SourceChain } from "./types.ts";
 
@@ -13,17 +14,21 @@ const testnet: readonly SourceChain[] = [
 ];
 
 const mainnet: readonly SourceChain[] = [
-  { id: "Ethereum", label: "Ethereum", chainId: 1, domain: 0, usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", explorerUrl: "https://etherscan.io", rpc: ["https://ethereum-rpc.publicnode.com"] },
-  { id: "Base", label: "Base", chainId: 8453, domain: 6, usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", explorerUrl: "https://basescan.org", rpc: ["https://mainnet.base.org"] },
-  { id: "Arbitrum", label: "Arbitrum", chainId: 42161, domain: 3, usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", explorerUrl: "https://arbiscan.io", rpc: ["https://arb1.arbitrum.io/rpc"] },
-  { id: "Optimism", label: "Optimism", chainId: 10, domain: 2, usdc: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", explorerUrl: "https://optimistic.etherscan.io", rpc: ["https://mainnet.optimism.io"] },
-  { id: "Avalanche", label: "Avalanche", chainId: 43114, domain: 1, usdc: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", explorerUrl: "https://subnets.avax.network/c-chain", rpc: ["https://api.avax.network/ext/bc/C/rpc"] },
-  { id: "Polygon", label: "Polygon", chainId: 137, domain: 7, usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", explorerUrl: "https://polygonscan.com", rpc: ["https://polygon.publicnode.com"] },
+  { id: "Ethereum", label: "Ethereum", chainId: 1, domain: 0, usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", explorerUrl: "https://etherscan.io", rpc: ["https://ethereum-rpc.publicnode.com"], usdt: { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" } },
+  { id: "Base", label: "Base", chainId: 8453, domain: 6, usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", explorerUrl: "https://basescan.org", rpc: ["https://mainnet.base.org"], usdt: { address: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2" } },
+  { id: "Arbitrum", label: "Arbitrum", chainId: 42161, domain: 3, usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", explorerUrl: "https://arbiscan.io", rpc: ["https://arb1.arbitrum.io/rpc"], usdt: { address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9" } },
+  { id: "Optimism", label: "Optimism", chainId: 10, domain: 2, usdc: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", explorerUrl: "https://optimistic.etherscan.io", rpc: ["https://mainnet.optimism.io"], usdt: { address: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58" } },
+  { id: "Avalanche", label: "Avalanche", chainId: 43114, domain: 1, usdc: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", explorerUrl: "https://subnets.avax.network/c-chain", rpc: ["https://api.avax.network/ext/bc/C/rpc"], usdt: { address: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7" } },
+  { id: "Polygon", label: "Polygon", chainId: 137, domain: 7, usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", explorerUrl: "https://polygonscan.com", rpc: ["https://polygon.publicnode.com"], usdt: { address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" } },
 ];
 
 const byNetwork: Record<ArcNetworkName, readonly SourceChain[]> = { testnet, mainnet };
 
 export const sourceChainsFor = (network: ArcNetworkName): readonly SourceChain[] => byNetwork[network];
+
+export function usdtChainsFor(network: ArcNetworkName): readonly (SourceChain & { usdt: { address: Address } })[] {
+  return byNetwork[network].filter((chain): chain is SourceChain & { usdt: { address: Address } } => chain.usdt !== undefined);
+}
 
 export function sourceChain(network: ArcNetworkName, id: string): SourceChain {
   const found = byNetwork[network].find((entry) => entry.id === id);

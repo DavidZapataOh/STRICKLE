@@ -65,6 +65,11 @@ describe("DepositView", () => {
     expect(view(base)).not.toContain(en.deposit.quote.refresh);
   });
 
+  it("shows the amount that was prefilled after sending a held conversion on", () => {
+    const out = view({ ...initialDeposit("testnet"), step: "wallet", sourceId: "Base_Sepolia", amount: 99_400_000n });
+    expect(out).toContain('value="99.4"');
+  });
+
   it("lets a user whose transfer is stuck start another, and keeps a timed-out one in waiting", () => {
     const burnTx = `0x${"ab".repeat(32)}` as const;
     expect(view({ ...initialDeposit("testnet"), step: "failed", error: "unavailable", burnTx })).toContain(en.deposit.states.another);
@@ -83,6 +88,10 @@ describe("DepositView", () => {
 });
 
 describe("errors", () => {
+  it("says the wallet holds too little when the executor refuses for the balance", () => {
+    expect(errorOf(Object.assign(new Error("x"), { name: "QuoteRefusal", code: "insufficient-balance" }))).toBe("insufficient-funds");
+  });
+
   it("maps the kit's own messages", () => {
     expect(errorOf(new Error("Insufficient USDC balance on Base Sepolia. Required: 5, available: 1"))).toBe("insufficient-funds");
     expect(errorOf(new Error("The fee quote is not safe for submission. Call estimate again"))).toBe("quote-expired");

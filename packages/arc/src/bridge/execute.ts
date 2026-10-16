@@ -3,9 +3,9 @@ import { formatAmount } from "./amount.ts";
 import { ARC_KIT_CHAIN } from "./chains.ts";
 import type { DepositAdapter, DepositKit } from "./kit.ts";
 import { assertConfirmable } from "./quote.ts";
-import type { DepositQuote } from "./types.ts";
+import { type DepositQuote, bridgeLegOf } from "./types.ts";
 
-export type DepositProgress = { stage: "approve" | "burn" | "attestation" | "arrival"; state: "pending" | "done" | "failed"; txHash?: Hex };
+export type DepositProgress = { stage: "swap" | "approve" | "burn" | "attestation" | "arrival"; state: "pending" | "done" | "failed"; txHash?: Hex; amount?: bigint };
 
 const STAGES: Record<string, DepositProgress["stage"]> = { approve: "approve", burn: "burn", fetchAttestation: "attestation", mint: "arrival" };
 const STATES: Record<string, DepositProgress["state"] | undefined> = { pending: "pending", success: "done", error: "failed" };
@@ -22,7 +22,7 @@ export const burnTxOf = (result: { steps: readonly { name: string; txHash?: stri
 /** Sends the quoted transfer (one kit instance per deposit, so the progress listener dies with it). The returned burn hash is what the tracker follows if the page is closed before the kit's promise settles. */
 export async function executeDeposit(deps: { kit: DepositKit; adapter: DepositAdapter }, quote: DepositQuote, onProgress: (progress: DepositProgress) => void): Promise<{ burnTx: Hex }> {
   assertConfirmable(quote);
-  const leg = quote.legs[0];
+  const leg = bridgeLegOf(quote);
   if (!leg) throw new Error("the quote has no bridge leg");
   deps.kit.on("*", (event: unknown) => {
     const step = event as { method?: string; values?: { name?: string; state?: string; txHash?: string } };

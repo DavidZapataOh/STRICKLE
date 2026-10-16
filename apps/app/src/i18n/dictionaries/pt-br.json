@@ -506,7 +506,8 @@
       "failed": "Este depósito não terminou",
       "failedBody": "Se a transferência já saiu da sua carteira, ela ainda pode chegar. Verifique de novo em instantes.",
       "retry": "Verificar de novo",
-      "another": "Adicionar mais dinheiro"
+      "another": "Adicionar mais dinheiro",
+      "converting": "Convertendo seu USDT"
     },
     "direct": {
       "title": "Enviar diretamente",
@@ -524,7 +525,29 @@
       "quote-refused": "Esta transferência não pode ser cotada agora. Tente outro valor ou outra cadeia.",
       "quote-expired": "A cotação expirou. Peça uma nova.",
       "unavailable": "Algo deu errado ao acessar a rede. Tente de novo.",
-      "timeout": "A transferência ainda não chegou. Ela pode estar a caminho: verifique de novo."
+      "timeout": "A transferência ainda não chegou. Ela pode estar a caminho: verifique de novo.",
+      "cost-too-high": "A conversão consumiria uma parte grande demais deste valor. Tente um valor maior.",
+      "stale": "A cotação está antiga. Peça uma nova."
+    },
+    "token": {
+      "label": "O que você está enviando?",
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "usdtNote": "Convertido primeiro para USDC e depois enviado ao seu cofre"
+    },
+    "swap": {
+      "title": "Converter USDT em USDC",
+      "fee": "Taxa de conversão",
+      "route": "Rota: {route}",
+      "floor": "A conversão só é feita se você receber pelo menos {amount}, mesmo que o preço se mova até {percent}.",
+      "expected": "Esperado: {amount}",
+      "network": "Taxa de rede ({token})"
+    },
+    "held": {
+      "title": "Seu USDT agora é USDC na sua carteira",
+      "body": "A conversão foi feita, mas a transferência para a Arc não conseguiu manter o valor que você viu. Nada se perdeu: {amount} estão na sua carteira.",
+      "send": "Enviar ao seu cofre",
+      "tx": "Transação de conversão"
     }
   },
   "rules": {

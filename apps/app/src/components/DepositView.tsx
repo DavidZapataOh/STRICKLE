@@ -1,6 +1,7 @@
-import type { DepositQuote } from "@strickle/arc/bridge/types";
-import { sourceChain, sourceChainsFor } from "@strickle/arc/bridge/chains";
+import { type DepositQuote, bridgeLegOf } from "@strickle/arc/bridge/types";
+import { sourceChain, sourceChainsFor, usdtChainsFor } from "@strickle/arc/bridge/chains";
 import { formatMoney } from "@strickle/design/format";
+import { formatUnits } from "viem";
 import type { DepositEvent, DepositState } from "@/deposit/flow";
 import { describeError } from "@/deposit/messages";
 import { explorerLink } from "@/config/network";
@@ -28,7 +29,7 @@ const EDITABLE = ["chain", "wallet", "quote"];
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 
 function feeOf(quote: DepositQuote | null): bigint | null {
-  const leg = quote?.legs.find((candidate) => candidate.kind === "bridge");
+  const leg = quote ? bridgeLegOf(quote) : undefined;
   return leg ? leg.fees.reduce((sum, fee) => sum + fee.amount, 0n) : null;
 }
 
@@ -41,7 +42,27 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
   if (state.step === "sending") {
     return (
       <div className="deposit">
-        <p role="status">{d.states.sending}</p>
+        <p role="status">{state.inputToken === "USDT" && !state.swapTx ? d.states.converting : d.states.sending}</p>
+      </div>
+    );
+  }
+
+  if (state.step === "held") {
+    const conversionLink = state.swapTx && state.sourceId ? `${sourceChain(state.network, state.sourceId).explorerUrl}/tx/${state.swapTx}` : null;
+    return (
+      <div className="deposit">
+        <Card as="section" aria-labelledby="deposit-held">
+          <h2 id="deposit-held">{d.held.title}</h2>
+          <p>{fill(d.held.body, { amount: state.amount !== null ? formatMoney(state.amount, lang) : "" })}</p>
+          <button type="button" className="btn" onClick={() => onEvent({ type: "resume-held" })}>
+            {d.held.send}
+          </button>
+          {conversionLink ? (
+            <a href={conversionLink} rel="noreferrer" target="_blank">
+              {d.held.tx}
+            </a>
+          ) : null}
+        </Card>
       </div>
     );
   }
@@ -119,7 +140,19 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
           value={state.sourceId}
           onChange={(id) => onEvent({ type: "chain", id })}
         />
-        <AmountField id="deposit-amount" label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
+        {state.sourceId && usdtChainsFor(state.network).some((chain) => chain.id === state.sourceId) ? (
+          <ChoiceGroup
+            name="deposit-token"
+            legend={d.token.label}
+            options={[
+              { value: "USDC" as const, label: d.token.usdc },
+              { value: "USDT" as const, label: d.token.usdt, hint: d.token.usdtNote },
+            ]}
+            value={state.inputToken}
+            onChange={(value) => onEvent({ type: "token", value })}
+          />
+        ) : null}
+        <AmountField id="deposit-amount" initial={state.amount !== null ? formatUnits(state.amount, 6) : ""} label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
         <ChoiceGroup
           name="deposit-speed"
           legend={d.speed.label}
