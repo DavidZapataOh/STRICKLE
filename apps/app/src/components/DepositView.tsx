@@ -136,7 +136,7 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
           <div role="group" aria-label={d.wallet.choose} className="wallet-list">
             {wallets.map((wallet) => (
               <button key={wallet.uuid} type="button" className="btn" data-variant="quiet" onClick={() => actions.pick(wallet)}>
-                {/* biome-ignore lint/performance/noImgElement: an inline data: image announced by the wallet, never fetched */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- an inline data: image announced by the wallet, never fetched */}
                 <img src={wallet.icon} alt="" width={24} height={24} />
                 {wallet.name}
               </button>

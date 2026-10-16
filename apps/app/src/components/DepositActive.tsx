@@ -2,7 +2,7 @@
 
 import { sourceChain } from "@strickle/arc/bridge/chains";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { type Address, type Hex, getAddress } from "viem";
+import { type Hex, getAddress } from "viem";
 import { appNetwork } from "@/config/network";
 import { depositReducer, initialDeposit } from "@/deposit/flow";
 import { errorOf } from "@/deposit/messages";
@@ -75,9 +75,10 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     void follow(pending.id);
   }, [follow]);
 
+  const { sourceId, amount, speed, account: sender, network } = state;
+
   // ask for a quote whenever what is being deposited changes; an older answer never overwrites a newer one
   useEffect(() => {
-    const { sourceId, amount, speed, account: sender } = state;
     const connection = bridge.current;
     if (!sourceId || !amount || !sender || !connection) return;
     const ticket = ++latestQuote.current;
@@ -85,7 +86,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       try {
         const quote = await connection.module.quoteDeposit(
           { kit: connection.kit, adapter: connection.adapter },
-          { network: state.network, source: sourceChain(state.network, sourceId), sourceAddress: sender, vault: account.vault, amountSent: amount, speed },
+          { network, source: sourceChain(network, sourceId), sourceAddress: sender, vault: account.vault, amountSent: amount, speed },
         );
         if (ticket === latestQuote.current && alive.current) dispatch({ type: "quoted", quote });
       } catch (error) {
@@ -97,7 +98,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     }, QUOTE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
     // the connection is a ref: it changes together with state.account
-  }, [state.sourceId, state.amount, state.speed, state.account, state.network, account.vault, round]);
+  }, [sourceId, amount, speed, sender, network, account.vault, round]);
 
   async function connect() {
     setWallets(await discoverWallets());
@@ -109,8 +110,8 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       const accounts = (await wallet.provider.request({ method: "eth_requestAccounts" })) as string[];
       const first = accounts[0];
       if (!first) throw new Error("the wallet returned no account");
-      const module = await import("@strickle/arc/bridge");
-      bridge.current = { module, kit: module.createDepositKit(), adapter: await module.adapterFromProvider(wallet.provider, state.network), provider: wallet.provider };
+      const bridgeModule = await import("@strickle/arc/bridge");
+      bridge.current = { module: bridgeModule, kit: bridgeModule.createDepositKit(), adapter: await bridgeModule.adapterFromProvider(wallet.provider, state.network), provider: wallet.provider };
       dispatch({ type: "wallet", wallet, account: getAddress(first) });
     } catch (error) {
       dispatch({ type: "failed", error: errorOf(error) });
