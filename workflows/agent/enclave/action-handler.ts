@@ -13,6 +13,7 @@ import { deliver } from "./deliver.ts";
 import { decryptState, deriveSealKey, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
 import { acceptSpend, planPrivatePay } from "./private-pay.ts";
+import { buildPlanNotice } from "./plan.ts";
 import { ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
 import { proveSpec, resolveLeaf } from "./prover-call.ts";
 import { ethBatch } from "./read.ts";
@@ -109,9 +110,11 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
       : encodeTickReport({ vault, next, ciphertext }),
   );
 
-  if (profile.userKey !== ZERO_KEY && result.notices.length > 0) {
+  // an adjust is confirmed by what is now in force: the app reads it from this fresh plan
+  const notices = request.action.kind === "adjust" ? [...result.notices, buildPlanNotice({ profile: stored, books, today, vault, nowSeconds: now })] : result.notices;
+  if (profile.userKey !== ZERO_KEY && notices.length > 0) {
     const userKey = hexToBytes(profile.userKey as Hex);
-    result.notices.forEach((notice, index) => {
+    notices.forEach((notice, index) => {
       const id = noticeCount + BigInt(index) + 1n;
       deliver(runtime, executor, encodeNoticeReport({ vault, id, sealed: bytesToHex(sealNotice(master, userKey, vault, id, notice)) }));
     });

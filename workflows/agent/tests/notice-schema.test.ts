@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { noticeSchema, planNoticeSchema } from "../enclave/notice-schema.ts";
 
+const settings = { proposed: "1000000", day: 1, payee: "0x00000000000000000000000000000000000000b2", dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [] as string[] };
 const plan = {
   kind: "plan" as const,
   asOf: "2026-11-01",
@@ -11,6 +12,7 @@ const plan = {
   events: [{ date: "2026-12-01", kind: "salary" as const, amount: "1000000" }, { date: "2026-12-17", kind: "tax" as const, amount: null }],
   targets: { taxes: "0", payroll: "0", salary: "1000000", operating: "840000", emergency: "0" },
   rates: { taxBps: 1800 },
+  settings,
 };
 
 describe("planNoticeSchema", () => {
@@ -30,6 +32,11 @@ describe("planNoticeSchema", () => {
     ["more than 26 forecast points", { forecast: { ...plan.forecast, p50: Array.from({ length: 27 }, () => "1") } }],
     ["an unknown forecast basis", { forecast: { ...plan.forecast, basis: "guess" } }],
     ["a negative amount where only units are allowed", { targets: { ...plan.targets, salary: "-1" } }],
+    ["no settings", { settings: undefined }],
+    ["a salary day of 29", { settings: { ...settings, day: 29 } }],
+    ["eight halt codes", { settings: { ...settings, haltCodes: Array(8).fill("c") } }],
+    ["a negative cap", { settings: { ...settings, dailyCap: "-1" } }],
+    ["an extra settings field", { settings: { ...settings, extra: 1 } }],
   ])("refuses %s", (_name, patch) => {
     expect(planNoticeSchema.safeParse({ ...plan, ...patch }).success).toBe(false);
   });

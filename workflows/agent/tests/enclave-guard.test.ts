@@ -54,4 +54,10 @@ describe("enclave sources", () => {
     expect(handler).toContain('getSecret({ id: "PROVER_TOKEN" })');
     expect(call).not.toMatch(/getSecret|ConfidentialHTTPClient|fetch\(/);
   });
+
+  it("the action handler publishes a fresh plan after an adjust, so the user sees what is now in force", () => {
+    const handler = readFileSync(new URL("action-handler.ts", dir), "utf8");
+    expect(handler).toMatch(/buildPlanNotice\(/);
+    expect(handler).toMatch(/kind === "adjust"/);
+  });
 });

@@ -20,6 +20,7 @@ const plan = (asOf: string) => ({
   events: [],
   targets: { taxes: "0", payroll: "0", salary: "1000000", operating: "840000", emergency: "0" },
   rates: { taxBps: 1800 },
+  settings: { proposed: "1800000000", day: 1, payee: "0x00000000000000000000000000000000000000b2", dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [] },
 });
 const salary = { kind: "salary" as const, month: "2026-11", paid: "1", pending: "0" };
 

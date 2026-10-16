@@ -122,4 +122,19 @@ describe("buildPlanNotice", () => {
     });
     expect(new TextEncoder().encode(JSON.stringify(build(wide))).length).toBeLessThan(3_000);
   });
+
+  it("carries the settings in force so the app can show them", () => {
+    const notice = buildPlanNotice({ profile: profile({ limits: { dailyCap: "100000000", signatureThreshold: "0" } }), books: books(), today, vault, nowSeconds: NOW });
+    expect(notice.settings).toEqual({
+      proposed: "1000000", day: 1, payee: "0x00000000000000000000000000000000000000b2",
+      dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [],
+    });
+  });
+
+  it("tells a user pause from a halt raised by an invariant", () => {
+    const paused = buildPlanNotice({ profile: profile({ breaker: { halted: true, since: "2026-11-01", codes: ["user-pause"] } }), books: books(), today, vault, nowSeconds: NOW });
+    expect(paused.settings).toMatchObject({ halted: true, haltCodes: ["user-pause"] });
+    const stopped = buildPlanNotice({ profile: profile({ breaker: { halted: true, since: "2026-11-01", codes: ["books-balance"] } }), books: books(), today, vault, nowSeconds: NOW });
+    expect(stopped.settings.haltCodes).toEqual(["books-balance"]);
+  });
 });

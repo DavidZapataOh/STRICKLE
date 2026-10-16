@@ -23,6 +23,7 @@ export const planNotice = (patch: Partial<PlanNotice> = {}): PlanNotice => ({
   events: [{ date: "2026-12-01", kind: "salary", amount: "1800000000" }, { date: "2026-12-17", kind: "tax", amount: null }],
   targets: { taxes: "0", payroll: "0", salary: "0", operating: "0", emergency: "0" },
   rates: { taxBps: 1800 },
+  settings: { proposed: "1800000000", day: 1, payee: "0x00000000000000000000000000000000000000b2", dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [] },
   ...patch,
 });
 
