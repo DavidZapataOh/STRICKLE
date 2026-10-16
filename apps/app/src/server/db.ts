@@ -1,5 +1,5 @@
 import "server-only";
-import { createLimiter } from "@strickle/db";
+import { createLimiter } from "@strickle/db/limiter";
 import postgres from "postgres";
 
 let limiter: ReturnType<typeof createLimiter> | undefined;

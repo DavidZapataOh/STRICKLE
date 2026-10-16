@@ -1,7 +1,7 @@
 import { envelopeSchema } from "@strickle/agent/signed";
 import { createHash } from "node:crypto";
 import type { Address, Hex } from "viem";
-import type { createLimiter } from "@strickle/db";
+import type { createLimiter } from "@strickle/db/limiter";
 import type { GatewayResult } from "./forward.ts";
 
 import type { RelayResult, RelayStatus } from "./relay-types.ts";

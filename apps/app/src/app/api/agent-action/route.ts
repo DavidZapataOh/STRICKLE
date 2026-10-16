@@ -6,9 +6,6 @@ import { relayLimiter } from "@/server/db";
 import { postToGateway } from "@/server/forward";
 import { type RelayResult, handleRelay } from "@/server/relay";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 // Built on first use: a build for a network whose contracts are not deployed must still compile.
 let guard: ReturnType<typeof createChainGuard> | undefined;
 const chainGuard = () => (guard ??= createChainGuard(getPublicClient(), deploymentsFor()));
