@@ -45,7 +45,21 @@ test("with no wallet installed it says so and still shows the direct address", a
   await expect(page.getByText(VAULT)).toBeVisible();
 });
 
-test("a wallet that cannot sign still gets a real quote and a refusal path, and nothing but the kit's usage-log call is blocked by the policy", async ({ page }) => {
+// Circle's estimator is a shared service and throttles bursts (the browser then reports a CORS failure): the quote tests run one at a time, and when it still throttles the screen offers a new quote and the test asks again after a pause
+async function aQuote(page: import("@playwright/test").Page) {
+  const quote = page.getByText("You send");
+  const again = page.getByRole("button", { name: "Refresh quote" });
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    await expect(quote.or(again)).toBeVisible({ timeout: 30_000 });
+    if (await quote.isVisible()) return;
+    await page.waitForTimeout(3_000 * attempt);
+    await again.click();
+  }
+  await expect(quote).toBeVisible({ timeout: 30_000 });
+}
+
+test("a wallet that cannot sign still gets a real quote and a refusal path, and nothing but the kit's usage-log call is blocked by the policy @quote", async ({ page }) => {
+  test.setTimeout(180_000);
   const wallet = createHeadlessWallet({ privateKey: `0x${"11".repeat(32)}`, signing: false });
   await wallet.install(page);
   const violations: string[] = [];
@@ -55,7 +69,7 @@ test("a wallet that cannot sign still gets a real quote and a refusal path, and 
   await page.getByRole("button", { name: /Headless/ }).click();
   await page.getByRole("radio", { name: "Base" }).check();
   await page.getByLabel("Amount (USDC)").fill("25");
-  await expect(page.getByText("You send")).toBeVisible({ timeout: 30_000 });
+  await aQuote(page);
   await expect(page.getByText(/exactly|at least/).first()).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText(/rejected/i)).toBeVisible();

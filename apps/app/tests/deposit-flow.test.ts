@@ -39,6 +39,13 @@ describe("the deposit flow", () => {
     expect(state.error).toBe("rejected");
   });
 
+  it("keeps the form, and the connected wallet, when a quote cannot be had before anything was sent", () => {
+    const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "failed", error: "unavailable" }]);
+    expect(state.step).toBe("wallet");
+    expect(state.error).toBe("unavailable");
+    expect(state.account).toBe("0xabc");
+  });
+
   it("remembers the speed Circle applied, which may differ from the one asked for", () => {
     const waiting = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "burned", burnTx: "0xb" as never }, { type: "speed-applied", value: "slow" }]);
     expect(waiting.speed).toBe("fast");

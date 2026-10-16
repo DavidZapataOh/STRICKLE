@@ -59,6 +59,12 @@ describe("DepositView", () => {
     expect(view(initialDeposit("testnet"), es as typeof en, "es")).toContain("Agregar dinero");
   });
 
+  it("offers to ask for the quote again when it could not be had, and not before a wallet is connected", () => {
+    const base = { ...initialDeposit("testnet"), step: "wallet" as const, sourceId: "Base_Sepolia", amount: 5_000_000n, error: "unavailable" as const };
+    expect(view({ ...base, account: "0xabc" as never })).toContain(en.deposit.quote.refresh);
+    expect(view(base)).not.toContain(en.deposit.quote.refresh);
+  });
+
   it("shows the error that sent the user back, and a way to check again after a burn", () => {
     const failed = { ...initialDeposit("testnet"), step: "failed" as const, error: "timeout" as const, burnTx: `0x${"ab".repeat(32)}` as const };
     const out = view(failed);

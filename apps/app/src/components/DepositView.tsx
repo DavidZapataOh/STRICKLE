@@ -20,9 +20,10 @@ export interface DepositActions {
   pick(wallet: InjectedWallet): void;
   confirm(): void;
   check(): void;
+  refresh(): void;
 }
 
-const noActions: DepositActions = { connect: () => {}, pick: () => {}, confirm: () => {}, check: () => {} };
+const noActions: DepositActions = { connect: () => {}, pick: () => {}, confirm: () => {}, check: () => {}, refresh: () => {} };
 const EDITABLE = ["chain", "wallet", "quote"];
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 
@@ -156,6 +157,12 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
           </>
         )}
       </Card>
+
+      {state.account && !state.quote && state.error && state.sourceId && state.amount ? (
+        <button type="button" className="btn" data-variant="quiet" onClick={actions.refresh}>
+          {d.quote.refresh}
+        </button>
+      ) : null}
 
       {state.quote ? (
         <>

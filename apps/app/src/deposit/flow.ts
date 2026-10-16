@@ -91,6 +91,8 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
     case "failed":
       if (state.burnTx !== null) return { ...state, step: "failed", error: event.error };
       if (event.error === "no-wallet") return { ...state, step: hasInput(state) ? "wallet" : "chain", error: event.error };
+      // nothing has been sent yet, so there is nothing to give up on: the form and the connected wallet stay
+      if (state.depositId === null) return { ...state, quote: event.error === "quote-expired" ? null : state.quote, step: hasInput(state) ? "wallet" : "chain", error: event.error };
       if (!RECOVERABLE.includes(event.error)) return { ...state, step: "failed", error: event.error };
       // an expired quote must be asked for again; any other recoverable failure keeps the quote on screen
       return event.error === "quote-expired" ? { ...state, quote: null, step: "wallet", error: event.error } : { ...state, step: state.quote ? "quote" : "wallet", error: event.error };

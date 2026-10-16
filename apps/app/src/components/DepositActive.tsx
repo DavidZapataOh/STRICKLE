@@ -181,7 +181,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
         if (event.type === "failed" && event.error === "quote-expired") setRound((value) => value + 1);
         dispatch(event);
       }}
-      actions={{ connect: () => void connect(), pick: (wallet) => void pick(wallet), confirm: () => void confirm(), check }}
+      actions={{ connect: () => void connect(), pick: (wallet) => void pick(wallet), confirm: () => void confirm(), check, refresh: () => setRound((value) => value + 1) }}
     />
   );
 }
