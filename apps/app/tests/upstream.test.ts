@@ -37,6 +37,14 @@ describe("buildUpstream", () => {
       expect(url.searchParams.get("topic1")).toBe(`0x${"0".repeat(24)}${vault.slice(2)}`);
     }
   });
+
+  it("reads the executor's PrivateSpend events of one vault", () => {
+    const url = new URL(buildUpstream("private-spend", vault, deployments, options));
+    expect(url.searchParams.get("address")).toBe(deployments.AgentExecutor);
+    expect(url.searchParams.get("topic0")).toBe(topic0("PrivateSpend(address,uint256)"));
+    expect(url.searchParams.get("topic0_1_opr")).toBe("and");
+    expect(url.searchParams.get("topic1")).toBe(`0x${"0".repeat(24)}${vault.slice(2)}`);
+  });
 });
 
 describe("explorerApiFor", () => {

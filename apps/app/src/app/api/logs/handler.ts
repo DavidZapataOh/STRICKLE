@@ -15,7 +15,9 @@ export interface LogsDeps {
   timeoutMs?: number;
 }
 
-const KINDS: readonly LogKind[] = ["notice", "allocated", "split", "salary"];
+const KINDS: readonly LogKind[] = ["notice", "allocated", "split", "salary", "private-spend"];
+/** A cursor is rounded down to a bucket so the cache stays bounded however many different cursors callers send. */
+const CURSOR_BUCKET = 1_000;
 /** About 100 days of Arc blocks (half a second each); a vault's recent history, not its whole life. */
 export const WINDOW_BLOCKS = 17_000_000;
 const MAX_PAGES = 5;
@@ -53,10 +55,10 @@ export function createLogsHandler(deps: LogsDeps): (request: Request) => Promise
     }
   }
 
-  async function collect(kind: LogKind, vault: Address): Promise<{ logs: Entry[]; truncated: boolean } | null> {
+  async function collect(kind: LogKind, vault: Address, cursor: number): Promise<{ logs: Entry[]; truncated: boolean } | null> {
     const head = await deps.headBlock();
     for (const [attempt, divisor] of SHRINKS.entries()) {
-      const fromBlock = Math.max(0, head - Math.floor(WINDOW_BLOCKS / divisor));
+      const fromBlock = Math.max(cursor, head - Math.floor(WINDOW_BLOCKS / divisor), 0);
       const logs: Entry[] = [];
       let capped = true;
       for (let number = 1; number <= MAX_PAGES; number++) {
@@ -79,6 +81,10 @@ export function createLogsHandler(deps: LogsDeps): (request: Request) => Promise
     const raw = url.searchParams.get("vault") ?? "";
     if (!kind || !KINDS.includes(kind) || !isAddress(raw, { strict: false })) return Response.json({ error: "bad request" }, { status: 400 });
 
+    const rawCursor = url.searchParams.get("fromBlock");
+    if (rawCursor !== null && !/^[0-9]{1,12}$/.test(rawCursor)) return Response.json({ error: "bad request" }, { status: 400 });
+    const cursor = rawCursor === null ? 0 : Math.floor(Number(rawCursor) / CURSOR_BUCKET) * CURSOR_BUCKET;
+
     const who = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const turn = limiter(who);
     if (!turn.allowed) return Response.json({ error: "slow down" }, { status: 429, headers: { "retry-after": String(turn.retryAfterSeconds), "cache-control": "no-store" } });
@@ -86,10 +92,10 @@ export function createLogsHandler(deps: LogsDeps): (request: Request) => Promise
     const vault = getAddress(raw);
     if (!(await genuine(vault))) return Response.json({ error: "unknown vault" }, { status: 404, headers: { "cache-control": "public, max-age=60" } });
 
-    const key = `${kind}:${vault}`;
+    const key = `${kind}:${vault}:${cursor}`;
     let answer = answers.get(key);
     if (!answer) {
-      const running = inflight.get(key) ?? collect(kind, vault).finally(() => inflight.delete(key));
+      const running = inflight.get(key) ?? collect(kind, vault, cursor).finally(() => inflight.delete(key));
       inflight.set(key, running);
       const collected = await running.catch(() => null);
       if (!collected) return unavailable();

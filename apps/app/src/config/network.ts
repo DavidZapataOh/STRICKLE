@@ -6,6 +6,8 @@ export interface Deployments {
   BoxVaultFactory: `0x${string}`;
   AgentState: `0x${string}`;
   AgentExecutor: `0x${string}`;
+  PolicyPool: `0x${string}`;
+  blocks: { AgentState: number; AgentExecutor: number };
 }
 
 export function resolveNetwork(value: string | undefined): ArcNetworkName {
@@ -31,6 +33,8 @@ export function deploymentsFor(name: ArcNetworkName = appNetwork()): Deployments
   if (!found) throw new Error(`the contracts are not deployed on ${name}`);
   return found;
 }
+
+export const executorFirstBlock = (name: ArcNetworkName = appNetwork()): bigint => BigInt(deploymentsFor(name).blocks.AgentExecutor);
 
 export function explorerLink(kind: "address" | "tx", value: string, name: ArcNetworkName = appNetwork()): string {
   return `${networks[name].explorerUrl}/${kind}/${value}`;

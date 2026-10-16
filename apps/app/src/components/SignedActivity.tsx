@@ -1,0 +1,132 @@
+"use client";
+
+import type { Locale } from "@strickle/design/locale";
+import { useEffect, useRef, useState } from "react";
+import { verifyKeyAgainstNotices } from "@/activity/key-check";
+import { useActivity } from "@/activity/use-activity";
+import type { Session } from "@/account/session";
+import { confirmDecision } from "@/agent/confirm";
+import { withProposalLock } from "@/agent/lock";
+import type { FailReason, Phase } from "@/agent/outcome";
+import { sendAgentAction } from "@/agent/send";
+import { getPublicClient } from "@/chain/client";
+import { readVault } from "@/chain/vault";
+import { executorFirstBlock } from "@/config/network";
+import { EmptyState } from "@/ui/EmptyState";
+import { fill } from "@/i18n/fill";
+import type { ActivityText } from "@/i18n/slices";
+import { type NoticeKey, loadNoticeKey } from "@/keys/notice-key";
+import { connectWallet } from "@/wallet/passkey";
+import { ProposalCard } from "./ProposalCard";
+import { ReceiptStrip } from "./ReceiptStrip";
+import { RestoreKey } from "./RestoreKey";
+
+type Progress = { phase: Phase; reason?: FailReason; decision?: "approve" | "reject"; anotherTab?: boolean };
+
+/** The receipts and proposals of a signed-in account, and the decisions the person can take with their passkey. */
+export function SignedActivity({ session, lang, t }: { session: Session; lang: Locale; t: ActivityText }) {
+  const copy = t.activity;
+  const [key, setKey] = useState<NoticeKey | null | undefined>(undefined);
+  const [unverified, setUnverified] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [progress, setProgress] = useState<Record<string, Progress>>({});
+  const wallet = useRef<Awaited<ReturnType<typeof connectWallet>> | undefined>(undefined);
+
+  useEffect(() => {
+    void loadNoticeKey(session.vault).then(setKey);
+    void readVault(session.vault).then((vault) => setPaused(vault.agentPaused), () => undefined);
+  }, [session.vault]);
+
+  const activity = useActivity({ vault: session.vault, key: key ?? null, locale: lang });
+
+  const decide = async (proposalId: string, digest: `0x${string}`, kind: "approve" | "reject") => {
+    const set = (phase: Phase, reason?: FailReason, anotherTab = false) => setProgress((current) => ({ ...current, [proposalId]: { phase, reason, decision: kind, anotherTab } }));
+    const run = await withProposalLock(proposalId, async () => {
+      const sinceBlock = (await getPublicClient().getBlockNumber()) - 1n;
+      wallet.current ??= await connectWallet("login", session.username);
+      const action = kind === "approve" ? ({ kind: "approve", proposalId, digest } as const) : ({ kind: "reject", proposalId } as const);
+      const status = kind === "approve" ? "executed" : "rejected";
+      const outcome = await sendAgentAction({
+        wallet: wallet.current,
+        vault: session.vault,
+        action,
+        onPhase: (phase) => set(phase),
+        confirm: () => confirmDecision({ vault: session.vault, key: key ?? null, proposalId, status, sinceBlock }),
+      });
+      set(outcome.phase, outcome.reason);
+      if (outcome.phase === "confirmed") activity.reload();
+    });
+    if (!run.ran) set("idle", undefined, true);
+  };
+
+  if (key === undefined || activity.status === "loading") return <p aria-live="polite">{copy.loading}</p>;
+  if (activity.status === "error") {
+    return (
+      <div>
+        <p role="alert">{copy.loadFailed}</p>
+        <button type="button" className="btn" data-variant="quiet" onClick={activity.reload}>
+          {copy.retry}
+        </button>
+      </div>
+    );
+  }
+
+  const pending = activity.proposals.filter((proposal) => proposal.state === "pending" || progress[proposal.proposalId]);
+  return (
+    <div className="activity">
+      {key === null ? (
+        <>
+          <section className="key-missing" aria-labelledby="key-missing-title">
+            <h2 id="key-missing-title">{copy.key.missingTitle}</h2>
+            <p>{copy.key.missingBody}</p>
+          </section>
+          <RestoreKey
+            vault={session.vault}
+            t={t}
+            verify={async (candidate) => ({ matches: true, mismatch: false, unknown: "unknown" as const })[verifyKeyAgainstNotices(activity.sealed, session.vault, candidate)]}
+            onRestored={(verified) => {
+              setUnverified(!verified);
+              void loadNoticeKey(session.vault).then(setKey);
+            }}
+          />
+        </>
+      ) : null}
+      {unverified ? <p className="activity-note">{t.start.restore.unverified}</p> : null}
+      {key && activity.unreadable > 0 ? <p className="activity-note">{fill(copy.key.unreadable, { count: activity.unreadable })}</p> : null}
+      {activity.truncated ? <p className="activity-note">{copy.truncated}</p> : null}
+      {pending.length > 0 ? (
+        <section aria-labelledby="pending-title">
+          <h2 id="pending-title" className="section-title">{copy.pendingHeading}</h2>
+          {pending.map((proposal) => {
+            const own = progress[proposal.proposalId];
+            return (
+              <ProposalCard
+                key={proposal.proposalId}
+                proposal={proposal}
+                locale={lang}
+                t={t}
+                phase={own?.phase ?? "idle"}
+                reason={own?.reason}
+                decision={own?.decision}
+                anotherTab={own?.anotherTab}
+                paused={paused}
+                now={activity.now}
+                onApprove={() => void decide(proposal.proposalId, proposal.digest, "approve")}
+                onReject={() => void decide(proposal.proposalId, proposal.digest, "reject")}
+              />
+            );
+          })}
+        </section>
+      ) : null}
+      <section aria-labelledby="history-title">
+        <h2 id="history-title" className="section-title">{copy.historyHeading}</h2>
+        {activity.receipts.length === 0 ? (
+          <EmptyState title={t.screens.activity.emptyTitle} body={t.screens.activity.emptyBody} />
+        ) : (
+          activity.receipts.map((receipt) => <ReceiptStrip key={receipt.id} receipt={receipt} locale={lang} t={t} />)
+        )}
+        <p className="activity-note">{fill(copy.since, { block: executorFirstBlock().toString() })}</p>
+      </section>
+    </div>
+  );
+}

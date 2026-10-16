@@ -285,5 +285,78 @@
         "body": "Quando o dinheiro chegar, você verá aqui como ele foi dividido entre as suas caixas."
       }
     }
+  },
+  "activity": {
+    "signedOutTitle": "Entre para ver sua atividade",
+    "signedOutBody": "Seus recibos são lidos da rede com a sua própria conta.",
+    "signIn": "Entrar com passkey",
+    "signInFailed": "Não conseguimos abrir sua passkey. Tente de novo.",
+    "noAccount": "Esta passkey ainda não tem uma conta.",
+    "createAccount": "Criar conta",
+    "loading": "Lendo sua atividade",
+    "loadFailed": "Não conseguimos ler sua atividade agora.",
+    "retry": "Tentar de novo",
+    "since": "Mostrando a atividade desde o bloco {block}",
+    "truncated": "Há mais histórico do que conseguimos mostrar de uma vez. Os recibos mais antigos não aparecem.",
+    "pendingHeading": "Esperando por você",
+    "historyHeading": "O que o agente fez",
+    "noProposals": "Esta conta não tem a chave de avisos neste dispositivo, então as propostas do agente não podem ser mostradas aqui. Restaure seu código de recuperação para vê-las.",
+    "proposal": {
+      "title": "Pagar seu salário: {amount}",
+      "to": "Para {payee}",
+      "rule": "Regra: seu salário, uma vez por mês",
+      "expires": "Válida até {date}",
+      "fingerprint": "Você aprova exatamente isto: {digest}",
+      "confirm": "Sua passkey confirma este pagamento exato.",
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "expired": "Esta proposta expirou. O agente propõe de novo no próximo dia de salário.",
+      "rejected": "Você rejeitou esta proposta. Nada foi pago.",
+      "executed": "Aprovada e paga.",
+      "unverified": "Esta proposta não bate com a própria impressão digital, então não pode ser aprovada. Nada foi pago.",
+      "tooLate": "Resta pouco tempo para aprovar isto com segurança. O agente propõe de novo no próximo dia de salário. Você ainda pode rejeitá-la.",
+      "paused": "Seu agente está pausado, então não consegue agir sobre uma decisão. Retome-o antes em Ajustes.",
+      "anotherTab": "Outra aba está decidindo sobre esta proposta."
+    },
+    "phase": {
+      "signing": "Confirme com sua passkey",
+      "sending": "Enviando ao agente",
+      "busy": "O agente está atendendo outro pedido. Tentando de novo em instantes",
+      "waiting": "Enviado. Aguardando o agente confirmar",
+      "confirmedApprove": "Pronto. O recibo aparece abaixo",
+      "confirmedReject": "Pronto. A proposta foi rejeitada",
+      "unconfirmed": "Ainda sem confirmação. Se o pedido chegou ao agente, o resultado aparece aqui. Confira de novo ou tente mais uma vez.",
+      "failed": "Isso não foi concluído. Não enviamos.",
+      "cancelled": "Cancelado. Nada foi enviado."
+    },
+    "failure": {
+      "signing": "Não conseguimos assinar com sua passkey. Nada foi enviado.",
+      "refused": "O agente não conseguiu aceitar este pedido. Nada foi enviado.",
+      "paused": "Seu agente está pausado. Retome-o em Ajustes para decidir sobre propostas.",
+      "unknown-vault": "Não reconhecemos esta conta na rede. Nada foi enviado.",
+      "closed": "O acesso está fechado no momento. Nada foi enviado.",
+      "busy-too-long": "O agente ficou ocupado por tempo demais. Nada foi enviado. Tente de novo em um minuto.",
+      "misconfigured": "O serviço não está pronto para este pedido. Nada foi enviado."
+    },
+    "receipt": {
+      "rule": "Regra: {rule}",
+      "rateNote": "A porcentagem mostrada é a parte deste pagamento para aquela caixa, não a sua alíquota de imposto.",
+      "rules": {
+        "cascade": "primeiro impostos, depois caixa, depois suas metas",
+        "salary-day": "seu salário no dia dele",
+        "private-spend": "um pagamento privado a partir de uma nota blindada"
+      },
+      "tx": "Ver transação",
+      "undo": {
+        "split": "O agente não pode reverter esta divisão: o dinheiro está nas caixas, sob os bloqueios delas.",
+        "salary": "Um salário pago já saiu das suas contas e não pode ser recuperado.",
+        "payment": "Um pagamento já saiu das suas contas e não pode ser recuperado."
+      }
+    },
+    "key": {
+      "missingTitle": "Este dispositivo não consegue ler os avisos do seu agente",
+      "missingBody": "Os recibos abaixo continuam aparecendo. Para ver propostas, restaure o código de recuperação que você guardou ao criar sua conta.",
+      "unreadable": "{count} avisos não puderam ser lidos com esta chave."
+    }
   }
 }

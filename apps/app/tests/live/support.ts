@@ -10,20 +10,22 @@ const deployed = deploymentsFor("testnet");
 export const liveEnabled = Boolean(process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY) && process.env.RUN_LIVE === "1";
 export const SKIP_REASON = "a live run needs RUN_LIVE=1 and the Circle testnet client key";
 
-export async function addVirtualAuthenticator(page: Page, context: BrowserContext): Promise<void> {
+export async function addVirtualAuthenticator(page: Page, context: BrowserContext): Promise<string> {
   const cdp = await context.newCDPSession(page);
   await cdp.send("WebAuthn.enable");
-  await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
+  const { authenticatorId } = await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
+  return authenticatorId;
 }
 
 /** A brand-new user walks the whole flow with a virtual passkey: the flat-estimate path (Nigeria), 3,200 a month, a 2,000 salary. Ends on the done screen. */
-export async function completeOnboarding(page: Page, context: BrowserContext): Promise<{ owner: Address; vault: Address; username: string; code: string }> {
-  await addVirtualAuthenticator(page, context);
+export async function completeOnboarding(page: Page, context: BrowserContext, options: { payday?: number } = {}): Promise<{ owner: Address; vault: Address; username: string; code: string; authenticatorId: string }> {
+  const authenticatorId = await addVirtualAuthenticator(page, context);
   await page.goto("/en/start?amount=3200&country=NG&goal=2000", { waitUntil: "networkidle" });
   await page.getByRole("radio").first().check(); // digital dollars
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("combobox").selectOption("NG");
   await page.getByRole("button", { name: "Continue" }).click();
+  if (options.payday !== undefined) await page.getByLabel(/^Payday/).fill(String(options.payday));
   await page.getByRole("button", { name: "Continue" }).click(); // income, prefilled by the landing link
   await page.getByRole("button", { name: "Continue" }).click(); // history
   await expect(page.getByText("a flat estimate until your regime is confirmed")).toBeVisible();
@@ -44,5 +46,5 @@ export async function completeOnboarding(page: Page, context: BrowserContext): P
   await expect(page.getByRole("heading", { name: "Your boxes are ready" })).toBeVisible({ timeout: 300_000 });
   const owner = (await page.getByTestId("account-address").textContent()) as Address;
   const vault = await chain.readContract({ address: deployed.BoxVaultFactory, abi: factoryAbi, functionName: "vaultOf", args: [owner] });
-  return { owner, vault, username, code: groups.join("-") };
+  return { owner, vault, username, code: groups.join("-"), authenticatorId };
 }

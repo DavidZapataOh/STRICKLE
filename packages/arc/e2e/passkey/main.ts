@@ -17,4 +17,9 @@ let wallet: PasskeyWallet | undefined;
     if (!wallet) throw new Error("open a wallet first");
     return wallet.transfer(to, amount);
   },
+  async signTypedData(typed: { domain: Parameters<PasskeyWallet["signTypedData"]>[0]["domain"]; types: Record<string, readonly { name: string; type: string }[]>; primaryType: string; message: Record<string, unknown> }) {
+    if (!wallet) throw new Error("open a wallet first");
+    const message = { ...typed.message, nonce: BigInt(String(typed.message.nonce)), deadline: BigInt(String(typed.message.deadline)) };
+    return wallet.signTypedData({ ...typed, message });
+  },
 };

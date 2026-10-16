@@ -11,7 +11,7 @@ const deployments = build().testnet;
 const apiKey = process.env.BLOCKSCOUT_API_KEY;
 const base = explorerApiFor(networks.testnet.chain.id, networks.testnet.explorerUrl, apiKey);
 
-for (const kind of ["allocated", "split"]) {
+for (const kind of ["allocated", "split", "private-spend"]) {
   const response = await fetch(buildUpstream(kind, vault, deployments, { base, fromBlock: 0, page: 1, apiKey }));
   const body = await response.json();
   if (!Array.isArray(body.result)) throw new Error(`the explorer did not answer for ${kind}: ${body.message}`);

@@ -285,5 +285,78 @@
         "body": "When money arrives, you will see here how it was divided between your boxes."
       }
     }
+  },
+  "activity": {
+    "signedOutTitle": "Sign in to see your activity",
+    "signedOutBody": "Your receipts are read from the network with your own account.",
+    "signIn": "Sign in with passkey",
+    "signInFailed": "We could not open your passkey. Try again.",
+    "noAccount": "This passkey has no account yet.",
+    "createAccount": "Create account",
+    "loading": "Reading your activity",
+    "loadFailed": "We could not read your activity right now.",
+    "retry": "Try again",
+    "since": "Showing activity since block {block}",
+    "truncated": "There is more history than we can show at once. Older receipts are not listed.",
+    "pendingHeading": "Waiting for you",
+    "historyHeading": "What the agent did",
+    "noProposals": "This account has no notice key on this device, so the agent's proposals cannot be shown here. Restore your recovery code to see them.",
+    "proposal": {
+      "title": "Pay your salary: {amount}",
+      "to": "To {payee}",
+      "rule": "Rule: your salary, once a month",
+      "expires": "Valid until {date}",
+      "fingerprint": "You approve exactly this: {digest}",
+      "confirm": "Your passkey confirms this exact payment.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "expired": "This proposal expired. The agent proposes again on the next salary day.",
+      "rejected": "You rejected this proposal. Nothing was paid.",
+      "executed": "Approved and paid.",
+      "unverified": "This proposal does not match its own fingerprint, so it cannot be approved. Nothing was paid.",
+      "tooLate": "Too little time is left to approve this safely. The agent proposes again on the next salary day. You can still reject it.",
+      "paused": "Your agent is paused, so it cannot act on a decision. Resume it in Settings first.",
+      "anotherTab": "Another tab is deciding on this proposal."
+    },
+    "phase": {
+      "signing": "Confirm with your passkey",
+      "sending": "Sending to the agent",
+      "busy": "The agent is handling another request. Trying again in a moment",
+      "waiting": "Sent. Waiting for the agent to confirm",
+      "confirmedApprove": "Done. The receipt is below",
+      "confirmedReject": "Done. The proposal was rejected",
+      "unconfirmed": "No confirmation yet. If the request reached the agent, the result appears here. Check again, or try once more.",
+      "failed": "This did not go through. We did not send it.",
+      "cancelled": "Cancelled. Nothing was sent."
+    },
+    "failure": {
+      "signing": "We could not sign with your passkey. Nothing was sent.",
+      "refused": "The agent could not accept this request. Nothing was sent.",
+      "paused": "Your agent is paused. Resume it in Settings to decide on proposals.",
+      "unknown-vault": "We do not recognize this account on the network. Nothing was sent.",
+      "closed": "Access is closed right now. Nothing was sent.",
+      "busy-too-long": "The agent stayed busy for too long. Nothing was sent. Try again in a minute.",
+      "misconfigured": "The service is not ready for this request. Nothing was sent."
+    },
+    "receipt": {
+      "rule": "Rule: {rule}",
+      "rateNote": "The percentage shown is this payment's share for that box, not your tax rate.",
+      "rules": {
+        "cascade": "taxes first, then cash, then your goals",
+        "salary-day": "your salary on its day",
+        "private-spend": "a private payment from a shielded note"
+      },
+      "tx": "View transaction",
+      "undo": {
+        "split": "This split cannot be reversed by the agent: the money sits in its boxes under their locks.",
+        "salary": "A paid salary has left your accounts and cannot be taken back.",
+        "payment": "A payment has left your accounts and cannot be taken back."
+      }
+    },
+    "key": {
+      "missingTitle": "This device cannot read your agent's notices",
+      "missingBody": "Receipts below still show. To see proposals, restore the recovery code you saved when you set up your account.",
+      "unreadable": "{count} notices could not be read with this key."
+    }
   }
 }

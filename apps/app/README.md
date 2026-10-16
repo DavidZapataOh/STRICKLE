@@ -35,3 +35,29 @@ Proven end to end on Arc testnet with a Chromium virtual passkey (`npm run test:
 - The one-day wait is real: the salary payee's approval takes effect exactly 86,400 seconds after the vault's creation block (`approvedFrom` 1792219909, block timestamp 1792133509), which is what the review and the final screens tell the user.
 - Not yet proven: that the enclave opens the delivered profile. The CRE workflow is paused between proofs and activating it is an action on a shared resource, so that check (`EXPECT_ENCLAVE=1`, `apps/app/scripts/read-state.mjs`) runs with the next activation. What a cancelled passkey prompt throws in a real browser was not recorded either; the app treats `NotAllowedError` and `AbortError` as a cancellation.
 - Found by running it live: the content security policy of the first version blocked the browser's calls to Circle's wallet service and to the RPC endpoint (`Failed to fetch`); the policy now takes both origins from the network configuration.
+
+## Agent relay
+
+`POST /api/agent-action` receives an envelope that the browser already sealed to the enclave and signed with the passkey, checks what it can check without reading it, and forwards it to the Chainlink CRE gateway. The gateway key never reaches the browser.
+
+Server environment (none of these is `NEXT_PUBLIC_`, none appears in a response or a log):
+
+- `CRE_GATEWAY_KEY`: the private key whose address is `gatewayAddress` in `workflows/agent/config.production.json`.
+- `CRE_GATEWAY_URL`: the gateway endpoint (`https://01.gateway.zone-a.cre.chain.link` for the current zone).
+- `CRE_WORKFLOW_ID`: the deployed workflow's ID. It changes at every `cre workflow deploy` and must equal `AgentExecutor.expectedWorkflowId()`; the relay refuses to run when it does not.
+- `DATABASE_URL`: a Postgres with the migrations applied. The per-address and per-vault limits live there, so they hold across instances. Without it the relay answers 503, and a database outage closes it instead of opening it.
+- `RELAY_IP_PEPPER`: a random string; client addresses are stored only as a keyed hash.
+
+`node --env-file=/Users/david/tameion/.env apps/app/scripts/check-relay-config.mjs` checks all of this against the chain and the database. Run it after every workflow redeploy.
+
+The gateway lets one request per 30 seconds through per workflow, shared by every user, so the relay admits one accepted request per vault and one per workflow in that interval and tells the caller how long to wait. Fairness between users is first come, first served; a real queue is a launch decision.
+
+## Activity on testnet
+
+The Activity tab shows the agent's receipts (read from the vault's and the executor's events through the cached `/api/logs` route, with the private payment's public amount read from its own transaction receipt), the proposals waiting for the user (sealed notices opened with the notice key on this device, each one re-checked against its own digest) and lets the user approve or reject with their passkey. Approving signs the exact request with the smart account (ERC-1271), seals it to the enclave and sends it through the relay. Only a decision notice on chain confirms an action: the relay and the gateway only say that a request was taken.
+
+The live proof takes two sittings a day apart (a new payee approval applies after a day), so it needs the shared workflow to be active and a proof vault with funds. It is never part of a default run:
+
+1. `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-prepare.mjs` reports what is missing (relay variables, database, workflow binding, the five-minute daily schedule).
+2. Day one: `RUN_LIVE=1 LIVE_PHASE=onboard npm run test:e2e:live -w app`, then `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-fund.mjs <vault>` to send the proof vault 2 USDC from the shared wallet. Both the funding and activating the workflow need the owner's go-ahead.
+3. On the payday set in step 2 (tomorrow's day of the month): `RUN_LIVE=1 LIVE_PHASE=approve npm run test:e2e:live -w app`. It waits for the agent's proposal, approves it with the replayed passkey, waits for the decision and the salary receipt, checks the relay's refusals and saves screenshots at ten viewports.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deploymentsFor, explorerLink, resolveNetwork, resolveRpc } from "../src/config/network.ts";
+import { deploymentsFor, executorFirstBlock, explorerLink, resolveNetwork, resolveRpc } from "../src/config/network.ts";
 
 describe("the network configuration", () => {
   it("defaults to testnet and accepts only the two networks", () => {
@@ -23,5 +23,12 @@ describe("the network configuration", () => {
   it("links the network's own explorer", () => {
     expect(explorerLink("address", "0xabc", "testnet")).toBe("https://explorer.testnet.arc.io/address/0xabc");
     expect(explorerLink("tx", "0xdef", "mainnet")).toBe("https://explorer.arc.io/tx/0xdef");
+  });
+
+  it("carries the pool and the deployment blocks the activity reader needs", () => {
+    const testnet = deploymentsFor("testnet");
+    expect(testnet.PolicyPool).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(testnet.blocks.AgentExecutor).toBeGreaterThan(0);
+    expect(executorFirstBlock("testnet")).toBe(BigInt(testnet.blocks.AgentExecutor));
   });
 });
