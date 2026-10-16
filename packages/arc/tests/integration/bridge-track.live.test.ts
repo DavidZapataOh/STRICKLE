@@ -32,6 +32,8 @@ describe.skipIf(!key)("a real deposit from another chain (needs DEPOSIT_TEST_KEY
     expect(result.state).toBe("arrived");
     if (result.state !== "arrived") return;
     expect(result.received).toBeGreaterThanOrEqual(quote.amountReceivedMin);
+    expect(result.at).toBeInstanceOf(Date);
+    expect(result.payer).toMatch(/^0x[0-9a-fA-F]{40}$/);
     if (exact) expect(result.received).toBe(1_000_000n);
     expect(await trackDeposit({ network: "testnet", source, burnTx, vault: VAULT, client: arc })).toEqual(result);
   });
