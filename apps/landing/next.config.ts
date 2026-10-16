@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
+  transpilePackages: ["@strickle/design"],
   turbopack: {
     rules: {
       "*.css": {

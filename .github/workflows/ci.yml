@@ -120,6 +120,8 @@ jobs:
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:responsive -w apps/landing
       - run: npm run test:perf -w apps/landing
+      - run: npm run test:responsive -w app
+      - run: npm run test:perf -w app
       - if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -129,6 +131,9 @@ jobs:
             apps/landing/playwright-report
             apps/landing/test-results
             apps/landing/.lighthouseci
+            apps/app/playwright-report
+            apps/app/test-results
+            apps/app/.lighthouseci
           if-no-files-found: ignore
 
   circuits:
