@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { plainDate } from "@strickle/core";
 import { Onboarding } from "@/components/Onboarding";
@@ -24,6 +25,8 @@ export default async function StartPage({ params, searchParams }: PageProps<"/[l
 
 async function StartContent({ lang, t, searchParams }: { lang: "en" | "es" | "pt-br"; t: Awaited<ReturnType<typeof getDictionary>>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const search = await searchParams;
+  // the date is a request-time value: say so before reading it so the route can keep its static shell
+  await connection();
   const now = new Date();
   const today = plainDate(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
   // country names are produced here so the server and the browser print the same text

@@ -1,4 +1,5 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useEffect, useReducer, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -12,9 +13,11 @@ import { COUNTRIES, type Country } from "@/onboarding/types";
 import { ChoiceGroup } from "@/ui/ChoiceGroup";
 import { NumberField } from "@/ui/NumberField";
 import { StartFrame } from "@/ui/StartFrame";
-import { AccountPanel } from "./AccountPanel";
-import { DonePanel } from "./DonePanel";
 import { Review } from "./Review";
+
+// the account step carries viem, the sealing and the wallet code: it loads only when the person gets there
+const AccountPanel = dynamic(() => import("./AccountPanel").then((m) => m.AccountPanel));
+const DonePanel = dynamic(() => import("./DonePanel").then((m) => m.DonePanel));
 
 const STORAGE_KEY = "strickle.start.v1";
 
