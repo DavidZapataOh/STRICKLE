@@ -15,6 +15,8 @@ export interface SourceChain {
   explorerUrl: string;
   /** Endpoints we read this chain through, in order of preference. */
   rpc: readonly string[];
+  /** Mainnet entries only: no swap quotes exist on testnet. */
+  usdt?: { address: Address };
 }
 
 export type Fee = { kind: "provider" | "forwarder"; amount: bigint };
@@ -50,7 +52,7 @@ export interface DepositQuote {
   opaque: unknown;
 }
 
-export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable";
+export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable" | "cost-too-high" | "stale";
 
 export class QuoteRefusal extends Error {
   readonly code: QuoteRefusalCode;
