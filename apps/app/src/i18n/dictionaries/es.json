@@ -372,5 +372,77 @@
     "unconfirmed": "Enviado, pero la red todavía no lo confirma. Revisa de nuevo en un momento.",
     "failed": "Esto no se completó. No cambió nada.",
     "cancelled": "Cancelado. No cambió nada."
+  },
+  "settings": {
+    "signedOut": "Inicia sesión para ver y cambiar cómo funciona tu agente.",
+    "error": "No pudimos cargar los ajustes. Inténtalo de nuevo en un momento.",
+    "retry": "Intentar de nuevo",
+    "loading": "Cargando tus ajustes",
+    "planMissing": "Este dispositivo no puede leer tu plan, así que no se muestran los ajustes propios del agente. Los límites de tu bóveda sí.",
+    "planStale": "Última comprobación: {date}",
+    "change": "Cambiar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "agent": {
+      "title": "El agente",
+      "running": "En marcha",
+      "paused": "En pausa",
+      "haltedUser": "En pausa dentro del agente",
+      "haltedSafety": "Detenido por una regla de seguridad",
+      "none": "Sin configurar",
+      "runningNote": "El agente reparte tus depósitos, paga tu sueldo en su día y actualiza tu plan.",
+      "pausedNote": "En pausa, el agente no puede repartir depósitos, pagar tu sueldo ni actualizar tu plan, y tampoco puede aplicar cambios a tu plan. Un pago privado que tú firmes sí puede salir. Tus cajas se quedan como están.",
+      "enclaveBlocked": "El agente aplica este cambio, así que solo se puede hacer mientras el agente está en marcha. Reanúdalo primero.",
+      "safetyNote": "El agente se detuvo solo porque falló una comprobación de seguridad: {codes}. Sigue detenido y esta app no puede reiniciarlo.",
+      "resumeInAgent": "Reanudar en el agente",
+      "limits": "Tu bóveda deja que el agente mueva como máximo {cap} cada {hours} horas.",
+      "limitsEdit": "Máximo que puede mover el agente",
+      "windowEdit": "Cada (horas)",
+      "immediate": "Se aplica ahora."
+    },
+    "autonomy": {
+      "title": "Cuánto decide el agente",
+      "ask": "Pregúntame antes de cada pago de sueldo",
+      "auto": "Pagar mi sueldo automáticamente hasta",
+      "limitsApply": "Los límites de la bóveda de arriba se aplican en ambos casos.",
+      "earned": "Los niveles que el agente gana con un historial limpio todavía no están activos."
+    },
+    "salary": {
+      "title": "Tu sueldo",
+      "amount": "Monto de cada mes",
+      "day": "Día del mes (1 a 28)",
+      "payee": "Se paga a",
+      "approve": "Aprobar esta dirección",
+      "waiting": "En espera hasta el {date}. La bóveda aplica un destinatario nuevo después de al menos un día.",
+      "effective": "Aprobada. Ya puedes usarla.",
+      "notApproved": "Esta dirección todavía no está aprobada. El agente no puede pagarle hasta que lo esté.",
+      "waitNote": "Una dirección nueva espera al menos {hours} h en tu bóveda antes de poder usarse. Luego la confirmas aquí.",
+      "dayValue": "Día {day} del mes",
+      "use": "Usar como dirección del sueldo"
+    },
+    "cushion": {
+      "title": "Tu colchón",
+      "value": "Piso de {floor} días, meta de {target} días",
+      "floor": "Piso, en días de gasto (7 a {max})",
+      "target": "Meta, en días de gasto ({min} a 90)"
+    },
+    "errors": {
+      "day": "Elige un día del 1 al 28.",
+      "amount": "Escribe un número entero de dólares mayor que cero.",
+      "payee": "Escribe una dirección válida.",
+      "floor": "El piso debe estar entre {min} y {max} días.",
+      "target": "La meta debe estar entre {min} y {max} días.",
+      "order": "El piso no puede ser mayor que la meta."
+    },
+    "phase": {
+      "signing": "Confirma con tu passkey",
+      "sending": "Enviando al agente",
+      "busy": "El agente está atendiendo otra solicitud. Reintentando en un momento",
+      "waiting": "Enviado. Esperando que el agente confirme",
+      "confirmed": "Listo. Esto ya está en vigor.",
+      "unconfirmed": "Todavía sin confirmación. No se muestra nada como cambiado hasta que el agente lo confirme. Puedes revisar de nuevo.",
+      "failed": "Esto no se completó. No se cambió nada.",
+      "cancelled": "Cancelado. No se cambió nada."
+    }
   }
 }

@@ -21,7 +21,7 @@ test.describe("signed in, on a device that holds no reading key", () => {
   });
 
   for (const locale of ["en", "es", "pt-br"]) {
-    for (const screen of ["", "/boxes", "/activity"]) {
+    for (const screen of ["", "/boxes", "/activity", "/settings"]) {
       test(`${locale}${screen || "/"} fits every viewport`, async ({ page }) => {
         await page.goto(`/${locale}${screen}`, { waitUntil: "networkidle" });
         await page.evaluate(() => document.fonts.ready);
@@ -46,6 +46,13 @@ test.describe("signed in, on a device that holds no reading key", () => {
     await expect(page.getByText("This device cannot read your agent's notices")).toBeVisible();
     await expect(page.getByRole("button", { name: "Restore" })).toBeVisible();
     await expect(page.locator(".strip").first()).not.toContainText(/NaN|undefined/);
+  });
+
+  test("Settings shows the vault's own limits from the chain and says the plan cannot be read without a key", async ({ page }) => {
+    await page.goto("/en/settings", { waitUntil: "networkidle" });
+    await expect(page.getByText("This device cannot read your plan, so the agent's own settings are not shown.")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("heading", { name: "The agent" })).toBeVisible();
+    await expect(page.getByRole("main")).not.toContainText(/NaN|undefined/);
   });
 
   test("Home without a reading key says so and keeps the navigation", async ({ page }) => {

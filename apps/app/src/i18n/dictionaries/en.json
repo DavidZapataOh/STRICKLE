@@ -372,5 +372,77 @@
     "unconfirmed": "Sent, but the network has not confirmed it yet. Check again in a moment.",
     "failed": "This did not go through. Nothing changed.",
     "cancelled": "Cancelled. Nothing changed."
+  },
+  "settings": {
+    "signedOut": "Sign in to see and change how your agent works.",
+    "error": "Settings could not be loaded. Try again in a moment.",
+    "retry": "Try again",
+    "loading": "Loading your settings",
+    "planMissing": "This device cannot read your plan, so the agent's own settings are not shown. The vault's own limits are.",
+    "planStale": "Last checked {date}",
+    "change": "Change",
+    "save": "Save",
+    "cancel": "Cancel",
+    "agent": {
+      "title": "The agent",
+      "running": "Running",
+      "paused": "Paused",
+      "haltedUser": "Paused inside the agent",
+      "haltedSafety": "Stopped by a safety rule",
+      "none": "Not set up",
+      "runningNote": "The agent splits your deposits, pays your salary on its day and refreshes your plan.",
+      "pausedNote": "While paused, the agent cannot split deposits, pay your salary or refresh your plan, and it cannot apply changes to your plan. A private payment you sign yourself can still go through. Your boxes stay as they are.",
+      "enclaveBlocked": "The agent applies this change, so it can only be made while the agent is running. Resume it first.",
+      "safetyNote": "The agent stopped itself because a safety check failed: {codes}. It stays stopped and this app cannot restart it.",
+      "resumeInAgent": "Resume in the agent",
+      "limits": "Your vault lets the agent move at most {cap} every {hours} hours.",
+      "limitsEdit": "Maximum the agent can move",
+      "windowEdit": "Every (hours)",
+      "immediate": "Takes effect now."
+    },
+    "autonomy": {
+      "title": "How much the agent decides",
+      "ask": "Ask me before every salary payment",
+      "auto": "Pay my salary automatically up to",
+      "limitsApply": "The vault's own limits above apply either way.",
+      "earned": "Levels the agent earns with a clean record are not active yet."
+    },
+    "salary": {
+      "title": "Your salary",
+      "amount": "Amount each month",
+      "day": "Day of the month (1 to 28)",
+      "payee": "Paid to",
+      "approve": "Approve this address",
+      "waiting": "Waiting until {date}. The vault applies a new recipient after at least a day.",
+      "effective": "Approved. You can use it now.",
+      "notApproved": "This address is not approved yet. The agent cannot pay it until it is.",
+      "waitNote": "A new address waits at least {hours} h in your vault before it can be used. You then confirm it here.",
+      "dayValue": "Day {day} of the month",
+      "use": "Use as salary address"
+    },
+    "cushion": {
+      "title": "Your cushion",
+      "value": "Floor {floor} days, target {target} days",
+      "floor": "Floor, in days of spending (7 to {max})",
+      "target": "Target, in days of spending ({min} to 90)"
+    },
+    "errors": {
+      "day": "Choose a day from 1 to 28.",
+      "amount": "Enter a whole number of dollars above zero.",
+      "payee": "Enter a valid address.",
+      "floor": "The floor must be between {min} and {max} days.",
+      "target": "The target must be between {min} and {max} days.",
+      "order": "The floor cannot be higher than the target."
+    },
+    "phase": {
+      "signing": "Confirm with your passkey",
+      "sending": "Sending to the agent",
+      "busy": "The agent is handling another request. Trying again in a moment",
+      "waiting": "Sent. Waiting for the agent to confirm",
+      "confirmed": "Done. This is now in force.",
+      "unconfirmed": "No confirmation yet. Nothing is shown as changed until the agent confirms it. You can check again.",
+      "failed": "This did not go through. Nothing was changed.",
+      "cancelled": "Cancelled. Nothing was changed."
+    }
   }
 }

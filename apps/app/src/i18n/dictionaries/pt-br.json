@@ -372,5 +372,77 @@
     "unconfirmed": "Enviado, mas a rede ainda não confirmou. Confira de novo em instantes.",
     "failed": "Isso não foi concluído. Nada mudou.",
     "cancelled": "Cancelado. Nada mudou."
+  },
+  "settings": {
+    "signedOut": "Entre para ver e mudar como seu agente funciona.",
+    "error": "Não conseguimos carregar os ajustes. Tente de novo em instantes.",
+    "retry": "Tentar de novo",
+    "loading": "Carregando seus ajustes",
+    "planMissing": "Este dispositivo não consegue ler seu plano, então os ajustes do próprio agente não aparecem. Os limites do seu cofre aparecem.",
+    "planStale": "Última verificação: {date}",
+    "change": "Mudar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "agent": {
+      "title": "O agente",
+      "running": "Em funcionamento",
+      "paused": "Pausado",
+      "haltedUser": "Pausado dentro do agente",
+      "haltedSafety": "Parado por uma regra de segurança",
+      "none": "Não configurado",
+      "runningNote": "O agente divide seus depósitos, paga seu salário no dia dele e atualiza seu plano.",
+      "pausedNote": "Enquanto está pausado, o agente não pode dividir depósitos, pagar seu salário nem atualizar seu plano, e também não pode aplicar mudanças ao seu plano. Um pagamento privado que você mesmo assina ainda pode sair. Suas caixas ficam como estão.",
+      "enclaveBlocked": "O agente aplica esta mudança, então ela só pode ser feita com o agente em funcionamento. Retome-o primeiro.",
+      "safetyNote": "O agente parou sozinho porque uma verificação de segurança falhou: {codes}. Ele continua parado e este app não consegue reiniciá-lo.",
+      "resumeInAgent": "Retomar no agente",
+      "limits": "Seu cofre deixa o agente mover no máximo {cap} a cada {hours} horas.",
+      "limitsEdit": "Máximo que o agente pode mover",
+      "windowEdit": "A cada (horas)",
+      "immediate": "Vale a partir de agora."
+    },
+    "autonomy": {
+      "title": "Quanto o agente decide",
+      "ask": "Pergunte antes de cada pagamento de salário",
+      "auto": "Pagar meu salário automaticamente até",
+      "limitsApply": "Os limites do cofre acima valem nos dois casos.",
+      "earned": "Os níveis que o agente ganha com um histórico limpo ainda não estão ativos."
+    },
+    "salary": {
+      "title": "Seu salário",
+      "amount": "Valor de cada mês",
+      "day": "Dia do mês (1 a 28)",
+      "payee": "Pago a",
+      "approve": "Aprovar este endereço",
+      "waiting": "Aguardando até {date}. O cofre aplica um novo destinatário depois de pelo menos um dia.",
+      "effective": "Aprovado. Você já pode usá-lo.",
+      "notApproved": "Este endereço ainda não está aprovado. O agente não pode pagá-lo até que esteja.",
+      "waitNote": "Um endereço novo espera pelo menos {hours} h no seu cofre antes de poder ser usado. Depois você o confirma aqui.",
+      "dayValue": "Dia {day} do mês",
+      "use": "Usar como endereço do salário"
+    },
+    "cushion": {
+      "title": "Sua reserva",
+      "value": "Piso de {floor} dias, meta de {target} dias",
+      "floor": "Piso, em dias de gasto (7 a {max})",
+      "target": "Meta, em dias de gasto ({min} a 90)"
+    },
+    "errors": {
+      "day": "Escolha um dia de 1 a 28.",
+      "amount": "Digite um número inteiro de dólares maior que zero.",
+      "payee": "Digite um endereço válido.",
+      "floor": "O piso deve estar entre {min} e {max} dias.",
+      "target": "A meta deve estar entre {min} e {max} dias.",
+      "order": "O piso não pode ser maior que a meta."
+    },
+    "phase": {
+      "signing": "Confirme com sua passkey",
+      "sending": "Enviando ao agente",
+      "busy": "O agente está atendendo outro pedido. Tentando de novo em instantes",
+      "waiting": "Enviado. Aguardando o agente confirmar",
+      "confirmed": "Pronto. Isto já está em vigor.",
+      "unconfirmed": "Ainda sem confirmação. Nada aparece como mudado até que o agente confirme. Você pode conferir de novo.",
+      "failed": "Isso não foi concluído. Nada foi mudado.",
+      "cancelled": "Cancelado. Nada foi mudado."
+    }
   }
 }
