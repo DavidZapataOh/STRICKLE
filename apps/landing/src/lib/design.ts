@@ -22,7 +22,7 @@ export const at = ({ x, y, w, h }: Box, extra: CSSProperties = {}): CSSPropertie
   ...extra,
 });
 
-export const APP_URL = "https://app.strickle.money";
+export const APP_URL = "https://app.strickle.xyz";
 
 export function money(amount: number, locale: Locale, sign = false) {
   const n = new Intl.NumberFormat(numberLocale[locale], { maximumFractionDigits: 0 }).format(amount);

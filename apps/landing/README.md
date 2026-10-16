@@ -2,7 +2,7 @@
 
 **Irregular income. Regular life.**
 
-Strickle is an AI agent for global freelancers. Every payment that comes in is struck level: taxes, a cushion and goals are set aside in boxes, and you get the same salary on the same day each month. This app is the marketing site; every call to action leads to the Strickle app (`https://app.strickle.money`).
+Strickle is an AI agent for global freelancers. Every payment that comes in is struck level: taxes, a cushion and goals are set aside in boxes, and you get the same salary on the same day each month. This app is the marketing site; every call to action leads to the Strickle app (`https://app.strickle.xyz`).
 
 ## Stack
 

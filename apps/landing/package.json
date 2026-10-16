@@ -9,9 +9,10 @@
     "lint": "eslint",
     "test:copy": "node scripts/word-budget.mjs",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "npm run test:copy",
+    "test": "npm run test:copy && npm run test:url",
     "test:responsive": "playwright test",
-    "test:perf": "npm run build && lhci autorun"
+    "test:perf": "npm run build && lhci autorun",
+    "test:url": "node --test scripts/app-url.test.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
