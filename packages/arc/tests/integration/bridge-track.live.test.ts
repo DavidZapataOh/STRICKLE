@@ -23,7 +23,7 @@ describe.skipIf(!key)("a real deposit from another chain (needs DEPOSIT_TEST_KEY
     const events: unknown[] = [];
     kit.on("*", (event: unknown) => events.push(event));
     const { burnTx } = await executeDeposit({ kit, adapter }, quote, () => {});
-    console.info("kit event payloads", JSON.stringify(events.slice(0, 6)));
+    console.info("kit event payloads", JSON.stringify(events.slice(0, 6), (_k, v) => (typeof v === "bigint" ? v.toString() : v)));
     let result = await trackDeposit({ network: "testnet", source, burnTx, vault: VAULT, client: arc });
     for (let i = 0; i < 90 && result.state === "waiting"; i++) {
       await new Promise((resolve) => setTimeout(resolve, 10_000));
