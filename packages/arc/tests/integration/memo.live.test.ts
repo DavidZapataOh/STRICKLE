@@ -8,8 +8,8 @@ const key = process.env.PRIVATE_KEY as `0x${string}` | undefined;
 const VAULT = "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8" as const;
 const network = networks.testnet;
 
-// Spends the shared deployer key: it runs locally with the owner's go-ahead, never in CI.
-describe.skipIf(!key)("a real Memo payment on Arc testnet", () => {
+// Spends the shared deployer key (the integration config loads it from .env): it runs only with RUN_MEMO_LIVE=1, on the owner's go-ahead, never in CI.
+describe.skipIf(!key || process.env.RUN_MEMO_LIVE !== "1")("a real Memo payment on Arc testnet (needs RUN_MEMO_LIVE=1 and the shared key)", () => {
   it("is read back as exactly the payment that was sent", async () => {
     const account = privateKeyToAccount(key as `0x${string}`);
     const client = createPublicClient({ chain: network.chain, transport: http(network.rpcUrl) });
