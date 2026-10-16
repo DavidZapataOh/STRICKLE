@@ -7,7 +7,7 @@ import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { type Outcome, type Phase, runSend } from "./outcome.ts";
 import { createNonceStore } from "./nonce-store.ts";
 import { type Signer, sealRequest, signAction } from "./request.ts";
-import type { RelayResult } from "../server/relay-types.ts";
+import { relayResultOf } from "../server/relay-types.ts";
 
 export async function sendAgentAction(args: { wallet: Signer; vault: Address; action: Action; onPhase: (phase: Phase) => void; confirm: () => Promise<boolean> }): Promise<Outcome> {
   const client = getPublicClient();
@@ -26,7 +26,7 @@ export async function sendAgentAction(args: { wallet: Signer; vault: Address; ac
       },
       post: async (envelope) => {
         const response = await fetch("/api/agent-action", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(envelope), signal: AbortSignal.timeout(25_000) });
-        return (await response.json()) as RelayResult;
+        return relayResultOf(await response.json().catch(() => null));
       },
       confirmed: args.confirm,
       sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),

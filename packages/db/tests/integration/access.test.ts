@@ -91,4 +91,13 @@ describe("sessions", () => {
   it("are not active when the database has never heard of them", async () => {
     expect(await sessionActive(db.sql, randomUUID(), new Date())).toBe(false);
   });
+
+  it("also burns the codes of that label that nobody redeemed yet, so a leaked batch cannot be used after the revoke", async () => {
+    const [used, unused] = await createInvites(db.sql, "leaked", 2);
+    const live = session();
+    await redeemInviteWithSession(db.sql, used as string, live);
+    await revokeInvites(db.sql, "leaked");
+    expect(await sessionActive(db.sql, live.sid, new Date())).toBe(false);
+    expect(await redeemInviteWithSession(db.sql, unused as string, session())).toBe(false);
+  });
 });

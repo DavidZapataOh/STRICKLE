@@ -101,6 +101,9 @@ function verifyContract({ contractName, entry, manifest, network, chainId, rpc, 
   }
 }
 
+/** What may be broadcast to mainnet: the core contracts only. The private pool and the agent contracts wait for an audit and for an agent that can run there. */
+const MAINNET_SCRIPTS = ["DeployVault.s.sol"];
+
 export const withPrefix = (key) => (key.startsWith("0x") ? key : `0x${key}`);
 
 export function resolveDeployer({ network, env = process.env }) {
@@ -147,6 +150,7 @@ export function deploy({
   env = process.env,
   confirmed,
 }) {
+  if (network === "mainnet" && !MAINNET_SCRIPTS.includes(basename(script))) throw new Error(`${basename(script)} is not deployed to mainnet: only the core contracts go there until an agent and an audit exist`);
   const { key, address: sender } = resolveDeployer({ network, env });
   if (network === "mainnet" && confirmed !== confirmationPhrase({ script, address: sender })) {
     throw new Error("a mainnet deploy needs the typed confirmation phrase");

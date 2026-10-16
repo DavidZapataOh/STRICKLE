@@ -34,7 +34,9 @@ export async function redeemInviteWithSession(sql: Sql, code: string, session: {
   });
 }
 
+/** Ends the live sessions of an invitation label and burns its codes nobody has redeemed, so a leaked batch is dead on both counts. Returns the sessions ended. */
 export async function revokeInvites(sql: Sql, label: string): Promise<number> {
+  await sql`update invites set redeemed_at = now() where label = ${label} and redeemed_at is null`;
   const rows = await sql`update access_sessions set revoked_at = now() where revoked_at is null and expires_at > now() and invite_id in (select id from invites where label = ${label}) returning sid`;
   return rows.length;
 }

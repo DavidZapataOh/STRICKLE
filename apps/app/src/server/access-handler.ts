@@ -25,6 +25,8 @@ function decodedCookie(header: string | null, name: string): string | undefined 
 }
 
 export async function handleAccess(request: Request, deps: AccessDeps): Promise<Response> {
+  // A form posted from another site would replace a visitor's session with the poster's code.
+  if (request.headers.get("origin") !== new URL(request.url).origin) return new Response(null, { status: 403 });
   const form = await request.formData().catch(() => new FormData());
   const langField = String(form.get("lang") ?? "");
   const lang = hasLocale(langField) ? langField : defaultLocale;

@@ -6,10 +6,10 @@ const SECRET = "s".repeat(40);
 const NOW = 1_800_000_000;
 const env = { ACCESS_MODE: "invite", ACCESS_COOKIE_SECRET: SECRET, RELAY_IP_PEPPER: "pepper" };
 
-const post = (code: string, lang = "en", cookie?: string) =>
+const post = (code: string, lang = "en", cookie?: string, origin: string | null = "https://app.test") =>
   new Request("https://app.test/api/access", {
     method: "POST",
-    headers: { "x-forwarded-for": "203.0.113.7", ...(cookie ? { cookie } : {}) },
+    headers: { "x-forwarded-for": "203.0.113.7", ...(origin ? { origin } : {}), ...(cookie ? { cookie } : {}) },
     body: new URLSearchParams({ code, lang }),
   });
 
@@ -88,5 +88,14 @@ describe("handleAccess", () => {
   it("sends everyone to the maintenance page when closed and has nothing to redeem when open", async () => {
     expect((await handleAccess(post("GOOD"), deps({ env: { ...env, ACCESS_MODE: "closed" } }).value)).headers.get("location")).toBe("https://app.test/en/closed");
     expect((await handleAccess(post("GOOD"), deps({ env: { ...env, ACCESS_MODE: "open" } }).value)).headers.get("location")).toBe("https://app.test/en");
+  });
+
+  it("refuses a form posted from another site, so a stranger's code cannot replace a visitor's session", async () => {
+    const { value, redeemed } = deps();
+    for (const origin of ["https://evil.example", null]) {
+      const response = await handleAccess(post("GOOD", "en", undefined, origin), value);
+      expect(response.status).toBe(403);
+    }
+    expect(redeemed).toEqual([]);
   });
 });

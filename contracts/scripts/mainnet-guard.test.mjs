@@ -82,3 +82,12 @@ test("the private pool is never deployed to mainnet", () => {
   assert.throws(() => assertPoolNotOnMainnet("mainnet"), /testnet only/);
   assert.doesNotThrow(() => assertPoolNotOnMainnet("testnet"));
 });
+
+test("only the core scripts can go to mainnet: the agent and pool scripts are refused before anything runs", () => {
+  const { calls, exec } = recorder(5042);
+  const { address } = resolveDeployer({ network: "mainnet", env: mainnetEnv });
+  for (const script of ["script/DeployPool.s.sol", "script/DeployAgent.s.sol", "script/DeployHeartbeat.s.sol"]) {
+    assert.throws(() => deploy({ ...args(), script, exec, confirmed: confirmationPhrase({ script, address }) }), /not deployed to mainnet/);
+  }
+  assert.equal(calls.length, 0);
+});

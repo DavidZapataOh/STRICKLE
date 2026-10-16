@@ -14,7 +14,7 @@ afterAll(() => db.drop());
 const SECRET = "s".repeat(40);
 const env = { ACCESS_MODE: "invite", ACCESS_COOKIE_SECRET: SECRET, RELAY_IP_PEPPER: "pepper" };
 const now = () => Math.floor(Date.now() / 1000);
-const post = (code: string, ip = "203.0.113.7") => new Request("https://app.test/api/access", { method: "POST", headers: { "x-forwarded-for": ip }, body: new URLSearchParams({ code, lang: "en" }) });
+const post = (code: string, ip = "203.0.113.7") => new Request("https://app.test/api/access", { method: "POST", headers: { "x-forwarded-for": ip, origin: "https://app.test" }, body: new URLSearchParams({ code, lang: "en" }) });
 const deps = () => ({
   env,
   now: now(),
