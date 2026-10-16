@@ -9,6 +9,7 @@ export interface DiagnosisJson {
   dailySpend: string;
   emergencyTarget: string;
   firstMonthReserve: string;
+  taxDates: string[];
   eligibility: Diagnosis["eligibility"];
 }
 
@@ -23,6 +24,7 @@ export function toJson(diagnosis: Diagnosis): DiagnosisJson {
     dailySpend: diagnosis.dailySpend.toString(),
     emergencyTarget: diagnosis.emergencyTarget.toString(),
     firstMonthReserve: diagnosis.firstMonthReserve.toString(),
+    taxDates: diagnosis.taxDates,
     eligibility: diagnosis.eligibility,
   };
 }
@@ -36,6 +38,7 @@ export function reviveDiagnosis(json: DiagnosisJson): Diagnosis {
     dailySpend: BigInt(json.dailySpend),
     emergencyTarget: BigInt(json.emergencyTarget),
     firstMonthReserve: BigInt(json.firstMonthReserve),
+    taxDates: json.taxDates,
     eligibility: json.eligibility,
   };
 }

@@ -62,6 +62,7 @@ export const profileSchema = z
     limits: z.object({ dailyCap: units, signatureThreshold: units }).strict().default({ dailyCap: "0", signatureThreshold: "0" }),
     history: z.array(z.tuple([date, signed, z.string().max(24)])).max(200).default([]),
     payrolls: z.array(z.tuple([date, units])).max(24).default([]),
+    taxDates: z.array(date).max(12).default([]),
     clockOffsetDays: z.number().int().min(-3650).max(3650).default(0),
     tick: z.object({ lastDay: maybeDate, p10: signed, p50: signed }).strict().default({ lastDay: "", p10: "0", p50: "0" }),
     breaker: z
