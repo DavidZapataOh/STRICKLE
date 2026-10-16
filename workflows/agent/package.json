@@ -27,7 +27,13 @@
   "exports": {
     "./profile": "./enclave/profile.ts",
     "./keys": "./enclave/keys.ts",
+    "./signed": "./enclave/signed.ts",
     "./notices": "./enclave/notices.ts",
-    "./notice-schema": "./enclave/notice-schema.ts"
+    "./notice-schema": "./enclave/notice-schema.ts",
+    "./proposals": "./enclave/proposals.ts",
+    "./gateway": {
+      "types": "./scripts/gateway.d.mts",
+      "default": "./scripts/gateway.mjs"
+    }
   }
 }
