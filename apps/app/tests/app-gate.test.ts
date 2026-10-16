@@ -6,7 +6,7 @@ const request = (path: string) => new NextRequest(`http://app.test${path}`);
 
 describe("isAgentScreen", () => {
   it("is true for the screens that need an agent, in every locale", () => {
-    for (const path of ["/en", "/es/", "/pt-br/start", "/en/activity", "/es/boxes", "/pt-br/settings", "/en/deposit"]) expect(isAgentScreen(path), path).toBe(true);
+    for (const path of ["/en", "/es/", "/pt-br/start", "/en/activity", "/es/boxes", "/pt-br/settings", "/en/deposit", "/en/invoices"]) expect(isAgentScreen(path), path).toBe(true);
   });
 
   it("is false for what works without one, and for anything outside a locale", () => {

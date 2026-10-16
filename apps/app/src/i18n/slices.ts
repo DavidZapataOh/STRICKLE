@@ -34,3 +34,8 @@ export const depositText = (t: Dictionary): DepositText => ({ deposit: t.deposit
 export type PayText = Pick<Dictionary, "pay" | "deposit" | "screens">;
 
 export const payText = (t: Dictionary): PayText => ({ pay: t.pay, deposit: t.deposit, screens: t.screens });
+
+/** What the freelancer's invoices screen reads. */
+export type InvoicesText = Pick<Dictionary, "invoices" | "screens">;
+
+export const invoicesText = (t: Dictionary): InvoicesText => ({ invoices: t.invoices, screens: t.screens });

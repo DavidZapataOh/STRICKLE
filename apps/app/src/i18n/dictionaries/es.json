@@ -47,6 +47,9 @@
     },
     "deposit": {
       "title": "Agregar dinero"
+    },
+    "invoices": {
+      "title": "Facturas"
     }
   },
   "boxes": {
@@ -264,7 +267,8 @@
       "activityDown": "Tu actividad no está disponible ahora. Los saldos están al día.",
       "paused": "Tu agente está en pausa."
     },
-    "addMoney": "Agregar dinero"
+    "addMoney": "Agregar dinero",
+    "invoices": "Facturas"
   },
   "boxesPage": {
     "total": "En tus cajas",
@@ -584,6 +588,61 @@
     "copyFailed": "Tu navegador bloqueó el copiado. Selecciona la dirección y cópiala a mano.",
     "noWallet": "No se encontró ninguna billetera en este navegador. Usa la dirección de abajo.",
     "paymentFailed": "El pago no se completó. No se cobró nada. Inténtalo de nuevo."
+  },
+  "invoices": {
+    "title": "Facturas",
+    "signedOut": {
+      "title": "Abre tu cuenta",
+      "body": "Crea tu cuenta o inicia sesión para cobrar a tus clientes.",
+      "create": "Crear cuenta",
+      "signIn": "Iniciar sesión"
+    },
+    "signature": {
+      "button": "Firmar para gestionar facturas",
+      "explain": "Una firma con tu passkey te deja gestionar facturas durante 30 minutos."
+    },
+    "loading": "Cargando tus facturas",
+    "form": {
+      "title": "Nueva factura",
+      "label": "¿Por qué concepto?",
+      "payee": "Nombre que verá tu cliente",
+      "note": "Nota para tu cliente (opcional)",
+      "amount": "Monto en USDC",
+      "expires": "Días hasta que venza el enlace",
+      "create": "Crear factura"
+    },
+    "empty": "Aún no hay facturas",
+    "status": {
+      "open": "Abierta",
+      "partial": "Pagada en parte",
+      "paid": "Pagada",
+      "void": "Anulada"
+    },
+    "paidOf": "Pagado {paid} de {amount}",
+    "expiry": "Vence {date}",
+    "noExpiry": "Sin vencimiento",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "copyFailed": "Tu navegador bloqueó el copiado. Selecciona el enlace y cópialo a mano.",
+    "newLink": "Nuevo enlace",
+    "newLinkConfirm": "Un enlace nuevo reemplaza a este y el anterior deja de funcionar. ¿Continuar?",
+    "void": "Anular",
+    "voidConfirm": "Anular cierra el enlace. Un pago que ya va en camino igual cuenta, como extra. ¿Continuar?",
+    "confirmYes": "Sí, continuar",
+    "cancel": "Cancelar",
+    "check": "Buscar pagos",
+    "checking": "Revisando la cadena",
+    "suggestion": {
+      "title": "Llegó un pago de {amount} desde {payer}. ¿Es de esta factura?",
+      "confirm": "Sí, lo es",
+      "dismiss": "No es esta"
+    },
+    "errors": {
+      "rate-limited": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+      "unavailable": "Algo falló al conectar con el servidor. Inténtalo de nuevo.",
+      "unauthorized": "Tu sesión terminó. Firma de nuevo para continuar.",
+      "rejected": "Revisa los campos e inténtalo de nuevo."
+    }
   },
   "rules": {
     "title": "Reglas de tus cajas",

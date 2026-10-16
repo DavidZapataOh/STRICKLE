@@ -47,6 +47,9 @@
     },
     "deposit": {
       "title": "Add money"
+    },
+    "invoices": {
+      "title": "Invoices"
     }
   },
   "boxes": {
@@ -264,7 +267,8 @@
       "activityDown": "Your activity is unavailable right now. Balances are up to date.",
       "paused": "Your agent is paused."
     },
-    "addMoney": "Add money"
+    "addMoney": "Add money",
+    "invoices": "Invoices"
   },
   "boxesPage": {
     "total": "Held in your boxes",
@@ -584,6 +588,61 @@
     "copyFailed": "Your browser blocked copying. Select the address and copy it by hand.",
     "noWallet": "No wallet was found in this browser. Use the address below.",
     "paymentFailed": "The payment did not go through. Nothing was charged. Try again."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "signedOut": {
+      "title": "Open your account",
+      "body": "Create your account or sign in to bill your clients.",
+      "create": "Create account",
+      "signIn": "Sign in"
+    },
+    "signature": {
+      "button": "Sign to manage invoices",
+      "explain": "One passkey signature lets you manage invoices for 30 minutes."
+    },
+    "loading": "Loading your invoices",
+    "form": {
+      "title": "New invoice",
+      "label": "What is it for?",
+      "payee": "Name shown to your client",
+      "note": "Note for your client (optional)",
+      "amount": "Amount in USDC",
+      "expires": "Days until the link expires",
+      "create": "Create invoice"
+    },
+    "empty": "No invoices yet",
+    "status": {
+      "open": "Open",
+      "partial": "Partly paid",
+      "paid": "Paid",
+      "void": "Void"
+    },
+    "paidOf": "Paid {paid} of {amount}",
+    "expiry": "Expires {date}",
+    "noExpiry": "No expiry",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Your browser blocked copying. Select the link and copy it by hand.",
+    "newLink": "New link",
+    "newLinkConfirm": "A new link replaces this one and the old link stops working. Continue?",
+    "void": "Void",
+    "voidConfirm": "Voiding closes the link. A payment already on its way still counts, as extra. Continue?",
+    "confirmYes": "Yes, continue",
+    "cancel": "Cancel",
+    "check": "Check for payments",
+    "checking": "Checking the chain",
+    "suggestion": {
+      "title": "A payment of {amount} arrived from {payer}. Is it for this invoice?",
+      "confirm": "Yes, it is",
+      "dismiss": "Not this one"
+    },
+    "errors": {
+      "rate-limited": "Too many tries. Wait a moment and try again.",
+      "unavailable": "Something went wrong reaching the server. Try again.",
+      "unauthorized": "Your session ended. Sign again to continue.",
+      "rejected": "Check the fields and try again."
+    }
   },
   "rules": {
     "title": "Rules of your boxes",

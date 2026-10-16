@@ -11,6 +11,7 @@
         "http://localhost:3200/en/activity",
         "http://localhost:3200/en/settings",
         "http://localhost:3200/en/deposit",
+        "http://localhost:3200/en/invoices",
         "http://localhost:3200/en/accountant"
       ],
       "numberOfRuns": 5
