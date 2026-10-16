@@ -8,5 +8,5 @@
   "stateAddress": "0xc8224D78e864476258785646a93a6884967b3973",
   "executorAddress": "0x9bC52AF7a9D13B8923AA220Ab574f1065cd94644",
   "sandboxClock": true,
-  "dailySchedule": "0 */5 * * * *"
+  "dailySchedule": "0 0 * * * *"
 }
