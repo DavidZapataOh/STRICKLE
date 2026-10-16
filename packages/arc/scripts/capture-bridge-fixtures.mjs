@@ -21,3 +21,14 @@ try {
   if (error.message?.startsWith("Avalanche Fuji now")) throw error;
   save("error-source-unsupported.json", { message: String(error.message) });
 }
+
+import { createPublicClient, http, parseAbiItem } from "viem";
+const arc = createPublicClient({ transport: http("https://rpc.blockdaemon.testnet.arc.io") });
+const head = await arc.getBlockNumber();
+const logs = await arc.getLogs({ address: "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275", event: parseAbiItem("event MessageReceived(address indexed caller, uint32 sourceDomain, bytes32 indexed nonce, bytes32 sender, uint32 indexed finalityThresholdExecuted, bytes messageBody)"), fromBlock: head - 9000n, toBlock: head });
+const latest = logs.at(-1);
+const iris = await (await fetch(`https://iris-api-sandbox.circle.com/v2/messages/${latest.args.sourceDomain}?nonce=${latest.args.nonce}`)).json();
+save("iris-complete.json", iris);
+const forward = iris.messages[0].forwardTxHash;
+const receipt = await arc.getTransactionReceipt({ hash: forward });
+save("arrival-receipt.json", { forwardTxHash: forward, logs: receipt.logs.map((log) => ({ address: log.address, topics: log.topics, data: log.data, logIndex: log.logIndex })) });
