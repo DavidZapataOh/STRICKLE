@@ -186,5 +186,104 @@
       "days": "Escolha dias diferentes de 1 a 28 para cada pagamento.",
       "emergency": "Digite de 1 a 12 meses."
     }
+  },
+  "home": {
+    "salary": {
+      "next": "Próximo salário",
+      "secured": "Coberto",
+      "approval": "Aguardando sua aprovação",
+      "partial": "Parcialmente coberto",
+      "held": "Em pausa",
+      "stale": "Última verificação: {date}",
+      "on": "em {date}",
+      "payNow": "{amount} podem ser pagos nesse dia",
+      "pending": "{amount} espera até a sua reserva permitir",
+      "none": "Nenhum salário definido",
+      "review": "Revisar e aprovar"
+    },
+    "reasons": {
+      "full": "Seu salário está coberto.",
+      "taxes-not-covered": "Os impostos ainda não estão cobertos.",
+      "insufficient-history": "Ainda não há histórico suficiente de renda real.",
+      "spend-unknown": "Você ainda não informou seu gasto mensal.",
+      "cushion-floor": "Sua reserva ficaria abaixo do piso.",
+      "scenario-risk": "Cenários demais ficariam abaixo do seu piso.",
+      "salary-box": "Sua caixa de salário ainda não é suficiente.",
+      "paused": "Seu agente está em pausa. Nada se move até você retomá-lo.",
+      "halted": "Seu agente parou para proteger você. Abra os Ajustes para ver o motivo.",
+      "approval": "Seu salário está acima do valor que o agente pode pagar sem a sua assinatura."
+    },
+    "cushion": {
+      "days": "{days} dias de reserva",
+      "floor": "Piso: {days} dias",
+      "unknown": "Informe seu gasto mensal para ver sua reserva"
+    },
+    "strip": {
+      "title": "Próximos 60 dias",
+      "above": "{percent} dos cenários ficam acima do seu piso",
+      "estimate": "Baseado na renda que você estimou. Fica real à medida que os pagamentos chegam.",
+      "floor": "Piso da reserva",
+      "typical": "Caminho típico",
+      "cautious": "Caminho prudente",
+      "summary": "Previsão do seu caixa para os próximos 60 dias diante de um piso de {floor}: o caminho prudente termina em {low} e o típico em {mid}."
+    },
+    "events": {
+      "title": "Próximas datas",
+      "salary": "Salário",
+      "payroll": "Reserva da folha",
+      "tax": "Impostos",
+      "ruleSalary": "Mesmo dia, mesmo valor",
+      "rulePayroll": "Separado antes da data",
+      "ruleTax": "Cerca de {rate} de cada pagamento",
+      "reserved": "{amount} separados"
+    },
+    "states": {
+      "signedOut": {
+        "title": "Abra sua conta",
+        "body": "Crie sua conta ou entre para ver seu próximo salário.",
+        "create": "Criar conta",
+        "signIn": "Entrar"
+      },
+      "loading": "Carregando seu plano",
+      "noKey": {
+        "title": "Este dispositivo não consegue ler seu plano",
+        "body": "Seu plano é criptografado e só um dispositivo com a sua chave de avisos pode abri-lo. Suas caixas continuam visíveis."
+      },
+      "waiting": {
+        "title": "Seu plano está a caminho",
+        "body": "O agente publica seu plano depois da primeira verificação diária. Pode levar até um dia."
+      },
+      "error": {
+        "title": "Não conseguimos carregar sua conta",
+        "body": "Verifique sua conexão e tente de novo.",
+        "retry": "Tentar de novo"
+      },
+      "activityDown": "Sua atividade está indisponível agora. Os saldos estão em dia.",
+      "paused": "Seu agente está em pausa."
+    }
+  },
+  "boxesPage": {
+    "total": "Nas suas caixas",
+    "targetOf": "{amount} de {target}",
+    "noTarget": "Sem meta: o que sobra chega aqui",
+    "locked": "Bloqueada até {date}",
+    "always": "As retiradas esperam {hours} h",
+    "below": "Retiradas abaixo de {floor} esperam {hours} h",
+    "restricted": "Só para destinatários aprovados",
+    "free": "Livre para mover",
+    "unallocated": "Esperando a divisão: {amount}",
+    "eurc": "Também guarda {amount} em dólares digitais em euros",
+    "euroTotal": "E {amount} em dólares digitais em euros",
+    "invested": "Inclui {amount} trabalhando em um cofre",
+    "older": "Os pagamentos mais antigos não são mostrados.",
+    "payments": {
+      "title": "Pagamentos recentes",
+      "agent": "Dividido pelo seu agente",
+      "manual": "Movido por você",
+      "empty": {
+        "title": "Ainda não há pagamentos",
+        "body": "Quando o dinheiro chegar, você verá aqui como ele foi dividido entre as suas caixas."
+      }
+    }
   }
 }

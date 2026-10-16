@@ -186,5 +186,104 @@
       "days": "Pick different days from 1 to 28 for each payment.",
       "emergency": "Enter from 1 to 12 months."
     }
+  },
+  "home": {
+    "salary": {
+      "next": "Next salary",
+      "secured": "Secured",
+      "approval": "Waiting for your approval",
+      "partial": "Partly secured",
+      "held": "On hold",
+      "stale": "Last checked {date}",
+      "on": "on {date}",
+      "payNow": "{amount} can be paid on that day",
+      "pending": "{amount} waits until your cushion allows it",
+      "none": "No salary set",
+      "review": "Review and approve"
+    },
+    "reasons": {
+      "full": "Your salary is covered.",
+      "taxes-not-covered": "Taxes are not covered yet.",
+      "insufficient-history": "There is not enough real income history yet.",
+      "spend-unknown": "Your monthly spending is not set yet.",
+      "cushion-floor": "Your cushion would drop below its floor.",
+      "scenario-risk": "Too many scenarios would fall below your floor.",
+      "salary-box": "Your salary box does not hold enough yet.",
+      "paused": "Your agent is paused. Nothing moves until you resume it.",
+      "halted": "Your agent stopped itself to protect you. Open Settings to see why.",
+      "approval": "Your salary is above the amount the agent may pay without your signature."
+    },
+    "cushion": {
+      "days": "{days} days of cushion",
+      "floor": "Floor: {days} days",
+      "unknown": "Set your monthly spending to see your cushion"
+    },
+    "strip": {
+      "title": "Next 60 days",
+      "above": "{percent} of scenarios stay above your floor",
+      "estimate": "Built on the income you estimated. It becomes real as payments arrive.",
+      "floor": "Cushion floor",
+      "typical": "Typical path",
+      "cautious": "Cautious path",
+      "summary": "Cash forecast for the next 60 days against a floor of {floor}: the cautious path ends at {low} and the typical path at {mid}."
+    },
+    "events": {
+      "title": "Next dates",
+      "salary": "Salary",
+      "payroll": "Payroll reserve",
+      "tax": "Taxes",
+      "ruleSalary": "Same day, same amount",
+      "rulePayroll": "Set aside before the date",
+      "ruleTax": "About {rate} of each payment",
+      "reserved": "{amount} set aside"
+    },
+    "states": {
+      "signedOut": {
+        "title": "Open your account",
+        "body": "Create your account or sign in to see your next salary.",
+        "create": "Create account",
+        "signIn": "Sign in"
+      },
+      "loading": "Loading your plan",
+      "noKey": {
+        "title": "This device cannot read your plan",
+        "body": "Your plan is encrypted and only a device holding your notice key can open it. Your boxes are still visible."
+      },
+      "waiting": {
+        "title": "Your plan is on its way",
+        "body": "The agent publishes your plan after its first daily check. It can take up to a day."
+      },
+      "error": {
+        "title": "We could not load your account",
+        "body": "Check your connection and try again.",
+        "retry": "Try again"
+      },
+      "activityDown": "Your activity is unavailable right now. Balances are up to date.",
+      "paused": "Your agent is paused."
+    }
+  },
+  "boxesPage": {
+    "total": "Held in your boxes",
+    "targetOf": "{amount} of {target}",
+    "noTarget": "No target: whatever is left lands here",
+    "locked": "Locked until {date}",
+    "always": "Withdrawals wait {hours} h",
+    "below": "Withdrawals below {floor} wait {hours} h",
+    "restricted": "Only to approved recipients",
+    "free": "Free to move",
+    "unallocated": "Waiting to be split: {amount}",
+    "eurc": "Also holds {amount} in euro digital dollars",
+    "euroTotal": "And {amount} in euro digital dollars",
+    "invested": "Includes {amount} working in a vault",
+    "older": "Older payments are not shown.",
+    "payments": {
+      "title": "Recent payments",
+      "agent": "Split by your agent",
+      "manual": "Moved by you",
+      "empty": {
+        "title": "No payments yet",
+        "body": "When money arrives, you will see here how it was divided between your boxes."
+      }
+    }
   }
 }
