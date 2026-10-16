@@ -21,6 +21,7 @@ const diagnosis: Diagnosis = {
   dailySpend: usd(2000) / 30n,
   emergencyTarget: usd(6000),
   firstMonthReserve: usd(640),
+  taxDates: ["2026-11-17", "2026-12-17"],
   eligibility: { status: "not-applicable" },
 };
 
@@ -78,6 +79,10 @@ describe("buildProfile", () => {
     const extreme = buildProfile({ answers: { ...answers, monthlyIncomeUsd: 1_000_000, salaryGoalUsd: 1_000_000, payday: 28, paymentsPerMonth: 4, paymentDays: [1, 9, 18, 28] }, diagnosis, owner, today, userKey });
     expect(encodeProfile(extreme).length).toBeLessThanOrEqual(MAX_SUBMITTED_BYTES);
     expect(profileSchema.safeParse(extreme).success).toBe(true);
+  });
+
+  it("carries the diagnosis's tax dates to the agent", () => {
+    expect(profile.taxDates).toEqual(["2026-11-17", "2026-12-17"]);
   });
 });
 

@@ -68,6 +68,7 @@ jobs:
       CIRCLE_AGENT_SCA_WALLET_ID: ${{ secrets.CIRCLE_AGENT_SCA_WALLET_ID }}
       CIRCLE_CLIENT_KEY_TESTNET: ${{ secrets.CIRCLE_CLIENT_KEY_TESTNET }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      BLOCKSCOUT_API_KEY: ${{ secrets.BLOCKSCOUT_API_KEY }}
       REQUIRE_CIRCLE: "1"
     steps:
       - uses: actions/checkout@v7
@@ -80,6 +81,7 @@ jobs:
       - run: npm run test:integration -w @strickle/arc
       - run: npm run test:live -w @strickle/tax-engine
       - run: npm run test:live -w @strickle/llm
+      - run: npm run test:live -w app
 
   db:
     runs-on: ubuntu-latest

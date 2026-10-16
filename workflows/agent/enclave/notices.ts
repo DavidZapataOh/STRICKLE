@@ -4,10 +4,9 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { open, scalarFrom, sealWith } from "@strickle/prover/sealed";
 import { type Address, hexToBytes, numberToBytes } from "viem";
 
-export type Notice =
-  | { kind: "proposal"; proposalId: string; amount: string; payee: string; digest: string; expiresAt: number }
-  | { kind: "salary"; month: string; paid: string; pending: string }
-  | { kind: "decision"; proposalId: string; status: "approved" | "rejected" | "executed" };
+import type { Notice } from "./notice-schema.ts";
+
+export type { Notice };
 
 const utf8 = (value: string) => new TextEncoder().encode(value);
 const concat = (...parts: Uint8Array[]) => Uint8Array.from(parts.flatMap((part) => [...part]));

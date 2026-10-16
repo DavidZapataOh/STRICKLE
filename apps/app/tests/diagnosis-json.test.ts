@@ -25,4 +25,9 @@ describe("the diagnosis wire shape", () => {
   it("carries the eligibility warning with the diagnosis", () => {
     expect(toJson(diagnosis).eligibility.status).toBe("warn");
   });
+
+  it("carries the tax dates through the wire and revives them", () => {
+    expect(diagnosis.taxDates).toHaveLength(6);
+    expect(reviveDiagnosis(JSON.parse(JSON.stringify(toJson(diagnosis)))).taxDates).toEqual(diagnosis.taxDates);
+  });
 });

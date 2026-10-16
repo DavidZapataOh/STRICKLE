@@ -41,6 +41,7 @@ export function buildProfile({ answers, diagnosis, owner, today, userKey }: { an
     salaryOwed: goal.toString(),
     emergencyTarget: diagnosis.emergencyTarget.toString(),
     taxesDue: diagnosis.firstMonthReserve.toString(),
+    taxDates: diagnosis.taxDates,
     // the public half of the key the user keeps their notices under; only the user can open what the agent seals to it
     userKey,
     salary: { proposed: goal.toString(), pending: "0", payee: owner, day: answers.payday, lastPaid: "" },

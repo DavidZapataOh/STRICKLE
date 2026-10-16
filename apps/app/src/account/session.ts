@@ -1,10 +1,20 @@
 import { getAddress, isAddress } from "viem";
-import { z } from "zod";
 
 export const SESSION_KEY = "strickle.session.v1";
 
-const address = z.string().refine((value) => isAddress(value, { strict: false }), "not an address");
-const schema = z.object({ owner: address, vault: address, username: z.string().max(64), createdAt: z.number().int().nonnegative() }).strict();
+const FIELDS = ["owner", "vault", "username", "createdAt"];
+const isStoredAddress = (value: unknown): value is string => typeof value === "string" && isAddress(value, { strict: false });
+
+function parseSession(value: unknown): Session | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).some((key) => !FIELDS.includes(key))) return null;
+  const { owner, vault, username, createdAt } = record;
+  if (!isStoredAddress(owner) || !isStoredAddress(vault)) return null;
+  if (typeof username !== "string" || username.length > 64) return null;
+  if (typeof createdAt !== "number" || !Number.isInteger(createdAt) || createdAt < 0) return null;
+  return { owner: getAddress(owner), vault: getAddress(vault), username, createdAt };
+}
 
 export interface Session {
   owner: `0x${string}`;
@@ -38,8 +48,7 @@ export function loadSession(storage: SessionReader | null = browserStorage()): S
   try {
     const raw = storage?.getItem(SESSION_KEY);
     if (!raw) return null;
-    const parsed = schema.safeParse(JSON.parse(raw));
-    return parsed.success ? { ...parsed.data, owner: getAddress(parsed.data.owner), vault: getAddress(parsed.data.vault) } : null;
+    return parseSession(JSON.parse(raw));
   } catch {
     return null;
   }

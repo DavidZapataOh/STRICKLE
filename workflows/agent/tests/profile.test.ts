@@ -210,3 +210,24 @@ describe("mergeProfile", () => {
     expect(mergeProfile(withNotes, resubmitted).privateMode.notes).toEqual(withNotes.privateMode.notes);
   });
 });
+
+describe("tax dates", () => {
+  it("round-trip and default to none for a profile submitted without them", () => {
+    const more = profileSchema.parse({ ...valid, taxDates: ["2026-11-17", "2026-12-17"] });
+    expect(decodeProfile(encodeProfile(more)).taxDates).toEqual(["2026-11-17", "2026-12-17"]);
+    expect(decodeProfile(new TextEncoder().encode(JSON.stringify(valid))).taxDates).toEqual([]);
+  });
+
+  it.each([
+    ["thirteen tax dates", { taxDates: Array.from({ length: 13 }, (_, i) => `2026-12-${String(i + 1).padStart(2, "0")}`) }],
+    ["a tax date that is not a date", { taxDates: ["17/11/2026"] }],
+  ])("refuses %s", (_name, patch) => {
+    expect(profileSchema.safeParse({ ...valid, ...patch }).success).toBe(false);
+  });
+
+  it("is kept from the submission when the owner re-submits over an existing state", () => {
+    const existing = profileSchema.parse({ ...valid, taxDates: ["2026-11-17"] });
+    const submitted = profileSchema.parse({ ...valid, taxDates: ["2026-12-17"] });
+    expect(mergeProfile(existing, submitted).taxDates).toEqual(["2026-12-17"]);
+  });
+});

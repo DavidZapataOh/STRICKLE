@@ -1,18 +1,18 @@
 import { notFound } from "next/navigation";
+import { HomeScreen } from "@/components/HomeScreen";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { dataText } from "@/i18n/slices";
 import { AppShell } from "@/ui/AppShell";
-import { EmptyState } from "@/ui/EmptyState";
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = await getDictionary(lang);
-  const screen = t.screens.home;
   return (
     <AppShell lang={lang} current="home" t={t}>
-      <h1 className="screen-title">{screen.title}</h1>
-      <EmptyState title={screen.emptyTitle} body={screen.emptyBody} />
+      <h1 className="screen-title">{t.screens.home.title}</h1>
+      <HomeScreen lang={lang} t={dataText(t)} />
     </AppShell>
   );
 }

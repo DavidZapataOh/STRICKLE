@@ -120,3 +120,16 @@ describe.skipIf(!process.env.RUN_FX_LIVE)("live exchange rate", () => {
     expect(await latestSpot("NG")).toBeUndefined();
   });
 });
+
+describe("tax dates", () => {
+  it("lists the next payment dates of the rule in use", () => {
+    const diagnosis = run({ collection: "bank" }, "17.25");
+    expect(diagnosis.taxDates.slice(0, 3)).toEqual(["2026-10-17", "2026-11-17", "2026-12-17"]);
+    expect(diagnosis.taxDates).toHaveLength(6);
+  });
+
+  it("has none under the flat fallback and none for Colombia, whose rule carries no dates", () => {
+    expect(run({ country: "NG" as never, regime: null }).taxDates).toEqual([]);
+    expect(run({ country: "CO", monthlyIncomeUsd: 3200 }, "4100").taxDates).toEqual([]);
+  });
+});

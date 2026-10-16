@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { type BoxKind, BOX_KINDS, type PlainDate, allocatePayment, money, mulDiv } from "@strickle/core";
+import { type BoxKind, BOX_KINDS, type PlainDate, allocatePayment, formatPlainDate, money, mulDiv } from "@strickle/core";
 import {
   type EligibilityResult, MEI_KIND, MONOTRIBUTO_KIND, RESICO_KIND, type RegimeInput, SIMPLE_KIND, type TaxRule,
-  applyRateBps, checkEligibility, estimateSimple, fetchSeries, isCurrent, loadFxSources, loadRules, parseResicoParams, reserveFor,
+  applyRateBps, checkEligibility, dueDates, estimateSimple, fetchSeries, isCurrent, loadFxSources, loadRules, parseResicoParams, reserveFor,
 } from "@strickle/tax-engine";
 import type { Country, Ready } from "./types.ts";
 
@@ -35,6 +35,8 @@ export interface Diagnosis {
   dailySpend: bigint;
   emergencyTarget: bigint;
   firstMonthReserve: bigint;
+  /** The next statutory payment dates of the rule in use, ISO, at most six; empty under the flat fallback or when the rule carries none. */
+  taxDates: string[];
   eligibility: EligibilityResult | { status: "not-applicable" };
 }
 
@@ -143,7 +145,9 @@ export function diagnose({ answers, rules, today, spot }: { answers: Ready; rule
 
   const common = { income, payments: answers.paymentsPerMonth, rateBps, goal, dailySpend, emergencyTarget };
   const month = previewMonth(common);
-  return { tax, rateBps, month, dailySpend, emergencyTarget, firstMonthReserve: mulDiv(income, BigInt(rateBps), 10_000n, "ceil"), eligibility };
+  const used = tax.origin === "rule" ? rules.find((rule) => rule.id === tax.ruleId) : undefined;
+  const taxDates = used ? dueDates(used, today, 6).map(formatPlainDate) : [];
+  return { tax, rateBps, month, dailySpend, emergencyTarget, firstMonthReserve: mulDiv(income, BigInt(rateBps), 10_000n, "ceil"), taxDates, eligibility };
 }
 
 function previewMonth(args: { income: bigint; payments: number; rateBps: number; goal: bigint; dailySpend: bigint; emergencyTarget: bigint }): MonthPlan {

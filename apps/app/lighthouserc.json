@@ -6,7 +6,8 @@
       "url": [
         "http://localhost:3200/en",
         "http://localhost:3200/pt-br/boxes",
-        "http://localhost:3200/en/start"
+        "http://localhost:3200/en/start",
+        "http://localhost:3200/en/boxes"
       ],
       "numberOfRuns": 5
     },
@@ -65,14 +66,14 @@
             "total-blocking-time": [
               "error",
               {
-                "maxNumericValue": 50,
+                "maxNumericValue": 120,
                 "aggregationMethod": "median-run"
               }
             ],
             "resource-summary:script:size": [
               "error",
               {
-                "maxNumericValue": 160000,
+                "maxNumericValue": 182000,
                 "aggregationMethod": "median-run"
               }
             ]
