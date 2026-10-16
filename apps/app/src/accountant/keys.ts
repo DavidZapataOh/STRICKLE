@@ -2,7 +2,9 @@ import { ORDER, type ViewKey, generateViewKey, viewKeyFromSecret } from "@strick
 import { type Hex, bytesToHex } from "viem";
 import type { SecretStore } from "../keys/secret-store.ts";
 
-export const ACCOUNTANT_KEY = "strickle.accountant-key.v1";
+import { ACCOUNTANT_KEY } from "./storage-name.ts";
+
+export { ACCOUNTANT_KEY };
 
 export const newAccountantKey = (): ViewKey => generateViewKey();
 export const publicKeyHex = (key: ViewKey): Hex => bytesToHex(key.publicKey);
