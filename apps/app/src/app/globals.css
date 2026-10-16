@@ -392,3 +392,15 @@ body {
 .proposal-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .proposal-actions .btn { flex: 1 1 9rem; }
 .proposal-phase { min-height: 1.5em; }
+
+.shell-header { flex-wrap: wrap; }
+.pause { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; }
+.pause-btn { min-height: var(--tap); }
+.pause-short { display: inline; }
+.pause-long { display: none; }
+@media (min-width: 30rem) {
+  .pause-short { display: none; }
+  .pause-long { display: inline; }
+}
+.pause-status { flex-basis: 100%; margin: 0; font-size: var(--fs-xs); color: var(--clay); text-align: end; }
+.pause-status:empty { display: none; }

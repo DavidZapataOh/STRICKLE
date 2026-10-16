@@ -358,5 +358,19 @@
       "missingBody": "Los recibos de abajo se siguen mostrando. Para ver propuestas, restaura el código de recuperación que guardaste al crear tu cuenta.",
       "unreadable": "{count} avisos no se pudieron leer con esta llave."
     }
+  },
+  "pause": {
+    "region": "Control del agente",
+    "short": "Pausar",
+    "pause": "Pausar agente",
+    "resumeShort": "Reanudar",
+    "resume": "Reanudar agente",
+    "paused": "Agente en pausa",
+    "signing": "Confirma con tu passkey",
+    "confirming": "Esperando a la red",
+    "done": "Listo",
+    "unconfirmed": "Enviado, pero la red todavía no lo confirma. Revisa de nuevo en un momento.",
+    "failed": "Esto no se completó. No cambió nada.",
+    "cancelled": "Cancelado. No cambió nada."
   }
 }

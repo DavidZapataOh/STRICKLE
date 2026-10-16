@@ -358,5 +358,19 @@
       "missingBody": "Receipts below still show. To see proposals, restore the recovery code you saved when you set up your account.",
       "unreadable": "{count} notices could not be read with this key."
     }
+  },
+  "pause": {
+    "region": "Agent control",
+    "short": "Pause",
+    "pause": "Pause agent",
+    "resumeShort": "Resume",
+    "resume": "Resume agent",
+    "paused": "Agent paused",
+    "signing": "Confirm with your passkey",
+    "confirming": "Waiting for the network",
+    "done": "Done",
+    "unconfirmed": "Sent, but the network has not confirmed it yet. Check again in a moment.",
+    "failed": "This did not go through. Nothing changed.",
+    "cancelled": "Cancelled. Nothing changed."
   }
 }

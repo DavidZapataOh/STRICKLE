@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PauseControl } from "@/components/PauseControl";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { AppShell } from "@/ui/AppShell";
@@ -10,7 +11,7 @@ export default async function SettingsPage({ params }: PageProps<"/[lang]/settin
   const t = await getDictionary(lang);
   const screen = t.screens.settings;
   return (
-    <AppShell lang={lang} current="settings" t={t}>
+    <AppShell lang={lang} current="settings" t={t} actions={<PauseControl lang={lang} labels={t.pause} />}>
       <h1 className="screen-title">{screen.title}</h1>
       <EmptyState title={screen.emptyTitle} body={screen.emptyBody} />
     </AppShell>
