@@ -5,6 +5,7 @@ import { agentStateAbi, factoryAbi } from "../chain/abi.ts";
 import { getPublicClient } from "../chain/client.ts";
 import { deploymentsFor } from "../config/network.ts";
 import { type NoticeKey, saveNoticeKey } from "../keys/notice-key.ts";
+import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { type PasskeyWallet, connectWallet } from "../wallet/passkey.ts";
 import { usd } from "./answers.ts";
 import { onboardingCalls } from "./calls.ts";
@@ -32,7 +33,7 @@ export interface Outcome {
 
 export function classifyError(error: unknown): "unsupported" | "cancelled" | "failed" {
   if (error instanceof Error && error.message === "passkeys are not supported here") return "unsupported";
-  if (error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "AbortError")) return "cancelled";
+  if (isPasskeyCancelled(error)) return "cancelled";
   return "failed";
 }
 
