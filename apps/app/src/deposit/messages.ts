@@ -7,7 +7,7 @@ export const describeError = (code: DepositError, t: DepositText): string => t.d
 export function errorOf(thrown: unknown): DepositError {
   if (typeof thrown !== "object" || thrown === null) return "unavailable";
   const { code, name, message } = thrown as { code?: unknown; name?: unknown; message?: unknown };
-  if (name === "QuoteRefusal") return code === "expired" ? "quote-expired" : "quote-refused";
+  if (name === "QuoteRefusal") return code === "expired" ? "quote-expired" : code === "cost-too-high" ? "cost-too-high" : code === "stale" ? "stale" : "quote-refused";
   if (code === 4001) return "rejected";
   if (code === 4902 || code === 4901) return "wrong-chain";
   const text = typeof message === "string" ? message : "";

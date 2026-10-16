@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DepositState, depositReducer, initialDeposit } from "../src/deposit/flow.ts";
+import { type DepositState, depositReducer, initialDeposit, needsRequote } from "../src/deposit/flow.ts";
 import { PENDING_KEY, clearPending, loadPending, savePending } from "../src/deposit/pending.ts";
 
 const wallet = { uuid: "a", name: "Alpha", icon: "data:image/png;base64,AA==", rdns: "io.alpha", provider: {} as never };
@@ -82,10 +82,10 @@ describe("the pending deposit that survives a reload", () => {
   it("round-trips, and ignores a corrupted entry", () => {
     const storage = memory();
     const burn = `0x${"ab".repeat(32)}` as const;
-    savePending("11111111-1111-4111-8111-111111111111", burn, storage);
-    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn });
-    savePending("11111111-1111-4111-8111-111111111111", burn, storage, { speed: "slow", sourceId: "Base_Sepolia" });
-    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn, speed: "slow", sourceId: "Base_Sepolia" });
+    savePending("11111111-1111-4111-8111-111111111111", { burnTx: burn }, storage);
+    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn, swapTx: null });
+    savePending("11111111-1111-4111-8111-111111111111", { burnTx: burn }, storage, { speed: "slow", sourceId: "Base_Sepolia" });
+    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn, swapTx: null, speed: "slow", sourceId: "Base_Sepolia" });
     storage.setItem(PENDING_KEY, "{not json");
     expect(loadPending(storage)).toBeNull();
     clearPending(storage);
@@ -93,6 +93,60 @@ describe("the pending deposit that survives a reload", () => {
   });
   it("survives a browser without storage", () => {
     expect(loadPending(null)).toBeNull();
-    expect(() => savePending("x", "0x" as never, null)).not.toThrow();
+    expect(() => savePending("x", { burnTx: "0x" as never }, null)).not.toThrow();
+  });
+});
+
+describe("the USDT path of the flow", () => {
+  const base = [{ type: "chain", id: "Ethereum" }, { type: "token", value: "USDT" }, { type: "amount", value: 100_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }] as const;
+
+  it("shows the token picker only after a chain is chosen and resets the quote when the token changes", () => {
+    const quoted = run([...base]);
+    expect(quoted.inputToken).toBe("USDT");
+    expect(depositReducer(quoted, { type: "token", value: "USDC" }).quote).toBeNull();
+  });
+
+  it("records the conversion and then the transfer", () => {
+    const state = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never }, { type: "burned", burnTx: "0xb" as never }]);
+    expect(state.step).toBe("waiting");
+    expect(state.swapTx).toBe("0xs");
+  });
+
+  it("holds the user's USDC when the second step cannot keep the quote, and lets them send it as plain USDC", () => {
+    const held = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never }, { type: "held", amount: 99_400_000n, swapTx: "0xs" as never }]);
+    expect(held.step).toBe("held");
+    const resumed = depositReducer(held, { type: "resume-held" });
+    expect(resumed).toMatchObject({ step: "wallet", inputToken: "USDC", amount: 99_400_000n, quote: null, swapTx: null, depositId: null });
+  });
+
+  it("a rejected signature during the conversion returns to the quote", () => {
+    const state = run([...base, { type: "sending", depositId: "d1" }, { type: "failed", error: "rejected" }]);
+    expect(state.step).toBe("quote");
+  });
+});
+
+
+describe("the pending USDT deposit", () => {
+  const memory = () => {
+    const data = new Map<string, string>();
+    return { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => void data.set(k, v), removeItem: (k: string) => void data.delete(k) } as unknown as Storage;
+  };
+  it("round-trips with only the conversion hash, and ignores an entry with neither hash", () => {
+    const storage = memory();
+    const swap = `0x${"cd".repeat(32)}` as const;
+    savePending("11111111-1111-4111-8111-111111111111", { swapTx: swap }, storage);
+    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: null, swapTx: swap });
+    storage.setItem(PENDING_KEY, JSON.stringify({ id: "11111111-1111-4111-8111-111111111111" }));
+    expect(loadPending(storage)).toBeNull();
+  });
+});
+
+describe("needsRequote", () => {
+  it("asks again when there is no quote or it is about to expire, never for one without an expiry", () => {
+    const at = (expiresAt: number | null) => ({ expiresAt }) as never;
+    expect(needsRequote(null, 0)).toBe(true);
+    expect(needsRequote(at(5_000), 0)).toBe(true);
+    expect(needsRequote(at(50_000), 0)).toBe(false);
+    expect(needsRequote(at(null), 0)).toBe(false);
   });
 });

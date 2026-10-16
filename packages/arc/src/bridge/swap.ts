@@ -48,15 +48,7 @@ export function composeUsdtQuote(swap: SwapLeg, bridge: DepositQuote, now: numbe
   return { ...bridge, amountSent: swap.amountIn, totalDebit: swap.amountIn, exact: false, legs: [swap, ...bridge.legs], expiresAt: now + SWAP_QUOTE_TTL_MS };
 }
 
-/** What the conversion is expected to deliver after the bridge fees; the floor is what is promised. */
-export function expectedReceived(quote: DepositQuote): bigint {
-  const swap = quote.legs.find((leg): leg is SwapLeg => leg.kind === "swap");
-  const bridge = quote.legs.find((leg) => leg.kind === "bridge");
-  if (!swap || !bridge) return quote.amountReceivedMin;
-  const fees = bridge.fees.reduce((sum, fee) => sum + fee.amount, 0n);
-  const expected = swap.estimatedOut - fees;
-  return expected < quote.amountReceivedMin ? quote.amountReceivedMin : expected > quote.amountSent ? quote.amountSent : expected;
-}
+export { expectedReceived } from "./types.ts";
 
 export interface UsdtQuoteInput {
   network: DepositQuote["network"];
