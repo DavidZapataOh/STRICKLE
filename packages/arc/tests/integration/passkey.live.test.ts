@@ -1,6 +1,6 @@
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
-import { createPublicClient, erc20Abi, http, type Address, type Hex } from "viem";
+import { createPublicClient, encodeFunctionData, erc20Abi, http, type Address, type Hex } from "viem";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { networks, rpcUrl, transferSponsored, walletsClient } from "../../src/index.ts";
 
@@ -9,7 +9,8 @@ const clientKey = process.env.CIRCLE_CLIENT_KEY_TESTNET;
 const walletId = process.env.CIRCLE_GAS_STATION_SCA_WALLET_ID;
 
 interface Harness {
-  open(mode: "register" | "login", username: string): Promise<Address>;
+  open(mode: "register" | "login", username?: string): Promise<Address>;
+  sendCalls(calls: { to: Address; data: Hex; value?: string }[], options?: { sponsored?: boolean }): Promise<Hex>;
   transfer(to: Address, amount: string): Promise<Hex>;
 }
 
@@ -17,6 +18,8 @@ describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => 
   let server: Awaited<ReturnType<typeof createServer>>;
   let browser: Awaited<ReturnType<typeof chromium.launch>>;
   let page: Awaited<ReturnType<Awaited<ReturnType<typeof chromium.launch>>["newPage"]>>;
+  let cdp: Awaited<ReturnType<Awaited<ReturnType<typeof browser.newContext>>["newCDPSession"]>>;
+  let authenticatorId = "";
   const publicClient = createPublicClient({ chain: network.chain, transport: http(rpcUrl("testnet")) });
   const balance = (who: Address) => publicClient.readContract({ address: network.usdc, abi: erc20Abi, functionName: "balanceOf", args: [who] });
 
@@ -31,11 +34,12 @@ describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => 
     browser = await chromium.launch();
     const context = await browser.newContext();
     page = await context.newPage();
-    const cdp = await context.newCDPSession(page);
+    cdp = await context.newCDPSession(page);
     await cdp.send("WebAuthn.enable");
-    await cdp.send("WebAuthn.addVirtualAuthenticator", {
+    const added = await cdp.send("WebAuthn.addVirtualAuthenticator", {
       options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
     });
+    authenticatorId = added.authenticatorId;
     await page.goto("http://localhost:5199/");
   });
 
@@ -65,5 +69,40 @@ describe.skipIf(!clientKey || !walletId)("passkey wallet on Arc testnet", () => 
     await harness("transfer", funder, "0.2");
     expect(await balance(address)).toBe(0n);
     console.log(`passkey wallet ${address}\nsponsored transfer ${network.explorerUrl}/tx/${tx}`);
+  });
+
+  it("sends a two-call batch sponsored by the paymaster and leaves the balance alone", async () => {
+    const username = `strickle-batch-${Date.now()}`;
+    const address = await harness("open", "register", username);
+    const circle = walletsClient("testnet");
+    const funder = (await circle.getWallet({ id: walletId as string })).data?.wallet?.address as Address;
+    const approve = encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [funder, 0n] });
+    const tx = await harness("sendCalls", [
+      { to: network.usdc, data: approve },
+      { to: address, data: "0x" },
+    ]);
+    expect(tx).toMatch(/^0x[0-9a-fA-F]{64}$/);
+    expect(await balance(address)).toBe(0n);
+  });
+
+  it("pays its own gas when the batch is sent unsponsored", async () => {
+    const username = `strickle-own-gas-${Date.now()}`;
+    const address = await harness("open", "register", username);
+    const circle = walletsClient("testnet");
+    const funder = (await circle.getWallet({ id: walletId as string })).data?.wallet?.address as Address;
+    await transferSponsored({ circle, network, walletAddress: funder, to: address, token: network.usdc, amount: "1" });
+    const before = await balance(address);
+    const approve = encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [funder, 0n] });
+    const tx = await harness("sendCalls", [{ to: network.usdc, data: approve }], { sponsored: false });
+    expect(tx).toMatch(/^0x[0-9a-fA-F]{64}$/);
+    expect(await balance(address)).toBeLessThan(before);
+  });
+
+  it("signs a returning user in without asking for a name when the authenticator holds one passkey", async () => {
+    // a browser asks the person to pick when several passkeys exist; the virtual authenticator cannot, so this case starts from one
+    await cdp.send("WebAuthn.clearCredentials", { authenticatorId });
+    const username = `strickle-login-${Date.now()}`;
+    const address = await harness("open", "register", username);
+    expect(await harness("open", "login")).toBe(address);
   });
 });
