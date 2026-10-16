@@ -1,7 +1,7 @@
 # Deployed agent workflow (Arc testnet)
 
 - Workflow: `strickle-agent` in the CRE private registry (one workflow holds every handler; the organization has no more private slots).
-- Current workflow ID: `0x0055ffa47a0c6061f88e59e4815b4ea84a6e1816af39e394e6031c5b85963f3c`. Redeploying changes it; run the bind script of the state plan afterwards, or `cast send <receiver> "setExpectedWorkflowId(bytes32)" <id>` for each receiver.
+- Current workflow ID: `0x006d2d44bd7d63b31b303cbd4796e3a92ffb08694a6b99b83818dd93154429a9` (the executor's `expectedWorkflowId()` returns the same value). Redeploying changes it; run the bind script of the state plan afterwards, or `cast send <receiver> "setExpectedWorkflowId(bytes32)" <id>` for each receiver.
 - Heartbeat receiver: `0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9` (forwarder `0x76c9cf548b4179F8901cda1f8623568b58215E62`), bound to the ID above.
 - State contract `AgentState`: `0xc8224D78e864476258785646a93a6884967b3973`, bound to the same ID. `AGENT_MASTER` lives in the Vault DON (`cre secrets create secrets.yaml --target production-settings --secrets-auth=browser --non-interactive --yes`).
 - Live proof: a sealed profile submitted on chain (`0xa0b40ded9dad32a4d78279c5eac4e0edc1ac3c39973bb58a6fd18a2104618ff8`) was opened by the enclave and published as encrypted state version 1; the execution wrote no logs. A log trigger needs a few minutes after activation before it fires.
@@ -17,3 +17,4 @@
 - Live proof of the private spend through the deployed workflow: 300000 paid to the allowlisted payee, `Spent` transaction `0xd5bfe81b2f258ebe351d8284a1fcedf025e21817654746ed150115d6886fd802` (block 67415200), the 700000 change note kept in the encrypted state.
 - The public Arc RPC rate-limits back-to-back batches; the workflow reads through `https://rpc.blockdaemon.testnet.arc.network`.
 - The confidential runtime has no `btoa`: base64 is written out in the prover protocol module.
+- Redeployed on 2026-10-16 from `main` (paused, not activated): it now reads the chain through `rpc.blockdaemon.testnet.arc.io` (the previous host no longer resolves) and carries the plan notice with the settings in force and the fresh plan after an `adjust`. The update kept the workflow ID, so nothing was rebound.
