@@ -1,5 +1,5 @@
 import { createViemAdapterFromPrivateKey } from "@circle-fin/adapter-viem-v2";
-import { createDepositKit, creditedLog, executeDeposit, quoteDeposit, sourceChain, trackDeposit } from "@strickle/arc/bridge";
+import { bridgeLegOf, createDepositKit, creditedLog, executeDeposit, quoteDeposit, sourceChain, trackDeposit } from "@strickle/arc/bridge";
 import { networks } from "@strickle/arc/networks";
 import { createLimiter } from "@strickle/db/limiter";
 import { createTestDatabase } from "@strickle/db/testing";
@@ -45,7 +45,7 @@ describe.skipIf(!key || !process.env.DATABASE_URL)("a real deposit from another 
     const quote = await quoteDeposit({ kit: createDepositKit(), adapter }, { network: "testnet", source, sourceAddress: account.address, vault: VAULT, amountSent: 1_000_000n, speed: "fast", feePayment });
     const post = (path: string, body: unknown) => new Request(`${ORIGIN}${path}`, { method: "POST", headers: { origin: ORIGIN, "content-type": "application/json" }, body: JSON.stringify(body) });
 
-    const created = (await handleCreateDeposit(post("/api/deposits", { vault: VAULT, sourceChain: source.id, sourceAddress: account.address, amount: quote.amountSent.toString(), speed: "fast", feeMode: quote.legs[0]?.feeMode, intent: "income" }), deps)).body;
+    const created = (await handleCreateDeposit(post("/api/deposits", { vault: VAULT, sourceChain: source.id, sourceAddress: account.address, amount: quote.amountSent.toString(), speed: "fast", feeMode: bridgeLegOf(quote)?.feeMode, intent: "income" }), deps)).body;
     if (created.status !== "created") throw new Error(`not created: ${created.status}`);
 
     const { burnTx } = await executeDeposit({ kit: createDepositKit(), adapter }, quote, () => {});
