@@ -44,6 +44,9 @@
       "title": "Docs",
       "emptyTitle": "Documentation is not published yet",
       "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces."
+    },
+    "deposit": {
+      "title": "Add money"
     }
   },
   "boxes": {
@@ -260,7 +263,8 @@
       },
       "activityDown": "Your activity is unavailable right now. Balances are up to date.",
       "paused": "Your agent is paused."
-    }
+    },
+    "addMoney": "Add money"
   },
   "boxesPage": {
     "total": "Held in your boxes",
@@ -443,6 +447,84 @@
       "unconfirmed": "No confirmation yet. Nothing is shown as changed until the agent confirms it. You can check again.",
       "failed": "This did not go through. Nothing was changed.",
       "cancelled": "Cancelled. Nothing was changed."
+    }
+  },
+  "deposit": {
+    "title": "Add money",
+    "chainLabel": "Where is your money now?",
+    "chains": {
+      "Ethereum": "Ethereum",
+      "Base": "Base",
+      "Avalanche": "Avalanche",
+      "Arbitrum": "Arbitrum",
+      "Optimism": "Optimism",
+      "Polygon": "Polygon"
+    },
+    "amountLabel": "Amount (USDC)",
+    "amountHint": "Digits and one decimal point, up to six decimals.",
+    "speed": {
+      "label": "Speed",
+      "fast": "Fast",
+      "standard": "Standard",
+      "feeFrom": "{fee} fee",
+      "appliedNote": "Circle delivered this as a {speed} transfer",
+      "names": {
+        "fast": "fast",
+        "slow": "standard"
+      }
+    },
+    "wallet": {
+      "connect": "Connect wallet",
+      "choose": "Choose a wallet",
+      "none": "No wallet found",
+      "noneBody": "Open this page in a browser with a wallet extension, or send USDC on Arc to your vault address below.",
+      "connected": "Connected: {address}"
+    },
+    "quote": {
+      "send": "You send",
+      "fees": "Fees",
+      "total": "Total from your wallet",
+      "forwarder": "Circle forwarding",
+      "fast": "Fast transfer",
+      "receives": "Arrives in your vault",
+      "exactly": "exactly",
+      "atLeast": "at least",
+      "network": "Network fee",
+      "walletShowsNetworkFee": "Your wallet shows the network fee",
+      "modeSource": "Fees are added on top: your wallet pays the amount plus fees, and your vault receives the full amount.",
+      "modeDestination": "Fees come out of the amount: your vault receives what is left after fees.",
+      "expires": "Quote valid until {time}",
+      "refresh": "Refresh quote"
+    },
+    "confirm": "Confirm and send",
+    "states": {
+      "sending": "Waiting for your wallet",
+      "waiting": "Sent. Waiting for Circle to deliver it",
+      "arrived": "Arrived. Your agent splits it into your boxes",
+      "arrivedBody": "The money is in your vault. The agent sorts it into your boxes on its next pass.",
+      "viewTx": "View the transaction",
+      "failed": "This deposit did not finish",
+      "failedBody": "If the transfer already left your wallet it can still arrive. Check again in a moment.",
+      "retry": "Check again",
+      "another": "Add more money"
+    },
+    "direct": {
+      "title": "Send directly",
+      "body": "You can also send USDC on Arc to your vault address: {address}",
+      "warning": "Only USDC, only on Arc",
+      "copy": "Copy address",
+      "copied": "Address copied",
+      "copyFailed": "Your browser blocked copying. Select the address and copy it by hand."
+    },
+    "errors": {
+      "no-wallet": "No wallet was found in this browser.",
+      "rejected": "Your wallet declined the request. Nothing was sent.",
+      "wrong-chain": "Your wallet is on another network. Switch it and try again.",
+      "insufficient-funds": "Your wallet does not have enough USDC or enough for the network fee.",
+      "quote-refused": "This transfer cannot be quoted right now. Try another amount or chain.",
+      "quote-expired": "The quote expired. Ask for a new one.",
+      "unavailable": "Something went wrong reaching the network. Try again.",
+      "timeout": "The transfer has not arrived yet. It may still be on its way: check again."
     }
   },
   "rules": {

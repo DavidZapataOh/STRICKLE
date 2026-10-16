@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { type AgentMode, capabilities } from "./agent-mode.ts";
 
 // Screens that exist only because an agent does. Everything else the app serves (access, closed, verify, docs, metrics, view, accountant, unavailable) works without one.
-const AGENT_SCREENS = ["", "start", "activity", "boxes", "settings"];
+const AGENT_SCREENS = ["", "start", "activity", "boxes", "settings", "deposit"];
 
 export function isAgentScreen(pathname: string): boolean {
   const [, lang, page = ""] = pathname.split("/");

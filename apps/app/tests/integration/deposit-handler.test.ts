@@ -105,6 +105,14 @@ describe("recording the burn and reading the deposit", () => {
     expect(JSON.stringify(read.body)).not.toContain("income");
     expect((await handleDepositRead(new Request(`${URL_}/${created.id}`), created.id, arrived)).body).toMatchObject({ status: "ok", deposit: { state: "arrived" } });
   });
+  it("passes on the speed Circle applied while the transfer is still on its way", async () => {
+    const created = (await handleCreateDeposit(post(valid, { origin: "http://localhost:3200", "x-forwarded-for": "10.0.0.12" }), deps)).body;
+    if (created.status !== "created") throw new Error("setup");
+    await handleDepositUpdate(new Request(`${URL_}/${created.id}`, { method: "POST", headers: { origin: "http://localhost:3200", "content-type": "application/json" }, body: JSON.stringify({ burnTx: `0x${"f3".repeat(32)}` }) }), created.id, deps);
+    const slow = { ...deps, track: async () => ({ state: "waiting" as const, appliedSpeed: "slow" as const }) };
+    expect((await handleDepositRead(new Request(`${URL_}/${created.id}`), created.id, slow)).body).toMatchObject({ status: "ok", deposit: { state: "burned", appliedSpeed: "slow" } });
+    expect((await handleDepositRead(new Request(`${URL_}/${created.id}`), created.id, deps)).body).not.toHaveProperty("deposit.appliedSpeed");
+  });
   it("answers not-found for an unknown or malformed id", async () => {
     expect((await handleDepositRead(new Request(`${URL_}/nope`), "nope", deps)).status).toBe(404);
   });

@@ -19,6 +19,7 @@ export interface DepositState {
   depositId: string | null;
   burnTx: Hex | null;
   received: bigint | null;
+  forwardTx: Hex | null;
   error: DepositError | null;
 }
 
@@ -32,7 +33,7 @@ export type DepositEvent =
   | { type: "refused"; code: string }
   | { type: "sending"; depositId: string }
   | { type: "burned"; burnTx: Hex }
-  | { type: "arrived"; received: bigint }
+  | { type: "arrived"; received: bigint; forwardTx?: Hex }
   | { type: "failed"; error: DepositError }
   | { type: "reset" };
 
@@ -49,6 +50,7 @@ export const initialDeposit = (network: ArcNetworkName): DepositState => ({
   depositId: null,
   burnTx: null,
   received: null,
+  forwardTx: null,
   error: null,
 });
 
@@ -85,7 +87,7 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
     case "burned":
       return { ...state, step: "waiting", burnTx: event.burnTx };
     case "arrived":
-      return { ...state, step: "arrived", received: event.received, error: null };
+      return { ...state, step: "arrived", received: event.received, forwardTx: event.forwardTx ?? null, error: null };
     case "failed":
       if (state.burnTx !== null) return { ...state, step: "failed", error: event.error };
       if (event.error === "no-wallet") return { ...state, step: hasInput(state) ? "wallet" : "chain", error: event.error };

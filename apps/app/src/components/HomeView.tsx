@@ -40,6 +40,9 @@ export function HomeView({ lang, t, state, today, onRetry }: { lang: Locale; t: 
   return (
     <div className="home">
       {snapshot.vault.agentPaused ? <p className="note" role="status">{t.home.states.paused}</p> : null}
+      <Button href={`/${lang}/deposit`} variant="quiet">
+        {t.home.addMoney}
+      </Button>
       {plan ? (
         <>
           <SalaryTile lang={lang} t={t} tile={salaryTile(plan, today, snapshot.vault.agentPaused)} cushion={plan.cushion} />

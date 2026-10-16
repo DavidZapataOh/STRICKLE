@@ -44,6 +44,9 @@
       "title": "Documentación",
       "emptyTitle": "La documentación aún no está publicada",
       "emptyBody": "Cuando lo esté, esta página enlazará a ella. Mientras tanto, cada regla que aplica el agente se muestra junto al número que produce."
+    },
+    "deposit": {
+      "title": "Agregar dinero"
     }
   },
   "boxes": {
@@ -260,7 +263,8 @@
       },
       "activityDown": "Tu actividad no está disponible ahora. Los saldos están al día.",
       "paused": "Tu agente está en pausa."
-    }
+    },
+    "addMoney": "Agregar dinero"
   },
   "boxesPage": {
     "total": "En tus cajas",
@@ -443,6 +447,84 @@
       "unconfirmed": "Todavía sin confirmación. No se muestra nada como cambiado hasta que el agente lo confirme. Puedes revisar de nuevo.",
       "failed": "Esto no se completó. No se cambió nada.",
       "cancelled": "Cancelado. No se cambió nada."
+    }
+  },
+  "deposit": {
+    "title": "Agregar dinero",
+    "chainLabel": "¿Dónde está tu dinero ahora?",
+    "chains": {
+      "Ethereum": "Ethereum",
+      "Base": "Base",
+      "Avalanche": "Avalanche",
+      "Arbitrum": "Arbitrum",
+      "Optimism": "Optimism",
+      "Polygon": "Polygon"
+    },
+    "amountLabel": "Monto (USDC)",
+    "amountHint": "Dígitos y un punto decimal, hasta seis decimales.",
+    "speed": {
+      "label": "Velocidad",
+      "fast": "Rápida",
+      "standard": "Estándar",
+      "feeFrom": "Comisión de {fee}",
+      "appliedNote": "Circle entregó esto como una transferencia {speed}",
+      "names": {
+        "fast": "rápida",
+        "slow": "estándar"
+      }
+    },
+    "wallet": {
+      "connect": "Conectar billetera",
+      "choose": "Elige una billetera",
+      "none": "No se encontró una billetera",
+      "noneBody": "Abre esta página en un navegador con una extensión de billetera, o envía USDC en Arc a la dirección de tu bóveda más abajo.",
+      "connected": "Conectada: {address}"
+    },
+    "quote": {
+      "send": "Envías",
+      "fees": "Comisiones",
+      "total": "Total desde tu billetera",
+      "forwarder": "Reenvío de Circle",
+      "fast": "Transferencia rápida",
+      "receives": "Llega a tu bóveda",
+      "exactly": "exactamente",
+      "atLeast": "al menos",
+      "network": "Comisión de red",
+      "walletShowsNetworkFee": "Tu billetera muestra la comisión de red",
+      "modeSource": "Las comisiones se suman: tu billetera paga el monto más las comisiones y tu bóveda recibe el monto completo.",
+      "modeDestination": "Las comisiones salen del monto: tu bóveda recibe lo que queda después de las comisiones.",
+      "expires": "Cotización válida hasta {time}",
+      "refresh": "Actualizar cotización"
+    },
+    "confirm": "Confirmar y enviar",
+    "states": {
+      "sending": "Esperando a tu billetera",
+      "waiting": "Enviado. Esperando que Circle lo entregue",
+      "arrived": "Llegó. Tu agente lo reparte en tus cajas",
+      "arrivedBody": "El dinero está en tu bóveda. El agente lo reparte en tus cajas en su próxima pasada.",
+      "viewTx": "Ver la transacción",
+      "failed": "Este depósito no terminó",
+      "failedBody": "Si la transferencia ya salió de tu billetera, todavía puede llegar. Vuelve a revisar en un momento.",
+      "retry": "Revisar de nuevo",
+      "another": "Agregar más dinero"
+    },
+    "direct": {
+      "title": "Enviar directamente",
+      "body": "También puedes enviar USDC en Arc a la dirección de tu bóveda: {address}",
+      "warning": "Solo USDC, solo en Arc",
+      "copy": "Copiar dirección",
+      "copied": "Dirección copiada",
+      "copyFailed": "Tu navegador bloqueó el copiado. Selecciona la dirección y cópiala a mano."
+    },
+    "errors": {
+      "no-wallet": "No se encontró ninguna billetera en este navegador.",
+      "rejected": "Tu billetera rechazó la solicitud. No se envió nada.",
+      "wrong-chain": "Tu billetera está en otra red. Cámbiala e inténtalo de nuevo.",
+      "insufficient-funds": "Tu billetera no tiene suficiente USDC o suficiente para la comisión de red.",
+      "quote-refused": "Esta transferencia no se puede cotizar ahora. Prueba otro monto u otra cadena.",
+      "quote-expired": "La cotización venció. Pide una nueva.",
+      "unavailable": "Algo falló al conectar con la red. Inténtalo de nuevo.",
+      "timeout": "La transferencia aún no llegó. Puede seguir en camino: vuelve a revisar."
     }
   },
   "rules": {

@@ -23,6 +23,11 @@ describe("HomeView", () => {
     expect(out.match(/class="row"/g)).toHaveLength(2);
   });
 
+  it("links to the deposit screen once the account is ready", () => {
+    expect(view(ready())).toContain('href="/en/deposit"');
+    expect(view(ready(), es as typeof en, "es")).toContain('href="/es/deposit"');
+  });
+
   it("takes the percentage from the notice, never from a constant", () => {
     const changed = view(ready({ plan: salary({ aboveFloorBps: 9100 }) }));
     expect(changed).toContain("91% of scenarios stay above your floor");

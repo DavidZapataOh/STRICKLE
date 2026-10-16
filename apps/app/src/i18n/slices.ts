@@ -24,3 +24,8 @@ export const viewText = (t: Dictionary): ViewText => ({ view: t.view, rules: t.r
 export type AccountantText = Pick<Dictionary, "accountant" | "boxes">;
 
 export const accountantText = (t: Dictionary): AccountantText => ({ accountant: t.accountant, boxes: t.boxes });
+
+/** What the deposit screen reads. */
+export type DepositText = Pick<Dictionary, "deposit" | "screens">;
+
+export const depositText = (t: Dictionary): DepositText => ({ deposit: t.deposit, screens: t.screens });

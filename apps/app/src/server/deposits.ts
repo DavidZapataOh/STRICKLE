@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export type DepositApiResult =
   | { status: "created"; id: string }
-  | { status: "ok"; deposit: { id: string; state: DepositRow["status"]; received?: string; forwardTx?: string } }
+  | { status: "ok"; deposit: { id: string; state: DepositRow["status"]; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } }
   | { status: "rejected" | "conflict" | "rate-limited" | "unknown-vault" | "not-found" | "closed" | "unavailable" | "misconfigured"; retryAfterSeconds?: number };
 
 export interface DepositDeps {
@@ -151,19 +151,21 @@ export async function handleDepositRead(request: Request, id: string, deps: Depo
     if (!ip.allowed) return done({ status: "rate-limited", retryAfterSeconds: ip.retryAfterSeconds });
     let row = await getDeposit(deps.sql, id);
     if (!row) return done({ status: "not-found" });
+    let appliedSpeed: "fast" | "slow" | undefined;
     if (row.status === "burned" && row.burnTx) {
       const tracked = await deps.track({ network: deps.network, source: sourceChain(deps.network, row.sourceChain), burnTx: row.burnTx as Hex, vault: row.vault as Address });
       if (tracked.state === "arrived" && (await recordArrival(deps.sql, id, { forwardTx: tracked.forwardTx, received: tracked.received }))) {
         await deps.onArrived?.(row, { forwardTx: tracked.forwardTx, received: tracked.received, payer: tracked.payer, logIndex: tracked.logIndex, at: tracked.at });
       }
+      if (tracked.state === "waiting") appliedSpeed = tracked.appliedSpeed;
       row = (await getDeposit(deps.sql, id)) ?? row;
     }
-    return done(okBody(row));
+    return done(okBody(row, appliedSpeed));
   } catch {
     return done({ status: "unavailable" });
   }
 }
 
-function okBody(row: DepositRow): DepositApiResult {
-  return { status: "ok", deposit: { id: row.id, state: row.status, ...(row.received !== null ? { received: row.received.toString() } : {}), ...(row.forwardTx ? { forwardTx: row.forwardTx } : {}) } };
+function okBody(row: DepositRow, appliedSpeed?: "fast" | "slow"): DepositApiResult {
+  return { status: "ok", deposit: { id: row.id, state: row.status, ...(row.received !== null ? { received: row.received.toString() } : {}), ...(row.forwardTx ? { forwardTx: row.forwardTx } : {}), ...(appliedSpeed ? { appliedSpeed } : {}) } };
 }
