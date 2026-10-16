@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { BOX_KINDS } from "@strickle/core";
 import type { Sql } from "postgres";
 import { describe, expect, it } from "vitest";
-import { migrate } from "../../src/migrate.ts";
+import { migrate, pendingMigrations } from "../../src/migrate.ts";
 import { createTestDatabase } from "./helpers.ts";
 
 const migrationsDir = (files: Record<string, string>) => {
@@ -96,6 +96,19 @@ describe("schema constraints", () => {
       await expect(
         db.sql`insert into mirror_boxes (user_id, kind, asset, balance) values (${userId ?? ""}, 'taxes', 'BTC', ${Buffer.from("x")})`,
       ).rejects.toThrow();
+    } finally {
+      await db.drop();
+    }
+  });
+
+  it("reports what is pending without applying it", async () => {
+    const db = await createTestDatabase();
+    try {
+      const all = readdirSync(new URL("../../migrations/", import.meta.url)).filter((name) => name.endsWith(".sql")).sort();
+      expect(await pendingMigrations(db.sql)).toEqual(all);
+      await migrate(db.sql);
+      expect(await pendingMigrations(db.sql)).toEqual([]);
+      expect(await pendingMigrations(db.sql, migrationsDir({ "9999_future.sql": "select 1;" }))).toEqual(["9999_future.sql"]);
     } finally {
       await db.drop();
     }

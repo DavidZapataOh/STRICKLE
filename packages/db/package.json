@@ -7,13 +7,16 @@
     ".": "./src/index.ts",
     "./limiter": "./src/limiter.ts",
     "./access": "./src/access.ts",
-    "./testing": "./src/testing.ts"
+    "./testing": "./src/testing.ts",
+    "./connect": "./src/connect.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.mts"
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "migrate": "node --env-file-if-exists=../../../.env src/migrate-cli.ts",
+    "db:ping": "node --env-file-if-exists=../../../.env src/ping-cli.ts"
   },
   "dependencies": {
     "@strickle/core": "*",

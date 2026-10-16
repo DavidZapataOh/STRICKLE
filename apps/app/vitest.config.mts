@@ -11,5 +11,5 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./tests/support/empty.ts", import.meta.url)),
     },
   },
-  test: { include: ["tests/**/*.test.{ts,tsx}"], exclude: ["tests/live/**", "node_modules/**"], environment: "node" },
+  test: { include: ["tests/**/*.test.{ts,tsx}"], exclude: ["tests/live/**", "tests/integration/**", "node_modules/**"], environment: "node" },
 });
