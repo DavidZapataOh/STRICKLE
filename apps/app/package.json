@@ -12,9 +12,12 @@
     "test:responsive": "playwright test",
     "test:perf": "npm run build && lhci autorun",
     "test:live": "vitest run --config vitest.live.config.mts --passWithNoTests",
-    "test:e2e:live": "playwright test --config playwright.live.config.ts --pass-with-no-tests"
+    "test:e2e:live": "playwright test --config playwright.live.config.ts --pass-with-no-tests",
+    "predev": "node scripts/sync-deployments.mjs",
+    "prebuild": "node scripts/sync-deployments.mjs"
   },
   "dependencies": {
+    "@strickle/arc": "*",
     "@strickle/core": "*",
     "@strickle/design": "*",
     "@strickle/tax-engine": "*",
@@ -22,6 +25,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "viem": "^2.57.7",
     "zod": "3.25.76"
   },
   "devDependencies": {

@@ -20,7 +20,7 @@ export const networks = {
   testnet: {
     name: "testnet",
     chain: arcTestnet,
-    rpcUrl: "https://rpc.testnet.arc.io",
+    rpcUrl: "https://rpc.blockdaemon.testnet.arc.network",
     explorerUrl: "https://explorer.testnet.arc.io",
     circleBlockchain: "ARC-TESTNET",
     usdc: "0x3600000000000000000000000000000000000000",
