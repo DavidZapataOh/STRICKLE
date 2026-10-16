@@ -3,7 +3,7 @@ import { migrate } from "@strickle/db";
 import { invoiceKeys } from "@strickle/db/invoice-keys";
 import { createLimiter } from "@strickle/db/limiter";
 import { randomBytes } from "node:crypto";
-import { hashTypedData, recoverAddress } from "viem";
+import { recoverAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { OWNER_COOKIE, handleOwnerSession, mintOwnerCookie, ownerTypedData, readOwnerCookie, requireOwner } from "../../src/server/owner-session.ts";

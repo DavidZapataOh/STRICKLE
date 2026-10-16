@@ -1,6 +1,6 @@
 import { type InvoiceKeys } from "@strickle/db/invoice-keys";
 import type { createLimiter } from "@strickle/db/limiter";
-import { useNonce } from "@strickle/db/payments";
+import { useNonce as spendNonce } from "@strickle/db/payments";
 import type { ArcNetworkName } from "@strickle/arc/networks";
 import { networks } from "@strickle/arc/networks";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
@@ -108,7 +108,7 @@ export async function handleOwnerSession(request: Request, deps: OwnerSessionDep
     const digest = hashTypedData(ownerTypedData({ chainId: networks[deps.network].chain.id, vault: vault as Address, nonce: BigInt(nonce), deadline }));
     if (!(await deps.chain.accepts(owner, digest, signature as Hex))) return reject(401);
     // the nonce is spent only by a signature the chain accepted, so a failed attempt cannot burn an honest one
-    if (!(await useNonce(deps.sql, vault, nonce, new Date(deadline * 1000)))) return reject(401);
+    if (!(await spendNonce(deps.sql, vault, nonce, new Date(deadline * 1000)))) return reject(401);
   } catch {
     return reject(502, "unavailable");
   }
