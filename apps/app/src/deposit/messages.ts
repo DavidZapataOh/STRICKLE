@@ -12,6 +12,8 @@ export function errorOf(thrown: unknown): DepositError {
   if (code === 4902 || code === 4901) return "wrong-chain";
   const text = typeof message === "string" ? message : "";
   if (/user (rejected|denied)|rejected the request/i.test(text)) return "rejected";
-  if (/insufficient funds|exceeds balance/i.test(text)) return "insufficient-funds";
+  if (/insufficient .*(balance|funds)|insufficient funds|exceeds balance/i.test(text)) return "insufficient-funds";
+  if (/fee quote is not safe|call estimate again/i.test(text)) return "quote-expired";
+  if (/failed to switch to chain|wallet_switchEthereumChain|unsupported method/i.test(text)) return "wrong-chain";
   return "unavailable";
 }

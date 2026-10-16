@@ -31,6 +31,8 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   const bridge = useRef<{ module: Bridge; kit: ReturnType<Bridge["createDepositKit"]>; adapter: Awaited<ReturnType<Bridge["adapterFromProvider"]>>; provider: InjectedWallet["provider"] } | null>(null);
   const latestQuote = useRef(0);
   const alive = useRef(true);
+  const run = useRef(0);
+  const confirming = useRef(false);
 
   useEffect(() => {
     alive.current = true;
@@ -39,41 +41,67 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     };
   }, []);
 
-  const follow = useCallback(async (id: string) => {
-    const deadline = Date.now() + GIVE_UP_MS;
-    while (alive.current && Date.now() < deadline) {
+  // Registers the burn (idempotent) until the server accepts it, then follows the deposit until it arrives. It never gives up: after the soft deadline it only says the transfer may still be on its way.
+  const follow = useCallback(async (id: string, burnTx: Hex, ticket: number) => {
+    const live = () => alive.current && run.current === ticket;
+    const softDeadline = Date.now() + GIVE_UP_MS;
+    let registered = false;
+    let warned = false;
+    while (live()) {
+      let wait = POLL_MS;
       try {
-        const response = await fetch(`/api/deposits/${id}`, { cache: "no-store" });
-        const body = (await response.json()) as { status: string; deposit?: { state: string; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } };
-        if (body.status === "ok" && body.deposit) {
-          if (body.deposit.appliedSpeed) dispatch({ type: "speed-applied", value: body.deposit.appliedSpeed });
-          if (body.deposit.state === "arrived" && body.deposit.received) {
-            clearPending();
-            dispatch({ type: "arrived", received: BigInt(body.deposit.received), ...(body.deposit.forwardTx ? { forwardTx: body.deposit.forwardTx as Hex } : {}) });
+        if (!registered) {
+          const response = await fetch(`/api/deposits/${id}`, json({ burnTx }));
+          const body = (await response.json()) as { status?: string; retryAfterSeconds?: number };
+          if (body.status === "ok") registered = true;
+          else if (body.status === "rejected" && body.retryAfterSeconds) wait = body.retryAfterSeconds * 1000;
+          else if (body.status === "rejected" || body.status === "conflict" || body.status === "not-found") {
+            if (live()) dispatch({ type: "failed", error: "unavailable" });
             return;
           }
         }
-        if (body.status === "not-found") {
-          clearPending();
-          dispatch({ type: "failed", error: "unavailable" });
-          return;
+        if (registered) {
+          const response = await fetch(`/api/deposits/${id}`, { cache: "no-store" });
+          const body = (await response.json()) as { status: string; deposit?: { state: string; received?: string; forwardTx?: string; appliedSpeed?: "fast" | "slow" } };
+          if (body.status === "ok" && body.deposit) {
+            if (body.deposit.appliedSpeed && live()) dispatch({ type: "speed-applied", value: body.deposit.appliedSpeed });
+            if (body.deposit.state === "arrived" && body.deposit.received) {
+              if (live()) {
+                clearPending();
+                dispatch({ type: "arrived", received: BigInt(body.deposit.received), ...(body.deposit.forwardTx ? { forwardTx: body.deposit.forwardTx as Hex } : {}) });
+              }
+              return;
+            }
+          }
         }
       } catch {
         // a dropped request is retried on the next turn
       }
-      await sleep(POLL_MS);
+      if (!warned && Date.now() > softDeadline) {
+        warned = true;
+        if (live()) dispatch({ type: "failed", error: "timeout" });
+      }
+      await sleep(wait);
     }
-    if (alive.current) dispatch({ type: "failed", error: "timeout" });
   }, []);
+
+  const resume = useCallback(
+    (pending: { id: string; burnTx: Hex; speed?: "fast" | "slow"; sourceId?: string }) => {
+      const ticket = ++run.current;
+      if (pending.sourceId) dispatch({ type: "chain", id: pending.sourceId });
+      if (pending.speed) dispatch({ type: "speed", value: pending.speed });
+      dispatch({ type: "sending", depositId: pending.id });
+      dispatch({ type: "burned", burnTx: pending.burnTx });
+      void follow(pending.id, pending.burnTx, ticket);
+    },
+    [follow],
+  );
 
   // a deposit whose burn was sent before the page closed is followed again, not forgotten
   useEffect(() => {
     const pending = loadPending();
-    if (!pending) return;
-    dispatch({ type: "sending", depositId: pending.id });
-    dispatch({ type: "burned", burnTx: pending.burnTx });
-    void follow(pending.id);
-  }, [follow]);
+    if (pending) resume(pending);
+  }, [resume]);
 
   const { sourceId, amount, speed, account: sender, network } = state;
 
@@ -118,26 +146,24 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     }
   }
 
-  async function register(id: string, burnTx: Hex) {
-    const deadline = Date.now() + GIVE_UP_MS;
-    while (alive.current && Date.now() < deadline) {
-      const response = await fetch(`/api/deposits/${id}`, json({ burnTx })).catch(() => null);
-      const body = (await response?.json().catch(() => null)) as { status?: string; retryAfterSeconds?: number } | null;
-      if (body?.status === "ok") return;
-      if (body?.status === "rejected" && body.retryAfterSeconds) await sleep(body.retryAfterSeconds * 1000);
-      else if (!body || body.status === "unavailable") await sleep(POLL_MS);
-      else return;
-    }
+  function fail(error: unknown) {
+    confirming.current = false;
+    const code = errorOf(error);
+    if (code === "quote-expired") setRound((value) => value + 1);
+    dispatch({ type: "failed", error: code });
   }
 
   async function confirm() {
-    const { quote, sourceId, speed, account: sender } = state;
+    const { quote, sourceId: chosen, speed: chosenSpeed, account: from } = state;
     const connection = bridge.current;
     const leg = quote?.legs[0];
-    if (!quote || !sourceId || !sender || !connection || !leg) return;
+    if (!quote || !chosen || !from || !connection || !leg || confirming.current) return;
+    confirming.current = true;
     let burned = false;
     try {
-      const created = await fetch("/api/deposits", json({ vault: account.vault, sourceChain: sourceId, sourceAddress: sender, amount: quote.amountSent.toString(), speed, feeMode: leg.feeMode, intent: "income" }));
+      // an expired quote is refused here, before any record exists and before the wallet is asked for anything
+      connection.module.assertConfirmable(quote);
+      const created = await fetch("/api/deposits", json({ vault: account.vault, sourceChain: chosen, sourceAddress: from, amount: quote.amountSent.toString(), speed: chosenSpeed, feeMode: leg.feeMode, intent: "income" }));
       const record = (await created.json()) as { status: string; id?: string };
       if (record.status !== "created" || !record.id) throw new Error(`the deposit was not recorded: ${record.status}`);
       const id = record.id;
@@ -149,24 +175,23 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
         .executeDeposit({ kit, adapter }, quote, (progress) => {
           if (progress.stage !== "burn" || progress.state !== "done" || !progress.txHash || burned) return;
           burned = true;
-          savePending(id, progress.txHash);
+          confirming.current = false;
+          savePending(id, progress.txHash, undefined, { speed: chosenSpeed, sourceId: chosen });
+          const ticket = ++run.current;
           dispatch({ type: "burned", burnTx: progress.txHash });
-          void register(id, progress.txHash).then(() => follow(id));
+          void follow(id, progress.txHash, ticket);
         })
         .catch((error: unknown) => {
-          if (!burned && alive.current) dispatch({ type: "failed", error: errorOf(error) });
+          if (!burned && alive.current) fail(error);
         });
     } catch (error) {
-      dispatch({ type: "failed", error: errorOf(error) });
+      fail(error);
     }
   }
 
   function check() {
     const pending = loadPending();
-    if (!pending) return;
-    dispatch({ type: "sending", depositId: pending.id });
-    dispatch({ type: "burned", burnTx: pending.burnTx });
-    void follow(pending.id);
+    if (pending) resume(pending);
   }
 
   return (
@@ -178,7 +203,10 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       discovered={discovered}
       vault={account.vault}
       onEvent={(event) => {
-        if (event.type === "failed" && event.error === "quote-expired") setRound((value) => value + 1);
+        if (event.type === "reset") {
+          run.current++;
+          clearPending();
+        }
         dispatch(event);
       }}
       actions={{ connect: () => void connect(), pick: (wallet) => void pick(wallet), confirm: () => void confirm(), check, refresh: () => setRound((value) => value + 1) }}

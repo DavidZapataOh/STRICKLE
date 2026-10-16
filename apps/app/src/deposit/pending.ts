@@ -8,22 +8,30 @@ const HASH = /^0x[0-9a-fA-F]{64}$/;
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export function savePending(id: string, burnTx: Hex, storage: Store | null = browserStorage()): void {
+export interface Pending {
+  id: string;
+  burnTx: Hex;
+  speed?: "fast" | "slow";
+  sourceId?: string;
+}
+
+export function savePending(id: string, burnTx: Hex, storage: Store | null = browserStorage(), extra: { speed?: "fast" | "slow"; sourceId?: string } = {}): void {
   try {
-    storage?.setItem(PENDING_KEY, JSON.stringify({ id, burnTx }));
+    storage?.setItem(PENDING_KEY, JSON.stringify({ id, burnTx, ...extra }));
   } catch {
     // a browser that refuses storage cannot resume after a reload; the deposit itself is unaffected
   }
 }
 
-export function loadPending(storage: Store | null = browserStorage()): { id: string; burnTx: Hex } | null {
+export function loadPending(storage: Store | null = browserStorage()): Pending | null {
   try {
     const raw = storage?.getItem(PENDING_KEY);
     if (!raw) return null;
     const value: unknown = JSON.parse(raw);
     if (typeof value !== "object" || value === null) return null;
-    const { id, burnTx } = value as Record<string, unknown>;
-    return typeof id === "string" && UUID.test(id) && typeof burnTx === "string" && HASH.test(burnTx) ? { id, burnTx: burnTx as Hex } : null;
+    const { id, burnTx, speed, sourceId } = value as Record<string, unknown>;
+    if (typeof id !== "string" || !UUID.test(id) || typeof burnTx !== "string" || !HASH.test(burnTx)) return null;
+    return { id, burnTx: burnTx as Hex, ...(speed === "fast" || speed === "slow" ? { speed } : {}), ...(typeof sourceId === "string" && sourceId.length <= 40 ? { sourceId } : {}) };
   } catch {
     return null;
   }

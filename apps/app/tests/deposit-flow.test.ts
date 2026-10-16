@@ -28,7 +28,7 @@ describe("the deposit flow", () => {
   });
 
   it("keeps the burn hash on a failure after the burn, so the deposit can still be followed", () => {
-    const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "burned", burnTx: "0xb" as never }, { type: "failed", error: "timeout" }]);
+    const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "burned", burnTx: "0xb" as never }, { type: "failed", error: "unavailable" }]);
     expect(state.step).toBe("failed");
     expect(state.burnTx).toBe("0xb");
   });
@@ -44,6 +44,27 @@ describe("the deposit flow", () => {
     expect(state.step).toBe("wallet");
     expect(state.error).toBe("unavailable");
     expect(state.account).toBe("0xabc");
+  });
+
+  it("returns to the form, not a dead end, for any failure before the burn", () => {
+    for (const error of ["unavailable", "insufficient-funds", "timeout"] as const) {
+      const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "failed", error }]);
+      expect(state.step, error).toBe("quote");
+      expect(state.burnTx).toBeNull();
+    }
+  });
+
+  it("an expired quote is dropped so the next one is asked for", () => {
+    const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "failed", error: "quote-expired" }]);
+    expect(state.quote).toBeNull();
+    expect(state.step).toBe("wallet");
+  });
+
+  it("a timeout after the burn keeps waiting: the money may still be on its way", () => {
+    const state = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "burned", burnTx: "0xb" as never }, { type: "failed", error: "timeout" }]);
+    expect(state.step).toBe("waiting");
+    expect(state.error).toBe("timeout");
+    expect(depositReducer(state, { type: "arrived", received: 1n }).error).toBeNull();
   });
 
   it("remembers the speed Circle applied, which may differ from the one asked for", () => {
@@ -63,6 +84,8 @@ describe("the pending deposit that survives a reload", () => {
     const burn = `0x${"ab".repeat(32)}` as const;
     savePending("11111111-1111-4111-8111-111111111111", burn, storage);
     expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn });
+    savePending("11111111-1111-4111-8111-111111111111", burn, storage, { speed: "slow", sourceId: "Base_Sepolia" });
+    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: burn, speed: "slow", sourceId: "Base_Sepolia" });
     storage.setItem(PENDING_KEY, "{not json");
     expect(loadPending(storage)).toBeNull();
     clearPending(storage);

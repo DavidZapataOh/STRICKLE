@@ -54,7 +54,6 @@ export const initialDeposit = (network: ArcNetworkName): DepositState => ({
   error: null,
 });
 
-const RECOVERABLE: readonly DepositError[] = ["rejected", "wrong-chain", "insufficient-funds", "quote-refused", "quote-expired"];
 const EDITABLE: readonly DepositStep[] = ["chain", "wallet", "quote"];
 
 const hasInput = (state: DepositState) => state.sourceId !== null && state.amount !== null && state.amount > 0n;
@@ -88,14 +87,13 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
       return { ...state, step: "waiting", burnTx: event.burnTx };
     case "arrived":
       return { ...state, step: "arrived", received: event.received, forwardTx: event.forwardTx ?? null, error: null };
-    case "failed":
-      if (state.burnTx !== null) return { ...state, step: "failed", error: event.error };
-      if (event.error === "no-wallet") return { ...state, step: hasInput(state) ? "wallet" : "chain", error: event.error };
-      // nothing has been sent yet, so there is nothing to give up on: the form and the connected wallet stay
-      if (state.depositId === null) return { ...state, quote: event.error === "quote-expired" ? null : state.quote, step: hasInput(state) ? "wallet" : "chain", error: event.error };
-      if (!RECOVERABLE.includes(event.error)) return { ...state, step: "failed", error: event.error };
-      // an expired quote must be asked for again; any other recoverable failure keeps the quote on screen
-      return event.error === "quote-expired" ? { ...state, quote: null, step: "wallet", error: event.error } : { ...state, step: state.quote ? "quote" : "wallet", error: event.error };
+    case "failed": {
+      if (state.burnTx !== null) return event.error === "timeout" ? { ...state, step: "waiting", error: event.error } : { ...state, step: "failed", error: event.error };
+      // nothing has left the wallet: every failure returns to the form, with the wallet still connected
+      const quote = event.error === "quote-expired" ? null : state.quote;
+      const step = event.error === "no-wallet" ? (hasInput(state) ? "wallet" : "chain") : quote ? "quote" : hasInput(state) ? "wallet" : "chain";
+      return { ...state, quote, step, depositId: null, error: event.error };
+    }
     case "reset":
       return initialDeposit(state.network);
   }

@@ -65,6 +65,15 @@ describe("DepositView", () => {
     expect(view(base)).not.toContain(en.deposit.quote.refresh);
   });
 
+  it("lets a user whose transfer is stuck start another, and keeps a timed-out one in waiting", () => {
+    const burnTx = `0x${"ab".repeat(32)}` as const;
+    expect(view({ ...initialDeposit("testnet"), step: "failed", error: "unavailable", burnTx })).toContain(en.deposit.states.another);
+    const waiting = view({ ...initialDeposit("testnet"), step: "waiting", error: "timeout", burnTx });
+    expect(waiting).toContain(en.deposit.states.waiting);
+    expect(waiting).toContain(en.deposit.errors.timeout);
+    expect(waiting).toContain(en.deposit.states.retry);
+  });
+
   it("shows the error that sent the user back, and a way to check again after a burn", () => {
     const failed = { ...initialDeposit("testnet"), step: "failed" as const, error: "timeout" as const, burnTx: `0x${"ab".repeat(32)}` as const };
     const out = view(failed);
@@ -74,6 +83,12 @@ describe("DepositView", () => {
 });
 
 describe("errors", () => {
+  it("maps the kit's own messages", () => {
+    expect(errorOf(new Error("Insufficient USDC balance on Base Sepolia. Required: 5, available: 1"))).toBe("insufficient-funds");
+    expect(errorOf(new Error("The fee quote is not safe for submission. Call estimate again"))).toBe("quote-expired");
+    expect(errorOf(new Error("Failed to switch to chain 84532: Unsupported method"))).toBe("wrong-chain");
+  });
+
   it("maps what a wallet and the network throw to the flow's error codes", () => {
     expect(errorOf({ code: 4001 })).toBe("rejected");
     expect(errorOf({ code: 4902 })).toBe("wrong-chain");

@@ -71,10 +71,16 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
               {state.appliedSpeed !== null && state.appliedSpeed !== state.speed ? (
                 <p role="status">{fill(d.speed.appliedNote, { speed: d.speed.names[state.appliedSpeed] })}</p>
               ) : null}
+              {state.error ? <p role="status">{describeError(state.error, t)}</p> : null}
               {burnLink ? (
                 <a href={burnLink} rel="noreferrer" target="_blank">
                   {d.states.viewTx}
                 </a>
+              ) : null}
+              {state.error ? (
+                <button type="button" className="btn" onClick={actions.check}>
+                  {d.states.retry}
+                </button>
               ) : null}
             </>
           ) : null}
@@ -83,16 +89,15 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
               <p role="alert">{state.error ? describeError(state.error, t) : d.states.failedBody}</p>
               {state.burnTx ? (
                 <>
-                  <p>{d.states.failedBody}</p>
+                  {state.error ? <p>{d.states.failedBody}</p> : null}
                   <button type="button" className="btn" onClick={actions.check}>
                     {d.states.retry}
                   </button>
                 </>
-              ) : (
-                <button type="button" className="btn" data-variant="quiet" onClick={() => onEvent({ type: "reset" })}>
-                  {d.states.another}
-                </button>
-              )}
+              ) : null}
+              <button type="button" className="btn" data-variant="quiet" onClick={() => onEvent({ type: "reset" })}>
+                {d.states.another}
+              </button>
             </>
           ) : null}
         </Card>

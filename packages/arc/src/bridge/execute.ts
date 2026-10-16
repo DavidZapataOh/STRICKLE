@@ -19,7 +19,7 @@ export function progressOf(step: { name: string; state: string; txHash?: string 
 
 export const burnTxOf = (result: { steps: readonly { name: string; txHash?: string }[] }): Hex | null => (result.steps.find((step) => step.name === "burn")?.txHash as Hex | undefined) ?? null;
 
-/** Sends the quoted transfer (one kit instance per deposit: `kit.on("*")` has no matching `off`, so a listener would otherwise outlive the call). The returned burn hash is what the tracker follows if the page is closed before the kit's promise settles. */
+/** Sends the quoted transfer (one kit instance per deposit, so the progress listener dies with it). The returned burn hash is what the tracker follows if the page is closed before the kit's promise settles. */
 export async function executeDeposit(deps: { kit: DepositKit; adapter: DepositAdapter }, quote: DepositQuote, onProgress: (progress: DepositProgress) => void): Promise<{ burnTx: Hex }> {
   assertConfirmable(quote);
   const leg = quote.legs[0];
