@@ -11,7 +11,9 @@ import { createPublicClient, parseUnits, type Address, type Hex, type Transport 
 import { createBundlerClient, toWebAuthnAccount } from "viem/account-abstraction";
 import { arcTestnet } from "viem/chains";
 
-import { MODULAR_URL } from "./networks.ts";
+import { MIN_FEE_PER_GAS, MODULAR_URL } from "./networks.ts";
+
+const MIN_PRIORITY_FEE = 1_000_000_000n;
 
 export { MODULAR_URL };
 
@@ -70,8 +72,16 @@ export async function openPasskeyWallet(args: {
   const account = await toCircleSmartAccount({ client: client as never, owner: toWebAuthnAccount({ credential }) });
   const bundler = createBundlerClient({ account, chain: arcTestnet, transport });
 
+  // The bundler refuses a priority fee below 1 gwei, Arc drops anything under its fee floor and an operation is only included with headroom over the base fee (twice the floor was measured to work, the floor alone never confirmed).
+  const fees = async () => {
+    const estimate = await client.estimateFeesPerGas().catch(() => undefined);
+    const maxPriorityFeePerGas = (estimate?.maxPriorityFeePerGas ?? 0n) > MIN_PRIORITY_FEE ? (estimate?.maxPriorityFeePerGas as bigint) : MIN_PRIORITY_FEE;
+    const base = ((estimate?.maxFeePerGas ?? 0n) > MIN_FEE_PER_GAS ? (estimate?.maxFeePerGas as bigint) : MIN_FEE_PER_GAS) * 2n;
+    return { maxPriorityFeePerGas, maxFeePerGas: base + maxPriorityFeePerGas };
+  };
+
   const sendCalls: PasskeyWallet["sendCalls"] = async (calls, options) => {
-    const hash = await bundler.sendUserOperation({ calls: toUserOperationCalls(calls), ...(options?.sponsored === false ? {} : { paymaster: true }) });
+    const hash = await bundler.sendUserOperation({ calls: toUserOperationCalls(calls), ...(await fees()), ...(options?.sponsored === false ? {} : { paymaster: true }) });
     const { receipt, success } = await bundler.waitForUserOperationReceipt({ hash });
     if (!success) throw new Error(`the user operation failed: ${receipt.transactionHash}`);
     return receipt.transactionHash;
