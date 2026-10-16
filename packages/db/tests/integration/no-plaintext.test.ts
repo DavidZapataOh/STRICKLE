@@ -55,6 +55,7 @@ describe("a dump of the database", () => {
     // and nothing that can hold an amount may be text, numeric or json.
     // metric_snapshots holds public, chain-derived aggregates (what /api/metrics serves) and the collector's resume state: vault and owner addresses that
     // are already public through the factory's events and two running totals, never an amount per user. It is the one deliberate exception to "no json".
+    // deposit_intents holds only facts already public on the source chain and on Arc (vault, sender, amount, transaction hashes) and the depositor's own income/own/unsure declaration.
     // The access tables hold only the hash of an invitation code, its label and times, and a random session id.
     // The rate tables hold a keyed hash of an address or a public vault address, a count and a time: no amount, no user data.
     const reviewed = [
@@ -67,6 +68,21 @@ describe("a dump of the database", () => {
       "agent_state.updated_at:timestamp with time zone",
       "agent_state.user_id:uuid",
       "agent_state.version:integer",
+      "deposit_intents.amount:bigint",
+      "deposit_intents.burn_tx:text",
+      "deposit_intents.created_at:timestamp with time zone",
+      "deposit_intents.failure:text",
+      "deposit_intents.fee_mode:text",
+      "deposit_intents.forward_tx:text",
+      "deposit_intents.id:uuid",
+      "deposit_intents.intent:text",
+      "deposit_intents.received:bigint",
+      "deposit_intents.source_address:text",
+      "deposit_intents.source_chain:text",
+      "deposit_intents.speed:text",
+      "deposit_intents.status:text",
+      "deposit_intents.updated_at:timestamp with time zone",
+      "deposit_intents.vault:text",
       "forecasts.as_of:date",
       "forecasts.id:uuid",
       "forecasts.payload:bytea",

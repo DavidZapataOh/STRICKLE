@@ -7,3 +7,4 @@ export * from "./access.ts";
 export * from "./connect.ts";
 export * from "./snapshots.ts";
 export * from "./wave.ts";
+export * from "./deposits.ts";

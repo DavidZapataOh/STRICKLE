@@ -9,7 +9,8 @@
     "./access": "./src/access.ts",
     "./testing": "./src/testing.ts",
     "./connect": "./src/connect.ts",
-    "./snapshots": "./src/snapshots.ts"
+    "./snapshots": "./src/snapshots.ts",
+    "./deposits": "./src/deposits.ts"
   },
   "scripts": {
     "lint": "eslint .",
