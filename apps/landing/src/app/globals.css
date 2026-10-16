@@ -1,20 +1,7 @@
 @import "tailwindcss";
+@import "@strickle/design/tokens.css";
 
 :root {
-  --night: #22141a;
-  --blush: #fbf3ef;
-  --hibiscus: #a3214f;
-  --hibiscus-deep: #861a41;
-  --hibiscus-light: #e2779b;
-  --marigold: #e9a23b;
-  --calyx: #2e6a4f;
-  --calyx-tint: #e7eee8;
-  --clay: #6e4a3e;
-  --ember: #9a3412;
-  --amber: #b45309;
-  --husk: #f3e5dd;
-  --line: #eadbd2;
-  --card: #fdf8f5;
   /* one design unit = 1px at a 1536px-wide desktop frame */
   --u: min(calc(100vw / 1536), 1.3px);
   /* phones and tablets: one unit = 1px on a 390px-wide frame, capped for tablets */
