@@ -7,6 +7,7 @@ const SIGNATURE = {
   allocated: "Allocated(uint8,uint8,uint256,uint256)",
   split: "Split(address,uint8,uint256)",
   salary: "SalaryPaid(address,uint8,address,uint256)",
+  "private-spend": "PrivateSpend(address,uint256)",
 } as const;
 
 export const PAGE_SIZE = 1_000;

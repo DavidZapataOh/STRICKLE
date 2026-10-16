@@ -10,6 +10,6 @@ test("the app's addresses are the deployed ones", () => {
 
 test("testnet lists every contract the onboarding calls and mainnet is honestly empty until deployed", () => {
   const { testnet, mainnet } = build();
-  for (const name of ["BoxVaultFactory", "AgentState", "AgentExecutor"]) assert.match(testnet[name], /^0x[0-9a-fA-F]{40}$/);
+  for (const name of ["BoxVaultFactory", "AgentState", "AgentExecutor", "PolicyPool"]) assert.match(testnet[name], /^0x[0-9a-fA-F]{40}$/);
   assert.ok(mainnet === null || /^0x[0-9a-fA-F]{40}$/.test(mainnet.BoxVaultFactory));
 });

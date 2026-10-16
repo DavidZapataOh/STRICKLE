@@ -1,7 +1,7 @@
 import { type Address, type Hex, decodeEventLog } from "viem";
 import { events } from "./read-abi.ts";
 
-export type LogKind = "notice" | "allocated" | "split" | "salary";
+export type LogKind = "notice" | "allocated" | "split" | "salary" | "private-spend";
 export interface RawLog {
   blockNumber: bigint;
   logIndex: number;
@@ -40,11 +40,15 @@ export function parseLogsResponse(json: unknown): LogPage {
   return { logs, truncated: body.truncated === true };
 }
 
-export async function fetchLogs(kind: LogKind, vault: Address, signal?: AbortSignal): Promise<LogPage> {
-  const response = await fetch(`/api/logs?kind=${kind}&vault=${vault}`, { signal });
+export const logsUrl = (kind: LogKind, vault: Address, fromBlock?: bigint): string => `/api/logs?kind=${kind}&vault=${vault}${fromBlock === undefined ? "" : `&fromBlock=${fromBlock}`}`;
+
+export async function fetchLogsFrom(kind: LogKind, vault: Address, options: { fromBlock?: bigint; signal?: AbortSignal } = {}): Promise<LogPage> {
+  const response = await fetch(logsUrl(kind, vault, options.fromBlock), { signal: options.signal });
   if (!response.ok) throw new Error("activity unavailable");
   return parseLogsResponse(await response.json());
 }
+
+export const fetchLogs = (kind: LogKind, vault: Address, signal?: AbortSignal): Promise<LogPage> => fetchLogsFrom(kind, vault, { signal });
 
 export function decodeAllocated(log: RawLog): { asset: number; box: number; amount: bigint; newBalance: bigint } {
   const { args } = decodeEventLog({ abi: [events.allocated], data: log.data, topics: log.topics as [Hex, ...Hex[]] });

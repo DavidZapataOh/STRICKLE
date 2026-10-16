@@ -132,4 +132,31 @@ describe("GET /api/logs", () => {
     expect(Number(slow.headers.get("retry-after"))).toBeGreaterThan(0);
     expect((await ask(h, `kind=allocated&vault=${vault}`, "8.8.8.8")).status).toBe(200);
   });
+
+  it("serves private-spend like the other executor kinds", async () => {
+    entries = [entry(99_999_990)];
+    const response = await ask(handler(), `kind=private-spend&vault=${vault}`);
+    expect(response.status).toBe(200);
+    expect(hits[0]?.searchParams.get("topic0")).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+
+  it("starts at the cursor's bucket inside the window and at the window's start when the cursor is older", async () => {
+    await ask(handler(), `kind=notice&vault=${vault}&fromBlock=99950123`);
+    expect(Number(hits[0]?.searchParams.get("fromBlock"))).toBe(99_950_000);
+    await ask(handler(), `kind=notice&vault=${vault}&fromBlock=5`, "2.2.2.2");
+    expect(Number(hits[1]?.searchParams.get("fromBlock"))).toBe(100_000_000 - 17_000_000);
+  });
+
+  it("refuses a cursor that is not decimal digits", async () => {
+    for (const bad of ["abc", "-1", "1e9", "1".repeat(13)]) {
+      expect((await ask(handler(), `kind=notice&vault=${vault}&fromBlock=${bad}`, "3.3.3.3")).status).toBe(400);
+    }
+  });
+
+  it("caches by bucket: two cursors in the same bucket cost one explorer request", async () => {
+    const shared = handler();
+    await ask(shared, `kind=notice&vault=${vault}&fromBlock=99950100`);
+    await ask(shared, `kind=notice&vault=${vault}&fromBlock=99950900`, "4.4.4.4");
+    expect(hits).toHaveLength(1);
+  });
 });
