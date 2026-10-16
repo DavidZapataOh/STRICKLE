@@ -37,6 +37,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   const run = useRef(0);
   const confirming = useRef(false);
   const heldFrom = useRef<Hex | null>(null);
+  const heldCap = useRef<bigint | null>(null);
 
   useEffect(() => {
     alive.current = true;
@@ -46,15 +47,22 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   }, []);
 
   // Registers the burn (idempotent) until the server accepts it, then follows the deposit until it arrives. It never gives up: after the soft deadline it only says the transfer may still be on its way.
-  const follow = useCallback(async (id: string, burnTx: Hex, ticket: number) => {
+  const follow = useCallback(async (id: string, burnTx: Hex, ticket: number, swap?: { swapTx: Hex; swapOut: string }) => {
     const live = () => alive.current && run.current === ticket;
     const softDeadline = Date.now() + GIVE_UP_MS;
     let registered = false;
+    let swapRegistered = !swap;
     let warned = false;
     while (live()) {
       let wait = POLL_MS;
       try {
-        if (!registered) {
+        // the burn is only accepted once the conversion it carries is on record
+        if (swap && !swapRegistered) {
+          const response = await fetch(`/api/deposits/${id}`, json(swap));
+          const body = (await response.json()) as { status?: string };
+          if (body.status === "ok") swapRegistered = true;
+        }
+        if (swapRegistered && !registered) {
           const response = await fetch(`/api/deposits/${id}`, json({ burnTx }));
           const body = (await response.json()) as { status?: string; retryAfterSeconds?: number };
           if (body.status === "ok") registered = true;
@@ -90,13 +98,13 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
   }, []);
 
   const resume = useCallback(
-    (pending: { id: string; burnTx: Hex; speed?: "fast" | "slow"; sourceId?: string; swapTx?: Hex | null }) => {
+    (pending: { id: string; burnTx: Hex; speed?: "fast" | "slow"; sourceId?: string; swapTx?: Hex | null; swapOut?: string }) => {
       const ticket = ++run.current;
       if (pending.sourceId) dispatch({ type: "chain", id: pending.sourceId });
       if (pending.speed) dispatch({ type: "speed", value: pending.speed });
       dispatch({ type: "sending", depositId: pending.id });
       dispatch({ type: "burned", burnTx: pending.burnTx });
-      void follow(pending.id, pending.burnTx, ticket);
+      void follow(pending.id, pending.burnTx, ticket, pending.swapTx && pending.swapOut ? { swapTx: pending.swapTx, swapOut: pending.swapOut } : undefined);
     },
     [follow],
   );
@@ -111,6 +119,7 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
     }
     // converted but never sent on: what the wallet holds is read from the chain once it reconnects, never from storage
     heldFrom.current = pending.swapTx;
+    heldCap.current = pending.swapOut ? BigInt(pending.swapOut) : null;
     if (pending.sourceId) dispatch({ type: "chain", id: pending.sourceId });
   }, [resume]);
 
@@ -126,7 +135,10 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
         const source = sourceChain(network, sourceId);
         const quote =
           inputToken === "USDT"
-            ? await connection.module.quoteUsdtDeposit({ swapKit: connection.module.createDepositSwapKit(), kit: connection.kit, adapter: connection.adapter }, { network, source, sourceAddress: sender, vault: account.vault, amountIn: amount, speed })
+            ? await (async () => {
+                const usdt = await import("@strickle/arc/bridge/usdt");
+                return usdt.quoteUsdtDeposit({ swapKit: usdt.createDepositSwapKit(), kit: connection.kit, adapter: connection.adapter }, { network, source, sourceAddress: sender, vault: account.vault, amountIn: amount, speed });
+              })()
             : await connection.module.quoteDeposit({ kit: connection.kit, adapter: connection.adapter }, { network, source, sourceAddress: sender, vault: account.vault, amountSent: amount, speed });
         if (ticket === latestQuote.current && alive.current) dispatch({ type: "quoted", quote });
       } catch (error) {
@@ -157,7 +169,9 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       if (heldFrom.current && sourceId) {
         const source = sourceChain(state.network, sourceId);
         const balance = (await createPublicClient({ transport: http(source.rpc[0]) }).readContract({ address: source.usdc, abi: balanceAbi, functionName: "balanceOf", args: [owner] })) as bigint;
-        if (balance > 0n) dispatch({ type: "held", amount: balance, swapTx: heldFrom.current });
+        // never more than the conversion credited: the wallet may hold other USDC, or part of it may already be burning
+        const held = heldCap.current !== null && heldCap.current < balance ? heldCap.current : balance;
+        if (held > 0n) dispatch({ type: "held", amount: held, swapTx: heldFrom.current });
         heldFrom.current = null;
       }
     } catch (error) {
@@ -199,24 +213,28 @@ export function DepositActive({ lang, t, account }: { lang: Locale; t: DepositTe
       const onBurn = (burnTx: Hex) => {
         burned = true;
         confirming.current = false;
-        savePending(id, { burnTx, ...(swapped ? { swapTx: swapped } : {}) }, undefined, { speed: chosenSpeed, sourceId: chosen });
+        savePending(id, { burnTx, ...(swapped ? { swapTx: swapped } : {}) }, undefined, { speed: chosenSpeed, sourceId: chosen, ...(swapRecord ? { swapOut: swapRecord.swapOut } : {}) });
         const ticket = ++run.current;
         dispatch({ type: "burned", burnTx });
-        void follow(id, burnTx, ticket);
+        void follow(id, burnTx, ticket, swapRecord);
       };
       let swapped: Hex | null = null;
+      let swapRecord: { swapTx: Hex; swapOut: string } | undefined;
       const onProgress = (progress: DepositProgress) => {
         if (progress.stage === "swap" && progress.state === "done" && progress.txHash && progress.amount && !swapped) {
           swapped = progress.txHash;
-          savePending(id, { swapTx: progress.txHash }, undefined, { speed: chosenSpeed, sourceId: chosen });
-          dispatch({ type: "swapped", swapTx: progress.txHash });
-          void fetch(`/api/deposits/${id}`, json({ swapTx: progress.txHash, swapOut: progress.amount.toString() }));
+          const swapOut = progress.amount.toString();
+          savePending(id, { swapTx: progress.txHash }, undefined, { speed: chosenSpeed, sourceId: chosen, swapOut });
+          dispatch({ type: "swapped", swapTx: progress.txHash, credited: progress.amount });
+          swapRecord = { swapTx: progress.txHash, swapOut };
+          // told to the server right away and again with the burn, until it is accepted: a lost request must not strand the burn
+          void fetch(`/api/deposits/${id}`, json(swapRecord)).catch(() => {});
         }
         if (progress.stage === "burn" && progress.state === "done" && progress.txHash && !burned) onBurn(progress.txHash);
       };
       // the kit's promise runs on until Circle delivers; the burn is what the screen follows
       const run_ = usdt
-        ? connection.module.executeUsdtDeposit({ swapKit: connection.module.createDepositSwapKit(), kit, adapter, client: createPublicClient({ transport: http(sourceChain(state.network, chosen).rpc[0]) }) }, quote, onProgress)
+        ? import("@strickle/arc/bridge/usdt").then((module) => module.executeUsdtDeposit({ swapKit: module.createDepositSwapKit(), kit, adapter, client: createPublicClient({ transport: http(sourceChain(state.network, chosen).rpc[0]) }) }, quote, onProgress))
         : connection.module.executeDeposit({ kit, adapter }, quote, onProgress);
       void run_.catch((error: unknown) => {
         if (burned || !alive.current) return;

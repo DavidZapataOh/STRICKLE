@@ -13,6 +13,8 @@ export interface DepositState {
   sourceId: string | null;
   inputToken: InputToken;
   swapTx: Hex | null;
+  /** What the conversion credited to the wallet, from its receipt. */
+  converted: bigint | null;
   amount: bigint | null;
   speed: TransferSpeed;
   appliedSpeed: TransferSpeed | null;
@@ -30,7 +32,7 @@ export type DepositEvent =
   | { type: "chain"; id: string }
   | { type: "token"; value: InputToken }
   | { type: "amount"; value: bigint | null }
-  | { type: "swapped"; swapTx: Hex }
+  | { type: "swapped"; swapTx: Hex; credited: bigint }
   | { type: "held"; amount: bigint; swapTx: Hex }
   | { type: "resume-held" }
   | { type: "speed"; value: TransferSpeed }
@@ -50,6 +52,7 @@ export const initialDeposit = (network: ArcNetworkName): DepositState => ({
   sourceId: null,
   inputToken: "USDC",
   swapTx: null,
+  converted: null,
   amount: null,
   speed: "fast",
   appliedSpeed: null,
@@ -80,7 +83,7 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
     case "token":
       return EDITABLE.includes(state.step) && event.value !== state.inputToken ? edited(state, { inputToken: event.value }) : state;
     case "swapped":
-      return { ...state, swapTx: event.swapTx };
+      return { ...state, swapTx: event.swapTx, converted: event.credited };
     case "held":
       return { ...state, step: "held", amount: event.amount, swapTx: event.swapTx, error: null };
     case "resume-held":
@@ -106,6 +109,8 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
       return { ...state, step: "arrived", received: event.received, forwardTx: event.forwardTx ?? null, error: null };
     case "failed": {
       if (state.burnTx !== null) return event.error === "timeout" ? { ...state, step: "waiting", error: event.error } : { ...state, step: "failed", error: event.error };
+      // the conversion mined but nothing was sent on: the USDC is in the wallet, so say so instead of offering a USDT quote the wallet can no longer fill
+      if (state.swapTx !== null && state.converted !== null) return { ...state, step: "held", amount: state.converted, error: null };
       // nothing has left the wallet: every failure returns to the form, with the wallet still connected
       const quote = event.error === "quote-expired" || event.error === "stale" ? null : state.quote;
       const step = event.error === "no-wallet" ? (hasInput(state) ? "wallet" : "chain") : quote ? "quote" : hasInput(state) ? "wallet" : "chain";

@@ -107,13 +107,13 @@ describe("the USDT path of the flow", () => {
   });
 
   it("records the conversion and then the transfer", () => {
-    const state = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never }, { type: "burned", burnTx: "0xb" as never }]);
+    const state = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never, credited: 99_400_000n }, { type: "burned", burnTx: "0xb" as never }]);
     expect(state.step).toBe("waiting");
     expect(state.swapTx).toBe("0xs");
   });
 
   it("holds the user's USDC when the second step cannot keep the quote, and lets them send it as plain USDC", () => {
-    const held = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never }, { type: "held", amount: 99_400_000n, swapTx: "0xs" as never }]);
+    const held = run([...base, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never, credited: 99_400_000n }, { type: "held", amount: 99_400_000n, swapTx: "0xs" as never }]);
     expect(held.step).toBe("held");
     const resumed = depositReducer(held, { type: "resume-held" });
     expect(resumed).toMatchObject({ step: "wallet", inputToken: "USDC", amount: 99_400_000n, quote: null, swapTx: null, depositId: null });
@@ -126,6 +126,19 @@ describe("the USDT path of the flow", () => {
 });
 
 
+describe("a failure after the conversion mined", () => {
+  const converted = [{ type: "chain", id: "Ethereum" }, { type: "token", value: "USDT" }, { type: "amount", value: 100_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }, { type: "sending", depositId: "d1" }, { type: "swapped", swapTx: "0xs" as never, credited: 99_400_000n }] as const;
+
+  it("holds the converted USDC instead of sending the user back to a USDT quote they can no longer execute", () => {
+    for (const error of ["rejected", "insufficient-funds", "unavailable"] as const) {
+      const state = run([...converted, { type: "failed", error }]);
+      expect(state.step, error).toBe("held");
+      expect(state.amount).toBe(99_400_000n);
+      expect(state.swapTx).toBe("0xs");
+    }
+  });
+});
+
 describe("the pending USDT deposit", () => {
   const memory = () => {
     const data = new Map<string, string>();
@@ -134,8 +147,8 @@ describe("the pending USDT deposit", () => {
   it("round-trips with only the conversion hash, and ignores an entry with neither hash", () => {
     const storage = memory();
     const swap = `0x${"cd".repeat(32)}` as const;
-    savePending("11111111-1111-4111-8111-111111111111", { swapTx: swap }, storage);
-    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: null, swapTx: swap });
+    savePending("11111111-1111-4111-8111-111111111111", { swapTx: swap }, storage, { swapOut: "99400000" });
+    expect(loadPending(storage)).toEqual({ id: "11111111-1111-4111-8111-111111111111", burnTx: null, swapTx: swap, swapOut: "99400000" });
     storage.setItem(PENDING_KEY, JSON.stringify({ id: "11111111-1111-4111-8111-111111111111" }));
     expect(loadPending(storage)).toBeNull();
   });

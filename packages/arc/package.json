@@ -12,6 +12,7 @@
     "./usdc": "./src/usdc.ts",
     "./bridge": "./src/bridge/index.ts",
     "./bridge/chains": "./src/bridge/chains.ts",
+    "./bridge/usdt": "./src/bridge/usdt.ts",
     "./bridge/types": "./src/bridge/types.ts",
     "./bridge/iris": "./src/bridge/iris.ts"
   },

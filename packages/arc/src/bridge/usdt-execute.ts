@@ -38,7 +38,7 @@ export async function executeUsdtDeposit(deps: { swapKit: DepositSwapKit; kit: D
   if (!swap || !bridge) throw new Error("the quote does not describe a conversion followed by a transfer");
 
   const balance = (await deps.client.readContract({ address: swap.tokenIn.address, abi: erc20Balance, functionName: "balanceOf", args: [quote.sourceAddress] })) as bigint;
-  if (balance < swap.amountIn) throw new QuoteRefusal("unavailable", "the wallet holds less USDT than the amount to convert");
+  if (balance < swap.amountIn) throw new QuoteRefusal("insufficient-balance", "the wallet holds less USDT than the amount to convert");
 
   onProgress({ stage: "swap", state: "pending" });
   const result = await deps.swapKit.swap({

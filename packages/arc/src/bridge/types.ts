@@ -66,7 +66,7 @@ export interface DepositQuote {
   opaque: unknown;
 }
 
-export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable" | "cost-too-high" | "stale";
+export type QuoteRefusalCode = "below-minimum" | "fee-unknown" | "expired" | "unsupported-chain" | "unavailable" | "cost-too-high" | "stale" | "insufficient-balance";
 
 export class QuoteRefusal extends Error {
   readonly code: QuoteRefusalCode;

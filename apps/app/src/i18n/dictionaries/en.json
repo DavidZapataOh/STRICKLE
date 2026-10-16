@@ -539,7 +539,7 @@
       "title": "Convert USDT to USDC",
       "fee": "Conversion fee",
       "route": "Route: {route}",
-      "floor": "You receive at least {amount} even if the price moves up to {percent}",
+      "floor": "The conversion only goes through if you would receive at least {amount}, even if the price moves up to {percent}.",
       "expected": "Expected: {amount}",
       "network": "Network fee ({token})"
     },

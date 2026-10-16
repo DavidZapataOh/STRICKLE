@@ -1,6 +1,7 @@
 import { type DepositQuote, bridgeLegOf } from "@strickle/arc/bridge/types";
 import { sourceChain, sourceChainsFor, usdtChainsFor } from "@strickle/arc/bridge/chains";
 import { formatMoney } from "@strickle/design/format";
+import { formatUnits } from "viem";
 import type { DepositEvent, DepositState } from "@/deposit/flow";
 import { describeError } from "@/deposit/messages";
 import { explorerLink } from "@/config/network";
@@ -151,7 +152,7 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
             onChange={(value) => onEvent({ type: "token", value })}
           />
         ) : null}
-        <AmountField id="deposit-amount" label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
+        <AmountField id="deposit-amount" initial={state.amount !== null ? formatUnits(state.amount, 6) : ""} label={d.amountLabel} hint={d.amountHint} onValue={(value) => onEvent({ type: "amount", value })} />
         <ChoiceGroup
           name="deposit-speed"
           legend={d.speed.label}

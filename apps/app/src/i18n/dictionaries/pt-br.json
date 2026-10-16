@@ -526,7 +526,7 @@
       "quote-expired": "A cotação expirou. Peça uma nova.",
       "unavailable": "Algo deu errado ao acessar a rede. Tente de novo.",
       "timeout": "A transferência ainda não chegou. Ela pode estar a caminho: verifique de novo.",
-      "cost-too-high": "Converter este valor custa caro demais dele. Tente um valor maior.",
+      "cost-too-high": "A conversão consumiria uma parte grande demais deste valor. Tente um valor maior.",
       "stale": "A cotação está antiga. Peça uma nova."
     },
     "token": {
@@ -539,7 +539,7 @@
       "title": "Converter USDT em USDC",
       "fee": "Taxa de conversão",
       "route": "Rota: {route}",
-      "floor": "Você recebe pelo menos {amount} mesmo que o preço se mova até {percent}",
+      "floor": "A conversão só é feita se você receber pelo menos {amount}, mesmo que o preço se mova até {percent}.",
       "expected": "Esperado: {amount}",
       "network": "Taxa de rede ({token})"
     },

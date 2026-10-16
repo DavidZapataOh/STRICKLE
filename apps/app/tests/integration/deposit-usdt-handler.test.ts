@@ -59,4 +59,11 @@ describe("USDT deposits through the routes", () => {
     expect((await handleDepositUpdate(post(`/${usdc.id}`, { swapTx: `0x${"a3".repeat(32)}`, swapOut: "1" }, "10.1.0.5"), usdc.id, deps)).status).toBe(400);
     expect((await handleDepositUpdate(post(`/${usdc.id}`, { swapTx: `0x${"a3".repeat(32)}`, swapOut: "-1" }, "10.1.0.5"), usdc.id, deps)).status).toBe(400);
   });
+
+  it("asks the client to try again when the burn arrives before the swap record, instead of rejecting it for good", async () => {
+    const created = (await handleCreateDeposit(post("", usdt, "10.1.0.6"), deps)).body;
+    if (created.status !== "created") throw new Error("setup");
+    const early = await handleDepositUpdate(post(`/${created.id}`, { burnTx: `0x${"b9".repeat(32)}` }, "10.1.0.6"), created.id, deps);
+    expect(early.body).toMatchObject({ status: "rejected", retryAfterSeconds: 5 });
+  });
 });

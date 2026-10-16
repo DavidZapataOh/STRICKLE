@@ -4,8 +4,8 @@ import { useState } from "react";
 import { parseAmountInput } from "@/deposit/amount";
 
 /** A six-decimal amount typed with a dot: the parent receives base units, or null while the text is not an amount. */
-export function AmountField({ id, label, hint, onValue }: { id: string; label: string; hint?: string; onValue: (value: bigint | null) => void }) {
-  const [text, setText] = useState("");
+export function AmountField({ id, label, hint, initial = "", onValue }: { id: string; label: string; hint?: string; initial?: string; onValue: (value: bigint | null) => void }) {
+  const [text, setText] = useState(initial);
   const invalid = text !== "" && parseAmountInput(text) === null;
   const describedBy = hint ? `${id}-hint` : undefined;
   return (

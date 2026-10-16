@@ -131,6 +131,8 @@ export async function handleDepositUpdate(request: Request, id: string, deps: De
       return swapped ? done(okBody(swapped)) : done({ status: "not-found" });
     }
     const burnTx = update.burnTx.toLowerCase() as Hex;
+    // the swap record may still be on its way: the client keeps asking until it lands
+    if (row.inputToken === "USDT" && row.swapOut === null && !row.burnTx) return done({ status: "rejected", retryAfterSeconds: IRIS_RETRY_SECONDS });
     if (row.burnTx) return row.burnTx === burnTx ? done(okBody(row)) : done({ status: "rejected" });
     if (row.status !== "created" && row.status !== "swapped") return done({ status: "rejected" });
 
