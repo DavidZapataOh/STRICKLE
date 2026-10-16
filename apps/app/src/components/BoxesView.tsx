@@ -1,17 +1,16 @@
-import { BOX_KINDS, type BoxKind } from "@strickle/core";
+import type { BoxKind } from "@strickle/core";
 import { formatMoney } from "@strickle/design/format";
 import type { Locale } from "@strickle/design/locale";
-import { describeRule } from "@/chain/rules";
 import { boxTotal, heldTotals } from "@/chain/totals";
-import { dateText, isoDay } from "@/home/format";
+import { ruleWords } from "@/home/rule-words";
 import type { DataText } from "@/i18n/slices";
 import { fill } from "@/i18n/fill";
 import { EmptyState } from "@/ui/EmptyState";
 import { ListRow } from "@/ui/ListRow";
 import { Progress } from "@/ui/Progress";
-import { SplitBar } from "@/ui/SplitBar";
 import { type ScreenState, Unready } from "./HomeView";
 import { MeasuresShelf } from "./MeasuresShelf";
+import { PaymentCard } from "./PaymentCard";
 
 export function fillRatio(balance: bigint, target: bigint): number | null {
   if (target <= 0n) return null;
@@ -27,18 +26,7 @@ export function BoxesView({ lang, t, state, onRetry }: { lang: Locale; t: DataTe
   const held = heldTotals(vault);
   const money = (units: bigint) => formatMoney(units, lang);
   const shelf = vault.boxes.map((box) => ({ kind: box.kind, ratio: fillRatio(boxTotal(box), targets[box.kind] ?? 0n), share: held.usdc > 0n ? Number((boxTotal(box) * 10_000n) / held.usdc) / 10_000 : 0 }));
-  const ruleText = (box: (typeof vault.boxes)[number]) =>
-    describeRule(box.rule, vault.now)
-      .map((line) => {
-        switch (line.key) {
-          case "locked": return fill(t.boxesPage.locked, { date: dateText(isoDay(line.until), lang) });
-          case "always": return fill(t.boxesPage.always, { hours: line.hours });
-          case "below": return fill(t.boxesPage.below, { floor: money(line.floor), hours: line.hours });
-          case "restricted": return t.boxesPage.restricted;
-          case "free": return t.boxesPage.free;
-        }
-      })
-      .join(" · ");
+  const ruleText = (box: (typeof vault.boxes)[number]) => ruleWords(box.rule, vault.now, lang, t.boxesPage);
 
   return (
     <div className="boxes">
@@ -81,19 +69,7 @@ export function BoxesView({ lang, t, state, onRetry }: { lang: Locale; t: DataTe
           <EmptyState title={t.boxesPage.payments.empty.title} body={t.boxesPage.payments.empty.body} />
         ) : (
           payments.slice(0, 10).map((payment) => (
-            <article key={`${payment.txHash}-${payment.asset}`} className="payment">
-              <p className="payment-head">
-                <span>{dateText(isoDay(payment.at), lang)}</span>
-                <span className="note">{payment.byAgent ? t.boxesPage.payments.agent : t.boxesPage.payments.manual}</span>
-                <span className="amount">{formatMoney(payment.total, lang, { asset: payment.asset })}</span>
-              </p>
-              <SplitBar
-                total={payment.total}
-                locale={lang}
-                asset={payment.asset}
-                parts={BOX_KINDS.filter((kind) => (payment.byBox[kind] ?? 0n) > 0n).map((kind) => ({ key: kind, label: t.boxes[kind], units: payment.byBox[kind] ?? 0n }))}
-              />
-            </article>
+            <PaymentCard key={`${payment.txHash}-${payment.asset}`} payment={payment} lang={lang} t={t} />
           ))
         )}
         {olderPayments ? <p className="note">{t.boxesPage.older}</p> : null}

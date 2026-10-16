@@ -48,3 +48,18 @@ describe("the locale redirect", () => {
     expect(matcher.test("/apiary")).toBe(true);
   });
 });
+
+describe("the account view path", () => {
+  const vault = "0x00000000000000000000000000000000000000a1";
+
+  it("lets an address through", () => {
+    expect(call(`http://app.test/en/view/${vault}`)).toBeUndefined();
+  });
+
+  it("answers a path that is not an address with a 404 before the page streams, whatever the language", () => {
+    for (const path of ["/en/view/not-an-address", "/pt-br/view/0x123", "/es/view/"]) {
+      const response = call(`http://app.test${path}`);
+      expect(response?.headers.get("x-middleware-rewrite"), path).toContain("/_missing");
+    }
+  });
+});

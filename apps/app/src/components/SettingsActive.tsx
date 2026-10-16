@@ -1,0 +1,237 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import type { Address } from "viem";
+import { getPublicClient } from "@/chain/client";
+import { fetchLogs } from "@/chain/logs";
+import { latestPlan } from "@/chain/plan";
+import { type BoxState, readVault } from "@/chain/vault";
+import type { Locale } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import type { SettingsText } from "@/i18n/slices";
+import { loadNoticeKey } from "@/keys/notice-key";
+import { usd } from "@/onboarding/answers";
+import { type AdjustError, type AdjustResult, cushionChange, cushionRanges, parseWholeDollars, presetChange, salaryChange, settingsMatch } from "@/settings/adjust";
+import type { Account } from "@/settings/account";
+import { type Call, approveRecipientCalls, setAgentCalls } from "@/settings/calls";
+import { type SettingsChain, approvalKey, approvalState, readSettingsChain } from "@/settings/chain";
+import { settingsModel } from "@/settings/model";
+import { sendOwnerCalls } from "@/settings/send";
+import { type TxPhase, runTx } from "@/settings/tx";
+import { useAdjust } from "@/settings/use-adjust";
+import { isPasskeyCancelled } from "@/wallet/errors";
+import { EditRow } from "./EditRow";
+import { RulesPanel } from "./RulesPanel";
+import { ShareLink } from "./ShareLink";
+import { type SettingsState, SettingsView } from "./SettingsView";
+
+const dollars = (units: bigint): string => String(units / 1_000_000n);
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number };
+
+/** What is in force for a signed-in account, and the changes the person can make: the vault's own through the owner's transaction, the agent's through a signed request. */
+export function SettingsActive({ lang, t, account }: { lang: Locale; t: SettingsText; account: Account }) {
+  const s = t.settings;
+  const [state, setState] = useState<SettingsState>({ status: "loading" });
+  const [extras, setExtras] = useState<Extras | null>(null);
+  const [txPhase, setTxPhase] = useState<TxPhase>("idle");
+  const [round, setRound] = useState(0);
+  const adjust = useAdjust(account);
+  const { vault } = account;
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const key = await loadNoticeKey(vault);
+        const logs = key ? ((await fetchLogs("notice", vault).catch(() => null))?.logs ?? null) : null;
+        const plan = key && logs ? latestPlan(logs, key, vault) : null;
+        const payees = plan ? [{ box: 3, who: plan.settings.payee as Address }] : [];
+        const [chain, vaultState] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault)]);
+        const now = Math.floor(Date.now() / 1000);
+        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now });
+        setState({ status: "ready", model: settingsModel({ chain, plan, todayIso: new Date(now * 1000).toISOString().slice(0, 10), now }) });
+      } catch {
+        setState((current) => (current.status === "ready" ? current : { status: "error" }));
+      }
+    };
+    void load();
+    const tick = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    const id = setInterval(tick, 30_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, [vault, round]);
+
+  const reload = useCallback(() => setRound((value) => value + 1), []);
+
+  const ownerTx = useCallback(
+    async (calls: Call[], confirmed: () => Promise<boolean>): Promise<TxPhase> => {
+      const outcome = await runTx({ send: () => sendOwnerCalls(account, calls), confirmed, sleep, now: Date.now, isCancelled: isPasskeyCancelled }, setTxPhase);
+      reload();
+      return outcome;
+    },
+    [account, reload],
+  );
+
+  if (state.status !== "ready" || !extras) {
+    return <SettingsView lang={lang} t={t} state={state} slots={{ retry: <button type="button" className="btn" onClick={reload}>{s.retry}</button> }} />;
+  }
+
+  const model = state.model;
+  const status = adjust.phase !== "idle" ? s.phase[adjust.phase] : txPhase !== "idle" ? t.pause[txPhase] : "";
+  const rowText = { changeLabel: s.change, saveLabel: s.save, cancelLabel: s.cancel };
+  const current = model.cushion ?? { floorDays: 14, targetDays: 42 };
+  // The executor refuses every report for a paused vault, so a change meant for the agent would never be applied while it is paused or stopped.
+  const enclaveBlocked = model.agent.state !== "running";
+  const blockedNote = enclaveBlocked ? s.agent.enclaveBlocked : undefined;
+  const ranges = cushionRanges(current);
+
+  const errorText = (error: AdjustError): string => {
+    if (error === "floor") return fill(s.errors.floor, { min: ranges.floor[0], max: ranges.floor[1] });
+    if (error === "target") return fill(s.errors.target, { min: ranges.target[0], max: ranges.target[1] });
+    return s.errors[error];
+  };
+  const apply = async (result: AdjustResult): Promise<void> => {
+    if (!result.ok) throw new Error(errorText(result.error));
+    const changes = result.action.changes;
+    await adjust.run(result.action, (plan) => settingsMatch(changes, plan.settings));
+  };
+  const field = (form: FormData, name: string) => String(form.get(name) ?? "");
+  const working = adjust.phase === "signing" || adjust.phase === "sending" || adjust.phase === "busy" || adjust.phase === "waiting";
+
+  const slots = {
+    resume: (
+      <button type="button" className="btn" data-variant="primary" disabled={working} onClick={() => void adjust.run({ kind: "resume" }, (plan) => !plan.settings.halted)}>
+        {s.agent.resumeInAgent}
+      </button>
+    ),
+    agentEdit:
+      model.agent.state === "none" ? null : (
+        <EditRow
+          {...rowText}
+          label={s.agent.limitsEdit}
+          value={`${dollars(model.limits.capUnits)} / ${model.limits.windowHours} h`}
+          note={s.agent.immediate}
+          status={status}
+          onSave={async (form) => {
+            const whole = parseWholeDollars(field(form, "cap"));
+            const hours = parseWholeDollars(field(form, "hours"));
+            if (whole === null || hours === null || hours === 0) throw new Error(s.errors.amount);
+            const cap = usd(whole);
+            const windowSeconds = hours * 3600;
+            await ownerTx(setAgentCalls({ vault, agent: extras.agent, cap, windowSeconds, paused: model.agent.state === "paused" }), async () => {
+              const read = await readSettingsChain(getPublicClient(), vault);
+              return read.limits.cap === cap && read.limits.windowSeconds === windowSeconds;
+            });
+          }}
+        >
+          <label>
+            {s.agent.limitsEdit}
+            <input name="cap" inputMode="numeric" defaultValue={dollars(model.limits.capUnits)} />
+          </label>
+          <label>
+            {s.agent.windowEdit}
+            <input name="hours" inputMode="numeric" defaultValue={String(model.limits.windowHours)} />
+          </label>
+        </EditRow>
+      ),
+    autonomy: (
+      <EditRow {...rowText} label={s.autonomy.title} value={model.autonomy === "ask" ? s.autonomy.ask : s.autonomy.auto} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(presetChange(field(form, "preset") === "auto" ? "auto" : "ask", field(form, "upTo")))}>
+        <label>
+          <input type="radio" name="preset" value="ask" defaultChecked={model.autonomy === "ask"} /> {s.autonomy.ask}
+        </label>
+        <label>
+          <input type="radio" name="preset" value="auto" defaultChecked={model.autonomy === "auto"} /> {s.autonomy.auto}
+        </label>
+        <input name="upTo" inputMode="numeric" aria-label={s.autonomy.auto} defaultValue={model.salary ? dollars(model.salary.proposed) : "0"} />
+      </EditRow>
+    ),
+    salary: model.salary ? (
+      <>
+        <EditRow {...rowText} label={s.salary.amount} value={dollars(model.salary.proposed)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(salaryChange({ proposedDollars: field(form, "amount") }))}>
+          <input name="amount" inputMode="numeric" aria-label={s.salary.amount} defaultValue={dollars(model.salary.proposed)} />
+        </EditRow>
+        <EditRow {...rowText} label={s.salary.day} value={String(model.salary.day)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(salaryChange({ day: field(form, "day") }))}>
+          <input name="day" inputMode="numeric" aria-label={s.salary.day} defaultValue={String(model.salary.day)} />
+        </EditRow>
+        <EditRow
+          {...rowText}
+          label={s.salary.approve}
+          value=""
+          note={blockedNote ?? fill(s.salary.waitNote, { hours: 24 })}
+          status={status}
+          disabled={enclaveBlocked}
+          onSave={async (form) => {
+            const who = field(form, "who");
+            const result = salaryChange({ payee: who });
+            if (!result.ok) throw new Error(errorText(result.error));
+            await ownerTx(approveRecipientCalls({ vault, box: 3, who: who as Address }), async () => {
+              const read = await readSettingsChain(getPublicClient(), vault, [{ box: 3, who: who as Address }]);
+              return read.approvals[approvalKey(3, who as Address)] !== null;
+            });
+          }}
+        >
+          <input name="who" aria-label={s.salary.approve} placeholder="0x…" />
+        </EditRow>
+        <EditRow
+          {...rowText}
+          label={s.salary.use}
+          value=""
+          status={status}
+          disabled={enclaveBlocked}
+          note={blockedNote}
+          onSave={async (form) => {
+            const who = field(form, "who");
+            const result = salaryChange({ payee: who });
+            if (!result.ok) throw new Error(errorText(result.error));
+            const read = await readSettingsChain(getPublicClient(), vault, [{ box: 3, who: who as Address }]);
+            if (approvalState(read.approvals[approvalKey(3, who as Address)] ?? null, Math.floor(Date.now() / 1000)) !== "effective") throw new Error(s.salary.notApproved);
+            await apply(result);
+          }}
+        >
+          <input name="who" aria-label={s.salary.use} placeholder="0x…" />
+        </EditRow>
+      </>
+    ) : null,
+    cushion: model.cushion ? (
+      <>
+        <EditRow {...rowText} label={fill(s.cushion.floor, { max: ranges.floor[1] })} value={String(current.floorDays)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(cushionChange({ floorDays: field(form, "floor"), current }))}>
+          <input name="floor" inputMode="numeric" aria-label={s.cushion.floor} defaultValue={String(current.floorDays)} />
+        </EditRow>
+        <EditRow {...rowText} label={fill(s.cushion.target, { min: ranges.target[0] })} value={String(current.targetDays)} status={status} disabled={enclaveBlocked} note={blockedNote} onSave={async (form) => apply(cushionChange({ targetDays: field(form, "target"), current }))}>
+          <input name="target" inputMode="numeric" aria-label={s.cushion.target} defaultValue={String(current.targetDays)} />
+        </EditRow>
+      </>
+    ) : null,
+    rules: (
+      <RulesPanel
+        lang={lang}
+        t={t}
+        vault={vault}
+        boxes={extras.boxes}
+        pending={extras.pending}
+        now={extras.now}
+        busy={txPhase === "signing" || txPhase === "confirming"}
+        onRun={ownerTx}
+        readBox={async (box) => {
+          const [vaultState, chain] = await Promise.all([readVault(vault), readSettingsChain(getPublicClient(), vault)]);
+          return { rule: (vaultState.boxes[box - 1] as BoxState).rule, pending: chain.pending[box - 1] ?? null };
+        }}
+      />
+    ),
+    accountant: (
+      <>
+        <p>{t.view.shareIntro}</p>
+        <ShareLink href={`${window.location.origin}/${lang}/view/${vault}`} t={t} />
+        <p>{t.view.keysIntro}</p>
+      </>
+    ),
+  };
+
+  return <SettingsView lang={lang} t={t} state={state} slots={slots} />;
+}

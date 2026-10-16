@@ -61,3 +61,17 @@ The live proof takes two sittings a day apart (a new payee approval applies afte
 1. `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-prepare.mjs` reports what is missing (relay variables, database, workflow binding, the five-minute daily schedule).
 2. Day one: `RUN_LIVE=1 LIVE_PHASE=onboard npm run test:e2e:live -w app`, then `node --env-file=/Users/david/tameion/.env apps/app/scripts/activity-live-fund.mjs <vault>` to send the proof vault 2 USDC from the shared wallet. Both the funding and activating the workflow need the owner's go-ahead.
 3. On the payday set in step 2 (tomorrow's day of the month): `RUN_LIVE=1 LIVE_PHASE=approve npm run test:e2e:live -w app`. It waits for the agent's proposal, approves it with the replayed passkey, waits for the decision and the salary receipt, checks the relay's refusals and saves screenshots at ten viewports.
+
+## Pause, settings and the accountant's view
+
+- **Pause** is in the header of every screen once this device has an account. It is an owner transaction on the vault (`pauseAgent`, `resumeAgent`), so it works when the workflow is down. While the vault is paused the executor refuses every report for it, so the agent's own settings (how much it decides, salary, cushion) are shown but disabled with the reason; the vault's own limits, box rules and recipients stay editable. A private payment the owner signs still goes through while paused, and the screen says so.
+- **Settings** separates three kinds of change: owner transactions on the vault (cap and window, which apply at once; box rules, where a stricter rule applies now and a looser one waits at least a day and is applied by the owner afterwards; recipient approvals, which wait), signed `adjust` requests to the agent (confirmed only by the fresh `plan` notice the enclave publishes after applying them), and reads. A change that is not confirmed is never shown as saved.
+- **`/view/<vault>`** is a public, `noindex` page of what anyone can read about a vault on the network. **`/accountant`** lets an accountant create or import a view key that stays in this browser and read only the section the pool sealed for the accountant tier.
+
+The live proof (`tests/live/settings.live.spec.ts`, `tests/live/accountant.live.spec.ts`, with `RUN_LIVE=1`) needs the shared workflow redeployed and active, funds from the shared test wallet and one shielded note made with the shared deployer key, so it runs only with the owner's go-ahead:
+
+1. `NEXT_PUBLIC_CIRCLE_CLIENT_KEY` and the relay variables set as in the agent relay section.
+2. `RUN_LIVE=1 npm run test:e2e:live -w app -- tests/live/settings.live.spec.ts` onboards a new passkey account, pauses it and checks on the chain that a deposit stays unsplit and that the executor reverts with `NotDelegated()`, edits the cap while paused and checks it stays paused, resumes, confirms a settings change by the agent's own plan, and checks that a stricter rule applies now while a looser one waits. It saves screenshots at ten viewports under `test-results/live/`.
+3. `RUN_LIVE=1 npm run test:e2e:live -w app -- tests/live/accountant.live.spec.ts` shields one real USDC sealed for a new accountant key and checks that this key sees exactly that note and a different key sees none.
+
+Not run in the same sitting: applying the looser rule after its day, and a pause while the paymaster's quota is spent (the fallback is covered by `tests/settings-send.test.ts` and the arc passkey live suite).

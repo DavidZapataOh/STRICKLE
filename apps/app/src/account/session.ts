@@ -9,7 +9,8 @@ function parseSession(value: unknown): Session | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
   if (Object.keys(record).some((key) => !FIELDS.includes(key))) return null;
-  const { owner, vault, username, createdAt } = record;
+  const { owner, vault, createdAt } = record;
+  const username = record.username ?? "";
   if (!isStoredAddress(owner) || !isStoredAddress(vault)) return null;
   if (typeof username !== "string" || username.length > 64) return null;
   if (typeof createdAt !== "number" || !Number.isInteger(createdAt) || createdAt < 0) return null;

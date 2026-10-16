@@ -31,6 +31,19 @@ export const planNoticeSchema = z
     events: z.array(z.object({ date, kind: z.enum(["salary", "payroll", "tax"]), amount: units.nullable() }).strict()).max(8),
     targets: z.object({ taxes: units, payroll: units, salary: units, operating: units, emergency: units }).strict(),
     rates: z.object({ taxBps: z.number().int().min(0).max(10_000) }).strict(),
+    settings: z
+      .object({
+        proposed: units,
+        day: z.number().int().min(1).max(28),
+        payee: address,
+        dailyCap: units,
+        signatureThreshold: units,
+        floorDays: z.number().int().min(0),
+        targetDays: z.number().int().min(0),
+        halted: z.boolean(),
+        haltCodes: z.array(z.string().max(32)).max(7),
+      })
+      .strict(),
   })
   .strict();
 
