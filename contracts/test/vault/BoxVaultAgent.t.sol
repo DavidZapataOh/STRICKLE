@@ -7,6 +7,7 @@ import {BoxVault} from "../../src/vault/BoxVault.sol";
 import {BoxVaultFactory} from "../../src/vault/BoxVaultFactory.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
 import {TestVault4626} from "../fixtures/TestVault4626.sol";
+import {Vaults} from "../fixtures/Vaults.sol";
 
 contract BoxVaultAgentTest is Test {
     uint8 internal constant TAXES = 1;
@@ -31,7 +32,7 @@ contract BoxVaultAgentTest is Test {
         vm.warp(1_900_000_000);
         usdc = new TestToken();
         eurc = new TestToken();
-        BoxVaultFactory factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(eurc))));
+        BoxVaultFactory factory = new BoxVaultFactory(address(Vaults.newVault(usdc, eurc)));
         vault = BoxVault(factory.create(owner));
         yield = new TestVault4626(usdc);
         usdc.mint(address(vault), 10_000e6);

@@ -6,6 +6,7 @@ import {BoxVault} from "../../src/vault/BoxVault.sol";
 import {BoxVaultFactory} from "../../src/vault/BoxVaultFactory.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
 import {TestVault4626} from "../fixtures/TestVault4626.sol";
+import {Vaults} from "../fixtures/Vaults.sol";
 
 contract AgentHandler is Test {
     BoxVault public vault;
@@ -131,7 +132,7 @@ contract BoxVaultAgentInvariantTest is Test {
         vm.warp(1_900_000_000);
         usdc = new TestToken();
         yield = new TestVault4626(usdc);
-        BoxVaultFactory factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(new TestToken()))));
+        BoxVaultFactory factory = new BoxVaultFactory(address(Vaults.newVault(usdc, new TestToken())));
         address owner = makeAddr("owner");
         address agent = makeAddr("agent");
         vault = BoxVault(factory.create(owner));

@@ -6,6 +6,7 @@ import {BoxLedger} from "../src/vault/BoxLedger.sol";
 import {BoxVault} from "../src/vault/BoxVault.sol";
 import {BoxVaultFactory} from "../src/vault/BoxVaultFactory.sol";
 import {TestToken} from "./fixtures/TestToken.sol";
+import {Vaults} from "./fixtures/Vaults.sol";
 
 /// The app classifies a rule change as immediate or delayed before it asks the owner to sign. This test runs the same
 /// cases (one shared JSON file) against the vault itself, so the screen can never promise something the contract will not do.
@@ -17,7 +18,7 @@ contract RuleChangeFixtureTest is Test {
     function setUp() public {
         TestToken usdc = new TestToken();
         TestToken eurc = new TestToken();
-        factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(eurc))));
+        factory = new BoxVaultFactory(address(Vaults.newVault(usdc, eurc)));
     }
 
     function ruleAt(string memory json, string memory path) internal pure returns (BoxLedger.Rule memory) {
