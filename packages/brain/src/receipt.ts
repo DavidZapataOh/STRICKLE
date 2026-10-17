@@ -46,6 +46,8 @@ const IRREVERSIBLE: Partial<Record<ReceiptKind, string>> = {
   "breaker-reset": "This records a human reset; there is nothing to undo.",
   "early-payment": "The payment has left your accounts, so it cannot be taken back.",
   "income-doubt": "There is nothing to undo; you can mark it as your own money.",
+  swap: "The conversion was made at that day's rate; to change it, set the box back to dollars and it converts back at the rate of that moment.",
+  "swap-held": "There is nothing to undo; this only says why conversions paused.",
   split: "The money now sits in its boxes under their locks; it can be adjusted by moving between boxes, and the locks apply.",
 };
 

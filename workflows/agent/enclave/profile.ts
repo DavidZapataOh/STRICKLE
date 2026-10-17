@@ -29,6 +29,7 @@ const proposalSchema = z
   })
   .strict();
 const bps = (min: number, max: number) => z.number().int().min(min).max(max);
+const currency = z.enum(["USD", "EUR"]);
 
 export const profileSchema = z
   .object({
@@ -76,6 +77,21 @@ export const profileSchema = z
     payrolls: z.array(z.tuple([date, units])).max(24).default([]),
     taxDates: z.array(date).max(12).default([]),
     clockOffsetDays: z.number().int().min(-3650).max(3650).default(0),
+    // Which asset each box holds; taxes and the salary stay in dollars, so they are not keys.
+    currencies: z
+      .object({ payroll: currency, operating: currency, emergency: currency, profit: currency })
+      .strict()
+      .default({ payroll: "USD", operating: "USD", emergency: "USD", profit: "USD" }),
+    // The agent's own bookkeeping of conversions: the daily amount spent (in dollars), the failure breaker, the day a currency setting last changed and the last day a held notice was raised.
+    swap: z
+      .object({ day: maybeDate, spent: units, failures: bps(0, 9), since: maybeDate, heldOn: maybeDate })
+      .strict()
+      .default({ day: "", spent: "0", failures: 0, since: "", heldOn: "" }),
+    // The last feed answers the agent used (eight decimals), so the app can show them and a restart does not lose them.
+    rate: z
+      .object({ usdcUsd: units, eurcUsd: units, at: z.number().int().min(0) })
+      .strict()
+      .default({ usdcUsd: "0", eurcUsd: "0", at: 0 }),
     tick: z.object({ lastDay: maybeDate, p10: signed, p50: signed }).strict().default({ lastDay: "", p10: "0", p50: "0" }),
     breaker: z
       .object({ halted: z.boolean(), since: maybeDate, codes: z.array(z.string().max(24)).max(7) })
@@ -125,13 +141,16 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
   // the agent owns these; a first submission cannot seed them
-  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0" };
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
     flow: existing.flow,
     arrivals: existing.arrivals,
     taxCatchUp: existing.taxCatchUp,
+    swap: existing.swap,
+    rate: existing.rate,
+    currencies: Object.values(existing.currencies).some((value) => value !== "USD") ? existing.currencies : submitted.currencies,
     tick: existing.tick,
     nonce: BigInt(existing.nonce) > BigInt(submitted.nonce) ? existing.nonce : submitted.nonce,
     proposals: existing.proposals,

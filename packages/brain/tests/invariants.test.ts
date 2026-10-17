@@ -204,3 +204,34 @@ describe("evaluate: several violations", () => {
     expect(() => evaluate(snap(), snap(), { floorDays: 0, dailyCap: 0n, signatureThreshold: 0n }, action)).toThrow(RangeError);
   });
 });
+
+describe("a swap", () => {
+  const worst = (amount: bigint) => (amount * 150n) / 10_000n; // 1% slippage plus 0.5% feed lag
+  const policy: InvariantPolicy = { dailyCap: 10_000n, signatureThreshold: 10_000n };
+  const swap = (box: "payroll" | "operating" | "emergency" | "profit", amount: bigint): Action => ({ kind: "swap", box, amount, worstLoss: worst(amount) });
+
+  it("is judged at its worst case: the box and the liquid cash both lose what the swap can lose", () => {
+    const after = predict(snap(), swap("emergency", 100n));
+    expect([after.boxes.emergency, after.liquid]).toEqual([99n, 1_249n]);
+    expect(total(after)).toBe(after.liquid + after.inVaults);
+  });
+
+  it("leaves every invariant satisfied on a healthy snapshot", () => {
+    const action = swap("emergency", 100n);
+    expect(evaluate(snap(), predict(snap(), action), policy, action)).toEqual([]);
+  });
+
+  it("violates the cushion floor when the operating cash sits exactly at it and the loss would break it", () => {
+    const atFloor = snap({ boxes: { ...zeroBoxes, taxes: 400n, payroll: 300n, salary: 200n, operating: 140n, emergency: 100n, profit: 50n }, liquid: 1_190n, taxesReserved: 400n });
+    const action = swap("operating", 140n);
+    expect(evaluate(atFloor, predict(atFloor, action), policy, action).map((violation) => violation.code)).toContain("cushion-floor");
+  });
+
+  it("throws when it is larger than the box", () => {
+    expect(() => predict(snap(), swap("profit", 51n))).toThrow(RangeError);
+  });
+
+  it("never lets the loss exceed the amount", () => {
+    expect(() => predict(snap(), { kind: "swap", box: "profit", amount: 10n, worstLoss: 11n })).toThrow(RangeError);
+  });
+});

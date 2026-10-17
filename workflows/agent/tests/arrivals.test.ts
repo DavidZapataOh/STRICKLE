@@ -103,3 +103,26 @@ describe("books and size", () => {
     expect(p.arrivals[0]?.[0]).toBe("0000000005-0");
   });
 });
+
+describe("a euro arrival", () => {
+  const rate = { usdcUsd: 100_000_000n, eurcUsd: 112_000_000n };
+  const euro = (amount: bigint) => ({ id: "a1b2c3d4e5", asset: "EURC" as const, amount, sender: "0x00000000000000000000000000000000000000c3", date: TODAY });
+  const run = (over: { rate?: typeof rate } = {}) =>
+    planArrivals({ profile: profile({ salaryOwed: "5000000000", dailySpend: "20000000" }), books: { ...books, asset: "EURC", unallocated: 1_000_000_000n }, arrivals: [euro(1_000_000_000n)], unexplained: 0n, checkpoint: 777n, today: TODAY, now: 1_792_000_000, ...over });
+
+  it("is sized against obligations in euros and records its value in dollars", () => {
+    const p = run({ rate });
+    expect(total(p)).toBe(1_000_000_000n);
+    // 1,000 EURC are worth 1,120 dollars: the history the forecast reads is in dollars
+    expect(p.next.history.at(-1)?.[1]).toBe("1120000000");
+    expect(p.next.arrivals.at(-1)?.[2]).toBe("1120000000");
+    // the salary still owed stays in dollars: 5,000 owed minus what 1,000 EURC left after taxes funded
+    expect(BigInt(p.next.salaryOwed)).toBeLessThan(5_000_000_000n);
+    expect(BigInt(p.next.salaryOwed)).toBeGreaterThan(3_500_000_000n);
+  });
+
+  it("without a rate keeps the one to one reading it always had", () => {
+    const p = run();
+    expect(p.next.history.at(-1)?.[1]).toBe("1000000000");
+  });
+});

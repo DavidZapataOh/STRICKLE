@@ -8,11 +8,13 @@ export type ReceiptKind =
   | "taxes-to-local" | "taxes-to-local-proposal" | "structural-change-proposal" | "breaker-halt" | "breaker-reset"
   | "move" | "proposal-cancelled"
   | "early-payment" | "early-payment-proposal"
-  | "income-doubt" | "reclassified";
+  | "income-doubt" | "reclassified"
+  | "swap" | "swap-held";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
   | { type: "bps"; value: number }
+  | { type: "sbps"; value: number }
   | { type: "days"; value: number }
   | { type: "count"; value: number }
   | { type: "date"; value: PlainDate };
@@ -68,6 +70,11 @@ export function formatFact(value: FactValue, lang: Lang, style: NumberStyle): st
       const fraction = String(value.value % 100).padStart(2, "0").replace(/0+$/, "");
       return `${whole}${fraction ? decimal + fraction : ""}%`;
     }
+    case "sbps": {
+      if (!Number.isInteger(value.value)) throw new RangeError(`sbps must be an integer, got ${value.value}`);
+      const magnitude = formatFact({ type: "bps", value: Math.abs(value.value) }, lang, style);
+      return value.value > 0 ? `+${magnitude}` : value.value < 0 ? `-${magnitude}` : magnitude;
+    }
     case "days": {
       nonNegativeInteger(value.value, "days");
       const unit = lang === "en" ? (value.value === 1 ? "day" : "days") : lang === "es" ? (value.value === 1 ? "día" : "días") : value.value === 1 ? "dia" : "dias";
@@ -106,6 +113,8 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   "breaker-reset": { values: [], labels: ["actor"] },
   "income-doubt": { values: ["amount"], labels: ["flag"] },
   reclassified: { values: ["amount"], labels: ["from", "to"] },
+  swap: { values: ["amount", "expectedOut", "minOut", "reference", "deviation", "fee"], labels: ["label", "direction"] },
+  "swap-held": { values: [], labels: ["label", "currency", "reason"] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -139,6 +148,30 @@ const CLASS_NAMES: Record<string, Record<Lang, string>> = {
   "own-transfer": { en: "your own money", es: "tu propio dinero", "pt-br": "seu próprio dinheiro" },
   refund: { en: "a refund", es: "un reembolso", "pt-br": "um reembolso" },
 };
+
+const SWAP_REASONS: Record<string, Record<Lang, string>> = {
+  "worse-than-reference": { en: "the price offered was worse than the market reference", es: "el precio ofrecido fue peor que la referencia del mercado", "pt-br": "o preço oferecido foi pior que a referência do mercado" },
+  "better-than-reference": { en: "the price offered was too good to be true against the market reference", es: "el precio ofrecido era demasiado bueno frente a la referencia del mercado", "pt-br": "o preço oferecido era bom demais frente à referência do mercado" },
+  "stale-feed": { en: "the price feed is out of date", es: "la fuente de precios está desactualizada", "pt-br": "a fonte de preços está desatualizada" },
+  "adapter-not-approved": { en: "the conversion service is not active on your account yet", es: "el servicio de conversión aún no está activo en tu cuenta", "pt-br": "o serviço de conversão ainda não está ativo na sua conta" },
+  failures: { en: "three attempts in a row failed", es: "tres intentos seguidos fallaron", "pt-br": "três tentativas seguidas falharam" },
+  "daily-cap": { en: "today's conversion limit is used", es: "el límite de conversión de hoy ya se usó", "pt-br": "o limite de conversão de hoje já foi usado" },
+  "invalid-quote": { en: "the answer from the conversion service did not pass its checks", es: "la respuesta del servicio de conversión no pasó sus verificaciones", "pt-br": "a resposta do serviço de conversão não passou nas verificações" },
+  "vault-refused": { en: "your vault refused the conversion under its own limits", es: "tu vault rechazó la conversión según sus propios límites", "pt-br": "seu vault recusou a conversão pelos próprios limites" },
+  "quote-unavailable": { en: "the conversion service did not answer", es: "el servicio de conversión no respondió", "pt-br": "o serviço de conversão não respondeu" },
+};
+
+const CURRENCY_NAMES: Record<string, Record<Lang, string>> = {
+  EUR: { en: "euros", es: "euros", "pt-br": "euros" },
+  USD: { en: "dollars", es: "dólares", "pt-br": "dólares" },
+};
+
+/** What a conversion turns the money into; an unknown direction is written as it came, never guessed. */
+const DIRECTIONS: Record<string, Record<Lang, string>> = {
+  "to-euros": CURRENCY_NAMES.EUR as Record<Lang, string>,
+  "to-dollars": CURRENCY_NAMES.USD as Record<Lang, string>,
+};
+const into = (direction: string, lang: Lang): string => DIRECTIONS[direction]?.[lang] ?? direction;
 
 type Maker = (v: (key: string) => string, l: (key: string) => string, lang: Lang) => string;
 
@@ -242,6 +275,16 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (v, l, lang) => `You marked ${v("amount")} as ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} instead of ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Taxes already set aside for it stay in your taxes box until your next tax date; if it turns out to be income, the next payments set aside what is missing.`,
     es: (v, l, lang) => `Marcaste ${v("amount")} como ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} en lugar de ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Los impuestos ya apartados para ese dinero se quedan en tu caja de impuestos hasta tu próxima fecha de pago; si resulta ser ingreso, los próximos pagos apartan lo que falte.`,
     "pt-br": (v, l, lang) => `Você marcou ${v("amount")} como ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} em vez de ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Os impostos já separados para esse dinheiro ficam na sua caixa de impostos até a próxima data de pagamento; se for renda, os próximos pagamentos separam o que faltar.`,
+  },
+  swap: {
+    en: (v, l, lang) => `Your ${l("label")} box is paid in ${into(l("direction"), lang)}, so ${v("amount")} were converted to ${into(l("direction"), lang)}. The agent expected ${v("expectedOut")}, accepted nothing worse than ${v("minOut")}, and the market reference was ${v("reference")} (a difference of ${v("deviation")}). Fees: ${v("fee")}.`,
+    es: (v, l, lang) => `Tu cajita ${l("label")} se paga en ${into(l("direction"), lang)}, así que se convirtieron ${v("amount")} a ${into(l("direction"), lang)}. El agente esperaba ${v("expectedOut")}, no aceptó nada peor que ${v("minOut")}, y la referencia del mercado era ${v("reference")} (una diferencia de ${v("deviation")}). Comisiones: ${v("fee")}.`,
+    "pt-br": (v, l, lang) => `Sua caixinha ${l("label")} é paga em ${into(l("direction"), lang)}, então ${v("amount")} foram convertidos em ${into(l("direction"), lang)}. O agente esperava ${v("expectedOut")}, não aceitou nada pior que ${v("minOut")}, e a referência do mercado era ${v("reference")} (uma diferença de ${v("deviation")}). Taxas: ${v("fee")}.`,
+  },
+  "swap-held": {
+    en: (_v, l, lang) => `Conversions to ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} for your ${l("label")} box are paused: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays in ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} and everything else keeps working.`,
+    es: (_v, l, lang) => `Las conversiones a ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} para tu cajita ${l("label")} están en pausa: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda en ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} y todo lo demás sigue funcionando.`,
+    "pt-br": (_v, l, lang) => `As conversões para ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} da sua caixinha ${l("label")} estão pausadas: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica em ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} e todo o resto continua funcionando.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,

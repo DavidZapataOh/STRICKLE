@@ -6,6 +6,8 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const hash32 = z.string().regex(/^0x[0-9a-f]{64}$/);
 
+const swapBox = z.enum(["payroll", "operating", "emergency", "profit", "taxes", "salary"]);
+
 export const BINDINGS = ["full", "taxes-not-covered", "insufficient-history", "spend-unknown", "cushion-floor", "scenario-risk", "salary-box"] as const;
 
 export const planNoticeSchema = z
@@ -53,6 +55,8 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("decision"), proposalId: z.string(), status: z.enum(["approved", "rejected", "executed"]) }).strict(),
   z.object({ kind: z.literal("income-doubt"), arrivalId: z.string(), asset: z.enum(["USDC", "EURC"]), amount: units, flags: z.array(z.enum(["own-address", "amount-matches-outflow", "outlier-size", "unattributed"])).min(1).max(4), sender: address.or(z.literal("")) }).strict(),
   z.object({ kind: z.literal("reclassified"), arrivalId: z.string(), amount: units, from: z.enum(["income", "own-transfer", "refund"]), to: z.enum(["income", "own-transfer", "refund"]) }).strict(),
+  z.object({ kind: z.literal("swap"), box: swapBox, from: z.enum(["USDC", "EURC"]), amountIn: units, estimatedOut: units, minOut: units, referenceOut: units, deviationBps: z.number().int(), feeBps: z.number().int().min(0).max(10_000) }).strict(),
+  z.object({ kind: z.literal("swap-held"), box: swapBox, reason: z.enum(["worse-than-reference", "better-than-reference", "stale-feed", "adapter-not-approved", "failures", "daily-cap", "invalid-quote", "quote-unavailable", "vault-refused"]) }).strict(),
   planNoticeSchema,
 ]);
 

@@ -17,6 +17,11 @@ import {
   pendingRequest,
   stateLogRequest,
   tickRequests,
+  valuedBooks,
+  SWAP_READS_PER_VAULT,
+  decodeSwapReadout,
+  swapReads,
+  valueTickBooks,
 } from "../enclave/books.ts";
 
 const executor = "0x00000000000000000000000000000000000000dd";
@@ -142,5 +147,65 @@ describe("notice count", () => {
   it("reads noticeCount(vault) from the state contract", () => {
     expect(noticeCountRequest(state, vault)).toMatchObject({ method: "eth_call", params: [{ to: state }, "latest"] });
     expect(decodeNoticeCount(encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n }))).toBe(4n);
+  });
+});
+
+describe("the euro side of a vault", () => {
+  const word = (value: bigint) => encodeFunctionResult({ abi: vaultAbi, functionName: "boxBalance", result: value });
+  const adapterAbi = parseAbi(["function swapAdapter() view returns (address)", "function swapAdapterFrom() view returns (uint64)", "function swapSlippageBps() view returns (uint16)"]);
+  const head = encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] });
+  const count = encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n });
+  const usdc = { taxes: 1n, payroll: 2n, salary: 3n, operating: 4n, emergency: 5n, profit: 6n };
+  const reads = (eurc: bigint[]) => [
+    ...eurc.map(word),
+    encodeFunctionResult({ abi: adapterAbi, functionName: "swapAdapter", result: "0x00000000000000000000000000000000000000ad" }),
+    encodeFunctionResult({ abi: adapterAbi, functionName: "swapAdapterFrom", result: 1_000n }),
+    encodeFunctionResult({ abi: adapterAbi, functionName: "swapSlippageBps", result: 100 }),
+  ];
+  const rate = { usdcUsd: 100_000_000n, eurcUsd: 112_000_000n };
+
+  it("keeps the tick's own reads at 15, so five vaults stay far below the batch limit", () => {
+    expect(tickRequests(state, vault)).toHaveLength(15);
+    expect(tickRequests(state, vault).length * 5).toBeLessThanOrEqual(100);
+    expect(swapReads(vault).length * 5 + 2).toBeLessThanOrEqual(100);
+  });
+
+  it("asks each vault for its six euro balances, its adapter and its own slippage in one place", () => {
+    const requests = swapReads(vault);
+    expect(requests).toHaveLength(SWAP_READS_PER_VAULT);
+    const data = (index: number) => (requests[index]?.params[0] as { data: Hex }).data;
+    expect(data(0)).toBe(encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [2, 1] }));
+    expect(data(5)).toBe(encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [2, 6] }));
+    expect(data(8)).toBe(encodeFunctionData({ abi: adapterAbi, functionName: "swapSlippageBps" }));
+  });
+
+  it("decodes the readout and values the books in dollars when the rate is usable", () => {
+    const readout = decodeSwapReadout(usdc, reads([0n, 0n, 0n, 1_000_000n, 0n, 0n]), rate);
+    expect(readout.raw.eurc.operating).toBe(1_000_000n);
+    expect(readout.adapter).toEqual({ address: getAddress("0x00000000000000000000000000000000000000ad"), from: 1_000n });
+    expect(readout.slippageBps).toBe(100);
+    const decoded = decodeTickBooks([head, ...[1n, 2n, 3n, 4n, 5n, 6n].map(word), ...[0n, 0n, 0n, 0n, 0n, 0n].map(word), word(0n), count]);
+    expect(valueTickBooks(decoded.books, readout, rate).boxes.operating).toBe(4n + 1_120_000n);
+  });
+
+  it("leaves the euros out of the books when there is no usable rate", () => {
+    const readout = decodeSwapReadout(usdc, reads([0n, 0n, 0n, 1_000_000n, 0n, 0n]), "stale");
+    const decoded = decodeTickBooks([head, ...[1n, 2n, 3n, 4n, 5n, 6n].map(word), ...[0n, 0n, 0n, 0n, 0n, 0n].map(word), word(0n), count]);
+    expect(valueTickBooks(decoded.books, readout, undefined).boxes.operating).toBe(4n);
+  });
+
+  it("throws for a vault that cannot answer, so the caller can leave that vault's conversions alone", () => {
+    expect(() => decodeSwapReadout(usdc, ["0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x"], rate)).toThrow();
+  });
+
+  it("reads both assets' balances for a deposit and values the other one", () => {
+    expect(booksRequests(state, vault, 1, true)).toHaveLength(7);
+    expect(booksRequests(state, vault, 1)).toHaveLength(4);
+    const decoded = decodeBooks([head, word(1n), word(2n), word(3n), word(10n), word(20n), word(30n)]);
+    expect(decoded.other).toEqual({ operating: 10n, payrollFunded: 20n, emergency: 30n });
+    expect(decodeBooks([head, word(1n), word(2n), word(3n)]).other).toBeUndefined();
+    expect(valuedBooks("USDC", { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, rate).operating).toBe(1_000n + 1_120n);
+    expect(valuedBooks("EURC", { operating: 1_120n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, rate).operating).toBe(1_120n + 892n);
+    expect(valuedBooks("USDC", { operating: 5n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, undefined).operating).toBe(5n);
   });
 });

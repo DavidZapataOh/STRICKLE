@@ -102,6 +102,37 @@ describe("pause and resume", () => {
   });
 });
 
+describe("adjust currencies", () => {
+  const withSwap = { ...base, swap: { day: "2026-10-30", spent: "10", failures: 2, since: "2026-10-01", heldOn: "2026-10-30" } };
+
+  it("sets the box currencies, remembers the day, resets the failures and tells nobody", () => {
+    const result = run({ kind: "adjust", changes: { currencies: { payroll: "EUR", profit: "EUR" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.currencies).toEqual({ payroll: "EUR", operating: "USD", emergency: "USD", profit: "EUR" });
+    expect(result.next.swap).toMatchObject({ since: "2026-11-01", failures: 0, spent: "10", day: "2026-10-30" });
+    expect(result.notices).toEqual([]);
+  });
+
+  it("leaves the profile exactly as it was when nothing changes", () => {
+    const result = run({ kind: "adjust", changes: { currencies: { payroll: "USD", operating: "USD" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next).toEqual(withSwap);
+  });
+
+  it("is accepted while the breaker is halted, because it only declares", () => {
+    const halted = { ...withSwap, breaker: { halted: true, since: "2026-10-31", codes: ["daily-cap"] } };
+    const result = run({ kind: "adjust", changes: { currencies: { emergency: "EUR" } } }, halted);
+    expect(result.ok).toBe(true);
+  });
+
+  it("changes a currency together with another setting", () => {
+    const result = run({ kind: "adjust", changes: { salaryDay: 9, currencies: { operating: "EUR" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.salary.day).toBe(9);
+    expect(result.next.currencies.operating).toBe("EUR");
+  });
+});
+
 describe("adjust", () => {
   it("applies plain settings and refunds the cascade's view of next month's salary", () => {
     const result = run({ kind: "adjust", changes: { salaryProposed: "2000000", salaryDay: 5, payee: "0x00000000000000000000000000000000000000c3", dailyCap: "5", signatureThreshold: "6" } });
@@ -189,6 +220,14 @@ describe("reclassify", () => {
     const result = applyAction(own, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "income" }, ctx);
     if (!result.ok) throw new Error(result.reason);
     expect(result.next.taxCatchUp).toBe("105000000"); // 500 x 20% x 1.05
+  });
+  it("corrects a euro part against the history row, both kept in dollars whatever the rate does afterwards", () => {
+    const rate = { usdcUsd: "100000000", eurcUsd: "130000000", at: 1_792_000_000 };
+    const euro = { ...taxed, rate, history: [["2026-11-03", "1120000000", "transfer"] as [string, string, string]], arrivals: [["a1b2c3d4e5-0", "2026-11-03", "1120000000", "o", "E"] as [string, string, string, string, string]] };
+    const result = applyAction(euro, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "income" }, ctx);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.history[0]?.[2]).toBe("deposit");
+    expect(result.next.taxCatchUp).toBe("235200000"); // 1,120 dollars x 20% x 1.05
   });
   it("ignores an arrival it does not know and a class it is already in", () => {
     expect(applyAction(withIncome, { kind: "reclassify", arrivalId: "ffffffffff-0", to: "refund" }, ctx).ok).toBe(false);

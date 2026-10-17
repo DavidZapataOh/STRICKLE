@@ -73,6 +73,19 @@ describe("decideAutonomy: a halted breaker blocks everything", () => {
   });
 });
 
+describe("decideAutonomy: a conversion", () => {
+  it("is automatic and tells the user, because the declaration of the currency is the approval and the vault bounds the execution", () => {
+    expect(decide("swap")).toEqual({ mode: "auto", notify: true });
+    expect(decide("swap", { amount: 1_000_000n }, record({ cleanTaxDueDates: 0 }))).toEqual({ mode: "auto", notify: true });
+  });
+  it("is blocked while the breaker is halted", () => {
+    expect(decide("swap", {}, record(), halted)).toEqual({ mode: "blocked", reason: "halted" });
+  });
+  it("is the class of a swap action", () => {
+    expect(actionClass({ kind: "swap", box: "payroll", amount: 1n, worstLoss: 0n })).toBe("swap");
+  });
+});
+
 describe("decideAutonomy: properties", () => {
   const records = fc.record({
     cleanTaxDueDates: fc.nat(10),
