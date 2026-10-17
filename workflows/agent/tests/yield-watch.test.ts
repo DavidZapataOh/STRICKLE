@@ -31,6 +31,20 @@ describe("observe", () => {
   });
 });
 
+describe("observe when the list is down", () => {
+  const stored = [{ id: EARN.toLowerCase(), apyBps: 420, active: true }];
+
+  it("falls back to the chain's own price with the stored rate and status, and never claims liquidity it does not know", () => {
+    const [one] = observe({ vaults, sharePrices: prices, list: null, stored });
+    expect(one).toMatchObject({ id: EARN.toLowerCase(), price: 1_001_058n, apyBps: 420, active: true });
+    expect(one?.liquidity).toBeGreaterThan(10n ** 30n);
+  });
+
+  it("gives nothing for a vault it has never seen when the list is down", () => {
+    expect(observe({ vaults, sharePrices: prices, list: null, stored: [] })).toEqual([]);
+  });
+});
+
 describe("watchStep", () => {
   const now = (price: bigint, over: Record<string, unknown> = {}) => [{ id: EARN.toLowerCase(), price, apyBps: 420, active: true, liquidity: 1_000_000_000_000n, ...over }];
 
@@ -40,11 +54,11 @@ describe("watchStep", () => {
     expect(result.next.yieldWatch).toEqual({ at: 1_790_000_000, vaults: [{ id: EARN.toLowerCase(), price: "1001058", apyBps: 420, active: true }] });
   });
 
-  it("flags a price drop against the stored observation and records the new one", () => {
+  it("flags a price drop against the stored observation and leaves that observation as it was", () => {
     const first = watchStep({ profile: profileOf(), now: now(1_001_058n), positions: {}, nowSeconds: 1 });
     const second = watchStep({ profile: first.next, now: now(980_000n), positions: { [EARN.toLowerCase()]: 5n }, nowSeconds: 2 });
     expect(second.anomalies).toEqual([{ id: EARN.toLowerCase(), reason: "price-drop" }]);
-    expect(second.next.yieldWatch.vaults[0]?.price).toBe("980000");
+    expect(second.next.yieldWatch.vaults[0]?.price).toBe("1001058");
   });
 
   it("stores a new observation once a day, so a quiet hour costs no report", () => {
@@ -55,11 +69,15 @@ describe("watchStep", () => {
     expect(nextDay.next.yieldWatch.vaults[0]?.price).toBe("1001200");
   });
 
-  it("still stores an observation, and flags the vault, the moment something is wrong", () => {
+  it("keeps the last good observation of a vault that is flagged, so it is flagged again until it recovers", () => {
     const first = watchStep({ profile: profileOf(), now: now(1_001_058n), positions: {}, nowSeconds: 1_790_000_000 });
     const bad = watchStep({ profile: first.next, now: now(900_000n), positions: {}, nowSeconds: 1_790_000_000 + 60 });
     expect(bad.anomalies).toHaveLength(1);
-    expect(bad.next.yieldWatch.vaults[0]?.price).toBe("900000");
+    expect(bad.next.yieldWatch.vaults[0]?.price).toBe("1001058");
+    const again = watchStep({ profile: bad.next, now: now(900_000n), positions: {}, nowSeconds: 1_790_000_000 + 3_600 });
+    expect(again.anomalies).toHaveLength(1);
+    const recovered = watchStep({ profile: bad.next, now: now(1_000_500n), positions: {}, nowSeconds: 1_790_000_000 + 7_200 });
+    expect(recovered.anomalies).toEqual([]);
   });
 
   it("keeps the previous observation when this run saw nothing, so a gap never hides a drop", () => {

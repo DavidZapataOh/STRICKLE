@@ -245,7 +245,7 @@ describe("a vault that was left", () => {
   const exit = (reason: string): Facts => ({ kind: "yield-exit", values: {}, labels: { label: "Profit", vault: "EarnKit USDC Vault", reason } });
   const reasons = ["price-drop", "rate-spike", "inactive", "illiquid"];
   it("keeps the English wording and names the reason", () => {
-    expect(template(exit("price-drop"), "en", "en-US")).toBe("Your Profit box's money was taken out of EarnKit USDC Vault because its share price fell. It is back in your box as cash; to put it to work again, ask for it.");
+    expect(template(exit("price-drop"), "en", "en-US")).toBe("The agent asked EarnKit USDC Vault to give back your Profit box's money because its share price fell. It returns to your box as cash when the withdrawal goes through; to put it to work again, ask for it.");
   });
   it.each(["en", "es", "pt-br"] as const)("gives each reason its own sentence in %s and leaves no placeholder", (lang) => {
     const texts = reasons.map((reason) => template(exit(reason), lang, "en-US"));
@@ -260,7 +260,7 @@ describe("why the agent moved money", () => {
   const back = (): Facts => ({ kind: "yield-back", values: { amount: usdc(2_525_000_000n), payment: usdc(3_000_000_000n), due: { type: "date", value: { year: 2026, month: 11, day: 4 } } }, labels: { label: "Payroll" } });
   it("keeps the English wording and states what was kept, what it covers and what went to work", () => {
     expect(template(plan(), "en", "en-US")).toBe("Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due within sixty days, and put 10,000.00 USDC to work. The rate changes and the value can go down.");
-    expect(template(back(), "en", "en-US")).toBe("Your Payroll box brought 2,525.00 USDC back from the vault because 3,000.00 USDC is due on Nov 4, 2026: the money is ready five business days before.");
+    expect(template(back(), "en", "en-US")).toBe("The agent asked the vault for 2,525.00 USDC back for your Payroll box because 3,000.00 USDC is due on Nov 4, 2026, so the money is ready five business days before.");
   });
   it.each(["en", "es", "pt-br"] as const)("names every number and leaves no placeholder in %s", (lang) => {
     for (const [facts, parts] of [[plan(), ["1,500.00 USDC", "1,200.00 USDC", "10,000.00 USDC"]], [back(), ["2,525.00 USDC", "3,000.00 USDC"]]] as const) {

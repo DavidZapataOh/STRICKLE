@@ -30,9 +30,9 @@ describe("the earn bookkeeping in the profile", () => {
     expect(mergeProfile(undefined, seeded).earn).toEqual({ pending: [], failures: 0, heldOn: "" });
   });
 
-  it("holds at most four intents and refuses malformed ones", () => {
+  it("holds at most five intents and refuses malformed ones", () => {
     const row = (n: number) => ({ id: `i${n}`, box: "profit", vault: vaultA, amount: "1", deposit: true, at: NOW });
-    expect(() => profileOf({ earn: { pending: [1, 2, 3, 4, 5].map(row), failures: 0, heldOn: "" } })).toThrow();
+    expect(() => profileOf({ earn: { pending: [1, 2, 3, 4, 5, 6].map(row), failures: 0, heldOn: "" } })).toThrow();
     expect(() => profileOf({ earn: { pending: [{ ...row(1), amount: "-1" }], failures: 0, heldOn: "" } })).toThrow();
     expect(() => profileOf({ earn: { pending: [], failures: 10, heldOn: "" } })).toThrow();
   });

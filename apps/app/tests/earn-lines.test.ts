@@ -36,14 +36,14 @@ describe("earnLines", () => {
   });
 
   it("writes a vault that was left, in the three languages, with the reason", () => {
-    expect(earnLines([at(exited)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-exit", text: "Your Profit box's money was taken out of EarnKit USDC Vault because its share price fell. It is back in your box as cash; to put it to work again, ask for it." });
+    expect(earnLines([at(exited)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-exit", text: "The agent asked EarnKit USDC Vault to give back your Profit box's money because its share price fell. It returns to your box as cash when the withdrawal goes through; to put it to work again, ask for it." });
     expect(earnLines([at(exited)], "es", es.boxes)[0]?.text).toContain("el precio de su participación bajó");
     expect(earnLines([at(exited)], "pt-br", ptBr.boxes)[0]?.text).toContain("o preço da sua cota caiu");
   });
 
   it("explains what the agent kept and put to work, and why it brought money back, with the date", () => {
     expect(earnLines([at(plan)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-plan", text: "Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due within sixty days, and put 10,000.00 USDC to work. The rate changes and the value can go down." });
-    expect(earnLines([at(backNotice)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-back", text: "Your Payroll box brought 2,525.00 USDC back from the vault because 3,000.00 USDC is due on Nov 4, 2026: the money is ready five business days before." });
+    expect(earnLines([at(backNotice)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-back", text: "The agent asked the vault for 2,525.00 USDC back for your Payroll box because 3,000.00 USDC is due on Nov 4, 2026, so the money is ready five business days before." });
     expect(earnLines([at(backNotice)], "es", es.boxes)[0]?.text).toContain("4 nov 2026");
   });
 

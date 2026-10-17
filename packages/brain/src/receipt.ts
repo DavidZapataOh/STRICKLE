@@ -51,9 +51,9 @@ const IRREVERSIBLE: Partial<Record<ReceiptKind, string>> = {
   earn: "The move was made at that moment's share price; to reverse it, take the money back out.",
   "earn-back": "The money is back in your box; to reverse it, put it to work again.",
   "earn-held": "There is nothing to undo; this only says why the move is on hold.",
-  "yield-exit": "The money is back in your box; to put it to work again, ask for it.",
+  "yield-exit": "The withdrawal is asked for, not done yet; once it goes through the money is back in your box, and to put it to work again, ask for it.",
   "yield-plan": "There is nothing to undo; this only says why the agent moved the money. To take it back, ask for it.",
-  "yield-back": "The money is back in your box; to put it to work again, ask for it.",
+  "yield-back": "The withdrawal is asked for, not done yet; once it goes through the money is back in your box, and to put it to work again, ask for it.",
   "yield-invite": "There is nothing to undo; this is an invitation, and you can switch yield on whenever you want.",
   split: "The money now sits in its boxes under their locks; it can be adjusted by moving between boxes, and the locks apply.",
 };

@@ -8,13 +8,14 @@ import { earnAllowed } from "./earn-allowed.ts";
 import { type EarnOutcome, type EarnReads, earnMove, expireStale } from "./earn-handle.ts";
 import { decodeEarnFirst, decodeEarnPreview, earnFirstReads, earnPreviewRead } from "./earn-reads.ts";
 import type { Profile } from "./profile.ts";
+import { isWholeExit } from "./yield-plan.ts";
 import { ethBatch } from "./read.ts";
 import type { TickBooks } from "./tick.ts";
 
 /** One move for one vault, read and decided in batches of their own: a vault or a service that cannot answer costs this move, never the tick. */
 export function earnFor(runtime: TeeRuntime<Config>, input: { profile: Profile; vault: Address; books: TickBooks; today: PlainDate; nowSeconds: number }): EarnOutcome {
   const { profile, vault } = input;
-  const intent = [...profile.earn.pending].sort((a, b) => a.at - b.at)[0];
+  const intent = [...profile.earn.pending].sort((a, b) => Number(isWholeExit(b)) - Number(isWholeExit(a)) || a.at - b.at)[0];
   if (!intent) return { kind: "none", next: profile };
   try {
     const earnVault = intent.vault as Address;

@@ -91,6 +91,11 @@ describe("redemptionsDue", () => {
     expect(redemptionsDue({ ...base, liquid: 1_000n * M, obligations: [due(2, 1_500n * M), due(4, 1_500n * M)] })).toBe(2_020n * M);
   });
 
+  it("can use the part of the position that has earned, up to what it is worth", () => {
+    expect(redemptionsDue({ ...base, invested: 1_000n * M, worth: 1_200n * M, obligations: [due(1, 1_100n * M)] })).toBe(1_111n * M);
+    expect(redemptionsDue({ ...base, invested: 1_000n * M, worth: 1_200n * M, obligations: [due(1, 5_000n * M)] })).toBe(1_200n * M);
+  });
+
   it("asks for the whole shortfall for a payment that is past due, and is capped by what is invested", () => {
     expect(redemptionsDue({ ...base, obligations: [due(-2, 1_000n * M)] })).toBe(1_010n * M);
     expect(redemptionsDue({ ...base, invested: 300n * M, obligations: [due(1, 1_000n * M)] })).toBe(300n * M);

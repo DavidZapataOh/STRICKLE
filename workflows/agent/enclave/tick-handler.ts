@@ -139,10 +139,14 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
         const watched = yieldRun(runtime, { profile: conversion.next, vault, usdc: readout ? readout.raw.usdc : current.books.boxes, invested: current.books.invested, today, nowSeconds });
         let ahead = conversion.next;
         if (JSON.stringify(watched.next) !== JSON.stringify(conversion.next)) {
-          version += 1n;
-          deliver(runtime, executor, encodeTickReport({ vault, next: version, ciphertext: seal(watched.next, version) }));
-          notices.push(...watched.notices);
-          ahead = watched.next;
+          try {
+            deliver(runtime, executor, encodeTickReport({ vault, next: version + 1n, ciphertext: seal(watched.next, version + 1n) }));
+            version += 1n;
+            notices.push(...watched.notices);
+            ahead = watched.next;
+          } catch {
+            // the look at the yield vaults is repeated next run; what the tick already decided is not lost
+          }
         }
         const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: ahead, vault, books: tickBooks, today, nowSeconds }), seal });
         version = moved.version;

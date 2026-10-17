@@ -32,12 +32,13 @@ export function investableNow(input: { box: BoxKind; liquid: bigint; invested: b
 }
 
 /** What to bring back from the vault now: the cash the payments inside the lead window lack, plus one percent as a buffer, rounded up, never more than what works. A payment already past due is inside the window. */
-export function redemptionsDue(input: { box: BoxKind; liquid: bigint; invested: bigint; obligations: readonly Obligation[]; today: PlainDate }): bigint {
+export function redemptionsDue(input: { box: BoxKind; liquid: bigint; invested: bigint; /** What the position is worth now, when that is more than the principal; the earned part can be brought back too. */ worth?: bigint; obligations: readonly Obligation[]; today: PlainDate }): bigint {
   const needed = input.obligations
     .filter((entry) => entry.box === input.box && daysBetween(input.today, businessDaysBefore(entry.due, REDEEM_LEAD_BUSINESS_DAYS)) <= 0)
     .reduce((sum, entry) => sum + entry.amount, 0n);
   const shortfall = atLeastZero(needed - input.liquid);
   if (shortfall === 0n) return 0n;
   const withBuffer = (shortfall * 101n + 99n) / 100n;
-  return withBuffer < input.invested ? withBuffer : input.invested;
+  const available = input.worth !== undefined && input.worth > input.invested ? input.worth : input.invested;
+  return withBuffer < available ? withBuffer : available;
 }

@@ -7,6 +7,7 @@ import { gainOf, yieldFee } from "@strickle/brain";
 import type { Notice } from "./notice-schema.ts";
 import type { Profile } from "./profile.ts";
 import { MAX_FAILURES } from "./swap-plan.ts";
+import { isWholeExit } from "./yield-plan.ts";
 
 /** An owner's request waits this long for a tick that can carry it out before it is dropped. */
 export const EARN_REQUEST_SECONDS = 86_400;
@@ -39,7 +40,7 @@ export const minOutFor = (preview: bigint, slippageBps: number): bigint => (prev
 
 /** The oldest request, dropped with a told reason when it is past its day: the reads that would have carried it out may be failing for good, and it must not wait for ever or block new requests. */
 export function expireStale(input: { profile: Profile; config: Config; now: number }): EarnOutcome | undefined {
-  const intent = [...input.profile.earn.pending].sort((a, b) => a.at - b.at)[0];
+  const intent = [...input.profile.earn.pending].filter((entry) => !isWholeExit(entry)).sort((a, b) => a.at - b.at)[0];
   if (!intent || input.now - intent.at <= EARN_REQUEST_SECONDS) return undefined;
   const name = input.config.earn.vaults.find((entry) => entry.address.toLowerCase() === intent.vault.toLowerCase())?.name ?? "";
   const rest = input.profile.earn.pending.filter((entry) => entry !== intent);
@@ -54,7 +55,8 @@ export function earnMove(input: { profile: Profile; vault: Address; reads: EarnR
   const { profile, reads, config, now } = input;
   const none: EarnOutcome = { kind: "none", next: profile };
   if (profile.breaker.halted) return none;
-  const intent = [...profile.earn.pending].sort((a, b) => a.at - b.at)[0];
+  // a whole exit from a vault that misbehaves goes first; otherwise the oldest request
+  const intent = [...profile.earn.pending].sort((a, b) => Number(isWholeExit(b)) - Number(isWholeExit(a)) || a.at - b.at)[0];
   if (!intent) return none;
 
   const day = formatPlainDate(input.today);
@@ -80,7 +82,7 @@ export function earnMove(input: { profile: Profile; vault: Address; reads: EarnR
   };
 
   if (!known) return drop("vault-not-approved");
-  if (now - intent.at > EARN_REQUEST_SECONDS) return drop("expired");
+  if (!isWholeExit(intent) && now - intent.at > EARN_REQUEST_SECONDS) return drop("expired");
   const adapter = reads.adapter.address.toLowerCase() === config.swap.adapter.toLowerCase() && reads.adapter.from !== 0n && BigInt(now) >= reads.adapter.from;
   if (!adapter) return hold("adapter-not-approved");
   // taking money out needs no approval of the vault: revoking one never traps what is already inside
@@ -117,7 +119,7 @@ export function earnMove(input: { profile: Profile; vault: Address; reads: EarnR
   const worth = intent.deposit ? reads.previewShares : (reads.position * checked.amount + reads.owned - 1n) / reads.owned + 1n;
   const valueOut = intent.deposit ? 0n : (reads.position * checked.amount) / reads.owned;
   // the vault settles a partial withdrawal against the same share of the principal, so the gain is what the shares are worth above that share
-  const gain = intent.deposit ? 0n : gainOf(valueOut, (reads.invested * checked.amount) / reads.owned);
+  const gain = intent.deposit || reads.invested === 0n ? 0n : gainOf(valueOut, (reads.invested * checked.amount) / reads.owned);
   const fee = yieldFee(gain).fee;
   const totals = intent.deposit ? profile.yield : { ...profile.yield, realized: (BigInt(profile.yield.realized) + gain).toString(), fee: (BigInt(profile.yield.fee) + fee).toString() };
   const next: Profile = { ...without(rest), earn: { ...profile.earn, pending: rest, failures: 0 }, yield: totals };

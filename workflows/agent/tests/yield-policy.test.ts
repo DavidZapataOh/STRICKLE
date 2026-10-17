@@ -41,9 +41,9 @@ describe("obligationsOf", () => {
     expect(obligationsOf(profileOf(), today)).toEqual([]);
   });
 
-  it("keeps a payroll due today and ignores a payroll that is already past", () => {
-    const profile = profileOf({ payrolls: [["2026-11-02", "1"], ["2026-11-01", "2"]] });
-    expect(obligationsOf(profile, today)).toEqual([{ box: "payroll", due: today, amount: 1n }]);
+  it("keeps a payroll due today and one that slipped by less than a week, and ignores older ones", () => {
+    const profile = profileOf({ payrolls: [["2026-11-02", "1"], ["2026-11-01", "2"], ["2026-10-26", "3"], ["2026-10-25", "4"]] });
+    expect(obligationsOf(profile, today).map((entry) => entry.amount)).toEqual([1n, 2n, 3n]);
   });
 });
 
@@ -89,6 +89,41 @@ describe("yieldIntents", () => {
     expect(summary(first)).toEqual([["payroll", false, String(2_525n * M), true]]);
     const again = y(input({ profile: first, usdc: { ...zero, payroll: 500n * M }, invested: { ...zero, payroll: 5_000n * M }, holdings: { [EARN.toLowerCase()]: { payroll: 5_000n * M } } }));
     expect(again.earn.pending).toHaveLength(1);
+  });
+
+  it("keeps the owner's own deposit for the box when it brings money back, and the agent's own deposit goes", () => {
+    const profile = profileOf({
+      payrolls: [["2026-11-04", "3000000000"]],
+      earn: { pending: [{ id: "o1", box: "payroll", vault: EARN, amount: "1", deposit: true, at: NOW - 9 }, { id: "a0", box: "payroll", vault: EARN, amount: "2", deposit: true, at: NOW - 8, auto: true }], failures: 0, heldOn: "" },
+    });
+    const next = y(input({ profile, usdc: { ...zero, payroll: 500n * M }, invested: { ...zero, payroll: 5_000n * M }, holdings: { [EARN.toLowerCase()]: { payroll: 5_000n * M } } }));
+    expect(next.earn.pending.map((entry) => entry.id).sort()).toEqual([expect.stringMatching(/^a/), "o1"].sort());
+  });
+
+  it("never evicts a whole exit or a withdrawal to make room for a redemption", () => {
+    const keep = (n: number, box: "taxes" | "emergency" | "profit" | "operating") => ({ id: `x${n}`, box, vault: EARN, amount: String(10n ** 15n), deposit: false, at: NOW - 100 + n, auto: true });
+    const crowded = profileOf({ payrolls: [["2026-11-04", "3000000000"]], earn: { pending: [keep(1, "taxes"), keep(2, "emergency"), keep(3, "profit"), keep(4, "operating"), { id: "x5", box: "taxes", vault: "0x00000000000000000000000000000000000000d9", amount: "1", deposit: true, at: NOW - 1 }], failures: 0, heldOn: "" } });
+    const next = y(input({ profile: crowded, usdc: { ...zero, payroll: 0n }, invested: { ...zero, payroll: 5_000n * M }, holdings: { [EARN.toLowerCase()]: { payroll: 5_000n * M } } }));
+    expect(next.earn.pending.filter((entry) => entry.id.startsWith("x") && !entry.deposit)).toHaveLength(4);
+    expect(next.earn.pending).toHaveLength(5);
+  });
+
+  it("skips a pending withdrawal only when it already covers the shortfall, and replaces a smaller one", () => {
+    const owner = (amount: string) => profileOf({ payrolls: [["2026-11-04", "3000000000"]], earn: { pending: [{ id: "o1", box: "payroll", vault: EARN, amount, deposit: false, at: NOW - 5 }], failures: 0, heldOn: "" } });
+    const args = { usdc: { ...zero, payroll: 500n * M }, invested: { ...zero, payroll: 5_000n * M }, holdings: { [EARN.toLowerCase()]: { payroll: 5_000n * M } } };
+    expect(y(input({ profile: owner(String(5_000n * M)), ...args })).earn.pending.map((entry) => entry.amount)).toEqual([String(5_000n * M)]);
+    expect(y(input({ profile: owner("5000000"), ...args })).earn.pending.map((entry) => entry.amount)).toEqual([String(2_525n * M)]);
+  });
+
+  it("brings back the part of a position that has earned, up to what it is worth", () => {
+    const profile = profileOf({ payrolls: [["2026-11-04", "1100000000"]] });
+    const result = y(input({ profile, usdc: { ...zero, payroll: 0n }, invested: { ...zero, payroll: 1_000n * M }, holdings: { [EARN.toLowerCase()]: { payroll: 1_200n * M } } }));
+    expect(result.earn.pending[0]?.amount).toBe(String(1_111n * M));
+  });
+
+  it("never puts more than half of the taxes box to work, whatever the vault would allow", () => {
+    const wide = allowing({ taxes: { maxInvestBps: 10_000, floor: 0n } });
+    expect(summary(y(input({ rules: wide }))).find(([box]) => box === "taxes")?.[2]).toBe(String(1_000n * M));
   });
 
   it("asks for a redemption even while a payment is the only thing waiting, and only from the vault that holds the money", () => {

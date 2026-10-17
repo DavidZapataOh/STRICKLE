@@ -92,7 +92,7 @@ export const profileSchema = z
       .object({
         pending: z
           .array(z.object({ id: z.string().regex(/^[a-z0-9-]{1,24}$/), box: z.enum(["taxes", "payroll", "operating", "emergency", "profit"]), vault: address, amount: units, deposit: z.boolean(), at: z.number().int().min(0), auto: z.boolean().optional() }).strict())
-          .max(4),
+          .max(5),
         failures: bps(0, 9),
         heldOn: maybeDate,
       })

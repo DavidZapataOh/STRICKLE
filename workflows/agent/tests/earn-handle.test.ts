@@ -219,6 +219,21 @@ describe("the minimum", () => {
   });
 });
 
+describe("a whole exit from a vault that misbehaves", () => {
+  const exit = pending({ deposit: false, auto: true, amount: String(10n ** 15n), at: NOW - 3 * 86_400 });
+  it("does not expire, however long it has waited", () => {
+    const result = move(withPending([exit]), { now: WITHDRAW_NOW, reads: reads({ position: 1_999_999n, owned: 1_997_885_511_423_141_916n }) });
+    expect(result.kind).toBe("earn");
+    expect(expireStale({ profile: withPending([exit]), config, now: NOW })).toBeUndefined();
+  });
+
+  it("books no gain when the box's principal reads as zero while shares remain", () => {
+    const result = move(withPending([pending({ deposit: false, amount: "1999999" })]), { now: WITHDRAW_NOW, reads: reads({ invested: 0n }) });
+    if (result.kind !== "earn") throw new Error(result.kind);
+    expect(result.next.yield).toMatchObject({ realized: "0", fee: "0" });
+  });
+});
+
 describe("a request that could never be read", () => {
   it("expires after a day even when the reads that would have carried it out keep failing", () => {
     const old = withPending([pending({ at: NOW - 86_401 }), pending({ id: "i2", box: "taxes", at: NOW - 10 })]);

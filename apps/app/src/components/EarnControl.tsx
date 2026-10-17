@@ -68,7 +68,7 @@ export function EarnControl({ lang, t, status, rows, quote, automatic, totals, w
             ]}
             value={automatic ? "on" : "off"}
             onChange={(next) => void onSwitch?.(next === "on").catch(() => undefined)}
-            disabled={status.kind === "unavailable" || status.kind === "unreadable" || working}
+            disabled={working}
           />
         </div>
       )}

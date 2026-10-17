@@ -1,5 +1,5 @@
 import type { TeeRuntime } from "@chainlink/cre-sdk";
-import type { BoxKind, PlainDate } from "@strickle/core";
+import { type BoxKind, type PlainDate, formatPlainDate } from "@strickle/core";
 import type { VaultView } from "@strickle/brain";
 import type { Address } from "viem";
 import type { Config } from "../config.ts";
@@ -27,7 +27,10 @@ export function yieldRun(runtime: TeeRuntime<Config>, input: { profile: Profile;
     const answers = ethBatch(runtime, vaults.flatMap((entry) => holdingsReads(input.vault, entry.address as Address)));
     const held = vaults.map((entry, index) => ({ entry, ...decodeHoldings(answers.slice(index * 6, index * 6 + 6)) }));
     const holds = held.some((row) => Object.keys(row.shares).length > 0);
+    const day = formatPlainDate(input.today);
     if (!holds && !input.profile.yield.enabled && !inviteDue(input.profile, input.today)) return unchanged;
+    // an account that holds nothing is looked at once a day: only the holdings read above runs every time
+    if (!holds && input.profile.yield.enabled && input.profile.yield.day === day) return unchanged;
 
     const sharePrices = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), row.price]));
     const positions = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), (Object.values(row.shares).reduce((sum, shares) => sum + shares, 0n) * row.price) / ONE_SHARE]));
@@ -37,14 +40,18 @@ export function yieldRun(runtime: TeeRuntime<Config>, input: { profile: Profile;
     } catch {
       // a list that is down is no observation this run; the chain's own share price still stands
     }
+    // the watch can judge a vault by the chain's price alone; allocation needs what the list says about it
+    const stored = input.profile.yieldWatch.vaults;
+    const watching = observe({ vaults, sharePrices, list, stored });
     const seen = observe({ vaults, sharePrices, list });
-    const watched = watchStep({ profile: input.profile, now: seen, positions, nowSeconds: input.nowSeconds });
+    const watched = watchStep({ profile: input.profile, now: watching, positions, nowSeconds: input.nowSeconds });
     const exits = exitIntents({
       profile: watched.next,
       anomalies: watched.anomalies,
       shares: Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), row.shares])),
       vaults: Object.fromEntries(vaults.map((entry) => [entry.address.toLowerCase(), { address: entry.address, name: entry.name }])),
       now: input.nowSeconds,
+      day,
     });
 
     // the one invitation for an account that has yield off, quoting the best rate among the vaults that are open and were not flagged

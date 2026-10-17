@@ -328,9 +328,9 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     "pt-br": (_v, l, lang) => `O movimento da sua caixinha ${l("label")} com ${l("vault")} está em pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica onde está e todo o resto continua funcionando.`,
   },
   "yield-exit": {
-    en: (_v, l, lang) => `Your ${l("label")} box's money was taken out of ${l("vault")} because ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. It is back in your box as cash; to put it to work again, ask for it.`,
-    es: (_v, l, lang) => `El dinero de tu cajita ${l("label")} se sacó de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volvió a tu cajita como efectivo; para ponerlo a trabajar otra vez, pídelo.`,
-    "pt-br": (_v, l, lang) => `O dinheiro da sua caixinha ${l("label")} foi retirado de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Voltou para a sua caixinha em dinheiro; para colocá-lo para trabalhar de novo, peça.`,
+    en: (_v, l, lang) => `The agent asked ${l("vault")} to give back your ${l("label")} box's money because ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. It returns to your box as cash when the withdrawal goes through; to put it to work again, ask for it.`,
+    es: (_v, l, lang) => `El agente pidió a ${l("vault")} que devuelva el dinero de tu cajita ${l("label")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Vuelve a tu cajita como efectivo cuando el retiro se complete; para ponerlo a trabajar otra vez, pídelo.`,
+    "pt-br": (_v, l, lang) => `O agente pediu a ${l("vault")} que devolva o dinheiro da sua caixinha ${l("label")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volta para a sua caixinha em dinheiro quando a retirada for concluída; para colocá-lo para trabalhar de novo, peça.`,
   },
   "yield-plan": {
     en: (v, l) => `Your ${l("label")} box keeps ${v("kept")} in cash, ${v("needed")} of it for what is due within sixty days, and put ${v("amount")} to work. The rate changes and the value can go down.`,
@@ -338,9 +338,9 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     "pt-br": (v, l) => `Sua caixinha ${l("label")} guarda ${v("kept")} em dinheiro, ${v("needed")} disso para o que vence nos próximos sessenta dias, e colocou ${v("amount")} para trabalhar. A taxa muda e o valor pode cair.`,
   },
   "yield-back": {
-    en: (v, l) => `Your ${l("label")} box brought ${v("amount")} back from the vault because ${v("payment")} is due on ${v("due")}: the money is ready five business days before.`,
-    es: (v, l) => `Tu cajita ${l("label")} trajo ${v("amount")} de vuelta de la vault porque ${v("payment")} vence el ${v("due")}: el dinero queda listo cinco días hábiles antes.`,
-    "pt-br": (v, l) => `Sua caixinha ${l("label")} trouxe ${v("amount")} de volta do vault porque ${v("payment")} vence em ${v("due")}: o dinheiro fica pronto cinco dias úteis antes.`,
+    en: (v, l) => `The agent asked the vault for ${v("amount")} back for your ${l("label")} box because ${v("payment")} is due on ${v("due")}, so the money is ready five business days before.`,
+    es: (v, l) => `El agente pidió a la vault ${v("amount")} de vuelta para tu cajita ${l("label")} porque ${v("payment")} vence el ${v("due")}, así el dinero queda listo cinco días hábiles antes.`,
+    "pt-br": (v, l) => `O agente pediu ao vault ${v("amount")} de volta para a sua caixinha ${l("label")} porque ${v("payment")} vence em ${v("due")}, assim o dinheiro fica pronto cinco dias úteis antes.`,
   },
   "yield-invite": {
     en: (v) => `Your money can work while it waits: a vault pays about ${v("apy")} a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need within sixty days is ever used.`,

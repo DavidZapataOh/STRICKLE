@@ -84,8 +84,9 @@ describe("EarnControl", () => {
     expect(view({ kind: "active" }, { automatic: true })).toMatch(/name="earn-auto" checked="" value="on"/);
   });
 
-  it("closes the switch where it cannot work and hides it where the plan has not said", () => {
-    expect(view({ kind: "unavailable" }, { automatic: false })).toContain('<fieldset class="choices" disabled=""');
+  it("keeps the switch open where the vault cannot earn and hides it where the plan has not said", () => {
+    // the switch is the owner's own setting, kept by the agent, so it works even where the vault cannot put money to work
+    expect(view({ kind: "unavailable" }, { automatic: false })).not.toContain('<fieldset class="choices" disabled=""');
     expect(view({ kind: "active" }, { automatic: undefined })).not.toContain("Let the agent put idle money to work");
   });
 
