@@ -1,0 +1,38 @@
+{
+  "quote": {
+    "estimatedAmount": "889955",
+    "minAmount": "881055",
+    "route": {
+      "provider": "lifi",
+      "steps": [
+        {
+          "type": "swap",
+          "tool": "fly",
+          "toolName": "Fly",
+          "fromToken": {
+            "symbol": "USDC",
+            "address": "0x3600000000000000000000000000000000000000",
+            "decimals": 6
+          },
+          "toToken": {
+            "symbol": "EURC",
+            "address": "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1",
+            "decimals": 6
+          },
+          "estimate": {
+            "fromAmount": "1000000",
+            "toAmount": "889955",
+            "gasCostUSD": "0.0033"
+          }
+        }
+      ]
+    }
+  },
+  "fees": [],
+  "feeContext": {
+    "type": "input",
+    "tokenAddress": "0x3600000000000000000000000000000000000000",
+    "tokenSymbol": "USDC",
+    "amount": "1000000"
+  }
+}
