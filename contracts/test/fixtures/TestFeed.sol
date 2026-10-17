@@ -15,6 +15,10 @@ contract TestFeed {
         answer = value;
     }
 
+    function setUpdatedAt(uint256 value) external {
+        updatedAt = value;
+    }
+
     function touch() external {
         updatedAt = block.timestamp;
     }

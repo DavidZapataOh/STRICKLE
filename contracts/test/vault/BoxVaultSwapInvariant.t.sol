@@ -64,40 +64,46 @@ contract SwapHandler is Test {
         eurcFeed.touch();
     }
 
-    function setAdapter(uint8 mode, uint256 rate) external {
-        adapter.setMode(TestSwapAdapter.Mode(bound(mode, 0, 4)));
-        adapter.setRate(bound(rate, 400_000, 2_500_000));
+    /// @dev Values above 4 mean an honest adapter, so most calls are honest and the rest are hostile in turn.
+    function setMode(uint8 mode) external {
+        adapter.setMode(TestSwapAdapter.Mode(mode <= 4 ? mode : 0));
     }
 
-    function swap(bool inUsdc, uint8 box, uint256 amount, bool exactBound) external {
+    function swap(bool inUsdc, uint8 box, uint256 amount, uint256 skewBps, bool exactBound) external {
         uint8 assetIn = inUsdc ? 1 : 2;
         box = uint8(bound(box, 1, 6));
         uint256 balance = vault.boxBalance(assetIn, box);
         if (balance == 0) return;
         amount = bound(amount, 1, balance);
+        // the adapter pays the feed ratio give or take a couple of percent, so honest swaps both clear the bound and miss it
+        (uint256 priceIn, uint256 priceOut) = _prices(assetIn);
+        adapter.setRate((priceIn * 1e6 * bound(skewBps, 9_700, 10_100)) / (priceOut * 10_000));
         uint256 minOut;
-        try vault.minSwapOutput(assetIn, amount) returns (uint256 bound_) {
-            minOut = exactBound ? bound_ : bound_ + 1;
+        try vault.minSwapOutput(assetIn, amount) returns (uint256 floor_) {
+            minOut = exactBound ? floor_ : floor_ + 1;
         } catch {
             return;
         }
-        (uint256 priceIn, uint256 priceOut) = _prices(assetIn);
-        bytes memory data = adapter.payload(address(inUsdc ? usdc : eurc), amount);
-        uint8 assetOut = inUsdc ? 2 : 1;
+        _attempt(box, assetIn, amount, minOut);
+    }
+
+    function _attempt(uint8 box, uint8 assetIn, uint256 amount, uint256 minOut) internal {
+        uint8 assetOut = assetIn == 1 ? 2 : 1;
+        bytes memory data = adapter.payload(assetIn == 1 ? address(usdc) : address(eurc), amount);
         uint256 outBefore = vault.boxBalance(assetOut, box);
         vm.prank(agent);
         try vault.swapBox(box, assetIn, amount, minOut, data) {
             swaps++;
-            uint256 received = vault.boxBalance(assetOut, box) - outBefore;
-            uint256 valueIn = amount * priceIn;
-            uint256 valueOut = (received + 1) * priceOut;
-            if (
-                valueIn > valueOut
-                    && (valueIn - valueOut) * 10_000 > valueIn * (vault.MAX_SWAP_SLIPPAGE_BPS() + vault.FEED_LAG_BPS())
-            ) {
-                overBound++;
-            }
+            if (_lossBeyondBound(assetIn, amount, vault.boxBalance(assetOut, box) - outBefore)) overBound++;
         } catch {}
+    }
+
+    function _lossBeyondBound(uint8 assetIn, uint256 amount, uint256 received) internal view returns (bool) {
+        (uint256 priceIn, uint256 priceOut) = _prices(assetIn);
+        uint256 valueIn = amount * priceIn;
+        uint256 valueOut = (received + 1) * priceOut;
+        return valueIn > valueOut
+            && (valueIn - valueOut) * 10_000 > valueIn * (vault.MAX_SWAP_SLIPPAGE_BPS() + vault.FEED_LAG_BPS());
     }
 
     function pauseOrResume(bool pause) external {
@@ -114,8 +120,6 @@ contract SwapHandler is Test {
         for (uint8 box = 1; box <= 6; ++box) {
             total += vault.boxBalance(asset, box);
         }
-        total += vault.invested(asset, 1) + vault.invested(asset, 2) + vault.invested(asset, 3);
-        total += vault.invested(asset, 4) + vault.invested(asset, 5) + vault.invested(asset, 6);
     }
 
     function _prices(uint8 assetIn) internal view returns (uint256 priceIn, uint256 priceOut) {
@@ -157,6 +161,15 @@ contract BoxVaultSwapInvariantTest is Test {
         eurcFeed.touch();
         handler = new SwapHandler(vault, usdc, eurc, usdcFeed, eurcFeed, adapter, owner, agent);
         targetContract(address(handler));
+    }
+
+    function test_TheHandlerReallySwapsSoTheInvariantsAreNotVacuous() public {
+        handler.mint(true, 1_000e6);
+        handler.split(true, 2, 1_000e6);
+        handler.setMode(5);
+        handler.swap(true, 2, 500e6, 10_000, true);
+        assertEq(handler.swaps(), 1);
+        assertGt(vault.boxBalance(2, 2), 0);
     }
 
     function invariant_TheVaultAlwaysHoldsWhatItOwesInBothAssets() public view {

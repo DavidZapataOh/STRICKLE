@@ -68,7 +68,8 @@ contract BoxVaultSwapTest is Test {
         pure
         returns (uint256)
     {
-        return (amountIn * priceIn * (10_000 - slippage - 50)) / (priceOut * 10_000);
+        uint256 denominator = priceOut * 10_000;
+        return (amountIn * priceIn * (10_000 - slippage - 50) + denominator - 1) / denominator;
     }
 
     function test_TheFixtureHasTheVerifiedAdaptersSelector() public view {
@@ -174,7 +175,7 @@ contract BoxVaultSwapTest is Test {
     function test_AnotherAdapterCannotBeApprovedWhileOneIsActive() public {
         address another = address(new TestSwapAdapter(usdc, eurc));
         vm.prank(owner);
-        vm.expectRevert(BoxVault.SwapAdapterNotApproved.selector);
+        vm.expectRevert(BoxVault.SwapAdapterAlreadySet.selector);
         vault.approveSwapAdapter(another);
     }
 
@@ -270,5 +271,64 @@ contract BoxVaultSwapTest is Test {
         vault.swapBox(PAYROLL, EURC, 500e6, bound, data);
         assertEq(vault.boxBalance(EURC, PAYROLL), 0);
         assertGe(vault.boxBalance(USDC, PAYROLL), 4_000e6 + bound);
+    }
+
+    function test_ASwapCannotTakeTheInputSideBelowTheBoxFloor() public {
+        BoxLedger.Rule memory rule = BoxLedger.Rule(24 hours, false, true, 3_500e6, 0);
+        vm.prank(owner);
+        vault.setRule(PAYROLL, rule);
+        uint256 ok = vault.minSwapOutput(USDC, 500e6);
+        uint256 over = vault.minSwapOutput(USDC, 501e6);
+        bytes memory okData = adapter.payload(address(usdc), 500e6);
+        bytes memory overData = adapter.payload(address(usdc), 501e6);
+        vm.startPrank(agent);
+        vault.swapBox(PAYROLL, USDC, 500e6, ok, okData);
+        vm.expectRevert(BoxVault.BelowFloor.selector);
+        vault.swapBox(PAYROLL, USDC, 501e6, over, overData);
+        vm.stopPrank();
+    }
+
+    function test_AFeedStampedInTheFutureIsRefusedAsStale() public {
+        usdcFeed.setUpdatedAt(block.timestamp + 1);
+        bytes memory data = adapter.payload(address(usdc), 100e6);
+        vm.prank(agent);
+        vm.expectRevert(BoxVault.StaleFeed.selector);
+        vault.swapBox(PAYROLL, USDC, 100e6, 1, data);
+    }
+
+    function test_TheMinimumRoundsUpSoADustSwapCannotReturnNothing() public {
+        assertEq(vault.minSwapOutput(USDC, 1), 1);
+        bytes memory data = adapter.payload(address(usdc), 1);
+        vm.prank(agent);
+        vm.expectRevert(BoxVault.BelowOracleBound.selector);
+        vault.swapBox(PAYROLL, USDC, 1, 0, data);
+    }
+
+    function test_ANewAdapterSwapsOnceItsDayHasPassed() public {
+        TestSwapAdapter other = new TestSwapAdapter(usdc, eurc);
+        eurc.mint(address(other), 1_000_000e6);
+        vm.startPrank(owner);
+        vault.revokeSwapAdapter();
+        vault.approveSwapAdapter(address(other));
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1 days);
+        usdcFeed.touch();
+        eurcFeed.touch();
+        uint256 minOut = vault.minSwapOutput(USDC, 100e6);
+        bytes memory data = other.payload(address(usdc), 100e6);
+        vm.prank(agent);
+        vault.swapBox(PAYROLL, USDC, 100e6, minOut, data);
+        assertGe(vault.boxBalance(EURC, PAYROLL), minOut);
+    }
+
+    function test_TokensDonatedDuringTheCallOnlyShrinkWhatTheBoxReceives() public {
+        // a donation of the input token inside the call lowers `spent`, never the ledger's view of what was received
+        uint256 minOut = vault.minSwapOutput(USDC, 1_000e6);
+        bytes memory data = adapter.payload(address(usdc), 1_000e6);
+        eurc.mint(address(vault), 777e6); // already there before the call: not part of what the swap produced
+        vm.prank(agent);
+        vault.swapBox(PAYROLL, USDC, 1_000e6, minOut, data);
+        assertLt(vault.boxBalance(EURC, PAYROLL), 1_000e6);
+        assertEq(vault.unallocated(EURC), 777e6);
     }
 }

@@ -155,7 +155,7 @@ contract AgentExecutorSwapTest is Test {
         uint256 before = gasleft();
         deliver(SWAP, args);
         uint256 used = before - gasleft();
-        // the vault's swapBox with the test adapter is about 206k; the report adds decoding, two reads and the state store
-        assertLt(used, 420_000);
+        // swapBox with the test adapter is about 206k; the report adds decoding, two reads and the state store
+        assertLt(used, 300_000);
     }
 }

@@ -17,6 +17,7 @@ contract DeployVault is Script {
 
     function run() external returns (BoxVault implementation, BoxVaultFactory factory) {
         bool testnet = block.chainid == 5042002;
+        if (!testnet) _checkMainnetFeeds();
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address usdcFeed = USDC_FEED_MAINNET;
         address eurcFeed = EURC_FEED_MAINNET;
@@ -25,7 +26,9 @@ contract DeployVault is Script {
             ReferenceFeed usdc = new ReferenceFeed();
             ReferenceFeed eurc = new ReferenceFeed();
             usdc.set(1e8);
-            eurc.set(int256(vm.envUint("EURC_USD_E8")));
+            uint256 eurcUsd = vm.envUint("EURC_USD_E8");
+            require(eurcUsd >= 0.5e8 && eurcUsd <= 2e8, "EURC_USD_E8 out of range");
+            eurc.set(int256(eurcUsd));
             usdcFeed = address(usdc);
             eurcFeed = address(eurc);
         }
@@ -39,4 +42,21 @@ contract DeployVault is Script {
         factory = new BoxVaultFactory{salt: keccak256("strickle.box-vault-factory.v2")}(address(implementation));
         vm.stopBroadcast();
     }
+
+    /// @dev The vault trusts these two proxies for every clone, so they are read before anything is deployed: both must
+    /// answer a price near a dollar and fresh enough to pass the vault's own age limit.
+    function _checkMainnetFeeds() internal view {
+        _requireSane(USDC_FEED_MAINNET, 0.9e8, 1.1e8);
+        _requireSane(EURC_FEED_MAINNET, 0.9e8, 1.4e8);
+    }
+
+    function _requireSane(address feed, int256 low, int256 high) internal view {
+        (, int256 answer,, uint256 updatedAt,) = IFeed(feed).latestRoundData();
+        require(answer >= low && answer <= high, "mainnet feed answer out of range");
+        require(block.timestamp - updatedAt <= MAINNET_FEED_AGE, "mainnet feed is stale");
+    }
+}
+
+interface IFeed {
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
 }

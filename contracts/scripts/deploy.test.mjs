@@ -143,7 +143,8 @@ test("recordDeployment keeps a second contract of the same name under its own ke
   const runFile = join(dir, "run-latest.json");
   const create = (n) => ({ hash: `0x${String(n).repeat(64)}`, transactionType: "CREATE", contractName: "ReferenceFeed", contractAddress: `0x00000000000000000000000000000000000000a${n}` });
   const receipt = (n) => ({ transactionHash: `0x${String(n).repeat(64)}`, blockNumber: "0x10" });
-  writeFileSync(runFile, JSON.stringify({ transactions: [create(1), create(2)], receipts: [receipt(1), receipt(2)] }));
+  const call = { hash: `0x${"9".repeat(64)}`, transactionType: "CALL", contractName: "ReferenceFeed", contractAddress: "0x00000000000000000000000000000000000000a1" };
+  writeFileSync(runFile, JSON.stringify({ transactions: [create(1), call, create(2)], receipts: [receipt(1), { transactionHash: call.hash, blockNumber: "0x10" }, receipt(2)] }));
   const manifest = recordDeployment({ runFile, manifestFile: join(dir, "manifest.json"), chainId: 1 });
   assert.equal(manifest.contracts.ReferenceFeed.address, "0x00000000000000000000000000000000000000A1");
   assert.equal(manifest.contracts["ReferenceFeed#2"].address, "0x00000000000000000000000000000000000000A2");

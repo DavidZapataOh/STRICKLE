@@ -4,7 +4,7 @@ import { basename, dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
-import { ecbEurcUsdE8 } from "./set-reference-rate.mjs";
+import { checkedRate, ecbEurcUsdE8 } from "./set-reference-rate.mjs";
 import { privateKeyToAddress } from "viem/accounts";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
@@ -38,7 +38,7 @@ function createdKeys(transactions) {
   const counts = new Map();
   const keys = new Map();
   for (const tx of transactions) {
-    if (!tx.contractName) continue;
+    if (!tx.contractName || (tx.transactionType !== "CREATE" && tx.transactionType !== "CREATE2")) continue;
     const count = (counts.get(tx.contractName) ?? 0) + 1;
     counts.set(tx.contractName, count);
     keys.set(tx, count === 1 ? tx.contractName : `${tx.contractName}#${count}`);
@@ -186,10 +186,10 @@ export function deploy({
     // To retry it, run the same verify-contract command for the address in the manifest.
     const created = JSON.parse(readFileSync(runFile, "utf8")).transactions;
     const keys = createdKeys(created);
-    for (const { contractName, ...tx } of created.filter((candidate) => candidate.contractName)) {
-      const entry = manifest.contracts[keys.get(created.find((candidate) => candidate.hash === tx.hash))];
+    for (const tx of created) {
+      const entry = manifest.contracts[keys.get(tx) ?? ""];
       if (!entry) continue;
-      verifyContract({ contractName, entry, manifest, network, chainId, rpc, retries: verifyRetries });
+      verifyContract({ contractName: tx.contractName, entry, manifest, network, chainId, rpc, retries: verifyRetries });
     }
   }
   return manifest;
@@ -201,7 +201,7 @@ if (import.meta.main) {
     console.error("usage: npm run deploy -w @strickle/contracts -- <testnet|mainnet> <script path>");
     process.exit(1);
   }
-  if (network === "testnet" && basename(script) === "DeployVault.s.sol") process.env.EURC_USD_E8 ??= String(await ecbEurcUsdE8());
+  if (network === "testnet" && basename(script) === "DeployVault.s.sol") process.env.EURC_USD_E8 = String(checkedRate(process.env.EURC_USD_E8 ?? (await ecbEurcUsdE8())));
   const confirmed = network === "mainnet" ? await confirmMainnet({ script, address: resolveDeployer({ network }).address }) : undefined;
   deploy({ network, script, rpc: rpcUrl(network), chainId: networks[network].chain.id, confirmed });
 }

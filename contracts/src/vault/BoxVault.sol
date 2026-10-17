@@ -48,6 +48,7 @@ contract BoxVault is BoxLedger {
     error InsufficientShares();
     error InvalidBps();
     error SwapAdapterNotApproved();
+    error SwapAdapterAlreadySet();
     error WrongSelector();
     error BelowOracleBound();
     error StaleFeed();
@@ -179,7 +180,7 @@ contract BoxVault is BoxLedger {
     }
 
     function approveSwapAdapter(address adapter) external onlyOwner {
-        if (swapAdapter != address(0)) revert SwapAdapterNotApproved();
+        if (swapAdapter != address(0)) revert SwapAdapterAlreadySet();
         swapAdapter = adapter;
         uint64 effectiveAt = uint64(block.timestamp) + MIN_LOOSEN_DELAY;
         swapAdapterFrom = effectiveAt;
@@ -215,7 +216,8 @@ contract BoxVault is BoxLedger {
     function minSwapOutput(uint8 assetIn, uint256 amountIn) public view returns (uint256) {
         (uint256 priceIn, uint256 priceOut) =
             assetIn == 1 ? (_price(USDC_FEED), _price(EURC_FEED)) : (_price(EURC_FEED), _price(USDC_FEED));
-        return (amountIn * priceIn * (10_000 - swapSlippageBps() - FEED_LAG_BPS)) / (priceOut * 10_000);
+        uint256 denominator = priceOut * 10_000;
+        return (amountIn * priceIn * (10_000 - swapSlippageBps() - FEED_LAG_BPS) + denominator - 1) / denominator;
     }
 
     function approveProposal(uint256 id) external onlyOwner nonReentrant {
@@ -334,6 +336,7 @@ contract BoxVault is BoxLedger {
 
         uint8 assetOut = assetIn == 1 ? 2 : 1;
         _debit(assetIn, box, spent);
+        if (boxBalance[assetIn][box] < rules[box].floor) revert BelowFloor();
         boxBalance[assetOut][box] += received;
         held[assetOut] += received;
         emit Swapped(box, assetIn, spent, received);
@@ -391,7 +394,9 @@ contract BoxVault is BoxLedger {
 
     function _price(IPriceFeed feed) private view returns (uint256) {
         (, int256 answer,, uint256 updatedAt,) = feed.latestRoundData();
-        if (answer <= 0 || block.timestamp - updatedAt > MAX_FEED_AGE) revert StaleFeed();
+        if (answer <= 0 || updatedAt > block.timestamp || block.timestamp - updatedAt > MAX_FEED_AGE) {
+            revert StaleFeed();
+        }
         return uint256(answer);
     }
 
