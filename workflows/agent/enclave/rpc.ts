@@ -25,6 +25,8 @@ export const logsRequest = (address: Address, block: bigint, topics: Hex[]): Rpc
   params: [{ address, fromBlock: blockTag(block), toBlock: blockTag(block), topics }],
 });
 
+export const blockNumberRequest = (): RpcRequest => ({ method: "eth_blockNumber", params: [] });
+
 /** A block range, for reading what arrived since a checkpoint; a topic may be a list of alternatives. */
 export const logsRangeRequest = (address: Address | undefined, from: bigint, to: bigint, topics: (Hex | Hex[] | null)[]): RpcRequest => ({
   method: "eth_getLogs",

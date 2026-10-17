@@ -22,6 +22,9 @@ export interface Attribution {
   checkpoint: bigint;
 }
 
+/** The widest block range one read asks of the RPC: the public Arc node accepted 100,000 blocks and refused 200,000 when the fixtures were captured. */
+export const MAX_LOG_SPAN = 100_000n;
+
 /** About ten minutes of Arc blocks: a log newer than this may belong to a deposit the balance read has not seen yet. */
 export const RACE_BLOCKS = 1_200n;
 

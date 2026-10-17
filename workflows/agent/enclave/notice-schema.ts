@@ -51,6 +51,8 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("proposal"), proposalId: z.string(), amount: units, payee: address, digest: hash32, expiresAt: z.number().int() }).strict(),
   z.object({ kind: z.literal("salary"), month: z.string(), paid: units, pending: units }).strict(),
   z.object({ kind: z.literal("decision"), proposalId: z.string(), status: z.enum(["approved", "rejected", "executed"]) }).strict(),
+  z.object({ kind: z.literal("income-doubt"), arrivalId: z.string(), asset: z.enum(["USDC", "EURC"]), amount: units, flags: z.array(z.enum(["own-address", "amount-matches-outflow", "outlier-size", "unattributed"])).min(1).max(4), sender: address.or(z.literal("")) }).strict(),
+  z.object({ kind: z.literal("reclassified"), arrivalId: z.string(), amount: units, from: z.enum(["income", "own-transfer", "refund"]), to: z.enum(["income", "own-transfer", "refund"]) }).strict(),
   planNoticeSchema,
 ]);
 

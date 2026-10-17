@@ -16,11 +16,13 @@ export interface VaultBooks {
   emergency: bigint;
 }
 
-export function planSplit(profile: Profile, books: VaultBooks, today: PlainDate): { boxes: number[]; amounts: bigint[]; next: Profile } {
-  const result = allocatePayment(money(books.asset, books.unallocated), {
+/** The cascade for one amount. Income reserves taxes (plus a catch-up if one is owed); money that is not income reserves none and is allocated the same way otherwise. */
+export function allocateAmount(profile: Profile, books: VaultBooks, amount: bigint, options: { income: boolean; taxExtra?: bigint }) {
+  return allocatePayment(money(books.asset, amount), {
     asset: books.asset,
-    taxRateBps: profile.taxRateBps,
+    taxRateBps: options.income ? profile.taxRateBps : 0,
     taxBufferBps: profile.taxBufferBps,
+    ...(options.income && options.taxExtra !== undefined && options.taxExtra > 0n ? { taxExtra: options.taxExtra } : {}),
     payrollDue: BigInt(profile.payrollDue),
     payrollFunded: books.payrollFunded,
     payrollShareBps: profile.payrollShareBps,
@@ -32,6 +34,10 @@ export function planSplit(profile: Profile, books: VaultBooks, today: PlainDate)
     emergencyTarget: BigInt(profile.emergencyTarget),
     emergencyBalance: books.emergency,
   });
+}
+
+export function planSplit(profile: Profile, books: VaultBooks, today: PlainDate): { boxes: number[]; amounts: bigint[]; next: Profile } {
+  const result = allocateAmount(profile, books, books.unallocated, { income: true });
   const boxes: number[] = [];
   const amounts: bigint[] = [];
   for (const kind of BOX_KINDS) {

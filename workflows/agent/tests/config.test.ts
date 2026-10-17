@@ -18,6 +18,8 @@ const valid = {
   proverUrl: "https://prover.example.test",
   proverKey: `0x${"ab".repeat(32)}`,
   privateSpendGas: "6500000",
+  usdcAddress: "0x3600000000000000000000000000000000000000",
+  eurcAddress: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",
 };
 
 describe("configSchema", () => {
@@ -25,7 +27,7 @@ describe("configSchema", () => {
     expect(configSchema.parse(valid)).toEqual(valid);
   });
 
-  it.each(["factoryAddress", "heartbeatAddress"])("rejects a malformed %s", (key) => {
+  it.each(["factoryAddress", "heartbeatAddress", "usdcAddress", "eurcAddress"])("rejects a malformed %s", (key) => {
     expect(() => configSchema.parse({ ...valid, [key]: "0x123" })).toThrow();
   });
 

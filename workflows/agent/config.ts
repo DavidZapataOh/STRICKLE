@@ -20,6 +20,8 @@ export const configSchema = z.object({
   privateSpendGas: z.string().regex(/^[0-9]+$/),
   sandboxClock: z.boolean(),
   gasLimit: z.string().regex(/^[0-9]+$/),
+  usdcAddress: address,
+  eurcAddress: address,
 });
 
 export type Config = z.infer<typeof configSchema>;

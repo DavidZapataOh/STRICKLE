@@ -50,3 +50,20 @@ describe("noticeSchema", () => {
     expect(noticeSchema.safeParse({ kind: "plan" }).success).toBe(false);
   });
 });
+
+describe("the income notices", () => {
+  const doubt = { kind: "income-doubt", arrivalId: "a1b2c3d4e5-0", asset: "USDC", amount: "500000000", flags: ["own-address"], sender: `0x${"1".repeat(40)}` };
+  const corrected = { kind: "reclassified", arrivalId: "a1b2c3d4e5-0", amount: "500000000", from: "income", to: "own-transfer" };
+  it("parse when well formed, with or without a sender on a doubt", () => {
+    expect(noticeSchema.safeParse(doubt).success).toBe(true);
+    expect(noticeSchema.safeParse({ ...doubt, flags: ["unattributed"], sender: "" }).success).toBe(true);
+    expect(noticeSchema.safeParse(corrected).success).toBe(true);
+  });
+  it("refuse an unknown flag, an empty flag list, an extra key and a sender that is not an address", () => {
+    expect(noticeSchema.safeParse({ ...doubt, flags: ["made-up"] }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...doubt, flags: [] }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...doubt, extra: 1 }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...doubt, sender: "nope" }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...corrected, to: "gift" }).success).toBe(false);
+  });
+});

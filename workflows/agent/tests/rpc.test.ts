@@ -1,6 +1,6 @@
 // workflows/agent/tests/rpc.test.ts
 import { describe, expect, it } from "vitest";
-import { batchBody, callRequest, codeRequest, decodeOwner, decodeVaultOf, firstLogData, isContract, logsRangeRequest, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
+import { batchBody, callRequest, codeRequest, decodeOwner, decodeVaultOf, firstLogData, blockNumberRequest, isContract, logsRangeRequest, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
 
 const to = "0x00000000000000000000000000000000000000aa";
 const decode = (body: string) => JSON.parse(Buffer.from(body, "base64").toString("utf8"));
@@ -101,5 +101,11 @@ describe("logsRangeRequest", () => {
     expect(request.method).toBe("eth_getLogs");
     expect(request.params).toEqual([{ address: to, fromBlock: "0x64", toBlock: "0xc8", topics: [topic(1n), null, [topic(2n), topic(3n)]] }]);
     expect((logsRangeRequest(undefined, 1n, 2n, []).params[0] as { address?: string }).address).toBeUndefined();
+  });
+});
+
+describe("blockNumberRequest", () => {
+  it("asks the head of the chain once, so a batch can be pinned to one block", () => {
+    expect(blockNumberRequest()).toEqual({ method: "eth_blockNumber", params: [] });
   });
 });
