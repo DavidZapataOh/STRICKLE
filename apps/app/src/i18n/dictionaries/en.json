@@ -895,5 +895,35 @@
       "line": "Earned so far: {gain}. Fee on that, shown and not charged on testnet: {fee}.",
       "none": "Nothing earned yet."
     }
+  },
+  "proof": {
+    "title": "Proof, without trusting us",
+    "intro": "Everything here is read from the chain, the explorer or the recorded numbers when you open the page. If a source is down, that part says so and the rest stays.",
+    "unreadable": "This part could not be read right now.",
+    "contracts": {
+      "title": "The contracts",
+      "name": "Contract",
+      "deployed": "Code deployed",
+      "notDeployed": "Not deployed here",
+      "verified": "Source verified",
+      "notVerified": "Source not verified",
+      "unknown": "Could not check"
+    },
+    "guarantees": {
+      "title": "What the contracts enforce",
+      "intro": "In plain words, with the function that does it and the test that pins it.",
+      "function": "Function",
+      "test": "Test"
+    },
+    "agent": {
+      "title": "The agent",
+      "last": "The agent last wrote to the chain {when}.",
+      "none": "No activity yet.",
+      "tx": "Transaction"
+    },
+    "honest": {
+      "title": "What this page does not prove",
+      "body": "These contracts are not audited and run on testnet, where the money is test USDC. The page shows that the code is deployed, whether its source is verified and what it enforces; it does not show that the code has no bugs. Private amounts stay private."
+    }
   }
 }

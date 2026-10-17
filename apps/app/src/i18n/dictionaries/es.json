@@ -895,5 +895,35 @@
       "line": "Ganado hasta ahora: {gain}. Comisión sobre eso, mostrada y no cobrada en testnet: {fee}.",
       "none": "Todavía no se ha ganado nada."
     }
+  },
+  "proof": {
+    "title": "Pruebas, sin confiar en nosotros",
+    "intro": "Todo lo de aquí se lee de la cadena, del explorador o de los números registrados al abrir la página. Si una fuente no responde, esa parte lo dice y el resto sigue.",
+    "unreadable": "Esta parte no se pudo leer ahora.",
+    "contracts": {
+      "title": "Los contratos",
+      "name": "Contrato",
+      "deployed": "Código desplegado",
+      "notDeployed": "No desplegado aquí",
+      "verified": "Fuente verificada",
+      "notVerified": "Fuente no verificada",
+      "unknown": "No se pudo comprobar"
+    },
+    "guarantees": {
+      "title": "Lo que imponen los contratos",
+      "intro": "En palabras simples, con la función que lo hace y la prueba que lo fija.",
+      "function": "Función",
+      "test": "Prueba"
+    },
+    "agent": {
+      "title": "El agente",
+      "last": "El agente escribió en la cadena por última vez {when}.",
+      "none": "Todavía no hay actividad.",
+      "tx": "Transacción"
+    },
+    "honest": {
+      "title": "Lo que esta página no demuestra",
+      "body": "Estos contratos no están auditados y corren en testnet, donde el dinero es USDC de prueba. La página muestra que el código está desplegado, si su fuente está verificada y lo que impone; no muestra que el código no tenga errores. Los montos privados siguen siendo privados."
+    }
   }
 }

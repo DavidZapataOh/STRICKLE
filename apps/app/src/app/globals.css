@@ -432,7 +432,11 @@ body {
 .rule-pending p { margin: 0; font-size: var(--fs-sm); }
 .rule-edit summary { min-height: var(--tap); display: inline-flex; align-items: center; color: var(--hibiscus); font-weight: 600; cursor: pointer; }
 
-.public-view { display: grid; gap: var(--space-4); }
+.public-view { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.proof-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.proof-list li { display: grid; gap: var(--space-1); min-width: 0; }
+.proof-address { overflow-wrap: anywhere; word-break: break-all; }
+.proof-list a { overflow-wrap: anywhere; }
 .public-view h2 { margin: 0; font: 600 var(--fs-lg)/1.2 var(--font-manrope), system-ui, sans-serif; }
 .public-view .card { display: grid; gap: var(--space-3); }
 .public-view .card > p { margin: 0; }

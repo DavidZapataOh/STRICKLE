@@ -895,5 +895,35 @@
       "line": "Rendido até agora: {gain}. Taxa sobre isso, mostrada e não cobrada na testnet: {fee}.",
       "none": "Ainda não rendeu nada."
     }
+  },
+  "proof": {
+    "title": "Provas, sem confiar em nós",
+    "intro": "Tudo aqui é lido da cadeia, do explorador ou dos números registrados quando você abre a página. Se uma fonte não responde, essa parte avisa e o resto continua.",
+    "unreadable": "Esta parte não pôde ser lida agora.",
+    "contracts": {
+      "title": "Os contratos",
+      "name": "Contrato",
+      "deployed": "Código implantado",
+      "notDeployed": "Não implantado aqui",
+      "verified": "Código-fonte verificado",
+      "notVerified": "Código-fonte não verificado",
+      "unknown": "Não foi possível verificar"
+    },
+    "guarantees": {
+      "title": "O que os contratos impõem",
+      "intro": "Em palavras simples, com a função que faz isso e o teste que a fixa.",
+      "function": "Função",
+      "test": "Teste"
+    },
+    "agent": {
+      "title": "O agente",
+      "last": "O agente escreveu na cadeia pela última vez {when}.",
+      "none": "Ainda não há atividade.",
+      "tx": "Transação"
+    },
+    "honest": {
+      "title": "O que esta página não prova",
+      "body": "Estes contratos não são auditados e rodam na testnet, onde o dinheiro é USDC de teste. A página mostra que o código está implantado, se o código-fonte está verificado e o que ele impõe; não mostra que o código não tem erros. Os valores privados continuam privados."
+    }
   }
 }

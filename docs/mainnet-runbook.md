@@ -151,6 +151,18 @@ The public page `/metrics` and `node scripts/traction-report.mjs --url https://<
 - **Reconciled.** A test sums the same events straight from the chain and compares. A snapshot recorded before the agent's moves were counted shows no such card, and the report says "not measured in this snapshot" instead of a zero.
 - **The daily update.** Run the report and paste its paragraph into `arc-canteen update traction`, which is interactive and belongs to the account owner. Every number in the paragraph is in the snapshot.
 
+## Proof page
+
+`/[lang]/proof` is the public page for checking the system without trusting it. It reads, when it is opened and never while the app is built:
+
+- **The numbers.** The latest recorded snapshot (the same one `/metrics` shows).
+- **The contracts.** For the factory, the state, the executor and the pool: whether code is deployed at the address (`eth_getCode`) and whether the explorer holds verified source (Blockscout `is_verified`). A contract with no code is shown as not deployed and never as verified; an explorer that does not answer is "could not check", not a guess.
+- **What each contract enforces.** A list kept in `apps/app/src/config/guarantees.ts`, each entry tied to the function that enforces it and the test that pins it, linked on GitHub. A test fails when a named function or test stops existing.
+- **The agent.** The time of the newest update of the state contract in the last 50,000 blocks, or "no activity yet".
+- **What it does not prove.** The contracts are unaudited and run on testnet; the page shows deployment, verification and what is enforced, not that the code has no bugs.
+
+If one source is down that part says so and the rest of the page stays. The page does not use the words safe, audited or insured, and a dictionary test keeps it that way.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
