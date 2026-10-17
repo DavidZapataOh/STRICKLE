@@ -1,7 +1,7 @@
 {
   "testnet": {
     "chainId": 5042002,
-    "BoxVaultFactory": "0x515EDF42f25af87ae7d806197232048D4A212100",
+    "BoxVaultFactory": "0x515EDF42f25af87aE7d806197232048D4A212100",
     "AgentState": "0xc8224D78e864476258785646a93a6884967b3973",
     "AgentExecutor": "0xA302dDdAbEaF908efc81d915419c2cBD0373C533",
     "PolicyPool": "0x20a16Ea01dC22D834CcC4962BB9153eeBa733D9F",

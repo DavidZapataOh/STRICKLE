@@ -68,7 +68,7 @@
       "create2": true
     },
     "BoxVaultFactory": {
-      "address": "0x515EDF42f25af87ae7d806197232048D4A212100",
+      "address": "0x515EDF42f25af87aE7d806197232048D4A212100",
       "txHash": "0x713541f7849bd355882d98a53861ca5bea8bce08f8d1b30ec49cc79754d98daf",
       "blockNumber": 67720253,
       "create2": true

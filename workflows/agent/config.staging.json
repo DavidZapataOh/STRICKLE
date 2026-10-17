@@ -1,7 +1,7 @@
 {
   "schedule": "0 */10 * * * *",
   "chainName": "arc-testnet",
-  "factoryAddress": "0x515EDF42f25af87ae7d806197232048D4A212100",
+  "factoryAddress": "0x515EDF42f25af87aE7d806197232048D4A212100",
   "heartbeatAddress": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
   "gasLimit": "900000",
   "rpcUrl": "https://rpc.blockdaemon.testnet.arc.io",
