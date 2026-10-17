@@ -2,13 +2,13 @@ import { creditedLog } from "@strickle/arc/bridge";
 import type { ArcNetworkName } from "@strickle/arc/networks";
 import type { InvoiceKeys } from "@strickle/db/invoice-keys";
 import type { createLimiter } from "@strickle/db/limiter";
-import { type OnrampSessionRow, findOnrampSession, recordWebhook, releaseWebhook, settleOnrampSession } from "@strickle/db/onramp";
+import { type OnrampSessionRow, findOnrampSession, markSessionUnresolved, markWebhookApplied, recordWebhook, releaseWebhook, settleOnrampSession } from "@strickle/db/onramp";
 import { settlePayment } from "@strickle/db/payments";
 import { createHash } from "node:crypto";
 import type { Sql } from "postgres";
 import type { Address, Hex } from "viem";
 import { z } from "zod";
-import { type PublicKeyLookup, verifyCircleSignature } from "./circle-signature.ts";
+import { type PublicKeyLookup, checkCircleSignature } from "./circle-signature.ts";
 import type { ChainReader } from "./reconcile.ts";
 
 const MAX_BODY = 64_000;
@@ -56,16 +56,20 @@ async function settleOnrampDeposit(deps: WebhookDeps, body: unknown): Promise<"c
   let session: OnrampSessionRow | null = n.sessionId ? await findOnrampSession(deps.sql, { circleSessionId: n.sessionId }) : null;
   const ours = n.userId ?? n.appUserId;
   if (!session && ours) session = await findOnrampSession(deps.sql, { id: ours });
-  if (!session || !n.transactionHash || n.destinationAddress.toLowerCase() !== session.vault.toLowerCase()) return "unresolved";
+  if (!session) return "unresolved";
+  const known = session;
+  const unresolved = async () => (await markSessionUnresolved(deps.sql, known.id), "unresolved" as const);
+  if (!n.transactionHash || n.destinationAddress.toLowerCase() !== known.vault.toLowerCase()) return unresolved();
   const receipt = await deps.chain.receipt(n.transactionHash as Hex);
   // a node that has not seen the transaction yet is a delay, not a verdict: throwing releases the event so Circle retries
   if (!receipt) throw new Error("the transaction is not visible yet");
-  if (receipt.status !== "success") return "unresolved";
-  const [credit] = creditedLog(receipt, deps.usdc, session.vault as Address);
-  if (!credit) return "unresolved";
-  const settled = await settlePayment(deps.sql, { chainId: deps.chainId, txHash: n.transactionHash, logIndex: credit.logIndex, vault: session.vault, payer: credit.from, amount: credit.amount, rail: "onramp", linkId: session.linkId, at: await deps.chain.blockTime(receipt.blockNumber) });
-  if (settled.outcome === "unmatched") return "unresolved";
-  if (settled.outcome === "credited" || settled.outcome === "extra") await settleOnrampSession(deps.sql, session.id, n.transactionHash);
+  if (receipt.status !== "success") return unresolved();
+  const [credit] = creditedLog(receipt, deps.usdc, known.vault as Address);
+  if (!credit) return unresolved();
+  const settled = await settlePayment(deps.sql, { chainId: deps.chainId, txHash: n.transactionHash, logIndex: credit.logIndex, vault: known.vault, payer: credit.from, amount: credit.amount, rail: "onramp", linkId: known.linkId, at: await deps.chain.blockTime(receipt.blockNumber) });
+  if (settled.outcome === "unmatched") return unresolved();
+  // also on a duplicate: an earlier attempt may have credited the payment and died before settling the session
+  await settleOnrampSession(deps.sql, known.id, n.transactionHash);
   return settled.outcome;
 }
 
@@ -79,12 +83,15 @@ export async function handleCircleWebhook(request: Request, deps: WebhookDeps): 
   } catch {
     return reply(502);
   }
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return reply(413);
   const text = await request.text();
-  if (text.length > MAX_BODY) return reply(413);
+  if (Buffer.byteLength(text) > MAX_BODY) return reply(413);
   const signature = request.headers.get("x-circle-signature");
   const keyId = request.headers.get("x-circle-key-id");
   if (!signature || !keyId) return reply(400);
-  if (!(await verifyCircleSignature({ body: text, signature, keyId, lookup: deps.lookup }))) return reply(403);
+  const verdict = await checkCircleSignature({ body: text, signature, keyId, lookup: deps.lookup });
+  if (verdict === "unavailable") return reply(503);
+  if (verdict === "invalid") return reply(403);
   let payload: { notificationType?: string; notification?: { id?: string } };
   try {
     payload = JSON.parse(text);
@@ -93,16 +100,25 @@ export async function handleCircleWebhook(request: Request, deps: WebhookDeps): 
   }
   const id = payload.notification?.id;
   if (payload.notificationType === "webhooks.test" || !id) return reply(200, { received: true });
+  let claim: "new" | "duplicate" | "in-flight";
   try {
-    if ((await recordWebhook(deps.sql, { notificationId: id, type: payload.notificationType ?? "unknown", payload })) === "duplicate") return reply(200, { received: true, duplicate: true });
+    claim = await recordWebhook(deps.sql, { notificationId: id, type: payload.notificationType ?? "unknown", payload });
   } catch {
     return reply(500);
   }
-  if (payload.notificationType !== "onramp.deposit.settled") return reply(200, { received: true });
+  if (claim === "duplicate") return reply(200, { received: true, duplicate: true });
+  // an earlier attempt may still be running: Circle retries later instead of this one applying the same event twice
+  if (claim === "in-flight") return reply(503);
+  if (payload.notificationType !== "onramp.deposit.settled") {
+    await markWebhookApplied(deps.sql, id).catch(() => undefined);
+    return reply(200, { received: true });
+  }
   try {
-    return reply(200, { received: true, applied: await settleOnrampDeposit(deps, payload) });
+    const applied = await settleOnrampDeposit(deps, payload);
+    await markWebhookApplied(deps.sql, id);
+    return reply(200, { received: true, applied });
   } catch {
-    // a failure that may pass: the event is not marked done, so the next delivery is applied
+    // a failure that may pass: the claim is released, and a claim that cannot even be released goes stale and is taken over
     await releaseWebhook(deps.sql, id).catch(() => undefined);
     return reply(500);
   }

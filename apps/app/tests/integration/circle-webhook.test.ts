@@ -74,6 +74,12 @@ describe("the signature gate", () => {
     expect((await findOnrampSession(db.sql, { id: s.id }))?.status).toBe("minted");
   });
 
+  it("answers 503, not 403, when Circle's key cannot be fetched: an honest delivery must be retried, not refused", async () => {
+    const s = await session();
+    const down: WebhookDeps = { ...deps(), lookup: async () => Promise.reject(new Error("circle down")) };
+    expect((await handleCircleWebhook(request(notification(s)), down)).status).toBe(503);
+  });
+
   it("limits unsigned traffic per IP and refuses a body beyond the cap", async () => {
     const statuses = [];
     for (let i = 0; i < 130; i++) statuses.push((await handleCircleWebhook(new Request("http://localhost:3200/api/webhooks/circle", { method: "POST", headers: { "x-forwarded-for": "10.2.0.1", "x-circle-key-id": `k${i}`, "x-circle-signature": "AAAA" }, body: "{}" }), deps())).status);
@@ -85,6 +91,33 @@ describe("the signature gate", () => {
   it("acknowledges Circle's endpoint test without doing anything", async () => {
     const result = await handleCircleWebhook(request({ notificationType: "webhooks.test", notification: {} }), deps());
     expect(result.status).toBe(200);
+  });
+});
+
+describe("an interrupted delivery", () => {
+  it("is applied by the retry once the first attempt's claim has gone stale, and not while it may still be running", async () => {
+    const s = await session();
+    const payload = notification(s, {}, "n-crash");
+    await db.sql`insert into circle_webhook_events (notification_id, type, payload) values ('n-crash', 'onramp.deposit.settled', ${db.sql.json(payload as never)})`; // a first attempt that died after claiming
+    expect((await handleCircleWebhook(request(payload), deps())).status).toBe(503); // too soon to know it died
+    await db.sql`update circle_webhook_events set received_at = now() - interval '5 minutes' where notification_id = 'n-crash'`;
+    expect((await handleCircleWebhook(request(payload), deps())).body).toMatchObject({ applied: "credited" });
+    expect((await handleCircleWebhook(request(payload), deps())).body).toMatchObject({ duplicate: true });
+  });
+
+  it("settles the session when the payment was already credited by an attempt that died before it", async () => {
+    const s = await session();
+    expect((await handleCircleWebhook(request(notification(s, {}, "n-first")), deps())).body).toMatchObject({ applied: "credited" });
+    await db.sql`update onramp_sessions set status = 'minted', settled_tx = null where id = ${s.id}`; // the first attempt died before settling the session
+    expect((await handleCircleWebhook(request(notification(s, {}, "n-second")), deps())).body).toMatchObject({ applied: "duplicate" });
+    expect((await findOnrampSession(db.sql, { id: s.id }))?.status).toBe("settled");
+  });
+
+  it("marks the session unresolved when a notification for it cannot be applied", async () => {
+    const s = await session();
+    const reverted = reader({ receipt: async () => ({ status: "reverted", logs: receipt.logs, blockNumber: 100n }) });
+    await handleCircleWebhook(request(notification(s)), deps(reverted));
+    expect((await findOnrampSession(db.sql, { id: s.id }))?.status).toBe("unresolved");
   });
 });
 

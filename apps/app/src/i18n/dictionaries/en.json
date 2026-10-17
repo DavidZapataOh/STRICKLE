@@ -597,8 +597,8 @@
       "blocked": "Your in-app browser blocks the card form. Open this page in your regular browser, or pay another way.",
       "closed": "This invoice can no longer be paid by card.",
       "unavailable": "Card payments are not available right now. Try again or pay another way.",
-      "expired": "The payment may still arrive and the invoice updates by itself. You can leave this page.",
-      "notCompleted": "The card payment was not completed. Nothing was charged.",
+      "expired": "The payment may still arrive. The invoice updates when it does, and you can leave this page.",
+      "notCompleted": "The card payment was not completed.",
       "retry": "Try again"
     }
   },

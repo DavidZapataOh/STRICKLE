@@ -1,6 +1,6 @@
 import { createSign, generateKeyPairSync } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { circlePublicKeyLookup, verifyCircleSignature } from "../src/server/circle-signature.ts";
+import { checkCircleSignature, circlePublicKeyLookup, sharedPublicKeyLookup, verifyCircleSignature } from "../src/server/circle-signature.ts";
 
 const pair = generateKeyPairSync("ec", { namedCurve: "P-256" });
 const other = generateKeyPairSync("ec", { namedCurve: "P-256" });
@@ -61,5 +61,26 @@ describe("circlePublicKeyLookup", () => {
     expect(calls).toBe(2);
     await expect(find("../../etc")).rejects.toThrow(/key id/);
     expect(calls).toBe(2);
+  });
+});
+
+describe("checkCircleSignature", () => {
+  it("tells a forged signature from a key that could not be fetched", async () => {
+    expect(await checkCircleSignature({ body, signature: sign(body), keyId: "key-1", lookup })).toBe("valid");
+    expect(await checkCircleSignature({ body, signature: sign(body, other.privateKey), keyId: "key-1", lookup })).toBe("invalid");
+    expect(await checkCircleSignature({ body, signature: sign(body), keyId: "nobody", lookup })).toBe("unavailable");
+  });
+});
+
+describe("sharedPublicKeyLookup", () => {
+  it("is one lookup, and so one cache, per Circle account, however many requests ask for it", async () => {
+    let calls = 0;
+    const fetcher = async () => (calls++, new Response(JSON.stringify({ data: { publicKey: spki(pair.publicKey) } }), { status: 200 }));
+    const a = sharedPublicKeyLookup({ apiBaseUrl: "https://api-test.circle.com", apiKey: "shared-key", fetcher });
+    const b = sharedPublicKeyLookup({ apiBaseUrl: "https://api-test.circle.com", apiKey: "shared-key" });
+    expect(b).toBe(a);
+    await a("key-1");
+    await b("key-1");
+    expect(calls).toBe(1);
   });
 });

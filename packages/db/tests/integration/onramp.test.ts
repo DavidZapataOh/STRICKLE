@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { invoiceKeys } from "../../src/invoice-keys.ts";
 import { migrate } from "../../src/migrate.ts";
-import { attachCircleSession, createOnrampSessionRow, findOnrampSession, openSessionsFor, recordWebhook, releaseWebhook, settleOnrampSession } from "../../src/onramp.ts";
+import { attachCircleSession, createOnrampSessionRow, findOnrampSession, markWebhookApplied, openSessionsFor, recordWebhook, releaseWebhook, settleOnrampSession } from "../../src/onramp.ts";
 import { confirmSuggestion, createInvoice, getLinkByToken, listInvoices, settlePayment, suggestMatch } from "../../src/payments.ts";
 import { createTestDatabase } from "../../src/testing.ts";
 
@@ -52,6 +52,7 @@ describe("onramp sessions", () => {
 describe("webhook events", () => {
   it("record a notification once and say so the second time", async () => {
     expect(await recordWebhook(db.sql, { notificationId: "n-1", type: "onramp.deposit.settled", payload: { a: 1 } })).toBe("new");
+    await markWebhookApplied(db.sql, "n-1");
     expect(await recordWebhook(db.sql, { notificationId: "n-1", type: "onramp.deposit.settled", payload: { a: 1 } })).toBe("duplicate");
   });
 
@@ -65,6 +66,20 @@ describe("webhook events", () => {
     await recordWebhook(db.sql, { notificationId: "n-3", type: "webhooks.test", payload: { hello: "world" } });
     const [row] = await db.sql<{ payload: { hello: string } }[]>`select payload from circle_webhook_events where notification_id = 'n-3'`;
     expect(row?.payload).toEqual({ hello: "world" });
+  });
+});
+
+describe("a webhook claim that never finished", () => {
+  const event = (id: string) => ({ notificationId: id, type: "onramp.deposit.settled", payload: {} });
+
+  it("is in flight while recent, taken over once stale, and a duplicate only after it was applied", async () => {
+    expect(await recordWebhook(db.sql, event("claim-1"))).toBe("new");
+    expect(await recordWebhook(db.sql, event("claim-1"))).toBe("in-flight");
+    await db.sql`update circle_webhook_events set received_at = now() - interval '5 minutes' where notification_id = 'claim-1'`;
+    expect(await recordWebhook(db.sql, event("claim-1"))).toBe("new");
+    await markWebhookApplied(db.sql, "claim-1");
+    await db.sql`update circle_webhook_events set received_at = now() - interval '5 minutes' where notification_id = 'claim-1'`;
+    expect(await recordWebhook(db.sql, event("claim-1"))).toBe("duplicate");
   });
 });
 
@@ -105,6 +120,29 @@ describe("card suggestions", () => {
     await suggestMatch(db.sql, { ...transfer(101, 100_000_000n), vault });
     const item = (await listInvoices(db.sql, keys, vault)).find((entry) => entry.id === created.id);
     expect(item?.suggestions[0]).toMatchObject({ viaCard: false });
+  });
+
+  it("remembers which card session a suggestion was attributed to, so a later session cannot change it", async () => {
+    const vault = `0x${"c4".repeat(20)}`;
+    const created = await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 100_000_000n, expiresAt: null });
+    const view = (await getLinkByToken(db.sql, keys, created.token))!;
+    await createOnrampSessionRow(db.sql, { linkId: view.linkId, vault, expiresAt: new Date(Date.now() + 1_800_000) });
+    await suggestMatch(db.sql, { ...transfer(103, 96_000_000n), vault });
+    await createOnrampSessionRow(db.sql, { linkId: view.linkId, vault, expiresAt: new Date(Date.now() + 1_800_000) }); // a second session opens afterwards
+    const item = (await listInvoices(db.sql, keys, vault)).find((entry) => entry.id === created.id);
+    expect(item?.suggestions[0]).toMatchObject({ viaCard: true });
+    expect(await confirmSuggestion(db.sql, vault, item?.suggestions[0]?.id as string)).toMatchObject({ outcome: "credited" });
+    const [payment] = await db.sql<{ rail: string }[]>`select rail from payments where tx_hash = ${transfer(103, 1n).txHash}`;
+    expect(payment?.rail).toBe("onramp");
+  });
+
+  it("proposes one card payment per session, not every transfer that follows", async () => {
+    const vault = `0x${"c5".repeat(20)}`;
+    const created = await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 100_000_000n, expiresAt: null });
+    const view = (await getLinkByToken(db.sql, keys, created.token))!;
+    await createOnrampSessionRow(db.sql, { linkId: view.linkId, vault, expiresAt: new Date(Date.now() + 1_800_000) });
+    expect(await suggestMatch(db.sql, { ...transfer(104, 96_000_000n), vault })).toEqual({ suggested: true });
+    expect(await suggestMatch(db.sql, { ...transfer(105, 1_000_000n), vault })).toEqual({ suggested: false });
   });
 
   it("proposes nothing for an arbitrary amount when no card session is open", async () => {

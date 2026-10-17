@@ -60,10 +60,24 @@ export async function openSessionsFor(sql: Sql, vault: string, since: Date): Pro
   return rows.map(toRow);
 }
 
-/** The first delivery of a notification wins; a repeat is told so and applies nothing. */
-export async function recordWebhook(sql: Sql, input: { notificationId: string; type: string; payload: unknown }): Promise<"new" | "duplicate"> {
-  const rows = await sql`insert into circle_webhook_events (notification_id, type, payload) values (${input.notificationId}, ${input.type}, ${sql.json(input.payload as never)}) on conflict (notification_id) do nothing returning notification_id`;
-  return rows.length === 1 ? "new" : "duplicate";
+/** The first delivery claims a notification. A repeat is a duplicate only once the first was applied; while it may still be running it is in flight, and a claim that never finished (a crash, a timeout) is taken over after two minutes, so a lost attempt cannot lose the credit. */
+export async function recordWebhook(sql: Sql, input: { notificationId: string; type: string; payload: unknown }): Promise<"new" | "duplicate" | "in-flight"> {
+  const claimed = await sql`insert into circle_webhook_events (notification_id, type, payload) values (${input.notificationId}, ${input.type}, ${sql.json(input.payload as never)})
+    on conflict (notification_id) do update set received_at = now(), payload = excluded.payload
+    where circle_webhook_events.applied_at is null and circle_webhook_events.received_at < now() - interval '2 minutes'
+    returning notification_id`;
+  if (claimed.length === 1) return "new";
+  const [row] = await sql<{ applied_at: Date | null }[]>`select applied_at from circle_webhook_events where notification_id = ${input.notificationId}`;
+  return row?.applied_at ? "duplicate" : "in-flight";
+}
+
+export async function markWebhookApplied(sql: Sql, notificationId: string): Promise<void> {
+  await sql`update circle_webhook_events set applied_at = now() where notification_id = ${notificationId}`;
+}
+
+/** A notification for a known session that cannot be applied: kept visible so a corrected parser can find it, and still settleable later. */
+export async function markSessionUnresolved(sql: Sql, id: string): Promise<void> {
+  await sql`update onramp_sessions set status = 'unresolved' where id = ${id} and status = 'minted'`;
 }
 
 /** Called when applying a verified event failed for a reason that may pass: the next delivery must be treated as new. */

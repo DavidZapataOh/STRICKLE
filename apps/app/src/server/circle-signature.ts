@@ -4,14 +4,25 @@ export type PublicKeyLookup = (keyId: string) => Promise<string>;
 
 const KEY_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
-export async function verifyCircleSignature(input: { body: string; signature: string; keyId: string; lookup: PublicKeyLookup }): Promise<boolean> {
-  if (!KEY_ID.test(input.keyId) || !/^[A-Za-z0-9+/]+={0,2}$/.test(input.signature)) return false;
+/** "unavailable" is not a forgery: Circle's key endpoint could not be reached, and the delivery must be retried rather than refused. */
+export async function checkCircleSignature(input: { body: string; signature: string; keyId: string; lookup: PublicKeyLookup }): Promise<"valid" | "invalid" | "unavailable"> {
+  if (!KEY_ID.test(input.keyId) || !/^[A-Za-z0-9+/]+={0,2}$/.test(input.signature)) return "invalid";
+  let der: string;
   try {
-    const key = createPublicKey({ key: Buffer.from(await input.lookup(input.keyId), "base64"), format: "der", type: "spki" });
-    return createVerify("SHA256").update(input.body).verify(key, Buffer.from(input.signature, "base64"));
+    der = await input.lookup(input.keyId);
   } catch {
-    return false;
+    return "unavailable";
   }
+  try {
+    const key = createPublicKey({ key: Buffer.from(der, "base64"), format: "der", type: "spki" });
+    return createVerify("SHA256").update(input.body).verify(key, Buffer.from(input.signature, "base64")) ? "valid" : "invalid";
+  } catch {
+    return "invalid";
+  }
+}
+
+export async function verifyCircleSignature(input: { body: string; signature: string; keyId: string; lookup: PublicKeyLookup }): Promise<boolean> {
+  return (await checkCircleSignature(input)) === "valid";
 }
 
 export function circlePublicKeyLookup(config: { apiBaseUrl: string; apiKey: string; fetcher?: typeof fetch; ttlMs?: number; failureMs?: number; now?: () => number }): PublicKeyLookup {
@@ -40,4 +51,17 @@ export function circlePublicKeyLookup(config: { apiBaseUrl: string; apiKey: stri
       throw error;
     }
   };
+}
+
+const shared = new Map<string, PublicKeyLookup>();
+
+/** One lookup, and so one key cache, per Circle account for the life of the server process: a lookup built per request would ask Circle on every request, forged ones included. */
+export function sharedPublicKeyLookup(config: Parameters<typeof circlePublicKeyLookup>[0]): PublicKeyLookup {
+  const id = `${config.apiBaseUrl}|${config.apiKey}`;
+  let lookup = shared.get(id);
+  if (!lookup) {
+    lookup = circlePublicKeyLookup(config);
+    shared.set(id, lookup);
+  }
+  return lookup;
 }

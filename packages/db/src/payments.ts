@@ -191,15 +191,19 @@ export async function suggestMatch(sql: Sql, input: { chainId: number; txHash: s
     const [existing] = await tx`select id from payments where chain_id = ${input.chainId} and tx_hash = ${key.hash} and log_index = ${input.logIndex}`;
     if (existing) return { suggested: false };
     const [candidate] = await tx<{ id: string }[]>`select id from invoices where vault = ${lower(input.vault)} and status in ('open', 'partial') and created_at <= ${input.at}::timestamptz + interval '5 seconds' and (amount = ${input.amount.toString()} or amount - paid between ${(input.amount - 9_999n).toString()} and ${input.amount.toString()}) order by created_at desc limit 1`;
+    const [card] = await CARD_WINDOW(tx, input.vault, input.at);
+    // one card payment per session: later transfers into the vault are not proposed as that card's, so nobody can fill the owner's list by sending dust
+    const [taken] = card ? await tx`select 1 from payments where card_session_id = ${card.id} and state in ('suggested', 'credited', 'extra') limit 1` : [];
+    const usable = card && !taken ? card : undefined;
     let target = candidate?.id;
-    if (!target) {
-      const [card] = await CARD_WINDOW(tx, input.vault, input.at);
-      const [open] = card ? await tx<{ id: string }[]>`select id from invoices where id = ${card.invoice_id} and status in ('open', 'partial')` : [];
+    if (!target && usable) {
+      const [open] = await tx<{ id: string }[]>`select id from invoices where id = ${usable.invoice_id} and status in ('open', 'partial')`;
       target = open?.id;
     }
     if (!target) return { suggested: false };
-    const inserted = await tx`insert into payments (chain_id, tx_hash, log_index, vault, invoice_id, payer, amount, rail, state, at)
-      values (${input.chainId}, ${key.hash}, ${input.logIndex}, ${lower(input.vault)}, ${target}, ${lower(input.payer)}, ${input.amount.toString()}, 'direct', 'suggested', ${input.at})
+    const cardSession = usable && usable.invoice_id === target ? usable.id : null;
+    const inserted = await tx`insert into payments (chain_id, tx_hash, log_index, vault, invoice_id, payer, amount, rail, state, at, card_session_id)
+      values (${input.chainId}, ${key.hash}, ${input.logIndex}, ${lower(input.vault)}, ${target}, ${lower(input.payer)}, ${input.amount.toString()}, 'direct', 'suggested', ${input.at}, ${cardSession})
       on conflict (chain_id, tx_hash, log_index) do nothing returning id`;
     return { suggested: inserted.length === 1 };
   });
@@ -207,12 +211,10 @@ export async function suggestMatch(sql: Sql, input: { chainId: number; txHash: s
 
 export async function confirmSuggestion(sql: Sql, vault: string, paymentId: string): Promise<SettleResult> {
   return sql.begin(async (tx) => {
-    const [row] = await tx<{ chain_id: number; tx_hash: string; log_index: number; payer: string; amount: string; at: Date; invoice_id: string }[]>`select chain_id, tx_hash, log_index, payer, amount, at, invoice_id from payments where id = ${paymentId} and vault = ${lower(vault)} and state = 'suggested'`;
+    const [row] = await tx<{ chain_id: number; tx_hash: string; log_index: number; payer: string; amount: string; at: Date; invoice_id: string; card_session_id: string | null }[]>`select chain_id, tx_hash, log_index, payer, amount, at, invoice_id, card_session_id from payments where id = ${paymentId} and vault = ${lower(vault)} and state = 'suggested'`;
     if (!row) return { outcome: "duplicate" } as const;
-    const [card] = await CARD_WINDOW(tx, vault, row.at);
-    const viaCard = card?.invoice_id === row.invoice_id ? card : undefined;
-    const settled = await credit(tx, row.invoice_id, { chainId: row.chain_id, txHash: row.tx_hash, logIndex: row.log_index, vault, payer: row.payer, amount: BigInt(row.amount), rail: viaCard ? "onramp" : "direct", at: row.at });
-    if (viaCard && (settled.outcome === "credited" || settled.outcome === "extra")) await settleOnrampSession(tx, viaCard.id, row.tx_hash);
+    const settled = await credit(tx, row.invoice_id, { chainId: row.chain_id, txHash: row.tx_hash, logIndex: row.log_index, vault, payer: row.payer, amount: BigInt(row.amount), rail: row.card_session_id ? "onramp" : "direct", at: row.at });
+    if (row.card_session_id && (settled.outcome === "credited" || settled.outcome === "extra")) await settleOnrampSession(tx, row.card_session_id, row.tx_hash);
     return settled;
   });
 }
@@ -244,12 +246,7 @@ export async function voidInvoice(sql: Sql, vault: string, invoiceId: string): P
 
 export async function listInvoices(sql: Sql, keys: InvoiceKeys, vault: string): Promise<InvoiceListItem[]> {
   const invoices = await sql<{ id: string; sealed: Buffer; amount: string; paid: string; status: string; expires_at: Date | null; created_at: Date; version: number }[]>`select i.id, i.sealed, i.amount, i.paid, i.status, i.expires_at, i.created_at, l.version from invoices i join payment_links l on l.invoice_id = i.id where i.vault = ${lower(vault)} order by i.created_at desc`;
-  const payments = await sql<{ invoice_id: string; id: string; amount: string; payer: string; state: string; rail: string; late: boolean; tx_hash: string; at: Date }[]>`select invoice_id, id, amount, payer, state, rail, late, tx_hash, at from payments where vault = ${lower(vault)} and invoice_id is not null and state <> 'dismissed' order by at desc`;
-  const cardInvoices = new Map<string, string>();
-  for (const payment of payments.filter((entry) => entry.state === "suggested")) {
-    const [card] = await CARD_WINDOW(sql, vault, payment.at);
-    if (card) cardInvoices.set(payment.id, card.invoice_id);
-  }
+  const payments = await sql<{ invoice_id: string; id: string; amount: string; payer: string; state: string; rail: string; late: boolean; tx_hash: string; at: Date; card_session_id: string | null }[]>`select invoice_id, id, amount, payer, state, rail, late, tx_hash, at, card_session_id from payments where vault = ${lower(vault)} and invoice_id is not null and state <> 'dismissed' order by at desc`;
   return invoices.map((row) => {
     const own = payments.filter((payment) => payment.invoice_id === row.id);
     return {
@@ -261,7 +258,7 @@ export async function listInvoices(sql: Sql, keys: InvoiceKeys, vault: string): 
       expiresAt: row.expires_at,
       createdAt: row.created_at,
       token: linkToken(keys, row.id, row.version),
-      suggestions: own.filter((payment) => payment.state === "suggested").map((payment) => ({ id: payment.id, amount: BigInt(payment.amount), payer: getAddress(payment.payer), txHash: payment.tx_hash, at: payment.at, viaCard: cardInvoices.get(payment.id) === row.id })),
+      suggestions: own.filter((payment) => payment.state === "suggested").map((payment) => ({ id: payment.id, amount: BigInt(payment.amount), payer: getAddress(payment.payer), txHash: payment.tx_hash, at: payment.at, viaCard: payment.card_session_id !== null })),
       payments: own.filter((payment) => payment.state !== "suggested").map((payment) => ({ amount: BigInt(payment.amount), state: payment.state as PaymentState, rail: payment.rail, late: payment.late, txHash: payment.tx_hash, at: payment.at })),
     };
   });

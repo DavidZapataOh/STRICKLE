@@ -44,6 +44,7 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
   const [state, dispatch] = useReducer(cardReducer, { step: "idle" } as CardState);
   const widget = useRef<{ close(): void } | null>(null);
   const alive = useRef(true);
+  const run = useRef(0);
 
   useEffect(() => {
     alive.current = true;
@@ -63,6 +64,7 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
   }, []);
 
   async function start() {
+    const ticket = ++run.current;
     dispatch({ type: "press" });
     widget.current?.close();
     widget.current = null;
@@ -76,14 +78,17 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
       // the container exists only after the render the dispatch above causes
       await new Promise((resolve) => requestAnimationFrame(resolve));
       const container = document.getElementById("onramp-root");
-      if (!container || !alive.current) return;
+      if (!alive.current || run.current !== ticket) return;
+      // a container that is not there is a card form that cannot be shown: say so instead of leaving an empty box
+      if (!container) return void dispatch({ type: "blocked" });
       const { createOnrampKit } = await import("@circle-fin/onramp-kit");
+      if (!alive.current || run.current !== ticket) return;
       widget.current = createOnrampKit({ widgetBaseUrl: session.widgetOrigin }).mountIframe({
         session,
         container,
         onDepositSubmitted: () => {
           dispatch({ type: "submitted" });
-          void follow(session.sessionId);
+          void follow(session.sessionId, ticket);
         },
         onDepositNotCompleted: () => dispatch({ type: "not-completed" }),
         onInitializationError: () => dispatch({ type: "blocked" }),
@@ -93,9 +98,9 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
     }
   }
 
-  async function follow(sessionId: string) {
+  async function follow(sessionId: string, ticket: number) {
     const deadline = Date.now() + GIVE_UP_MS;
-    while (alive.current && Date.now() < deadline) {
+    while (alive.current && run.current === ticket && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, POLL_MS));
       try {
         const response = await fetch(`/api/pay/${token}/card/${sessionId}`, { cache: "no-store" });
@@ -110,7 +115,7 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
         // a dropped request is retried on the next turn
       }
     }
-    if (alive.current) dispatch({ type: "expired" });
+    if (alive.current && run.current === ticket) dispatch({ type: "expired" });
   }
 
   return <CardView t={t} state={state} onStart={() => void start()} onRetry={() => void start()} />;

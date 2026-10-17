@@ -597,8 +597,8 @@
       "blocked": "O navegador interno do seu app bloqueia o formulário do cartão. Abra esta página no seu navegador comum ou pague de outra forma.",
       "closed": "Esta fatura não pode mais ser paga com cartão.",
       "unavailable": "Os pagamentos com cartão não estão disponíveis agora. Tente de novo ou pague de outra forma.",
-      "expired": "O pagamento ainda pode chegar e a fatura se atualiza sozinha. Você pode sair desta página.",
-      "notCompleted": "O pagamento com cartão não foi concluído. Nada foi cobrado.",
+      "expired": "O pagamento ainda pode chegar. A fatura se atualiza quando chegar e você pode sair desta página.",
+      "notCompleted": "O pagamento com cartão não foi concluído.",
       "retry": "Tentar de novo"
     }
   },
