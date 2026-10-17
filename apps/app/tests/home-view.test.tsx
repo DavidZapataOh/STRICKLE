@@ -26,6 +26,7 @@ describe("HomeView", () => {
   it("links to the deposit screen once the account is ready", () => {
     expect(view(ready())).toContain('href="/en/deposit"');
     expect(view(ready(), es as typeof en, "es")).toContain('href="/es/deposit"');
+    expect(view(ready())).toContain('href="/en/invoices"');
   });
 
   it("takes the percentage from the notice, never from a constant", () => {

@@ -47,6 +47,9 @@
     },
     "deposit": {
       "title": "Adicionar dinheiro"
+    },
+    "invoices": {
+      "title": "Faturas"
     }
   },
   "boxes": {
@@ -264,7 +267,8 @@
       "activityDown": "Sua atividade está indisponível agora. Os saldos estão em dia.",
       "paused": "Seu agente está em pausa."
     },
-    "addMoney": "Adicionar dinheiro"
+    "addMoney": "Adicionar dinheiro",
+    "invoices": "Faturas"
   },
   "boxesPage": {
     "total": "Nas suas caixas",
@@ -548,6 +552,96 @@
       "body": "A conversão foi feita, mas a transferência para a Arc não conseguiu manter o valor que você viu. Nada se perdeu: {amount} estão na sua carteira.",
       "send": "Enviar ao seu cofre",
       "tx": "Transação de conversão"
+    }
+  },
+  "pay": {
+    "title": "Pagar {payee}",
+    "due": "Valor a pagar",
+    "paidSoFar": "Pago até agora {paid} de {amount}; faltam {remaining}",
+    "remaining": "Falta",
+    "status": {
+      "open": "Aberta",
+      "partial": "Paga em parte",
+      "paid": "Paga",
+      "void": "Encerrada"
+    },
+    "expired": "Este link expirou. Peça um novo a {payee}.",
+    "closedBody": "Não resta nada a pagar nesta fatura.",
+    "loading": "Carregando a fatura",
+    "notFound": "Este link não existe ou não está mais ativo.",
+    "error": "Não foi possível carregar a fatura. Tente de novo.",
+    "options": {
+      "arc": "Pagar na Arc com sua carteira",
+      "other": "Pagar de outra cadeia",
+      "direct": "Pagar de outra forma"
+    },
+    "connect": "Conectar carteira",
+    "needEoa": "Esta carteira não consegue anexar a referência. Use o endereço abaixo ou outra carteira.",
+    "sending": "Aguardando sua carteira",
+    "confirming": "Confirmando seu pagamento",
+    "thanks": "Pagamento recebido.",
+    "retryClaim": "Verificar de novo",
+    "directBody": "Envie exatamente {amount} USDC na Arc para {address}. {payee} confirma manualmente.",
+    "addressWarning": "Somente USDC na Arc",
+    "copy": "Copiar endereço",
+    "copied": "Endereço copiado",
+    "copyFailed": "Seu navegador bloqueou a cópia. Selecione o endereço e copie manualmente.",
+    "noWallet": "Nenhuma carteira foi encontrada neste navegador. Use o endereço abaixo.",
+    "paymentFailed": "O pagamento não foi concluído. Nada foi cobrado. Tente de novo."
+  },
+  "invoices": {
+    "title": "Faturas",
+    "signedOut": {
+      "title": "Abra sua conta",
+      "body": "Crie sua conta ou entre para cobrar seus clientes.",
+      "create": "Criar conta",
+      "signIn": "Entrar"
+    },
+    "signature": {
+      "button": "Assinar para gerenciar faturas",
+      "explain": "Uma assinatura com sua passkey permite gerenciar faturas por 30 minutos."
+    },
+    "loading": "Carregando suas faturas",
+    "form": {
+      "title": "Nova fatura",
+      "label": "Para quê?",
+      "payee": "Nome que seu cliente verá",
+      "note": "Nota para seu cliente (opcional)",
+      "amount": "Valor em USDC",
+      "expires": "Dias até o link expirar",
+      "create": "Criar fatura"
+    },
+    "empty": "Ainda não há faturas",
+    "status": {
+      "open": "Aberta",
+      "partial": "Paga em parte",
+      "paid": "Paga",
+      "void": "Anulada"
+    },
+    "paidOf": "Pago {paid} de {amount}",
+    "expiry": "Expira {date}",
+    "noExpiry": "Sem expiração",
+    "copyLink": "Copiar link",
+    "copied": "Link copiado",
+    "copyFailed": "Seu navegador bloqueou a cópia. Selecione o link e copie manualmente.",
+    "newLink": "Novo link",
+    "newLinkConfirm": "Um novo link substitui este e o anterior deixa de funcionar. Continuar?",
+    "void": "Anular",
+    "voidConfirm": "Anular encerra o link. Um pagamento que já está a caminho ainda conta, como extra. Continuar?",
+    "confirmYes": "Sim, continuar",
+    "cancel": "Cancelar",
+    "check": "Buscar pagamentos",
+    "checking": "Verificando a cadeia",
+    "suggestion": {
+      "title": "Chegou um pagamento de {amount} de {payer}. É desta fatura?",
+      "confirm": "Sim, é",
+      "dismiss": "Não é esta"
+    },
+    "errors": {
+      "rate-limited": "Tentativas demais. Aguarde um momento e tente de novo.",
+      "unavailable": "Algo deu errado ao acessar o servidor. Tente de novo.",
+      "unauthorized": "Sua sessão terminou. Assine de novo para continuar.",
+      "rejected": "Confira os campos e tente de novo."
     }
   },
   "rules": {

@@ -461,3 +461,9 @@ body {
 .wallet-list { display: grid; gap: var(--space-2); }
 .wallet-list .btn { justify-content: flex-start; }
 .wallet-list img { flex: none; border-radius: var(--radius-sm); }
+.deposit h2, .deposit p, .deposit dd, .deposit dt { overflow-wrap: anywhere; min-width: 0; }
+.deposit .amount { white-space: normal; }
+.quote-row dt { flex: 0 1 auto; }
+.quote-row dd { flex: 1 1 auto; min-width: 0; }
+.deposit, .deposit .card { grid-template-columns: minmax(0, 1fr); }
+.deposit .btn { white-space: normal; text-align: center; height: auto; padding-block: var(--space-3); }

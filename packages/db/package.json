@@ -10,7 +10,9 @@
     "./testing": "./src/testing.ts",
     "./connect": "./src/connect.ts",
     "./snapshots": "./src/snapshots.ts",
-    "./deposits": "./src/deposits.ts"
+    "./deposits": "./src/deposits.ts",
+    "./invoice-keys": "./src/invoice-keys.ts",
+    "./payments": "./src/payments.ts"
   },
   "scripts": {
     "lint": "eslint .",

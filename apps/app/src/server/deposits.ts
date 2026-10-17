@@ -66,11 +66,12 @@ const sameOrigin = (request: Request) => {
   return origin !== null && origin === new URL(request.url).origin;
 };
 
-export async function handleCreateDeposit(request: Request, deps: DepositDeps): Promise<{ status: number; body: DepositApiResult }> {
+/** `bind` ties a deposit to a payment link: the vault comes from the link, never from the body, and the money is income by construction. */
+export async function handleCreateDeposit(request: Request, deps: DepositDeps, bind?: { vault: Address; linkId: string }): Promise<{ status: number; body: DepositApiResult }> {
   if (!sameOrigin(request)) return done({ status: "rejected" });
   const parsed = createBody.safeParse(await readJson(request));
   if (!parsed.success) return done({ status: "rejected" });
-  const input = parsed.data;
+  const input = bind ? { ...parsed.data, vault: bind.vault, intent: "income" as const, inputToken: "USDC" as const } : parsed.data;
   const amount = BigInt(input.amount);
   if (amount < MIN_AMOUNT || amount > MAX_AMOUNT) return done({ status: "rejected" });
   let source: SourceChain;
@@ -92,9 +93,10 @@ export async function handleCreateDeposit(request: Request, deps: DepositDeps): 
     const ip = await deps.limiter.count(ipKey("deposit-ip", pepper, request), 60, 30);
     if (!ip.allowed) return done({ status: "rate-limited", retryAfterSeconds: ip.retryAfterSeconds });
     if (!(await deps.guard.vault(input.vault as Address)).registered) return done({ status: "unknown-vault" });
-    const vault = await deps.limiter.count(`deposit-vault:${input.vault.toLowerCase()}`, 3_600, 10);
+    // a link's payers share their own budget, so a stranger paying a link cannot spend the freelancer's own
+    const vault = await deps.limiter.count(bind ? `deposit-link:${bind.linkId}` : `deposit-vault:${input.vault.toLowerCase()}`, 3_600, 10);
     if (!vault.allowed) return done({ status: "rate-limited", retryAfterSeconds: vault.retryAfterSeconds });
-    const id = await createDeposit(deps.sql, { ...input, sourceChain: source.id, amount, feeMode: input.inputToken === "USDT" ? "destination" : input.feeMode });
+    const id = await createDeposit(deps.sql, { ...input, sourceChain: source.id, amount, feeMode: input.inputToken === "USDT" ? "destination" : input.feeMode, ...(bind ? { linkId: bind.linkId } : {}) });
     return done({ status: "created", id });
   } catch {
     return done({ status: "unavailable" });

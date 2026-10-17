@@ -11,7 +11,7 @@ const ITEMS = [
   { key: "settings", path: "/settings" },
 ] as const;
 
-export type ShellPage = (typeof ITEMS)[number]["key"] | "verify" | "docs" | "deposit";
+export type ShellPage = (typeof ITEMS)[number]["key"] | "verify" | "docs" | "deposit" | "invoices";
 
 export function AppShell({ lang, current, t, actions, children }: { lang: Locale; current: ShellPage; t: Dictionary; actions?: ReactNode; children: ReactNode }) {
   return (

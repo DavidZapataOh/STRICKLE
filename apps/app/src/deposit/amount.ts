@@ -22,3 +22,10 @@ export function formatTokenAmount(units: bigint, symbol: "USDC" | "USDT", lang: 
   const decimal = new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")?.value ?? ".";
   return `${whole}${decimal}${(cents % 100n).toString().padStart(2, "0")} ${symbol}`;
 }
+
+/** Base units as a plain decimal string with up to six decimals and no trailing zeros ("99.4", "25"): what the server's amount field parses. */
+export function formatUnits6(units: bigint): string {
+  const whole = units / 1_000_000n;
+  const fraction = (units % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : `${whole}`;
+}
