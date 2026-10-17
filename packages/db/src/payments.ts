@@ -39,7 +39,7 @@ export interface SettleInput {
   vault: string;
   payer: string;
   amount: bigint;
-  rail: "direct" | "cctp";
+  rail: "direct" | "cctp" | "onramp";
   memoId?: string | null;
   linkId?: string | null;
   at: Date;
@@ -133,7 +133,7 @@ interface Credit {
   vault: string;
   payer: string;
   amount: bigint;
-  rail: "direct" | "cctp";
+  rail: "direct" | "cctp" | "onramp";
   at: Date;
 }
 
