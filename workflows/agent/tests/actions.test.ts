@@ -190,6 +190,14 @@ describe("reclassify", () => {
     if (!result.ok) throw new Error(result.reason);
     expect(result.next.taxCatchUp).toBe("105000000"); // 500 x 20% x 1.05
   });
+  it("corrects a euro part against the history row that holds its dollar value", () => {
+    const rate = { usdcUsd: "100000000", eurcUsd: "112000000", at: 1_792_000_000 };
+    const euro = { ...taxed, rate, history: [["2026-11-03", "1120000000", "transfer"] as [string, string, string]], arrivals: [["a1b2c3d4e5-0", "2026-11-03", "1000000000", "o", "E"] as [string, string, string, string, string]] };
+    const result = applyAction(euro, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "income" }, ctx);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.history[0]?.[2]).toBe("deposit");
+    expect(result.next.taxCatchUp).toBe("235200000"); // 1,120 dollars x 20% x 1.05
+  });
   it("ignores an arrival it does not know and a class it is already in", () => {
     expect(applyAction(withIncome, { kind: "reclassify", arrivalId: "ffffffffff-0", to: "refund" }, ctx).ok).toBe(false);
     const same = applyAction(withIncome, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "income" }, ctx);

@@ -1,5 +1,5 @@
 import { type Arrival, type Expectation, type Part, type Sent, classifyArrival } from "@strickle/brain";
-import { type PlainDate, daysBetween, formatPlainDate, parsePlainDate } from "@strickle/core";
+import { type PlainDate, type Rate, daysBetween, formatPlainDate, fromUsdc, parsePlainDate, toUsdc } from "@strickle/core";
 import { keccak256, toBytes } from "viem";
 import { BOX_KINDS } from "@strickle/core";
 import { BOX_ID, type VaultBooks, allocateAmount } from "./cascade.ts";
@@ -29,8 +29,11 @@ const ceilMul = (amount: bigint, rate: number, buffer: number): bigint => (amoun
 /**
  * The deposit handler's heart: each arrival is classified, each part goes through the cascade on the running books (taxes only for income, plus any catch-up owed), and one merged split comes out with the books written back. What no log explains is income with a notice.
  */
-export function planArrivals(input: { profile: Profile; books: VaultBooks; arrivals: Arrival[]; unexplained: bigint; checkpoint: bigint; today: PlainDate; now: number }): ArrivalPlan {
-  const { profile, books, today, now } = input;
+export function planArrivals(input: { profile: Profile; books: VaultBooks; arrivals: Arrival[]; unexplained: bigint; checkpoint: bigint; today: PlainDate; now: number; rate?: Rate }): ArrivalPlan {
+  const { profile, books, today, now, rate } = input;
+  // the profile, the history and the tax catch-up are kept in dollars; a euro part is converted at the feed rate on the way in and out
+  const toDollars = (asset: Arrival["asset"], units: bigint) => (rate !== undefined && asset === "EURC" ? toUsdc("EURC", units, rate) : units);
+  const fromDollars = (asset: Arrival["asset"], units: bigint) => (rate !== undefined && asset === "EURC" ? fromUsdc("EURC", units, rate) : units);
   const recent = profile.history.filter(([date]) => daysBetween(parsePlainDate(date), today) < WINDOW_DAYS);
   const recentMax = recent.filter(([, , source]) => source === "deposit").reduce((max, [, amount]) => (BigInt(amount) > max ? BigInt(amount) : max), 0n);
 
@@ -47,8 +50,9 @@ export function planArrivals(input: { profile: Profile; books: VaultBooks; arriv
 
   const apply = (id: string, asset: Arrival["asset"], part: Part, index: number) => {
     const income = part.class === "income";
-    const extra = income ? (catchUp < part.amount ? catchUp : part.amount) : 0n;
-    const result = allocateAmount({ ...profile, salaryOwed }, { ...books, ...running, unallocated: part.amount }, part.amount, { income, taxExtra: extra });
+    const owed = fromDollars(asset, catchUp);
+    const extra = income ? (owed < part.amount ? owed : part.amount) : 0n;
+    const result = allocateAmount({ ...profile, salaryOwed }, { ...books, ...running, unallocated: part.amount }, part.amount, { income, taxExtra: extra, ...(rate ? { rate } : {}) });
     for (const kind of BOX_KINDS) {
       const units = result.byBox[kind].units;
       if (units > 0n) perBox.set(BOX_ID[kind], (perBox.get(BOX_ID[kind]) ?? 0n) + units);
@@ -56,13 +60,13 @@ export function planArrivals(input: { profile: Profile; books: VaultBooks; arriv
     running.operating += result.byBox.operating.units;
     running.payrollFunded += result.byBox.payroll.units;
     running.emergency += result.byBox.emergency.units;
-    salaryOwed = result.salaryPending.units.toString();
+    salaryOwed = toDollars(asset, result.salaryPending.units).toString();
     if (income && extra > 0n) {
       const beyondOwn = result.byBox.taxes.units - ceilMul(part.amount, profile.taxRateBps, profile.taxBufferBps);
       const taken = beyondOwn > 0n ? (beyondOwn < extra ? beyondOwn : extra) : 0n;
-      catchUp -= taken;
+      catchUp -= toDollars(asset, taken);
     }
-    history.push([formatPlainDate(today), part.amount.toString(), HISTORY_SOURCE[part.class]]);
+    history.push([formatPlainDate(today), toDollars(asset, part.amount).toString(), HISTORY_SOURCE[part.class]]);
     ledger.push([`${id}-${index}`, formatPlainDate(today), part.amount.toString(), CLASS_CODE[part.class], ASSET_CODE[asset]]);
   };
 

@@ -1,5 +1,5 @@
 // workflows/agent/enclave/cascade.ts
-import { type Asset, type BoxKind, BOX_KINDS, type PlainDate, allocatePayment, daysBetween, formatPlainDate, money, parsePlainDate } from "@strickle/core";
+import { type Asset, type BoxKind, BOX_KINDS, type PlainDate, type Rate, allocatePayment, daysBetween, formatPlainDate, fromUsdc, money, parsePlainDate } from "@strickle/core";
 import type { Profile } from "./profile.ts";
 
 export const BOX_ID = Object.fromEntries(BOX_KINDS.map((box, index) => [box, index + 1])) as Record<BoxKind, number>;
@@ -17,21 +17,24 @@ export interface VaultBooks {
 }
 
 /** The cascade for one amount. Income reserves taxes (plus a catch-up if one is owed); money that is not income reserves none and is allocated the same way otherwise. */
-export function allocateAmount(profile: Profile, books: VaultBooks, amount: bigint, options: { income: boolean; taxExtra?: bigint }) {
+export function allocateAmount(profile: Profile, books: VaultBooks, amount: bigint, options: { income: boolean; taxExtra?: bigint; rate?: Rate }) {
+  // the profile states its obligations in dollars; a euro arrival is sized against them at the feed rate, a dollar arrival never needs one
+  const euros = options.rate !== undefined && books.asset === "EURC";
+  const asset = (dollars: bigint) => (euros && options.rate ? fromUsdc("EURC", dollars, options.rate) : dollars);
   return allocatePayment(money(books.asset, amount), {
     asset: books.asset,
     taxRateBps: options.income ? profile.taxRateBps : 0,
     taxBufferBps: profile.taxBufferBps,
     ...(options.income && options.taxExtra !== undefined && options.taxExtra > 0n ? { taxExtra: options.taxExtra } : {}),
-    payrollDue: BigInt(profile.payrollDue),
+    payrollDue: asset(BigInt(profile.payrollDue)),
     payrollFunded: books.payrollFunded,
     payrollShareBps: profile.payrollShareBps,
-    dailySpend: BigInt(profile.dailySpend),
+    dailySpend: asset(BigInt(profile.dailySpend)),
     operatingBalance: books.operating,
     floorDays: profile.floorDays,
     targetDays: profile.targetDays,
-    salaryOwed: BigInt(profile.salaryOwed),
-    emergencyTarget: BigInt(profile.emergencyTarget),
+    salaryOwed: asset(BigInt(profile.salaryOwed)),
+    emergencyTarget: asset(BigInt(profile.emergencyTarget)),
     emergencyBalance: books.emergency,
   });
 }

@@ -117,3 +117,30 @@ describe("allocateAmount", () => {
     expect(plan.boxes.map((box, index) => [box, plan.amounts[index]])).toEqual(fromDirect);
   });
 });
+
+describe("allocateAmount across two assets", () => {
+  const rate = { usdcUsd: 100_000_000n, eurcUsd: 112_000_000n };
+  const euro = { ...live, taxRateBps: 2_000, dailySpend: "20000000", payrollDue: "100000000", emergencyTarget: "300000000" };
+  const books = { asset: "USDC" as const, unallocated: 0n, operating: 0n, payrollFunded: 0n, emergency: 0n };
+
+  it("is byte for byte what it was for a dollar arrival, with or without a rate", () => {
+    const without = allocateAmount(euro, books, 1_000_000_000n, { income: true });
+    const withRate = allocateAmount(euro, books, 1_000_000_000n, { income: true, rate });
+    expect(JSON.stringify(withRate, (_k, v) => (typeof v === "bigint" ? v.toString() : v))).toBe(JSON.stringify(without, (_k, v) => (typeof v === "bigint" ? v.toString() : v)));
+  });
+
+  it("sizes a euro arrival with obligations converted to euros, not one to one", () => {
+    const dollars = allocateAmount(euro, books, 1_120_000_000n, { income: true });
+    const euros = allocateAmount(euro, { ...books, asset: "EURC" }, 1_000_000_000n, { income: true, rate });
+    for (const kind of ["taxes", "payroll", "operating", "emergency", "profit"] as const) {
+      const expected = (dollars.byBox[kind].units * 1_000_000_000n) / 1_120_000_000n;
+      const diff = euros.byBox[kind].units > expected ? euros.byBox[kind].units - expected : expected - euros.byBox[kind].units;
+      expect(diff, kind).toBeLessThanOrEqual(2n);
+    }
+  });
+
+  it("without a rate a euro arrival keeps the old one to one reading", () => {
+    const old = allocateAmount(euro, { ...books, asset: "EURC" }, 1_000_000_000n, { income: true });
+    expect(old.byBox.payroll.units).toBe(100_000_000n);
+  });
+});
