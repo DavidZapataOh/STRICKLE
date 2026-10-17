@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { onrampKey } from "./support/onramp-keys.ts";
 import { onrampConfig } from "../src/onramp/environment.ts";
 import { cardHeaderExtra } from "../src/payments/card-headers.ts";
 import { payHeaders } from "../src/payments/headers.ts";
 import { contentSecurityPolicy, permissionsPolicy, securityHeaders } from "../src/security-headers.ts";
 
-const card = onrampConfig({ ONRAMP_API_KEY: "TEST_API_KEY:a:b", ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet");
+const card = onrampConfig({ ONRAMP_API_KEY: onrampKey("TEST", "a:b"), ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet");
 const value = (headers: { key: string; value: string }[], key: string) => headers.find((header) => header.key === key)?.value ?? "";
 
 describe("the default policy", () => {
@@ -54,7 +55,7 @@ describe("the pay route without card payments", () => {
 
 describe("production", () => {
   it("uses the production origins and never the sandbox ones", () => {
-    const live = onrampConfig({ ONRAMP_API_KEY: "LIVE_API_KEY:a:b", ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "mainnet");
+    const live = onrampConfig({ ONRAMP_API_KEY: onrampKey("LIVE", "a:b"), ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "mainnet");
     const headers = payHeaders("mainnet", cardHeaderExtra(live));
     expect(value(headers, "Content-Security-Policy")).toContain("frame-src https://onramp.arc.io");
     expect(value(headers, "Content-Security-Policy")).not.toContain("sandbox");
