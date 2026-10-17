@@ -319,3 +319,17 @@ describe("the yield watch in the profile", () => {
   });
 });
 
+describe("the yield state in the profile", () => {
+  it("starts off, empty and not invited, round-trips and keeps the owner's choice and the agent's totals", () => {
+    expect(profileOf().yield).toEqual({ enabled: false, day: "", realized: "0", fee: "0", invitedOn: "" });
+    const stored = profileOf({ yield: { enabled: true, day: "2026-11-02", realized: "2114", fee: "211", invitedOn: "" } });
+    expect(decodeProfile(encodeProfile(stored)).yield).toEqual(stored.yield);
+    expect(mergeProfile(stored, profileOf()).yield).toEqual(stored.yield);
+  });
+
+  it("takes the owner's first choice from the submission and nothing else", () => {
+    const submitted = profileOf({ yield: { enabled: true, day: "2026-11-02", realized: "999", fee: "99", invitedOn: "2026-11-01" } });
+    expect(mergeProfile(undefined, submitted).yield).toEqual({ enabled: true, day: "", realized: "0", fee: "0", invitedOn: "" });
+  });
+});
+

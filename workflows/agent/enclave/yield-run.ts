@@ -9,6 +9,7 @@ import type { Notice } from "./notice-schema.ts";
 import type { Profile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
 import { exitIntents } from "./yield-plan.ts";
+import { inviteDue, inviteStep } from "./yield-invite.ts";
 import { yieldIntents } from "./yield-policy.ts";
 import { observe, watchStep } from "./yield-watch.ts";
 
@@ -26,7 +27,7 @@ export function yieldRun(runtime: TeeRuntime<Config>, input: { profile: Profile;
     const answers = ethBatch(runtime, vaults.flatMap((entry) => holdingsReads(input.vault, entry.address as Address)));
     const held = vaults.map((entry, index) => ({ entry, ...decodeHoldings(answers.slice(index * 6, index * 6 + 6)) }));
     const holds = held.some((row) => Object.keys(row.shares).length > 0);
-    if (!holds && !input.profile.yield.enabled) return unchanged;
+    if (!holds && !input.profile.yield.enabled && !inviteDue(input.profile, input.today)) return unchanged;
 
     const sharePrices = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), row.price]));
     const positions = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), (Object.values(row.shares).reduce((sum, shares) => sum + shares, 0n) * row.price) / ONE_SHARE]));
@@ -46,13 +47,17 @@ export function yieldRun(runtime: TeeRuntime<Config>, input: { profile: Profile;
       now: input.nowSeconds,
     });
 
+    // the one invitation for an account that has yield off, quoting the best rate among the vaults that are open and were not flagged
+    const open = seen.filter((entry) => entry.active && !watched.anomalies.some((flagged) => flagged.id === entry.id));
+    const invited = inviteStep({ profile: exits.next, today: input.today, apyBps: open.length > 0 ? Math.max(...open.map((entry) => entry.apyBps)) : null });
+
     // a vault that was just flagged gets no new money, and a vault the list did not carry cannot be judged
     const flagged = new Set(watched.anomalies.map((entry) => entry.id));
     const views: VaultView[] = seen.filter((entry) => !flagged.has(entry.id)).map((entry) => ({ id: entry.id, protocol: vaults.find((candidate) => candidate.address.toLowerCase() === entry.id)?.protocol ?? "", apyBps: entry.apyBps, active: entry.active, liquidity: entry.liquidity }));
     const rules = decodeRules(ethBatch(runtime, rulesReads(input.vault)));
     const holdings = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), Object.fromEntries(Object.entries(row.shares).map(([box, shares]) => [box, (shares * row.price) / ONE_SHARE]))]));
-    const decided = yieldIntents({ profile: exits.next, usdc: input.usdc, invested: input.invested, rules, holdings, views, vaults, today: input.today, now: input.nowSeconds, limits: runtime.config.earn.limits });
-    return { next: decided.next, notices: [...exits.notices, ...decided.notices] };
+    const decided = yieldIntents({ profile: invited.next, usdc: input.usdc, invested: input.invested, rules, holdings, views, vaults, today: input.today, now: input.nowSeconds, limits: runtime.config.earn.limits });
+    return { next: decided.next, notices: [...exits.notices, ...invited.notices, ...decided.notices] };
   } catch {
     return unchanged;
   }

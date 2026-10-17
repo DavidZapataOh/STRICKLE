@@ -63,13 +63,15 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("swap"), box: swapBox, from: z.enum(["USDC", "EURC"]), amountIn: units, estimatedOut: units, minOut: units, referenceOut: units, deviationBps: z.number().int(), feeBps: z.number().int().min(0).max(10_000) }).strict(),
   z.object({ kind: z.literal("swap-held"), box: swapBox, reason: z.enum(["worse-than-reference", "better-than-reference", "stale-feed", "adapter-not-approved", "failures", "daily-cap", "invalid-quote", "quote-unavailable", "vault-refused"]) }).strict(),
   // for a deposit `amount` is the dollars put to work and `counter` the shares received; for a withdrawal `amount` is the dollars taken back and `counter` the shares redeemed
-  z.object({ kind: z.literal("earn"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), protocol: z.string().max(24), vault: address, amount: units, counter: units, apyBps: z.number().int().min(0).max(100_000) }).strict(),
+  z.object({ kind: z.literal("earn"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), protocol: z.string().max(24), vault: address, amount: units, counter: units, apyBps: z.number().int().min(0).max(100_000), gain: units.optional(), fee: units.optional() }).strict(),
   z.object({ kind: z.literal("earn-held"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), reason: z.enum(["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"]) }).strict(),
   // the agent took everything out of a vault that misbehaved, one notice per box
   z.object({ kind: z.literal("yield-exit"), box: earnBox, name: z.string().max(40), reason: z.enum(["price-drop", "rate-spike", "inactive", "illiquid"]) }).strict(),
   // why the agent put money to work (what it kept and the part of that needed within 60 days), and why it brought some back (the payment and its date)
   z.object({ kind: z.literal("yield-plan"), box: earnBox, amount: units, kept: units, needed: units }).strict(),
   z.object({ kind: z.literal("yield-back"), box: earnBox, amount: units, payment: units, due: date }).strict(),
+  // the one invitation to an account that has yield off, with the rate the agent saw
+  z.object({ kind: z.literal("yield-invite"), apyBps: z.number().int().min(1).max(100_000) }).strict(),
   planNoticeSchema,
 ]);
 

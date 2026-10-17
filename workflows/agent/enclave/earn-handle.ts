@@ -3,6 +3,7 @@ import type { Address, Hex } from "viem";
 import type { Config } from "../config.ts";
 import { BOX_ID } from "./cascade.ts";
 import { checkEarnBundle, earnBody, parseEarnQuote } from "./earn-quote.ts";
+import { gainOf, yieldFee } from "@strickle/brain";
 import type { Notice } from "./notice-schema.ts";
 import type { Profile } from "./profile.ts";
 import { MAX_FAILURES } from "./swap-plan.ts";
@@ -12,6 +13,8 @@ export const EARN_REQUEST_SECONDS = 86_400;
 
 /** What one move needs from one vault, read in a batch of its own: the approvals, the box's money and shares, the vault's slippage setting and its own two previews. */
 export interface EarnReads {
+  /** What the box put into yield vaults, in assets: the principal a withdrawal's gain is measured against. */
+  invested: bigint;
   approvedFrom: bigint;
   owned: bigint;
   box: bigint;
@@ -112,8 +115,13 @@ export function earnMove(input: { profile: Profile; vault: Address; reads: EarnR
 
   const slippage = Math.min(config.swap.maxSlipBps, reads.slippageBps);
   const worth = intent.deposit ? reads.previewShares : (reads.position * checked.amount + reads.owned - 1n) / reads.owned + 1n;
-  const next: Profile = { ...without(rest), earn: { ...profile.earn, pending: rest, failures: 0 } };
-  const notice: Notice = { kind: "earn", box: intent.box, deposit: intent.deposit, name, protocol: known.protocol, vault: earnVault, amount: (intent.deposit ? assets : (reads.position * checked.amount) / reads.owned).toString(), counter: (intent.deposit ? reads.previewShares : checked.amount).toString(), apyBps };
+  const valueOut = intent.deposit ? 0n : (reads.position * checked.amount) / reads.owned;
+  // the vault settles a partial withdrawal against the same share of the principal, so the gain is what the shares are worth above that share
+  const gain = intent.deposit ? 0n : gainOf(valueOut, (reads.invested * checked.amount) / reads.owned);
+  const fee = yieldFee(gain).fee;
+  const totals = intent.deposit ? profile.yield : { ...profile.yield, realized: (BigInt(profile.yield.realized) + gain).toString(), fee: (BigInt(profile.yield.fee) + fee).toString() };
+  const next: Profile = { ...without(rest), earn: { ...profile.earn, pending: rest, failures: 0 }, yield: totals };
+  const notice: Notice = { kind: "earn", box: intent.box, deposit: intent.deposit, name, protocol: known.protocol, vault: earnVault, amount: (intent.deposit ? assets : valueOut).toString(), counter: (intent.deposit ? reads.previewShares : checked.amount).toString(), apyBps, ...(intent.deposit ? {} : { gain: gain.toString(), fee: fee.toString() }) };
   // if the delivered report reverts on chain, the vault refused it under a limit the enclave cannot see (the box's floor, its invest share)
   const reverted = failure("vault-refused");
   return {

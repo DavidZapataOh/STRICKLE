@@ -12,12 +12,13 @@ const abi = parseAbi([
   "function swapAdapter() view returns (address)",
   "function swapAdapterFrom() view returns (uint64)",
   "function swapSlippageBps() view returns (uint16)",
+  "function invested(uint8 asset, uint8 box) view returns (uint256)",
   "function previewDeposit(uint256 assets) view returns (uint256)",
   "function previewRedeem(uint256 shares) view returns (uint256)",
 ]);
 
 describe("the reads for an Earn move", () => {
-  it("are six eth_calls to the box vault, the first naming the yield vault and the box", () => {
+  it("are seven eth_calls to the box vault, the first naming the yield vault and the box", () => {
     const reads = earnFirstReads(VAULT, EARN, 6);
     expect(reads).toHaveLength(EARN_FIRST_READS);
     expect(reads.every((read) => read.method === "eth_call")).toBe(true);
@@ -33,8 +34,9 @@ describe("the reads for an Earn move", () => {
       encodeFunctionResult({ abi, functionName: "swapAdapter", result: ADAPTER }),
       encodeFunctionResult({ abi, functionName: "swapAdapterFrom", result: 1_900_001_000n }),
       encodeFunctionResult({ abi, functionName: "swapSlippageBps", result: 100 }),
+      encodeFunctionResult({ abi, functionName: "invested", result: 3_000_000n }),
     ];
-    expect(decodeEarnFirst(answers)).toEqual({ approvedFrom: 1_900_000_000n, owned: 3n * 10n ** 18n, box: 4_000_000_000n, adapter: { address: ADAPTER, from: 1_900_001_000n }, slippageBps: 100 });
+    expect(decodeEarnFirst(answers)).toEqual({ approvedFrom: 1_900_000_000n, owned: 3n * 10n ** 18n, box: 4_000_000_000n, adapter: { address: ADAPTER, from: 1_900_001_000n }, slippageBps: 100, invested: 3_000_000n });
   });
 
   it("ask the yield vault for the preview that fits the direction", () => {

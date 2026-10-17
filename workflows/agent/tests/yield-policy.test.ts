@@ -11,7 +11,7 @@ const today = plainDate(2026, 11, 2); // a Monday
 const NOW = 1_794_000_000;
 const zero = { taxes: 0n, payroll: 0n, salary: 0n, operating: 0n, emergency: 0n, profit: 0n };
 const allowing = (over: Record<string, { maxInvestBps: number; floor: bigint }> = {}) => ({ taxes: { maxInvestBps: 5_000, floor: 0n }, payroll: { maxInvestBps: 0, floor: 0n }, operating: { maxInvestBps: 0, floor: 0n }, emergency: { maxInvestBps: 10_000, floor: 0n }, profit: { maxInvestBps: 10_000, floor: 0n }, ...over });
-const enabled = (over: Record<string, unknown> = {}) => profileOf({ yield: { enabled: true, day: "" }, ...over });
+const enabled = (over: Record<string, unknown> = {}) => profileOf({ yield: { enabled: true, day: "", realized: "0", fee: "0", invitedOn: "" }, ...over });
 const input = (over: Partial<PolicyInput> = {}): PolicyInput => ({
   profile: enabled(),
   usdc: { ...zero, profit: 10_000n * M, taxes: 2_000n * M },
@@ -67,7 +67,7 @@ describe("yieldIntents", () => {
 
   it("invests nothing when yield is off, and only once a day when it is on", () => {
     expect(y(input({ profile: profileOf() })).earn.pending).toEqual([]);
-    expect(y(input({ profile: enabled({ yield: { enabled: true, day: "2026-11-02" } }) })).earn.pending).toEqual([]);
+    expect(y(input({ profile: enabled({ yield: { enabled: true, day: "2026-11-02", realized: "0", fee: "0", invitedOn: "" } }) })).earn.pending).toEqual([]);
   });
 
   it("never invests the salary box, and never invests while halted or when a request waits for that box", () => {
@@ -136,9 +136,9 @@ describe("the signed switch", () => {
 
   it("leaves the yield state alone for a setting that changes nothing", () => {
     const books = { boxes: zero, invested: zero, unallocated: 0n };
-    const profile = profileOf({ yield: { enabled: true, day: "2026-11-01" } });
+    const profile = profileOf({ yield: { enabled: true, day: "2026-11-01", realized: "0", fee: "0", invitedOn: "" } });
     const result = applyAction(profile, { kind: "adjust", changes: { yieldEnabled: true } }, { now: NOW, today, books });
     if (!result.ok) throw new Error(result.reason);
-    expect(result.next.yield).toEqual({ enabled: true, day: "2026-11-01" });
+    expect(result.next.yield).toMatchObject({ enabled: true, day: "2026-11-01" });
   });
 });

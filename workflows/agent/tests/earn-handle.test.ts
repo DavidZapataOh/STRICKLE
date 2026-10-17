@@ -27,7 +27,7 @@ const bundle = (name: string) => {
   for (const entry of response.data.executionParams.tokens) entry.beneficiary = VAULT;
   return response;
 };
-const reads = (over: Partial<EarnReads> = {}): EarnReads => ({ approvedFrom: BigInt(NOW - 86_400), owned: 3_000_000_000_000_000_000n, box: 4_000_000_000n, adapter: { address: ADAPTER, from: BigInt(NOW - 86_400) }, slippageBps: 100, previewShares: 998_942_755_721_263_755n, position: 3_003_174n, ...over });
+const reads = (over: Partial<EarnReads> = {}): EarnReads => ({ invested: 3_000_000n, approvedFrom: BigInt(NOW - 86_400), owned: 3_000_000_000_000_000_000n, box: 4_000_000_000n, adapter: { address: ADAPTER, from: BigInt(NOW - 86_400) }, slippageBps: 100, previewShares: 998_942_755_721_263_755n, position: 3_003_174n, ...over });
 const pending = (over: Record<string, unknown> = {}) => ({ id: "i1", box: "profit" as const, vault: EARN, amount: "1000000", deposit: true, at: NOW - 60, ...over });
 const withPending = (entries: ReturnType<typeof pending>[], over: Partial<Profile["earn"]> = {}): Profile => profileOf({ earn: { pending: entries, failures: 0, heldOn: "", ...over } });
 const quoteOf = (calls: string[] = []) => (path: string): unknown => {
@@ -86,7 +86,30 @@ describe("a withdrawal", () => {
     expect(result.amount).toBe(1_997_885_511_423_141_916n);
     expect(result.seen).toBe(3_000_000_000_000_000_000n);
     expect(result.minOut).toBeGreaterThan(1_900_000n);
-    expect(result.notices).toEqual([{ kind: "earn", box: "profit", deposit: false, name: "EarnKit USDC Vault", protocol: "Morpho", vault: EARN, amount: "1999999", counter: "1997885511423141916", apyBps: 0 }]);
+    expect(result.notices).toEqual([{ kind: "earn", box: "profit", deposit: false, name: "EarnKit USDC Vault", protocol: "Morpho", vault: EARN, amount: "1999999", counter: "1997885511423141916", apyBps: 0, gain: "2114", fee: "211" }]);
+  });
+
+  it("books the gain over the principal it took out and the ten percent fee on it, in the notice and in the running totals", () => {
+    const result = outMove(withPending([out]));
+    if (result.kind !== "earn") throw new Error(result.kind);
+    expect(result.next.yield).toMatchObject({ realized: "2114", fee: "211" });
+    const again = outMove(profileOf({ yield: { enabled: true, day: "", realized: "1000", fee: "100", invitedOn: "" }, earn: { pending: [out], failures: 0, heldOn: "" } }));
+    if (again.kind !== "earn") throw new Error(again.kind);
+    expect(again.next.yield).toMatchObject({ realized: "3114", fee: "311" });
+  });
+
+  it("books a loss as no gain and no fee, and leaves the totals as they were", () => {
+    const result = outMove(withPending([out]), { reads: reads({ invested: 9_000_000n }) });
+    if (result.kind !== "earn") throw new Error(result.kind);
+    expect(result.notices[0]).toMatchObject({ gain: "0", fee: "0" });
+    expect(result.next.yield).toMatchObject({ realized: "0", fee: "0" });
+  });
+
+  it("has no gain or fee on a deposit", () => {
+    const result = move(withPending([pending()]));
+    if (result.kind !== "earn") throw new Error(result.kind);
+    expect(result.notices[0]).not.toHaveProperty("gain");
+    expect(result.next.yield).toMatchObject({ realized: "0", fee: "0" });
   });
 
   it("works without any vault approval, and takes everything when asked for more than the position", () => {

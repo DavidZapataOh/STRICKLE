@@ -9,12 +9,13 @@ const vaultAbi = parseAbi([
   "function swapAdapter() view returns (address)",
   "function swapAdapterFrom() view returns (uint64)",
   "function swapSlippageBps() view returns (uint16)",
+  "function invested(uint8 asset, uint8 box) view returns (uint256)",
 ]);
 const rulesAbi = parseAbi(["function maxInvestBps(uint8 box) view returns (uint16)", "function rules(uint8 box) view returns (uint32 delay, bool alwaysDelayed, bool restricted, uint128 floor, uint64 lockedUntil)"]);
 const yieldAbi = parseAbi(["function previewDeposit(uint256 assets) view returns (uint256)", "function previewRedeem(uint256 shares) view returns (uint256)"]);
 const USDC = 1;
 
-export const EARN_FIRST_READS = 6;
+export const EARN_FIRST_READS = 7;
 
 /** The first batch for one request: what the box vault says about the approvals, the box's money and its shares. */
 export const earnFirstReads = (vault: Address, earnVault: Address, box: number): RpcRequest[] => [
@@ -24,6 +25,7 @@ export const earnFirstReads = (vault: Address, earnVault: Address, box: number):
   callRequest(vault, encodeFunctionData({ abi: vaultAbi, functionName: "swapAdapter" }), "latest"),
   callRequest(vault, encodeFunctionData({ abi: vaultAbi, functionName: "swapAdapterFrom" }), "latest"),
   callRequest(vault, encodeFunctionData({ abi: vaultAbi, functionName: "swapSlippageBps" }), "latest"),
+  callRequest(vault, encodeFunctionData({ abi: vaultAbi, functionName: "invested", args: [USDC, box] }), "latest"),
 ];
 
 type First = Omit<EarnReads, "previewShares" | "position">;
@@ -36,6 +38,7 @@ export function decodeEarnFirst(answers: unknown[]): First {
     box: decodeFunctionResult({ abi: vaultAbi, functionName: "boxBalance", data: data(2) }),
     adapter: { address: decodeFunctionResult({ abi: vaultAbi, functionName: "swapAdapter", data: data(3) }), from: decodeFunctionResult({ abi: vaultAbi, functionName: "swapAdapterFrom", data: data(4) }) },
     slippageBps: decodeFunctionResult({ abi: vaultAbi, functionName: "swapSlippageBps", data: data(5) }),
+    invested: decodeFunctionResult({ abi: vaultAbi, functionName: "invested", data: data(6) }),
   };
 }
 
