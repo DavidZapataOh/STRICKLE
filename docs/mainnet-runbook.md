@@ -142,6 +142,15 @@ A person can put part of a box to work in a Morpho vault listed by Circle's Earn
 - **Accounts.** A vault created before the redeploy has no `EARN_VERSION` and shows "not available"; an account whose read failed shows "could not be read", not that.
 - **Known limits.** `invested` (the principal) is kept per box, not per yield vault, so with two vaults in one box a full withdrawal from one wipes the other's principal and loosens the investable-share check. The app offers one vault per box today. The contract has about 60 bytes of runtime size left, so anything new goes into a library or a new implementation. The agent's request to Circle names the box vault, the yield vault and the amount, which the move publishes on chain a moment later.
 
+## Traction
+
+The public page `/metrics` and `node scripts/traction-report.mjs --url https://<the app>/api/metrics` show what the metrics collector read from the chain, with the team apart from everyone else.
+
+- **Businesses onboarded.** The vaults the factory created. A vault is the team's when its owner is on the team list (`apps/app/src/config`) or was funded directly by a team address; everyone else is organic.
+- **Value the agent moved.** USDC, summed by kind, from the events the agent's own transactions cause: income split into boxes, salary paid, currency conversions (the USDC side of each swap) and money put to work or taken back (the assets). Private payments are not counted, because their amounts are hidden by design. On testnet it is test USDC and the page says so.
+- **Reconciled.** A test sums the same events straight from the chain and compares. A snapshot recorded before the agent's moves were counted shows no such card, and the report says "not measured in this snapshot" instead of a zero.
+- **The daily update.** Run the report and paste its paragraph into `arc-canteen update traction`, which is interactive and belongs to the account owner. Every number in the paragraph is in the snapshot.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.

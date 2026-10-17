@@ -768,7 +768,19 @@
       "yield": "Rendimento",
       "earlyPayments": "Pagamentos antecipados",
       "invariantBreaches": "Verificações de segurança que falharam"
-    }
+    },
+    "moved": {
+      "title": "O que o agente movimentou",
+      "total": "Tudo o que o agente movimentou",
+      "kinds": {
+        "split": "Renda dividida em caixinhas",
+        "salary": "Salário pago",
+        "swap": "Conversões de moeda",
+        "earn": "Dinheiro colocado para trabalhar e retirado"
+      },
+      "private": "Pagamentos privados não são contados: seus valores são ocultos de propósito."
+    },
+    "rule": "A equipe são os endereços que listamos mais quem eles financiaram diretamente; todos os demais contam como orgânicos. Na testnet os valores são USDC de teste."
   },
   "agent": {
     "modes": {

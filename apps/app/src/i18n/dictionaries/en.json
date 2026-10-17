@@ -768,7 +768,19 @@
       "yield": "Yield",
       "earlyPayments": "Early payments",
       "invariantBreaches": "Safety checks that failed"
-    }
+    },
+    "moved": {
+      "title": "What the agent moved",
+      "total": "Everything the agent moved",
+      "kinds": {
+        "split": "Income split into boxes",
+        "salary": "Salary paid",
+        "swap": "Currency conversions",
+        "earn": "Money put to work and taken back"
+      },
+      "private": "Private payments are not counted: their amounts are hidden on purpose."
+    },
+    "rule": "The team is the addresses we list plus anyone they funded directly; everyone else counts as organic. On testnet the amounts are test USDC."
   },
   "agent": {
     "modes": {
