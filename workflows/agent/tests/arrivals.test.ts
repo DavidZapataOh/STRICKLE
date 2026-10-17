@@ -115,6 +115,7 @@ describe("a euro arrival", () => {
     expect(total(p)).toBe(1_000_000_000n);
     // 1,000 EURC are worth 1,120 dollars: the history the forecast reads is in dollars
     expect(p.next.history.at(-1)?.[1]).toBe("1120000000");
+    expect(p.next.arrivals.at(-1)?.[2]).toBe("1120000000");
     // the salary still owed stays in dollars: 5,000 owed minus what 1,000 EURC left after taxes funded
     expect(BigInt(p.next.salaryOwed)).toBeLessThan(5_000_000_000n);
     expect(BigInt(p.next.salaryOwed)).toBeGreaterThan(3_500_000_000n);

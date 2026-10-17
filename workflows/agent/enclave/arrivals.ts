@@ -67,7 +67,8 @@ export function planArrivals(input: { profile: Profile; books: VaultBooks; arriv
       catchUp -= toDollars(asset, taken);
     }
     history.push([formatPlainDate(today), toDollars(asset, part.amount).toString(), HISTORY_SOURCE[part.class]]);
-    ledger.push([`${id}-${index}`, formatPlainDate(today), part.amount.toString(), CLASS_CODE[part.class], ASSET_CODE[asset]]);
+    // the ledger keeps dollars like the history, so a correction finds its row whatever the rate does afterwards
+    ledger.push([`${id}-${index}`, formatPlainDate(today), toDollars(asset, part.amount).toString(), CLASS_CODE[part.class], ASSET_CODE[asset]]);
   };
 
   for (const arrival of input.arrivals) {

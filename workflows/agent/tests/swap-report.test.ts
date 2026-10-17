@@ -1,6 +1,6 @@
 import { decodeAbiParameters } from "viem";
 import { describe, expect, it } from "vitest";
-import { encodeSwapReport } from "../enclave/swap-report.ts";
+import { encodeSwapReport } from "../enclave/reports.ts";
 
 const VAULT = "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8";
 

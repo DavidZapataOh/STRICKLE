@@ -7,7 +7,7 @@ import { planArrivals } from "./arrivals.ts";
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf } from "./clock.ts";
 import { deliver } from "./deliver.ts";
-import { decodeRate, feedRequests } from "./fx.ts";
+import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { attribute, decodeMoves, decodeTransfers, logWindow, transfersRequest, vaultMovesRequest } from "./flow.ts";
 import { sealNotice } from "./notices.ts";
@@ -21,7 +21,6 @@ export const MAX_PER_RUN = 5;
 const LIST_LIMIT = 10;
 const ASSETS = ["USDC", "EURC"] as const;
 const READS_PER_ITEM = 7;
-const STORED_RATE_DAYS = 7;
 
 export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
   const executor = runtime.config.executorAddress as Address;
@@ -36,11 +35,11 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
   const master = parseMaster(runtime.getSecret({ id: "AGENT_MASTER" }).result().value);
   const { swap: swapConfig } = runtime.config;
   const nowSeconds = Math.floor(runtime.now().getTime() / 1000);
-  const answers = ethBatch(runtime, [...list.flatMap((item) => booksRequests(state, item.vault, item.asset, true)), ...feedRequests(swapConfig.usdcFeed as Address, swapConfig.eurcFeed as Address)]);
-  // the feeds are read once per run; a failed or stale read never stops a split, it only means no fresh rate
+  const answers = ethBatch(runtime, list.flatMap((item) => booksRequests(state, item.vault, item.asset, true)));
+  // the feeds are read once per run in a batch of their own: a failed or stale read never stops a split, it only means no fresh rate
   let fresh: ReturnType<typeof decodeRate> = "stale";
   try {
-    fresh = decodeRate(answers.slice(list.length * READS_PER_ITEM), nowSeconds, swapConfig.maxFeedAgeSeconds);
+    fresh = decodeRate(ethBatch(runtime, feedRequests(swapConfig.usdcFeed as Address, swapConfig.eurcFeed as Address)), nowSeconds, swapConfig.maxFeedAgeSeconds);
   } catch {
     fresh = "stale";
   }
@@ -67,7 +66,7 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
       const attribution = attribute({ transfers: decodeTransfers(rawTransfers, token, asset, decodeMoves(moves)), unallocated: item.amount, head });
       // a transfer is in the logs but the balance read has not caught up: this vault waits for the next run
       if (attribution === "race") return;
-      const stored = BigInt(profile.rate.usdcUsd) > 0n && BigInt(profile.rate.eurcUsd) > 0n && nowSeconds - profile.rate.at <= STORED_RATE_DAYS * 86_400 ? { usdcUsd: BigInt(profile.rate.usdcUsd), eurcUsd: BigInt(profile.rate.eurcUsd) } : undefined;
+      const stored = storedRate(profile, nowSeconds);
       const rate = fresh === "stale" ? stored : fresh;
       const plan = planArrivals({
         profile,

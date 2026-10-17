@@ -157,6 +157,7 @@ const SWAP_REASONS: Record<string, Record<Lang, string>> = {
   failures: { en: "three attempts in a row failed", es: "tres intentos seguidos fallaron", "pt-br": "três tentativas seguidas falharam" },
   "daily-cap": { en: "today's conversion limit is used", es: "el límite de conversión de hoy ya se usó", "pt-br": "o limite de conversão de hoje já foi usado" },
   "invalid-quote": { en: "the answer from the conversion service did not pass its checks", es: "la respuesta del servicio de conversión no pasó sus verificaciones", "pt-br": "a resposta do serviço de conversão não passou nas verificações" },
+  "vault-refused": { en: "your vault refused the conversion under its own limits", es: "tu vault rechazó la conversión según sus propios límites", "pt-br": "seu vault recusou a conversão pelos próprios limites" },
   "quote-unavailable": { en: "the conversion service did not answer", es: "el servicio de conversión no respondió", "pt-br": "o serviço de conversão não respondeu" },
 };
 

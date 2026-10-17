@@ -18,11 +18,12 @@ const NOW = deadline - 540;
 const zero = (): Record<BoxKind, bigint> => ({ taxes: 0n, payroll: 0n, salary: 0n, operating: 0n, emergency: 0n, profit: 0n });
 const holdings = (usdc: Partial<Record<BoxKind, bigint>> = {}) => ({ usdc: { ...zero(), ...usdc }, eurc: zero() });
 const euroPayroll = (over = {}) => profileOf({ currencies: { payroll: "EUR", operating: "USD", emergency: "USD", profit: "USD" }, ...over });
-const run = (over: { profile?: ReturnType<typeof profileOf>; rate?: typeof rate | "stale"; adapter?: { address: string; from: bigint }; quote?: (body: string) => unknown; raw?: ReturnType<typeof holdings> } = {}) =>
+const run = (over: { slippageBps?: number; allowed?: (intent: unknown) => boolean; profile?: ReturnType<typeof profileOf>; rate?: typeof rate | "stale"; adapter?: { address: string; from: bigint }; quote?: (body: string) => unknown; raw?: ReturnType<typeof holdings> } = {}) =>
   convert({
     profile: over.profile ?? euroPayroll(),
     vault: VAULT,
-    swap: { raw: over.raw ?? holdings({ payroll: 1_000_000n }), rate: over.rate ?? rate, adapter: (over.adapter ?? { address: ADAPTER, from: 1_000n }) as { address: `0x${string}`; from: bigint } },
+    swap: { raw: over.raw ?? holdings({ payroll: 1_000_000n }), rate: over.rate ?? rate, adapter: (over.adapter ?? { address: ADAPTER, from: 1_000n }) as { address: `0x${string}`; from: bigint }, slippageBps: over.slippageBps ?? 100 },
+    allowed: over.allowed,
     today: TODAY,
     now: NOW,
     config,
@@ -45,7 +46,7 @@ describe("convert", () => {
     expect(result.notices).toHaveLength(1);
     expect(result.notices[0]).toMatchObject({ kind: "swap", box: "payroll", from: "USDC", amountIn: "1000000", estimatedOut: mainnet.estimatedAmount, feeBps: 2 });
     expect(result.failed.next.swap.failures).toBe(1);
-    expect(result.failed.notices[0]).toMatchObject({ kind: "swap-held", reason: "adapter-not-approved" });
+    expect(result.failed.notices[0]).toMatchObject({ kind: "swap-held", reason: "vault-refused" });
   });
 
   it("does nothing when nothing needs converting, without asking Circle", () => {
@@ -98,12 +99,45 @@ describe("convert", () => {
     }
   });
 
-  it("says once that three failures stopped the conversions", () => {
-    const stopped = run({ profile: euroPayroll({ swap: { day: "", spent: "0", failures: 3, since: "", heldOn: "" } }) });
-    if (stopped.kind !== "held") throw new Error(stopped.kind);
-    expect(stopped.notices).toEqual([{ kind: "swap-held", box: "payroll", reason: "failures" }]);
-    const quiet = run({ profile: stopped.next });
-    expect(quiet.kind).toBe("none");
+  it("says once that three failures stopped the conversions, and nothing more that day", () => {
+    const third = run({ profile: euroPayroll({ swap: { day: "", spent: "0", failures: 2, since: "", heldOn: "2026-11-10" } }), quote: () => { throw new Error("down"); } });
+    if (third.kind !== "held") throw new Error(third.kind);
+    expect(third.notices).toEqual([{ kind: "swap-held", box: "payroll", reason: "failures" }]);
+    expect(third.next.swap.failures).toBe(3);
+    expect(run({ profile: third.next }).kind).toBe("none");
+  });
+
+  it("gives the breaker a fresh start the next day instead of switching conversions off for good", () => {
+    const yesterday = euroPayroll({ swap: { day: "", spent: "0", failures: 3, since: "", heldOn: "2026-11-09" } });
+    const result = run({ profile: yesterday });
+    expect(result.kind).toBe("swap");
+  });
+
+  it("says nothing about an adapter the user never approved when they never declared euros", () => {
+    const result = run({ profile: profileOf(), raw: { usdc: zero(), eurc: { ...zero(), taxes: 900_000_000n } }, adapter: { address: "0x0000000000000000000000000000000000000000", from: 0n } });
+    expect(result.kind).toBe("none");
+  });
+
+  it("asks for no looser a minimum than the vault's own, tighter, slippage would accept", () => {
+    const loose = run();
+    const tight = run({ slippageBps: 10 });
+    if (loose.kind !== "swap" || tight.kind !== "swap") throw new Error("expected swaps");
+    expect(tight.intent.minOut).toBeGreaterThan(loose.intent.minOut);
+  });
+
+  it("bounds the gas it passes on to a small multiple of its own", () => {
+    const wild = JSON.parse(JSON.stringify(mainnet));
+    wild.transaction.gasLimit = "0xffffffffff";
+    const result = run({ quote: () => wild });
+    if (result.kind !== "swap") throw new Error(result.kind);
+    expect(result.gasLimit).toBe(3_000_000n);
+  });
+
+  it("lets the brain's invariants stop a conversion before Circle is asked", () => {
+    let asked = false;
+    const result = run({ allowed: () => false, quote: () => { asked = true; return mainnet; } });
+    expect(result.kind).toBe("none");
+    expect(asked).toBe(false);
   });
 
   it("says the daily cap is used, once", () => {

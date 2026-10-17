@@ -25,7 +25,8 @@ export function fromUsdc(asset: Asset, usdcUnits: bigint, rate: Rate): bigint {
 /** (quoted - expected) / expected in basis points, truncated toward zero. */
 export function deviationBps(quoted: bigint, expected: bigint): number {
   if (expected <= 0n) throw new RangeError("the expected amount must be positive");
-  return Number(((quoted - expected) * 10_000n) / expected);
+  const bps = ((quoted - expected) * 10_000n) / expected;
+  return Number(bps > 1_000_000n ? 1_000_000n : bps < -1_000_000n ? -1_000_000n : bps);
 }
 
 /** What a swap of `amountIn` of `assetIn` should return at the feed prices. */

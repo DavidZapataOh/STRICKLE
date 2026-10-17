@@ -1,4 +1,5 @@
 import type { Rate } from "@strickle/core";
+import type { Profile } from "./profile.ts";
 import { type Address, type Hex, decodeFunctionResult, encodeFunctionData, parseAbi } from "viem";
 import { type RpcRequest, callRequest } from "./rpc.ts";
 
@@ -17,4 +18,13 @@ export function decodeRate(answers: unknown[], now: number, maxAgeSeconds: numbe
     if (updatedAt > now || now - updatedAt > maxAgeSeconds) return "stale";
   }
   return { usdcUsd: usdc[1], eurcUsd: eurc[1] };
+}
+
+export const STORED_RATE_DAYS = 7;
+
+/** The last rate the agent stored, when it is recent enough to value euros with while a feed cannot be read. */
+export function storedRate(profile: Profile, nowSeconds: number): Rate | undefined {
+  const usdcUsd = BigInt(profile.rate.usdcUsd);
+  const eurcUsd = BigInt(profile.rate.eurcUsd);
+  return usdcUsd > 0n && eurcUsd > 0n && nowSeconds - profile.rate.at <= STORED_RATE_DAYS * 86_400 ? { usdcUsd, eurcUsd } : undefined;
 }

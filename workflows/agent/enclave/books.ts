@@ -2,7 +2,6 @@
 import { type Address, type Hex, decodeAbiParameters, decodeFunctionResult, encodeFunctionData, hexToBytes, keccak256, parseAbi, toBytes } from "viem";
 import { BOX_KINDS, type BoxKind, type Rate, toUsdc } from "@strickle/core";
 import { BOX_ID } from "./cascade.ts";
-import { decodeRate, feedRequests } from "./fx.ts";
 import { type RpcRequest, callRequest, firstLogData, logsRequest, stateAbi, topic } from "./rpc.ts";
 import type { TickBooks } from "./tick.ts";
 
@@ -59,6 +58,7 @@ const tickVaultAbi = parseAbi([
   "function boxBalance(uint8 asset, uint8 box) view returns (uint256)",
   "function swapAdapter() view returns (address)",
   "function swapAdapterFrom() view returns (uint64)",
+  "function swapSlippageBps() view returns (uint16)",
   "function invested(uint8 asset, uint8 box) view returns (uint256)",
   "function unallocated(uint8 asset) view returns (uint256)",
 ]);
@@ -84,51 +84,54 @@ export const noticeCountRequest = (state: Address, vault: Address): RpcRequest =
   callRequest(state, encodeFunctionData({ abi: noticeAbi, functionName: "noticeCount", args: [vault] }), "latest");
 export const decodeNoticeCount = (result: unknown): bigint => decodeFunctionResult({ abi: noticeAbi, functionName: "noticeCount", data: result as Hex });
 
-export interface SwapReads {
-  usdcFeed: Address;
-  eurcFeed: Address;
-}
-
-/** The 15 reads of a tick; with `swap` it also reads the six euro balances, the two feeds and the vault's approved adapter (25 in all). */
-export const tickRequests = (state: Address, vault: Address, swap?: SwapReads): RpcRequest[] => [
+export const tickRequests = (state: Address, vault: Address): RpcRequest[] => [
   callRequest(state, encodeFunctionData({ abi: stateAbi, functionName: "head", args: [vault] }), "latest"),
   ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "boxBalance", args: [USDC, box] }), "latest")),
   ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "invested", args: [USDC, box] }), "latest")),
   callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "unallocated", args: [USDC] }), "latest"),
   noticeCountRequest(state, vault),
-  ...(swap
-    ? [
-        ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "boxBalance", args: [2, box] }), "latest")),
-        ...feedRequests(swap.usdcFeed, swap.eurcFeed),
-        callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "swapAdapter" }), "latest"),
-        callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "swapAdapterFrom" }), "latest"),
-      ]
-    : []),
+];
+
+export const SWAP_READS_PER_VAULT = 9;
+
+/** What a conversion needs from one vault, in a batch of its own so a vault that cannot answer never stops a tick: the six euro balances, the approved adapter and the vault's own slippage setting. */
+export const swapReads = (vault: Address): RpcRequest[] => [
+  ...BOXES.map((box) => callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "boxBalance", args: [2, box] }), "latest")),
+  callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "swapAdapter" }), "latest"),
+  callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "swapAdapterFrom" }), "latest"),
+  callRequest(vault, encodeFunctionData({ abi: tickVaultAbi, functionName: "swapSlippageBps" }), "latest"),
 ];
 
 export interface SwapReadout {
   raw: { usdc: Record<BoxKind, bigint>; eurc: Record<BoxKind, bigint> };
   rate: Rate | "stale";
   adapter: { address: Address; from: bigint };
+  /** The slippage the vault itself enforces; the agent never asks for a looser minimum than the vault would accept. */
+  slippageBps: number;
 }
 
-/** `fx` names the clock and the feed age limit; with the 25-answer layout the books are valued in dollars when the feeds are fresh, and in USDC alone when they are not. */
-export function decodeTickBooks(answers: unknown[], fx?: { now: number; maxAgeSeconds: number }): { version: bigint; at: bigint; applied: bigint; notices: bigint; books: TickBooks; swap?: SwapReadout } {
+export function decodeTickBooks(answers: unknown[]): { version: bigint; at: bigint; applied: bigint; notices: bigint; books: TickBooks } {
   const [version, at, applied] = decodeFunctionResult({ abi: stateAbi, functionName: "head", data: answers[0] as Hex });
   const word = (answer: unknown) => decodeFunctionResult({ abi: tickVaultAbi, functionName: "boxBalance", data: answer as Hex });
   const byKind = (offset: number) => Object.fromEntries(BOX_KINDS.map((kind, index) => [kind, word(answers[offset + index])])) as TickBooks["boxes"];
-  const usdc = byKind(1);
-  const base = { version, at, applied, notices: decodeNoticeCount(answers[14]) };
-  if (answers.length < 25 || !fx) return { ...base, books: { boxes: usdc, invested: byKind(7), unallocated: word(answers[13]) } };
+  return { version, at, applied, notices: decodeNoticeCount(answers[14]), books: { boxes: byKind(1), invested: byKind(7), unallocated: word(answers[13]) } };
+}
 
-  const eurc = byKind(15);
-  let rate: Rate | "stale";
-  try {
-    rate = decodeRate([answers[21], answers[22]], fx.now, fx.maxAgeSeconds);
-  } catch {
-    rate = "stale";
-  }
-  const adapter = { address: decodeFunctionResult({ abi: tickVaultAbi, functionName: "swapAdapter", data: answers[23] as Hex }), from: decodeFunctionResult({ abi: tickVaultAbi, functionName: "swapAdapterFrom", data: answers[24] as Hex }) };
-  const boxes = rate === "stale" ? usdc : (Object.fromEntries(BOX_KINDS.map((kind) => [kind, usdc[kind] + toUsdc("EURC", eurc[kind], rate)])) as TickBooks["boxes"]);
-  return { ...base, books: { boxes, invested: byKind(7), unallocated: word(answers[13]) }, swap: { raw: { usdc, eurc }, rate, adapter } };
+/** The euro side of one vault. A vault from before conversions answers none of these calls, which the caller treats as "no conversions here". */
+export function decodeSwapReadout(usdc: TickBooks["boxes"], answers: unknown[], rate: Rate | "stale"): SwapReadout {
+  const word = (answer: unknown) => decodeFunctionResult({ abi: tickVaultAbi, functionName: "boxBalance", data: answer as Hex });
+  const eurc = Object.fromEntries(BOX_KINDS.map((kind, index) => [kind, word(answers[index])])) as TickBooks["boxes"];
+  return {
+    raw: { usdc, eurc },
+    rate,
+    adapter: { address: decodeFunctionResult({ abi: tickVaultAbi, functionName: "swapAdapter", data: answers[6] as Hex }), from: decodeFunctionResult({ abi: tickVaultAbi, functionName: "swapAdapterFrom", data: answers[7] as Hex }) },
+    slippageBps: decodeFunctionResult({ abi: tickVaultAbi, functionName: "swapSlippageBps", data: answers[8] as Hex }),
+  };
+}
+
+/** The books in dollars: each box's dollars plus its euros at the rate; with no usable rate the euros are left out, the conservative reading. */
+export function valueTickBooks(books: TickBooks, readout: SwapReadout, rate: Rate | undefined): TickBooks {
+  if (!rate) return books;
+  const boxes = Object.fromEntries(BOX_KINDS.map((kind) => [kind, readout.raw.usdc[kind] + toUsdc("EURC", readout.raw.eurc[kind], rate)])) as TickBooks["boxes"];
+  return { ...books, boxes };
 }

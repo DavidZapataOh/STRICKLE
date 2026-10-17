@@ -20,6 +20,10 @@ describe("valuation", () => {
     expect(deviationBps(1_000_000n, 1_000_000n)).toBe(0);
     expect(() => deviationBps(1n, 0n)).toThrow();
   });
+  it("never turns an absurd quote into infinity", () => {
+    expect(deviationBps(10n ** 400n, 1n)).toBe(1_000_000);
+    expect(deviationBps(0n, 10n ** 400n)).toBe(-10_000);
+  });
   it("expects, for a swap, what the feeds say", () => {
     expect(expectedOut("USDC", 1_000_000_000n, rate)).toBe((1_000_000_000n * 99_982_900n) / 112_136_087n);
     expect(expectedOut("EURC", 1_000_000_000n, rate)).toBe((1_000_000_000n * 112_136_087n) / 99_982_900n);

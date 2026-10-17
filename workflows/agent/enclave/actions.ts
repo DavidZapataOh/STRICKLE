@@ -1,6 +1,6 @@
 // workflows/agent/enclave/actions.ts
 import { cascadeSalaryOwed, decide, execute, guard, validateParameterProposal } from "@strickle/brain";
-import { type PlainDate, formatPlainDate, toUsdc } from "@strickle/core";
+import { type PlainDate, formatPlainDate } from "@strickle/core";
 import type { Address } from "viem";
 import { appendSent } from "./flow.ts";
 import type { Notice } from "./notices.ts";
@@ -108,12 +108,10 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
       const arrivals = profile.arrivals.map((candidate, at) => (at === index ? ([candidate[0], date, amount, (from === "income" || code === "O" || code === "R" ? TAXED_CODE : CLASS_CODE)[action.to], assetCode] as typeof entry) : candidate));
       // the history entry that recorded this part is relabelled, so the forecast and the weeks of history follow the correction; the last match is the most recent one
       const wanted = HISTORY_SOURCE[from];
-      // the history keeps dollars: a euro part is found by its value at the last rate the agent used
-      const value = assetCode === "E" && BigInt(profile.rate.eurcUsd) > 0n && BigInt(profile.rate.usdcUsd) > 0n ? toUsdc("EURC", BigInt(amount), { usdcUsd: BigInt(profile.rate.usdcUsd), eurcUsd: BigInt(profile.rate.eurcUsd) }) : BigInt(amount);
-      const at = profile.history.map(([d, a, s]) => d === date && (a === amount || a === value.toString()) && s === wanted).lastIndexOf(true);
+      const at = profile.history.map(([d, a, s]) => d === date && a === amount && s === wanted).lastIndexOf(true);
       const history = at < 0 ? profile.history : profile.history.map((row, position) => (position === at ? ([row[0], row[1], HISTORY_SOURCE[action.to]] as typeof row) : row));
       // a payment that turns out to be income owes the taxes it skipped: the next income sets them aside, nothing is taken from boxes now
-      const owed = from !== "income" && action.to === "income" && code !== "O" && code !== "R" ? ceilTax(value, profile.taxRateBps, profile.taxBufferBps, value) : 0n;
+      const owed = from !== "income" && action.to === "income" && code !== "O" && code !== "R" ? ceilTax(BigInt(amount), profile.taxRateBps, profile.taxBufferBps, BigInt(amount)) : 0n;
       const owners = action.learn !== undefined && action.to === "own-transfer" ? withOwner(profile.flow.owners, action.learn) : profile.flow.owners;
       const next: Profile = { ...profile, arrivals, history, taxCatchUp: (BigInt(profile.taxCatchUp) + owed).toString(), flow: { ...profile.flow, owners } };
       return { ok: true, next, notices: [{ kind: "reclassified", arrivalId: entry[0], amount, from, to: action.to }] };

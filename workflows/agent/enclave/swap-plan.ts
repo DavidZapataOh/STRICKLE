@@ -20,7 +20,7 @@ const ORDER = ["payroll", "operating", "emergency", "profit", "taxes", "salary"]
 export const MAX_FAILURES = 3;
 
 /** At most one conversion per run. Amounts are counted in dollars for the daily cap and the minimum, so a euro box and a dollar box spend the same allowance. */
-export function planSwap(input: { profile: Profile; raw: { usdc: Record<BoxKind, bigint>; eurc: Record<BoxKind, bigint> }; rate: Rate; today: PlainDate; config: SwapConfig }): SwapIntent | SwapSkip {
+export function planSwap(input: { profile: Profile; raw: { usdc: Record<BoxKind, bigint>; eurc: Record<BoxKind, bigint> }; rate: Rate; today: PlainDate; config: SwapConfig; slippageBps?: number }): SwapIntent | SwapSkip {
   const { profile, raw, rate, config } = input;
   if (profile.breaker.halted) return { skip: "halted" };
   if (profile.swap.failures >= MAX_FAILURES) return { skip: "failures" };
@@ -30,6 +30,8 @@ export function planSwap(input: { profile: Profile; raw: { usdc: Record<BoxKind,
   const spentToday = profile.swap.day === day ? BigInt(profile.swap.spent) : 0n;
   const cap = BigInt(config.dailyCap);
   const minimum = BigInt(config.minUnits);
+  // never ask for a looser minimum than the vault would accept: its own slippage setting can be tighter than ours
+  const slippage = Math.min(config.maxSlipBps, input.slippageBps ?? config.maxSlipBps);
   let capped = false;
 
   for (const kind of ORDER) {
@@ -49,7 +51,7 @@ export function planSwap(input: { profile: Profile; raw: { usdc: Record<BoxKind,
       continue;
     }
     const expected = expectedOut(assetIn, amountIn, rate);
-    return { box: BOX_ID[kind], boxKind: kind, assetIn, amountIn, minOut: (expected * BigInt(10_000 - config.maxSlipBps)) / 10_000n, expected, reason: wantEuros ? "to-euros" : "to-dollars" };
+    return { box: BOX_ID[kind], boxKind: kind, assetIn, amountIn, minOut: (expected * BigInt(10_000 - slippage)) / 10_000n, expected, reason: wantEuros ? "to-euros" : "to-dollars" };
   }
   return { skip: capped ? "daily-cap" : "nothing-to-do" };
 }

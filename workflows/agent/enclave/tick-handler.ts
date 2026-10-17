@@ -1,12 +1,14 @@
 // workflows/agent/enclave/tick-handler.ts
 import type { TeeRuntime } from "@chainlink/cre-sdk";
-import { BOX_KINDS, toUsdc } from "@strickle/core";
+import { evaluate, predict } from "@strickle/brain";
+import { type Rate, toUsdc } from "@strickle/core";
 import { type Address, type Hex, bytesToHex, getAddress, hexToBytes } from "viem";
 import type { Config } from "../config.ts";
-import { decodeDelegated, decodeHead, decodeStateLog, decodeTickBooks, delegatedRequest, headRequest, stateLogRequest, tickRequests } from "./books.ts";
+import { SWAP_READS_PER_VAULT, type SwapReadout, decodeDelegated, decodeHead, decodeStateLog, decodeSwapReadout, decodeTickBooks, delegatedRequest, headRequest, stateLogRequest, swapReads, tickRequests, valueTickBooks } from "./books.ts";
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
+import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
 import { ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
@@ -14,12 +16,24 @@ import { ethBatch } from "./read.ts";
 import { encodeNoticeReport, encodeSalaryReport, encodeSwapReport, encodeTickReport } from "./reports.ts";
 import { chainOf, circleQuote } from "./swap-call.ts";
 import { convert } from "./swap-handle.ts";
-import { planTick } from "./tick.ts";
+import { invariantPolicy, planTick, snapshotOf } from "./tick.ts";
 
 export const MAX_PER_RUN = 5;
 const LIST_LIMIT = 10;
-const READS_PER_VAULT = 25;
-const STORED_RATE_DAYS = 7;
+const READS_PER_VAULT = 15;
+
+/** The brain's invariants judge the conversion at its worst case (what the vault's bound lets it lose) before anything is asked of Circle; the vault enforces its own bound regardless. */
+function conversionAllowed(profile: Parameters<typeof snapshotOf>[0], books: Parameters<typeof snapshotOf>[1], today: Parameters<typeof snapshotOf>[2], intent: { box: number; boxKind: string; assetIn: "USDC" | "EURC"; amountIn: bigint }, rate: Rate | "stale"): boolean {
+  if (rate === "stale") return false;
+  const amount = toUsdc(intent.assetIn, intent.amountIn, rate);
+  const action = { kind: "swap" as const, box: intent.boxKind as never, amount, worstLoss: (amount * 150n) / 10_000n };
+  try {
+    const before = snapshotOf(profile, books, today);
+    return evaluate(before, predict(before, action), invariantPolicy(profile), action).length === 0;
+  } catch {
+    return false;
+  }
+}
 
 export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
   const executor = runtime.config.executorAddress as Address;
@@ -43,8 +57,23 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
   const master = parseMaster(runtime.getSecret({ id: "AGENT_MASTER" }).result().value);
   const { swap: swapConfig } = runtime.config;
   const nowSeconds = Math.floor(runtime.now().getTime() / 1000);
-  const answers = ethBatch(runtime, stalest.flatMap((entry) => tickRequests(state, entry.vault, { usdcFeed: swapConfig.usdcFeed as Address, eurcFeed: swapConfig.eurcFeed as Address })));
-  const books = stalest.map((_, index) => decodeTickBooks(answers.slice(index * READS_PER_VAULT, (index + 1) * READS_PER_VAULT), { now: nowSeconds, maxAgeSeconds: swapConfig.maxFeedAgeSeconds }));
+  const answers = ethBatch(runtime, stalest.flatMap((entry) => tickRequests(state, entry.vault)));
+  const books = stalest.map((_, index) => decodeTickBooks(answers.slice(index * READS_PER_VAULT, (index + 1) * READS_PER_VAULT)));
+  // the euro side is read in a batch of its own: a feed or a vault that cannot answer costs the conversions of this run, never the salary or the tick
+  let euros: { answers: unknown[]; fresh: Rate | "stale" } | undefined;
+  try {
+    const extra = ethBatch(runtime, [...stalest.flatMap((entry) => swapReads(entry.vault)), ...feedRequests(swapConfig.usdcFeed as Address, swapConfig.eurcFeed as Address)]);
+    const rateAnswers = extra.slice(stalest.length * SWAP_READS_PER_VAULT);
+    let fresh: Rate | "stale";
+    try {
+      fresh = decodeRate(rateAnswers, nowSeconds, swapConfig.maxFeedAgeSeconds);
+    } catch {
+      fresh = "stale";
+    }
+    euros = { answers: extra, fresh };
+  } catch {
+    euros = undefined;
+  }
   const logs = ethBatch(runtime, books.map((entry, index) => stateLogRequest(state, (stalest[index] as { vault: Address }).vault, entry.version, entry.at)));
 
   stalest.forEach((entry, position) => {
@@ -53,20 +82,23 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
       const vault = getAddress(entry.vault);
       const profile = decodeProfile(decryptState(master, vault, current.version, decodeStateLog(logs[position])));
       const today = todayOf(runtime.now(), runtime.config.sandboxClock ? profile.clockOffsetDays : 0);
-      const swapReads = current.swap;
-      // a stale feed values the euros at the last rate the agent stored when it is recent, and leaves them out otherwise
-      const stored = BigInt(profile.rate.usdcUsd) > 0n && BigInt(profile.rate.eurcUsd) > 0n && nowSeconds - profile.rate.at <= STORED_RATE_DAYS * 86_400 ? { usdcUsd: BigInt(profile.rate.usdcUsd), eurcUsd: BigInt(profile.rate.eurcUsd) } : undefined;
-      let tickBooks = current.books;
-      if (swapReads && swapReads.rate === "stale" && stored) {
-        const boxes = Object.fromEntries(BOX_KINDS.map((kind) => [kind, swapReads.raw.usdc[kind] + toUsdc("EURC", swapReads.raw.eurc[kind], stored)])) as typeof current.books.boxes;
-        tickBooks = { ...current.books, boxes };
+      let readout: SwapReadout | undefined;
+      if (euros) {
+        try {
+          readout = decodeSwapReadout(current.books.boxes, euros.answers.slice(position * SWAP_READS_PER_VAULT, (position + 1) * SWAP_READS_PER_VAULT), euros.fresh);
+        } catch {
+          readout = undefined;
+        }
       }
+      // a stale feed values the euros at the last rate the agent stored when it is recent, and leaves them out otherwise
+      let tickBooks = current.books;
+      if (readout) tickBooks = valueTickBooks(current.books, readout, readout.rate === "stale" ? storedRate(profile, nowSeconds) : readout.rate);
       // the salary is paid in dollars: only dollars in its box count towards it, so the report's `seen` is the real balance
-      if (swapReads) tickBooks = { ...tickBooks, boxes: { ...tickBooks.boxes, salary: swapReads.raw.usdc.salary } };
+      if (readout) tickBooks = { ...tickBooks, boxes: { ...tickBooks.boxes, salary: readout.raw.usdc.salary } };
       const plan = planTick(profile, tickBooks, today, vault, nowSeconds);
       const base = plan.kind === "skip" ? profile : plan.next;
-      const conversion = swapReads
-        ? convert({ profile: base, vault, swap: swapReads, today, now: nowSeconds, config: swapConfig, usdc: runtime.config.usdcAddress as Address, eurc: runtime.config.eurcAddress as Address, chain: chainOf(runtime.config), quote: (body) => circleQuote(runtime, body) })
+      const conversion = readout
+        ? convert({ allowed: (intent) => conversionAllowed(base, tickBooks, today, intent, readout.rate), profile: base, vault, swap: readout, today, now: nowSeconds, config: swapConfig, usdc: runtime.config.usdcAddress as Address, eurc: runtime.config.eurcAddress as Address, chain: chainOf(runtime.config), quote: (body) => circleQuote(runtime, body) })
         : { kind: "none" as const, next: base };
       const seal = (profileNext: typeof base, version: bigint) => bytesToHex(encryptState(master, vault, version, encodeProfile(profileNext)));
       let version = current.version;

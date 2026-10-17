@@ -3,7 +3,7 @@ import { expectedOut } from "@strickle/core";
 import { decodeFunctionData, toFunctionSelector, type Hex } from "viem";
 import { describe, expect, it } from "vitest";
 import type { SwapConfig } from "../config.ts";
-import { adapterAbi, checkQuote, quoteBody } from "../enclave/swap-quote.ts";
+import { adapterAbi, checkQuote, providerFeeBps, quoteBody } from "../enclave/swap-quote.ts";
 import type { SwapIntent } from "../enclave/swap-plan.ts";
 
 const load = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/swap/${name}`, import.meta.url), "utf8"));
@@ -78,6 +78,31 @@ describe("checkQuote on Circle's real answers", () => {
     expect(reason(run(bad))).toBe("shape");
     expect(reason(run(null))).toBe("shape");
     expect(reason(run({}))).toBe("shape");
+  });
+
+  it("treats an answer that breaks the encoding as a refused answer, never an exception", () => {
+    const badChecksum = clone(mainnet);
+    badChecksum.transaction.executionParams.instructions[0].target = "0xF992EFCB5FA2eD7cB48310D9dd8Cb4ce5FB7DdC9";
+    expect(reason(run(badChecksum))).toBe("shape");
+    const huge = clone(mainnet);
+    huge.transaction.executionParams.instructions[1].minTokenOut = "9".repeat(80);
+    expect(reason(run(huge))).toBe("shape");
+  });
+
+  it("refuses an answer that needs ETH, and arrays larger than any real route", () => {
+    const withValue = clone(mainnet);
+    withValue.transaction.executionParams.instructions[0].value = "1";
+    expect(reason(run(withValue))).toBe("shape");
+    const many = clone(mainnet);
+    many.transaction.executionParams.instructions = Array.from({ length: 9 }, () => mainnet.transaction.executionParams.instructions[0]);
+    expect(reason(run(many))).toBe("shape");
+  });
+
+  it("reads the provider fee from the answer, and zero from anything it cannot read", () => {
+    expect(providerFeeBps({ fees: { provider: [{ amount: "200" }] } }, 1_000_000n)).toBe(2);
+    expect(providerFeeBps({ fees: { provider: [{ amount: "oops" }] } }, 1_000_000n)).toBe(0);
+    expect(providerFeeBps({}, 1_000_000n)).toBe(0);
+    expect(providerFeeBps({ fees: { provider: [{ amount: "99999999999" }] } }, 1_000_000n)).toBe(10_000);
   });
 
   it("builds the adapter's calldata from the answer and a single token input of the exact amount", () => {
