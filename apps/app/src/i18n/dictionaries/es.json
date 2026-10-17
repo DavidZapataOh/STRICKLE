@@ -42,8 +42,15 @@
     },
     "docs": {
       "title": "Documentación",
-      "emptyTitle": "La documentación aún no está publicada",
-      "emptyBody": "Cuando lo esté, esta página enlazará a ella. Mientras tanto, cada regla que aplica el agente se muestra junto al número que produce."
+      "intro": "Cómo funciona Strickle, qué hace cada regla y dónde termina. Cada sección enlaza al archivo que la hace cumplir.",
+      "searchLabel": "Buscar en la documentación",
+      "searchButton": "Buscar",
+      "topics": "Temas",
+      "results": "{count} resultados para «{query}»",
+      "nothing": "No se encontró nada para «{query}». Estos son los temas:",
+      "sources": "Dónde se hace cumplir",
+      "back": "Toda la documentación",
+      "open": "Leer"
     },
     "deposit": {
       "title": "Agregar dinero"

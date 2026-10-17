@@ -42,8 +42,15 @@
     },
     "docs": {
       "title": "Docs",
-      "emptyTitle": "Documentation is not published yet",
-      "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces."
+      "intro": "How Strickle works, what each rule does and where it stops. Every section links to the file that enforces it.",
+      "searchLabel": "Search the docs",
+      "searchButton": "Search",
+      "topics": "Topics",
+      "results": "{count} results for “{query}”",
+      "nothing": "Nothing found for “{query}”. These are the topics:",
+      "sources": "Where this is enforced",
+      "back": "All docs",
+      "open": "Read"
     },
     "deposit": {
       "title": "Add money"

@@ -128,6 +128,10 @@ Known limits:
 - The sealed state records the intent and the counters, never balances. The executor's `Swapped` event reports the amount requested; only the vault's `Swapped` event reports what was received, so use that one to audit a conversion.
 - A conversion cannot be undone at the same price: setting the box back to dollars converts it again at that day's rate.
 
+## Documentation
+
+The product documentation is served at `/[lang]/docs` and `/[lang]/docs/[topic]` in English, Spanish and Brazilian Portuguese. Its content is typed modules in `apps/app/src/docs/content` (one file per topic, the three languages side by side); search is a plain `GET ?q=` handled on the server over the same modules, so it ships no JavaScript. Every section lists `sources`, repository paths that a test resolves: renaming a file a section rests on fails the build. To add a topic, create its module, add it to `apps/app/src/docs/topics.ts` and write all three languages with the same section ids; the parity test enforces both.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
