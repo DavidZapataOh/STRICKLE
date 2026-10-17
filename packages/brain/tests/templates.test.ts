@@ -254,3 +254,20 @@ describe("a vault that was left", () => {
   });
 });
 
+describe("why the agent moved money", () => {
+  const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
+  const plan = (): Facts => ({ kind: "yield-plan", values: { amount: usdc(10_000_000_000n), kept: usdc(1_500_000_000n), needed: usdc(1_200_000_000n) }, labels: { label: "Profit" } });
+  const back = (): Facts => ({ kind: "yield-back", values: { amount: usdc(2_525_000_000n), payment: usdc(3_000_000_000n), due: { type: "date", value: { year: 2026, month: 11, day: 4 } } }, labels: { label: "Payroll" } });
+  it("keeps the English wording and states what was kept, what it covers and what went to work", () => {
+    expect(template(plan(), "en", "en-US")).toBe("Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due within sixty days, and put 10,000.00 USDC to work. The rate changes and the value can go down.");
+    expect(template(back(), "en", "en-US")).toBe("Your Payroll box brought 2,525.00 USDC back from the vault because 3,000.00 USDC is due on Nov 4, 2026: the money is ready five business days before.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names every number and leaves no placeholder in %s", (lang) => {
+    for (const [facts, parts] of [[plan(), ["1,500.00 USDC", "1,200.00 USDC", "10,000.00 USDC"]], [back(), ["2,525.00 USDC", "3,000.00 USDC"]]] as const) {
+      const text = template(facts, lang, "en-US");
+      expect(text).not.toMatch(/[{}]|undefined/);
+      for (const part of parts) expect(text).toContain(part);
+    }
+  });
+});
+

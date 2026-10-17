@@ -10,7 +10,7 @@ export type ReceiptKind =
   | "early-payment" | "early-payment-proposal"
   | "income-doubt" | "reclassified"
   | "swap" | "swap-held"
-  | "earn" | "earn-back" | "earn-held" | "yield-exit";
+  | "earn" | "earn-back" | "earn-held" | "yield-exit" | "yield-plan" | "yield-back";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -120,6 +120,8 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   "earn-back": { values: ["amount"], labels: ["label", "vault", "protocol"] },
   "earn-held": { values: [], labels: ["label", "vault", "reason"] },
   "yield-exit": { values: [], labels: ["label", "vault", "reason"] },
+  "yield-plan": { values: ["amount", "kept", "needed"], labels: ["label"] },
+  "yield-back": { values: ["amount", "payment", "due"], labels: ["label"] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -328,6 +330,16 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l, lang) => `Your ${l("label")} box's money was taken out of ${l("vault")} because ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. It is back in your box as cash; to put it to work again, ask for it.`,
     es: (_v, l, lang) => `El dinero de tu cajita ${l("label")} se sacó de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volvió a tu cajita como efectivo; para ponerlo a trabajar otra vez, pídelo.`,
     "pt-br": (_v, l, lang) => `O dinheiro da sua caixinha ${l("label")} foi retirado de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Voltou para a sua caixinha em dinheiro; para colocá-lo para trabalhar de novo, peça.`,
+  },
+  "yield-plan": {
+    en: (v, l) => `Your ${l("label")} box keeps ${v("kept")} in cash, ${v("needed")} of it for what is due within sixty days, and put ${v("amount")} to work. The rate changes and the value can go down.`,
+    es: (v, l) => `Tu cajita ${l("label")} guarda ${v("kept")} en efectivo, ${v("needed")} de eso para lo que vence en los próximos sesenta días, y puso ${v("amount")} a trabajar. La tasa cambia y el valor puede bajar.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} guarda ${v("kept")} em dinheiro, ${v("needed")} disso para o que vence nos próximos sessenta dias, e colocou ${v("amount")} para trabalhar. A taxa muda e o valor pode cair.`,
+  },
+  "yield-back": {
+    en: (v, l) => `Your ${l("label")} box brought ${v("amount")} back from the vault because ${v("payment")} is due on ${v("due")}: the money is ready five business days before.`,
+    es: (v, l) => `Tu cajita ${l("label")} trajo ${v("amount")} de vuelta de la vault porque ${v("payment")} vence el ${v("due")}: el dinero queda listo cinco días hábiles antes.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} trouxe ${v("amount")} de volta do vault porque ${v("payment")} vence em ${v("due")}: o dinheiro fica pronto cinco dias úteis antes.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,
