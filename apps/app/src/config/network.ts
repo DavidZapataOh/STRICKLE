@@ -10,6 +10,8 @@ export interface AgentDeployments {
   AgentState: `0x${string}`;
   AgentExecutor: `0x${string}`;
   PolicyPool: `0x${string}`;
+  /** The contract the workflow's schedule writes to; absent on a network that has none. */
+  AgentHeartbeat: `0x${string}` | null;
   blocks: { AgentState: number; AgentExecutor: number };
 }
 
@@ -17,14 +19,14 @@ export type Deployments = CoreDeployments & AgentDeployments;
 
 type Generated = Record<
   string,
-  { chainId: number; BoxVaultFactory: `0x${string}` | null; AgentState: `0x${string}` | null; AgentExecutor: `0x${string}` | null; PolicyPool: `0x${string}` | null; blocks: { AgentState: number; AgentExecutor: number } | null } | null
+  { chainId: number; BoxVaultFactory: `0x${string}` | null; AgentState: `0x${string}` | null; AgentExecutor: `0x${string}` | null; PolicyPool: `0x${string}` | null; AgentHeartbeat?: `0x${string}` | null; blocks: { AgentState: number; AgentExecutor: number } | null } | null
 >;
 
 /** The core contracts are required; the agent contracts exist only where an agent does (never on mainnet while CRE is testnet-only). */
 export function resolveDeployments(generated: Generated, name: ArcNetworkName): { core: CoreDeployments; agent: AgentDeployments | null } {
   const found = generated[name];
   if (!found || !found.BoxVaultFactory) throw new Error(`the contracts are not deployed on ${name}`);
-  const agent = found.AgentState && found.AgentExecutor && found.PolicyPool && found.blocks ? { AgentState: found.AgentState, AgentExecutor: found.AgentExecutor, PolicyPool: found.PolicyPool, blocks: found.blocks } : null;
+  const agent = found.AgentState && found.AgentExecutor && found.PolicyPool && found.blocks ? { AgentState: found.AgentState, AgentExecutor: found.AgentExecutor, PolicyPool: found.PolicyPool, AgentHeartbeat: found.AgentHeartbeat ?? null, blocks: found.blocks } : null;
   return { core: { chainId: found.chainId, BoxVaultFactory: found.BoxVaultFactory }, agent };
 }
 

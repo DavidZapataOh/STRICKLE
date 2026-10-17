@@ -18,6 +18,6 @@ test("a network with only the core contracts has no agent entries instead of bei
   const core = { chainId: 5042, contracts: { BoxVaultFactory: { address: "0x00000000000000000000000000000000000000a1", blockNumber: 7 } } };
   const none = { chainId: 5042002, contracts: {} };
   const { mainnet, testnet } = build((name) => (name === "mainnet" ? core : none));
-  assert.deepEqual(mainnet, { chainId: 5042, BoxVaultFactory: "0x00000000000000000000000000000000000000a1", AgentState: null, AgentExecutor: null, PolicyPool: null, blocks: null });
+  assert.deepEqual(mainnet, { chainId: 5042, BoxVaultFactory: "0x00000000000000000000000000000000000000a1", AgentState: null, AgentExecutor: null, PolicyPool: null, AgentHeartbeat: null, blocks: null });
   assert.equal(testnet, null);
 });

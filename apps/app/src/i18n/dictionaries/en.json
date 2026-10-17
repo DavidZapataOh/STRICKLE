@@ -924,6 +924,28 @@
     "honest": {
       "title": "What this page does not prove",
       "body": "These contracts are not audited and run on testnet, where the money is test USDC. The page shows that the code is deployed, whether its source is verified and what it enforces; it does not show that the code has no bugs. Private amounts stay private."
+    },
+    "attestation": {
+      "title": "Is the agent running the published code?",
+      "explain": "The confidential workflow network verifies the enclave's attestation before it signs a report, and this page does not show the hardware quote. What it checks itself is what happens after: which workflow the contracts accept, and who signed the newest report and for which workflow.",
+      "contracts": "The workflow the contracts accept",
+      "status": {
+        "consistent": "The contracts accept the same workflow.",
+        "mismatch": "The contracts do not accept the same workflow.",
+        "unbound": "A contract is not bound to a workflow yet.",
+        "unreadable": "Could not read the workflow from a contract."
+      },
+      "report": {
+        "title": "The newest report",
+        "ok": "It was signed by {valid} of the DON's authorized nodes (needed: {threshold}) and carries that workflow, {when}.",
+        "few": "Only {valid} valid signatures of the {threshold} needed.",
+        "different": "It carries a different workflow than the contracts accept.",
+        "none": "No report has been delivered yet.",
+        "unreadable": "Could not be checked right now.",
+        "tx": "Transaction"
+      },
+      "reproduce": "To recompute the workflow ID from the published source, run:",
+      "note": "This is the chain of custody after the enclave. It does not show the hardware quote."
     }
   }
 }

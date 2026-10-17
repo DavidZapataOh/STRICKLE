@@ -21,6 +21,7 @@ export function build(read = manifest) {
           AgentState: agent ? contracts.AgentState.address : null,
           AgentExecutor: agent ? contracts.AgentExecutor.address : null,
           PolicyPool: agent ? contracts.PolicyPool.address : null,
+          AgentHeartbeat: agent ? (contracts.AgentHeartbeat?.address ?? null) : null,
           blocks: agent ? { AgentState: contracts.AgentState.blockNumber, AgentExecutor: contracts.AgentExecutor.blockNumber } : null,
         },
       ];

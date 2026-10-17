@@ -163,6 +163,16 @@ The public page `/metrics` and `node scripts/traction-report.mjs --url https://<
 
 If one source is down that part says so and the rest of the page stays. The page does not use the words safe, audited or insured, and a dictionary test keeps it that way.
 
+## Attestation
+
+The proof page checks the chain of custody after the enclave. Chainlink's Workflow DON verifies the enclave's attestation before it signs a report; the quote itself is not exposed to developers, so the page does not show one. What it checks itself:
+
+1. The workflow ID that `AgentExecutor`, `AgentState` and `AgentHeartbeat` accept (`expectedWorkflowId()`): consistent, different, not bound yet, or unreadable.
+2. The newest forwarder report delivered to them: the 109-byte header is parsed, its workflow ID is compared with the contracts', and the DON signatures are verified as documented (`keccak256(keccak256(report) || context)`, at least `f + 1` distinct signers from the Capability Registry on Ethereum).
+3. The command a verifier runs to recompute the workflow ID from the published source: `cre workflow hash ./workflows/agent --public_key <workflow owner>`.
+
+Not checked: the hardware attestation itself. If the Ethereum registry cannot be read the check says it could not be made, never a pass. The Ethereum read uses `ETHEREUM_RPC_URL` (a public RPC, read-only, with a timeout). After a redeploy the old reports carry the old workflow ID and are shown as such until the next report arrives. Refresh the fixtures with `node scripts/capture-attestation.ts` from `apps/app`.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.

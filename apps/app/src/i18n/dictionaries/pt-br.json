@@ -924,6 +924,28 @@
     "honest": {
       "title": "O que esta página não prova",
       "body": "Estes contratos não são auditados e rodam na testnet, onde o dinheiro é USDC de teste. A página mostra que o código está implantado, se o código-fonte está verificado e o que ele impõe; não mostra que o código não tem erros. Os valores privados continuam privados."
+    },
+    "attestation": {
+      "title": "O agente executa o código publicado?",
+      "explain": "A rede de workflows confidenciais verifica a atestação do enclave antes de assinar um relatório, e esta página não mostra a cotação do hardware. O que ela verifica por conta própria é o que vem depois: qual workflow os contratos aceitam e quem assinou o relatório mais recente e para qual workflow.",
+      "contracts": "O workflow que os contratos aceitam",
+      "status": {
+        "consistent": "Os contratos aceitam o mesmo workflow.",
+        "mismatch": "Os contratos não aceitam o mesmo workflow.",
+        "unbound": "Um contrato ainda não está vinculado a um workflow.",
+        "unreadable": "Não foi possível ler o workflow de um contrato."
+      },
+      "report": {
+        "title": "O relatório mais recente",
+        "ok": "Foi assinado por {valid} dos nós autorizados da DON (eram necessários {threshold}) e leva esse workflow, {when}.",
+        "few": "Apenas {valid} assinaturas válidas das {threshold} necessárias.",
+        "different": "Leva um workflow diferente do que os contratos aceitam.",
+        "none": "Nenhum relatório foi entregue ainda.",
+        "unreadable": "Não foi possível verificar agora.",
+        "tx": "Transação"
+      },
+      "reproduce": "Para recalcular o ID do workflow a partir do código publicado, execute:",
+      "note": "Esta é a cadeia de custódia depois do enclave. Não mostra a cotação do hardware."
     }
   }
 }
