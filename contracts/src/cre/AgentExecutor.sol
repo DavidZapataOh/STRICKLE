@@ -13,6 +13,7 @@ interface IVault {
     function split(uint8 asset, uint8[] calldata boxes, uint256[] calldata amounts) external;
     function boxBalance(uint8 asset, uint8 box) external view returns (uint256);
     function payAllowlisted(uint8 asset, uint8 box, address to, uint256 amount) external;
+    function swapBox(uint8 box, uint8 assetIn, uint256 amountIn, uint256 minOut, bytes calldata data) external;
 }
 
 interface IFactory {
@@ -104,9 +105,11 @@ contract AgentExecutor is CreReceiver {
     uint8 public constant TICK = 3;
     uint8 public constant NOTICE = 4;
     uint8 public constant PRIVATE_SPEND = 5;
+    uint8 public constant SWAP = 6;
     uint8 public constant SALARY_BOX = 3;
 
     event SalaryPaid(address indexed vault, uint8 indexed asset, address indexed payee, uint256 amount);
+    event Swapped(address indexed vault, uint8 indexed box, uint8 indexed assetIn, uint256 amountIn);
 
     /// @notice Up to `maxHits` active delegations, scanning the registry in a circle from `seed % count` (see `pending`).
     function delegated(uint256 seed, uint256 maxHits) external view returns (address[] memory out) {
@@ -132,6 +135,7 @@ contract AgentExecutor is CreReceiver {
         else if (action == TICK) _tick(args);
         else if (action == NOTICE) _notice(args);
         else if (action == PRIVATE_SPEND) _privateSpend(args);
+        else if (action == SWAP) _swap(args);
         else revert UnknownAction(action);
     }
 
@@ -177,6 +181,26 @@ contract AgentExecutor is CreReceiver {
         pool.spend(proof, p, poolCiphertext);
         state.store(vault, next, stateCiphertext);
         emit PrivateSpend(vault, p.nullifiers[0]);
+    }
+
+    function _swap(bytes memory args) private {
+        (
+            address vault,
+            uint8 box,
+            uint8 assetIn,
+            uint256 amountIn,
+            uint256 minOut,
+            uint256 seen,
+            bytes memory data,
+            uint64 next,
+            bytes memory ciphertext
+        ) = abi.decode(args, (address, uint8, uint8, uint256, uint256, uint256, bytes, uint64, bytes));
+        _requireActive(vault);
+        uint256 live = IVault(vault).boxBalance(assetIn, box);
+        if (live != seen) revert Stale(seen, live);
+        IVault(vault).swapBox(box, assetIn, amountIn, minOut, data);
+        state.store(vault, next, ciphertext);
+        emit Swapped(vault, box, assetIn, amountIn);
     }
 
     function _tick(bytes memory args) private {
