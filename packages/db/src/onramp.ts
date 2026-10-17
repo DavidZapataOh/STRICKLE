@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { Sql, TransactionSql } from "postgres";
 
 export interface OnrampSessionRow {
   id: string;
@@ -50,7 +50,7 @@ export async function findOnrampSession(sql: Sql, keys: { id?: string; circleSes
   return null;
 }
 
-export async function settleOnrampSession(sql: Sql, id: string, txHash: string): Promise<boolean> {
+export async function settleOnrampSession(sql: Sql | TransactionSql, id: string, txHash: string): Promise<boolean> {
   const rows = await sql`update onramp_sessions set status = 'settled', settled_tx = ${txHash.toLowerCase()} where id = ${id} and status in ('minted', 'unresolved') returning id`;
   return rows.length === 1;
 }

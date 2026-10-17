@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { invoiceKeys } from "../../src/invoice-keys.ts";
 import { migrate } from "../../src/migrate.ts";
 import { attachCircleSession, createOnrampSessionRow, findOnrampSession, openSessionsFor, recordWebhook, releaseWebhook, settleOnrampSession } from "../../src/onramp.ts";
-import { createInvoice, getLinkByToken, settlePayment } from "../../src/payments.ts";
+import { confirmSuggestion, createInvoice, getLinkByToken, listInvoices, settlePayment, suggestMatch } from "../../src/payments.ts";
 import { createTestDatabase } from "../../src/testing.ts";
 
 const keys = invoiceKeys(randomBytes(32).toString("base64"));
@@ -74,5 +74,42 @@ describe("the onramp rail", () => {
     const input = { chainId: 5042002, txHash: `0x${"33".repeat(32)}`, logIndex: 5, vault: VAULT, payer: PAYER, amount: 95_000_000n, rail: "onramp" as const, linkId: view.linkId, at: new Date() };
     expect(await settlePayment(db.sql, input)).toMatchObject({ outcome: "credited", status: "partial", paid: 95_000_000n });
     expect(await settlePayment(db.sql, input)).toEqual({ outcome: "duplicate" });
+  });
+});
+
+describe("card suggestions", () => {
+  const at = new Date();
+  const transfer = (n: number, amount: bigint) => ({ chainId: 5042002, txHash: `0x${n.toString(16).padStart(64, "0")}`, logIndex: 2, vault: VAULT, payer: PAYER, amount, at });
+
+  it("offers a transfer into a vault with one open card session as a possible card payment of any amount, never credits it, and credits it as card when the owner confirms", async () => {
+    const vault = `0x${"c1".repeat(20)}`;
+    const created = await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 100_000_000n, expiresAt: null });
+    const view = (await getLinkByToken(db.sql, keys, created.token))!;
+    const session = await createOnrampSessionRow(db.sql, { linkId: view.linkId, vault, expiresAt: new Date(Date.now() + 1_800_000) });
+    expect(await suggestMatch(db.sql, { ...transfer(100, 96_500_000n), vault })).toEqual({ suggested: true });
+    const item = (await listInvoices(db.sql, keys, vault)).find((entry) => entry.id === created.id);
+    expect(item).toMatchObject({ paid: 0n, status: "open" });
+    expect(item?.suggestions[0]).toMatchObject({ amount: 96_500_000n, viaCard: true });
+    const confirmed = await confirmSuggestion(db.sql, vault, item?.suggestions[0]?.id as string);
+    expect(confirmed).toMatchObject({ outcome: "credited", status: "partial", paid: 96_500_000n });
+    const [payment] = await db.sql<{ rail: string }[]>`select rail from payments where tx_hash = ${transfer(100, 1n).txHash}`;
+    expect(payment?.rail).toBe("onramp");
+    expect((await findOnrampSession(db.sql, { id: session }))?.status).toBe("settled");
+  });
+
+  it("does not guess when two card sessions are open: the suggestion is plain, not attributed to a card", async () => {
+    const vault = `0x${"c2".repeat(20)}`;
+    const created = await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 100_000_000n, expiresAt: null });
+    const view = (await getLinkByToken(db.sql, keys, created.token))!;
+    for (let i = 0; i < 2; i++) await createOnrampSessionRow(db.sql, { linkId: view.linkId, vault, expiresAt: new Date(Date.now() + 1_800_000) });
+    await suggestMatch(db.sql, { ...transfer(101, 100_000_000n), vault });
+    const item = (await listInvoices(db.sql, keys, vault)).find((entry) => entry.id === created.id);
+    expect(item?.suggestions[0]).toMatchObject({ viaCard: false });
+  });
+
+  it("proposes nothing for an arbitrary amount when no card session is open", async () => {
+    const vault = `0x${"c3".repeat(20)}`;
+    await createInvoice(db.sql, keys, { vault, label: "L", payeeName: "P", note: "", amount: 100_000_000n, expiresAt: null });
+    expect(await suggestMatch(db.sql, { ...transfer(102, 96_500_000n), vault })).toEqual({ suggested: false });
   });
 });

@@ -635,7 +635,8 @@
     "suggestion": {
       "title": "Chegou um pagamento de {amount} de {payer}. É desta fatura?",
       "confirm": "Sim, é",
-      "dismiss": "Não é esta"
+      "dismiss": "Não é esta",
+      "viaCard": "Pode ser um pagamento com cartão: o valor é o que chegou depois das taxas do cartão."
     },
     "errors": {
       "rate-limited": "Tentativas demais. Aguarde um momento e tente de novo.",

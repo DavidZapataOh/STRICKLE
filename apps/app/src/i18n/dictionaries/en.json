@@ -635,7 +635,8 @@
     "suggestion": {
       "title": "A payment of {amount} arrived from {payer}. Is it for this invoice?",
       "confirm": "Yes, it is",
-      "dismiss": "Not this one"
+      "dismiss": "Not this one",
+      "viaCard": "This may be a card payment: the amount is what arrived after the card's fees."
     },
     "errors": {
       "rate-limited": "Too many tries. Wait a moment and try again.",

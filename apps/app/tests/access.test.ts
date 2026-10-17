@@ -42,6 +42,11 @@ describe("what is public", () => {
     for (const path of ["/en", "/en/boxes", "/en/activity", "/en/settings", "/en/start", "/api/agent-action", "/api/anything"]) expect(isPublicPath(path), path).toBe(false);
   });
 
+  it("lets Circle's notifications through without an invite, and nothing else under /api/webhooks", () => {
+    expect(isPublicPath("/api/webhooks/circle")).toBe(true);
+    for (const path of ["/api/webhooks", "/api/webhooks/other", "/api/webhooks/circle/extra"]) expect(isPublicPath(path), path).toBe(false);
+  });
+
   it("tells API routes from pages", () => {
     expect(isApiPath("/api/logs")).toBe(true);
     expect(isApiPath("/en/api")).toBe(false);

@@ -117,6 +117,7 @@ export function InvoicesView({ lang, t, state, origin, onEvent }: { lang: Locale
             {invoice.suggestions.map((suggestion) => (
               <div key={suggestion.id} className="note">
                 <p>{fill(s.suggestion.title, { amount: formatMoney(BigInt(suggestion.amount), lang), payer: short(suggestion.payer) })}</p>
+                {suggestion.viaCard ? <p className="field-hint">{s.suggestion.viaCard}</p> : null}
                 <button type="button" className="btn" onClick={() => onEvent({ type: "confirm-payment", id: invoice.id, paymentId: suggestion.id })}>
                   {s.suggestion.confirm}
                 </button>

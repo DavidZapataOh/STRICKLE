@@ -37,7 +37,7 @@ export function readAccess(secret: string, value: string | undefined, now: numbe
 }
 
 const PUBLIC_PAGES = ["access", "closed", "unavailable", "verify", "docs", "metrics", "view", "accountant", "pay"];
-const PUBLIC_API = ["/api/access", "/api/metrics", "/api/logs", "/api/pool-notes"];
+const PUBLIC_API = ["/api/access", "/api/metrics", "/api/logs", "/api/pool-notes", "/api/webhooks/circle"];
 
 export const isApiPath = (pathname: string): boolean => pathname === "/api" || pathname.startsWith("/api/");
 
