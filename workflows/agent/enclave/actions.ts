@@ -142,6 +142,11 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
         if (change.status === "rejected" || change.applied === null) return fail("rejected-parameter");
         next = { ...next, [name]: change.applied };
       }
+      if (changes.currencies !== undefined) {
+        const merged = { ...next.currencies, ...changes.currencies };
+        // a setting that changes nothing neither restarts the day's wait nor clears the failure count
+        if (JSON.stringify(merged) !== JSON.stringify(next.currencies)) next = { ...next, currencies: merged, swap: { ...next.swap, since: day, failures: 0 } };
+      }
       return { ok: true, next: refreshOwed(next, salaryBox), notices: [] };
     }
   }

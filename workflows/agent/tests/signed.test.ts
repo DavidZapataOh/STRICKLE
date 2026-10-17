@@ -48,9 +48,19 @@ describe("requests", () => {
     expect(requestSchema.safeParse({ ...request, signature: `0x${"22".repeat(300)}` }).success).toBe(true);
   });
 
+  it("accepts a currency change for the four boxes that can be euros", () => {
+    const action = { kind: "adjust", changes: { currencies: { payroll: "EUR", operating: "USD", emergency: "EUR", profit: "USD" } } };
+    expect(requestSchema.safeParse({ ...request, action }).success).toBe(true);
+    expect(requestSchema.safeParse({ ...request, action: { kind: "adjust", changes: { currencies: { profit: "EUR" } } } }).success).toBe(true);
+  });
+
   it.each([
     ["an unknown action", { action: { kind: "withdraw" } }],
     ["an adjust with no change", { action: { kind: "adjust", changes: {} } }],
+    ["an adjust with a currency for the salary", { action: { kind: "adjust", changes: { currencies: { salary: "EUR" } } } }],
+    ["an adjust with a currency for taxes", { action: { kind: "adjust", changes: { currencies: { taxes: "EUR" } } } }],
+    ["an adjust with an empty currencies object", { action: { kind: "adjust", changes: { currencies: {} } } }],
+    ["an adjust with an unknown currency", { action: { kind: "adjust", changes: { currencies: { payroll: "GBP" } } } }],
     ["an adjust with a salary day of 31", { action: { kind: "adjust", changes: { salaryDay: 31 } } }],
     ["a short signature", { signature: "0x1234" }],
     ["a signature longer than 2 KB", { signature: `0x${"11".repeat(2049)}` }],

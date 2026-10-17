@@ -171,3 +171,42 @@ describe("income doubts and corrections", () => {
     expect(template(facts("reclassified", { from: "income", to: "own-transfer" }), "en", "en-US")).toContain("Taxes already set aside for it stay in your taxes box until your next tax date");
   });
 });
+
+describe("conversions", () => {
+  const amount = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
+  const eur = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "EURC" });
+  const swapFacts = (direction: "to-euros" | "to-dollars", deviation = -42): Facts => ({
+    kind: "swap",
+    values: { amount: direction === "to-euros" ? amount(1_000_000_000n) : eur(500_000_000n), expectedOut: eur(890_000_000n), minOut: eur(881_100_000n), reference: eur(889_900_000n), deviation: { type: "sbps", value: deviation }, fee: { type: "bps", value: 2 } },
+    labels: { label: "Payroll", direction },
+  });
+  it("keeps the English wording the plan fixed", () => {
+    expect(template(swapFacts("to-euros"), "en", "en-US")).toBe(
+      "Your Payroll box is paid in euros, so 1,000.00 USDC were converted to euros. The agent expected 890.00 EURC, accepted nothing worse than 881.10 EURC, and the market reference was 889.90 EURC (a difference of -0.42%). Fees: 0.02%.",
+    );
+  });
+  it.each(["en", "es", "pt-br"] as const)("a conversion in either direction leaves no placeholder in %s and names every number", (lang) => {
+    for (const direction of ["to-euros", "to-dollars"] as const) {
+      const text = template(swapFacts(direction), lang, "en-US");
+      expect(text).not.toMatch(/[{}]|to-euros|to-dollars/);
+      for (const part of ["890.00 EURC", "881.10 EURC", "889.90 EURC", "0.42%", "0.02%"]) expect(text).toContain(part);
+    }
+  });
+  it("writes the signed deviation with the number style and a sign", () => {
+    expect(template(swapFacts("to-euros", 150), "en", "en-US")).toContain("+1.5%");
+    expect(template(swapFacts("to-euros", -150), "es", "es-CO")).toContain("-1,5%");
+    expect(template(swapFacts("to-euros", 0), "en", "en-US")).toContain("0%");
+  });
+  const held = (reason: string, currency = "EUR"): Facts => ({ kind: "swap-held", values: {}, labels: { label: "Payroll", currency, reason } });
+  const reasons = ["worse-than-reference", "better-than-reference", "stale-feed", "adapter-not-approved", "failures", "daily-cap", "invalid-quote", "quote-unavailable"];
+  it.each(["en", "es", "pt-br"] as const)("a pause names its reason and where the money stays in %s", (lang) => {
+    const texts = reasons.map((reason) => template(held(reason), lang, "en-US"));
+    for (const text of texts) expect(text).not.toMatch(/[{}]|stale-feed|daily-cap|worse-than-reference/);
+    expect(new Set(texts).size).toBe(reasons.length);
+    expect(template(held("stale-feed", "USD"), "en", "en-US")).toContain("Conversions to dollars for your Payroll box are paused");
+    expect(template(held("stale-feed"), "en", "en-US")).toContain("Your money stays in dollars");
+  });
+  it("keeps the English wording of the pause", () => {
+    expect(template(held("stale-feed"), "en", "en-US")).toBe("Conversions to euros for your Payroll box are paused: the price feed is out of date. Your money stays in dollars and everything else keeps working.");
+  });
+});

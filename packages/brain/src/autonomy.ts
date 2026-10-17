@@ -1,7 +1,7 @@
 import type { BreakerState } from "./breaker.ts";
 import type { Action } from "./invariants.ts";
 
-export type ActionKind = "split" | "taxes-recompute" | "vault-sweep" | "vault-redeem" | "salary-day-one" | "taxes-to-local" | "salary-raise" | "structural-change" | "payment";
+export type ActionKind = "split" | "taxes-recompute" | "vault-sweep" | "vault-redeem" | "salary-day-one" | "taxes-to-local" | "salary-raise" | "structural-change" | "payment" | "swap";
 
 export interface AutonomyRecord {
   /** Consecutive tax due dates paid without incident. */
@@ -41,6 +41,9 @@ export function decideAutonomy(request: ActionRequest, record: AutonomyRecord, b
     case "vault-sweep":
     case "vault-redeem":
       return { mode: "auto" };
+    // declaring a box's currency is the user's approval of the rule, and the vault bounds every execution (price feeds and its own cap)
+    case "swap":
+      return { mode: "auto", notify: true };
     case "salary-day-one":
       return policy.signatureThreshold !== undefined && (request.amount ?? 0n) > policy.signatureThreshold ? { mode: "propose", reason: "needs-signature" } : { mode: "auto" };
     case "taxes-recompute":
@@ -73,6 +76,8 @@ export function actionClass(action: Action): ActionKind {
       return "payment";
     case "salary":
       return "salary-day-one";
+    case "swap":
+      return "swap";
   }
 }
 

@@ -102,6 +102,37 @@ describe("pause and resume", () => {
   });
 });
 
+describe("adjust currencies", () => {
+  const withSwap = { ...base, swap: { day: "2026-10-30", spent: "10", failures: 2, since: "2026-10-01", heldOn: "2026-10-30" } };
+
+  it("sets the box currencies, remembers the day, resets the failures and tells nobody", () => {
+    const result = run({ kind: "adjust", changes: { currencies: { payroll: "EUR", profit: "EUR" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.currencies).toEqual({ payroll: "EUR", operating: "USD", emergency: "USD", profit: "EUR" });
+    expect(result.next.swap).toMatchObject({ since: "2026-11-01", failures: 0, spent: "10", day: "2026-10-30" });
+    expect(result.notices).toEqual([]);
+  });
+
+  it("leaves the profile exactly as it was when nothing changes", () => {
+    const result = run({ kind: "adjust", changes: { currencies: { payroll: "USD", operating: "USD" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next).toEqual(withSwap);
+  });
+
+  it("is accepted while the breaker is halted, because it only declares", () => {
+    const halted = { ...withSwap, breaker: { halted: true, since: "2026-10-31", codes: ["daily-cap"] } };
+    const result = run({ kind: "adjust", changes: { currencies: { emergency: "EUR" } } }, halted);
+    expect(result.ok).toBe(true);
+  });
+
+  it("changes a currency together with another setting", () => {
+    const result = run({ kind: "adjust", changes: { salaryDay: 9, currencies: { operating: "EUR" } } }, withSwap);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next.salary.day).toBe(9);
+    expect(result.next.currencies.operating).toBe("EUR");
+  });
+});
+
 describe("adjust", () => {
   it("applies plain settings and refunds the cascade's view of next month's salary", () => {
     const result = run({ kind: "adjust", changes: { salaryProposed: "2000000", salaryDay: 5, payee: "0x00000000000000000000000000000000000000c3", dailyCap: "5", signatureThreshold: "6" } });

@@ -19,7 +19,8 @@ export type Action =
   | { kind: "pay"; from: BoxKind; amount: bigint; settles?: { kind: "payroll"; due: PlainDate } | { kind: "tax" }; signed?: boolean }
   | { kind: "sweep"; amount: bigint }
   | { kind: "redeem"; amount: bigint }
-  | { kind: "salary"; amount: bigint; signed?: boolean };
+  | { kind: "salary"; amount: bigint; signed?: boolean }
+  | { kind: "swap"; box: BoxKind; amount: bigint; worstLoss: bigint };
 
 const sameDay = (a: PlainDate, b: PlainDate) => daysBetween(a, b) === 0;
 
@@ -72,6 +73,13 @@ export function predict(snapshot: Snapshot, action: Action): Snapshot {
       take(snapshot.inVaults, action.amount, "redeem");
       next.inVaults -= action.amount;
       next.liquid += action.amount;
+      break;
+    case "swap":
+      // a conversion changes value only by what it can lose, so every invariant is judged at that worst case
+      take(boxes[action.box], action.amount, "swap");
+      take(action.amount, action.worstLoss, "swap (worst loss)");
+      boxes[action.box] -= action.worstLoss;
+      next.liquid -= action.worstLoss;
       break;
     case "salary":
       take(boxes.salary, action.amount, "salary");
