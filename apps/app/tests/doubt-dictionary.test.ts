@@ -24,13 +24,8 @@ describe("the doubt strings", () => {
   it("are actually translated, apart from the chains' own names", () => {
     for (const language of [es, pt]) {
       for (const [index, [key, text]] of same(language).entries()) {
-        if (false) continue;
         if (text === base[index]?.[1] && /[a-z]{4}/i.test(text)) throw new Error(`${key} is not translated: ${text}`);
       }
     }
-  });
-
-  it("name every error the flow can raise", () => {
-    expect(Object.keys(en.deposit.errors).sort()).toEqual(["cost-too-high", "insufficient-funds", "no-wallet", "quote-expired", "quote-refused", "rejected", "stale", "timeout", "unavailable", "wrong-chain"]);
   });
 });

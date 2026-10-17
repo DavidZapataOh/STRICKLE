@@ -253,13 +253,14 @@ describe("the arrival ledger and the flow books", () => {
   it("drops the oldest arrivals before it drops any history when the state would not fit", () => {
     const heavy = { ...base, history: Array.from({ length: 200 }, () => ["2026-11-03", "123456789012345678901234567890", "deposit-with-a-long-name"] as [string, string, string]), arrivals: Array.from({ length: 40 }, (_, i) => [`a1b2c3d4e${i % 10}-0`, "2026-11-03", "1200000000", "i", "U"] as [string, string, string, string, string]) };
     const decoded = decodeProfile(encodeProfile(heavy));
+    expect(decoded.arrivals.length).toBeLessThan(40);
     if (decoded.history.length < 200) expect(decoded.arrivals).toHaveLength(0);
-    expect(decoded.arrivals.length === 0 || decoded.history.length === 200).toBe(true);
   });
 
   it("refuses an owner list of more than eight, a ledger of more than forty and a malformed id", () => {
     expect(() => profileSchema.parse({ ...base, flow: { ...base.flow, owners: Array.from({ length: 9 }, () => `0x${"1".repeat(40)}`) } })).toThrow();
     expect(() => profileSchema.parse({ ...base, arrivals: Array.from({ length: 41 }, () => ["a1b2c3d4e5", "2026-11-03", "1", "i", "U"]) })).toThrow();
+    expect(() => profileSchema.parse({ ...base, arrivals: [["a1b2c3d4e5-12", "2026-11-03", "1", "i", "U"]] })).not.toThrow();
     expect(() => profileSchema.parse({ ...base, arrivals: [["not-hex-id!", "2026-11-03", "1", "i", "U"]] })).toThrow();
   });
 

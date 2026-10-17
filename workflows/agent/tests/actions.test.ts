@@ -159,7 +159,7 @@ describe("reclassify", () => {
     const result = applyAction(withIncome, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "own-transfer" }, ctx);
     if (!result.ok) throw new Error(result.reason);
     expect(result.next.history[0]?.[2]).toBe("transfer");
-    expect(result.next.arrivals[0]?.[3]).toBe("o");
+    expect(result.next.arrivals[0]?.[3]).toBe("O");
     expect(result.pay).toBeUndefined();
     expect(result.notices).toEqual([{ kind: "reclassified", arrivalId: "a1b2c3d4e5-0", amount: "500000000", from: "income", to: "own-transfer" }]);
   });
@@ -168,7 +168,21 @@ describe("reclassify", () => {
     if (!away.ok) throw new Error(away.reason);
     const back = applyAction(away.next, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "income" }, ctx);
     if (!back.ok) throw new Error(back.reason);
-    expect({ ...back.next, taxCatchUp: "0" }).toEqual(withIncome);
+    expect(back.next).toEqual(withIncome);
+  });
+  it("does not ask for the tax again however many times a correction is toggled", () => {
+    let profile = withIncome;
+    for (const to of ["own-transfer", "income", "own-transfer", "income"] as const) {
+      const step = applyAction(profile, { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to }, ctx);
+      if (!step.ok) throw new Error(step.reason);
+      profile = step.next;
+    }
+    expect(profile).toEqual(withIncome);
+  });
+  it("accepts the id of an arrival that was split into ten or more parts", () => {
+    const wide = { ...withIncome, arrivals: [["a1b2c3d4e5-10", "2026-11-03", "500000000", "i", "U"] as [string, string, string, string, string]] };
+    const result = applyAction(wide, { kind: "reclassify", arrivalId: "a1b2c3d4e5-10", to: "refund" }, ctx);
+    expect(result.ok).toBe(true);
   });
   it("asks the next income to set aside the tax it missed, once", () => {
     const own = { ...withIncome, history: [["2026-11-03", "500000000", "transfer"] as [string, string, string]], arrivals: [["a1b2c3d4e5-0", "2026-11-03", "500000000", "o", "U"] as [string, string, string, string, string]] };

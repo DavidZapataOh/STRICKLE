@@ -13,7 +13,7 @@ export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("approve"), proposalId: z.string().max(24), digest: hash32 }).strict(),
   z.object({ kind: z.literal("reject"), proposalId: z.string().max(24) }).strict(),
   z.object({ kind: z.literal("expect"), id: z.string().regex(/^[a-z0-9-]{1,12}$/), asset: z.enum(["USDC", "EURC"]), min: units, max: units, expiresInSeconds: z.number().int().min(60).max(86_400), from: address.optional() }).strict(),
-  z.object({ kind: z.literal("reclassify"), arrivalId: z.string().regex(/^[0-9a-f]{10}(-[0-9])?$/), to: z.enum(["income", "own-transfer", "refund"]), learn: address.optional() }).strict(),
+  z.object({ kind: z.literal("reclassify"), arrivalId: z.string().regex(/^[0-9a-f]{10}(-[0-9]{1,2})?$/), to: z.enum(["income", "own-transfer", "refund"]), learn: address.optional() }).strict(),
   z
     .object({ kind: z.literal("pay"), box: z.enum(["taxes", "payroll", "salary", "operating", "emergency", "profit"]), to: address, amount: units.refine((value) => BigInt(value) > 0n) })
     .strict(),

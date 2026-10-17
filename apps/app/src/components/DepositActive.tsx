@@ -227,7 +227,7 @@ export function DepositActive({ lang, t, account, endpoint = "/api/deposits", sc
           const [{ sendAgentAction }, { connectWallet }, { expectAction }] = await Promise.all([import("@/agent/send"), import("@/wallet/passkey"), import("@/agent/arrival-actions")]);
           const signer = await connectWallet("login", account.username);
           const outcome = await sendAgentAction({ wallet: signer, vault: account.vault, action: expectAction({ quote, id: `d${Date.now().toString(36)}`, from }), onPhase: () => {}, confirm: async () => true });
-          if (outcome.phase === "failed") dispatch({ type: "declare-failed" });
+          if (outcome.phase !== "confirmed") dispatch({ type: "declare-failed" });
         } catch {
           dispatch({ type: "declare-failed" });
         }

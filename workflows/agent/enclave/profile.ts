@@ -71,7 +71,7 @@ export const profileSchema = z
       })
       .strict()
       .default({ checkpoint: "", owners: [], expect: [], sent: [] }),
-    arrivals: z.array(z.tuple([z.string().regex(/^[0-9a-f]{10}(-[0-9])?$/), date, units, z.enum(["i", "o", "r"]), z.enum(["U", "E"])])).max(40).default([]),
+    arrivals: z.array(z.tuple([z.string().regex(/^[0-9a-f]{10}(-[0-9]{1,2})?$/), date, units, z.enum(["i", "o", "r", "O", "R"]), z.enum(["U", "E"])])).max(40).default([]),
     taxCatchUp: units.default("0"),
     payrolls: z.array(z.tuple([date, units])).max(24).default([]),
     taxDates: z.array(date).max(12).default([]),
@@ -124,7 +124,8 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 }
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
-  if (!existing) return submitted;
+  // the agent owns these; a first submission cannot seed them
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0" };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,

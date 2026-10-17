@@ -55,7 +55,7 @@ describe("decodeTransfers on real Arc logs", () => {
 });
 
 describe("conversions and redemptions are not arrivals", () => {
-  // No Redeemed or Swapped event exists yet on the shared test vault, so the logs are built with viem's own encoder from the contract's event ABI; Task 8 replaces them with real ones.
+  // No Redeemed or Swapped event exists yet on the shared test vault, so the logs are built with viem's own encoder from the contract's event ABI; replace them with captured logs once a real one exists.
   const redeemed = parseAbi(["event Redeemed(uint8 indexed asset, uint8 indexed box, address indexed vault, uint256 shares, uint256 assets)"]);
   const logOf = (txHash: string) => ({ address: VAULT, topics: encodeEventTopics({ abi: redeemed, eventName: "Redeemed", args: { asset: 1, box: 4, vault: VAULT } }), data: encodeAbiParameters([{ type: "uint256" }, { type: "uint256" }], [1n, 2n]), transactionHash: txHash, blockNumber: "0x10", logIndex: "0x1" });
 

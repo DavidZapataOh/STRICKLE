@@ -78,7 +78,8 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
         onPhase: (phase) => set(phase),
         confirm: async () => true,
       });
-      set(outcome.phase, outcome.reason);
+      // the relay accepted it; the card stays locked until the agent's notice arrives and replaces it
+      set(outcome.phase === "confirmed" ? "waiting" : "failed", outcome.reason);
       if (outcome.phase === "confirmed") activity.reload();
     } catch {
       set("failed");

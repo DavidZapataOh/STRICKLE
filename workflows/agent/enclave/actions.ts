@@ -16,8 +16,10 @@ export type ApplyResult =
 const MAX_DECLARED = 10n ** 15n;
 const MAX_EXPECTATIONS = 4;
 const MAX_OWNERS = 8;
+// a capital letter marks a part that had its tax set aside before it was corrected to not-income, so correcting it back owes nothing
 const CLASS_CODE = { income: "i", "own-transfer": "o", refund: "r" } as const;
-const CLASS_OF = { i: "income", o: "own-transfer", r: "refund" } as const;
+const TAXED_CODE = { income: "i", "own-transfer": "O", refund: "R" } as const;
+const CLASS_OF = { i: "income", o: "own-transfer", r: "refund", O: "own-transfer", R: "refund" } as const;
 const HISTORY_SOURCE = { income: "deposit", "own-transfer": "transfer", refund: "refund" } as const;
 const withOwner = (owners: string[], address: string): string[] => (owners.some((owner) => owner.toLowerCase() === address.toLowerCase()) || owners.length >= MAX_OWNERS ? owners : [...owners, address]);
 const ceilTax = (amount: bigint, rate: number, buffer: number, cap: bigint): bigint => {
@@ -103,13 +105,13 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
       const [, date, amount, code, assetCode] = entry;
       const from = CLASS_OF[code];
       if (from === action.to) return { ok: true, next: profile, notices: [] };
-      const arrivals = profile.arrivals.map((candidate, at) => (at === index ? ([candidate[0], date, amount, CLASS_CODE[action.to], assetCode] as typeof entry) : candidate));
+      const arrivals = profile.arrivals.map((candidate, at) => (at === index ? ([candidate[0], date, amount, (from === "income" || code === "O" || code === "R" ? TAXED_CODE : CLASS_CODE)[action.to], assetCode] as typeof entry) : candidate));
       // the history entry that recorded this part is relabelled, so the forecast and the weeks of history follow the correction; the last match is the most recent one
       const wanted = HISTORY_SOURCE[from];
       const at = profile.history.map(([d, a, s]) => d === date && a === amount && s === wanted).lastIndexOf(true);
       const history = at < 0 ? profile.history : profile.history.map((row, position) => (position === at ? ([row[0], row[1], HISTORY_SOURCE[action.to]] as typeof row) : row));
       // a payment that turns out to be income owes the taxes it skipped: the next income sets them aside, nothing is taken from boxes now
-      const owed = from !== "income" && action.to === "income" ? ceilTax(BigInt(amount), profile.taxRateBps, profile.taxBufferBps, BigInt(amount)) : 0n;
+      const owed = from !== "income" && action.to === "income" && code !== "O" && code !== "R" ? ceilTax(BigInt(amount), profile.taxRateBps, profile.taxBufferBps, BigInt(amount)) : 0n;
       const owners = action.learn !== undefined && action.to === "own-transfer" ? withOwner(profile.flow.owners, action.learn) : profile.flow.owners;
       const next: Profile = { ...profile, arrivals, history, taxCatchUp: (BigInt(profile.taxCatchUp) + owed).toString(), flow: { ...profile.flow, owners } };
       return { ok: true, next, notices: [{ kind: "reclassified", arrivalId: entry[0], amount, from, to: action.to }] };

@@ -38,7 +38,7 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
     .slice(0, MAX_PER_RUN);
   const logs = ready.length === 0 ? [] : ethBatch(runtime, ready.map(({ item, books }) => stateLogRequest(state, item.vault, books.version, books.at)));
 
-  // one head for the whole run, so every read of a vault looks at the same block
+  // one head for the whole run: the logs of every vault are read up to it; the balance is read at latest, so a deposit landing between the two shows as a race only when the logs exceed the balance
   const head = ready.length === 0 ? 0n : hexToBigInt(ethBatch(runtime, [blockNumberRequest()])[0] as Hex);
 
   ready.forEach(({ item, books }, position) => {
