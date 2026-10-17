@@ -136,3 +136,25 @@ describe("signature checks over RPC", () => {
     expect(decodeOwner(`0x${"0".repeat(24)}${account.address.slice(2).toLowerCase()}`)).toBe(account.address);
   });
 });
+
+describe("the declaration and correction actions", () => {
+  const expectAction = { kind: "expect", id: "e1", asset: "USDC", min: "490000000", max: "500000000", expiresInSeconds: 3600 };
+  const reclassify = { kind: "reclassify", arrivalId: "a1b2c3d4e5-0", to: "own-transfer" };
+  it("parse when well formed, and an inverted window still parses because the rule lives in applyAction", () => {
+    expect(actionSchema.safeParse(expectAction).success).toBe(true);
+    expect(actionSchema.safeParse({ ...expectAction, min: "5", max: "4" }).success).toBe(true);
+    expect(actionSchema.safeParse({ ...expectAction, from: `0x${"1".repeat(40)}` }).success).toBe(true);
+    expect(actionSchema.safeParse(reclassify).success).toBe(true);
+    expect(actionSchema.safeParse({ ...reclassify, learn: `0x${"1".repeat(40)}` }).success).toBe(true);
+  });
+  it("refuse a declaration that lasts under a minute or over a day, an extra key, a bad id, an unknown class and a learn that is not an address", () => {
+    for (const bad of [{ ...expectAction, expiresInSeconds: 59 }, { ...expectAction, expiresInSeconds: 86_401 }, { ...expectAction, extra: 1 }, { ...expectAction, id: "UPPER" }, { ...reclassify, arrivalId: "zz" }, { ...reclassify, to: "gift" }, { ...reclassify, learn: "nope" }]) {
+      expect(actionSchema.safeParse(bad).success, JSON.stringify(bad)).toBe(false);
+    }
+  });
+  it("hash the same however the keys were ordered", () => {
+    const a = actionSchema.parse(expectAction);
+    const b = actionSchema.parse(Object.fromEntries(Object.entries(expectAction).reverse()));
+    expect(actionHash(a)).toBe(actionHash(b));
+  });
+});

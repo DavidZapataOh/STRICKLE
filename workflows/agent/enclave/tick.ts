@@ -1,5 +1,6 @@
 // workflows/agent/enclave/tick.ts
 import { type InvariantPolicy, PROPOSAL_TTL_SECONDS, type Snapshot, cascadeSalaryOwed, decideSalary, forecast, guard } from "@strickle/brain";
+import { appendSent } from "./flow.ts";
 import { BOX_KINDS, type BoxKind, type PlainDate, formatPlainDate, parsePlainDate } from "@strickle/core";
 import type { Address } from "viem";
 import { historyOf, historyWeeksOf, seedOf } from "./history.ts";
@@ -96,7 +97,7 @@ export function planTick(profile: Profile, books: TickBooks, today: PlainDate, v
       return conclude(
         {
           kind: "salary",
-          next: finish(decision.pending, decision.payNow, month),
+          next: { ...finish(decision.pending, decision.payNow, month), flow: { ...profile.flow, sent: appendSent(profile, { payee: profile.salary.payee, amount: decision.payNow, date: today, kind: "o" }) } },
           payee: profile.salary.payee as Address,
           amount: decision.payNow,
           seen: salaryBox,

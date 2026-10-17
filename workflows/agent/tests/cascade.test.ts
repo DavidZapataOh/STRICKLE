@@ -2,7 +2,7 @@
 import { plainDate } from "@strickle/core";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { BOX_ID, planSplit } from "../enclave/cascade.ts";
+import { BOX_ID, allocateAmount, planSplit } from "../enclave/cascade.ts";
 import { profileSchema } from "../enclave/profile.ts";
 
 const live = profileSchema.parse({
@@ -96,5 +96,24 @@ describe("planSplit history", () => {
     expect(history).toHaveLength(200);
     expect(history[0][1]).toBe("2");
     expect(history.at(-1)?.[1]).toBe("1000000");
+  });
+});
+
+describe("allocateAmount", () => {
+  const taxed = { ...live, taxRateBps: 2_000 };
+  it("reserves taxes only for income, and everything else is allocated the same way", () => {
+    const income = allocateAmount(taxed, empty, 1_000_000n, { income: true });
+    const own = allocateAmount(taxed, empty, 1_000_000n, { income: false });
+    expect(income.byBox.taxes.units).toBeGreaterThan(0n);
+    expect(own.byBox.taxes.units).toBe(0n);
+    const sum = (r: typeof income) => Object.values(r.byBox).reduce((total, m) => total + m.units, 0n);
+    expect(sum(income)).toBe(1_000_000n);
+    expect(sum(own)).toBe(1_000_000n);
+  });
+  it("is what planSplit uses for income, so nothing that worked before changes", () => {
+    const direct = allocateAmount(taxed, empty, empty.unallocated, { income: true });
+    const plan = planSplit(taxed, empty, today);
+    const fromDirect = Object.entries(direct.byBox).filter(([, m]) => m.units > 0n).map(([kind, m]) => [BOX_ID[kind as keyof typeof BOX_ID], m.units]);
+    expect(plan.boxes.map((box, index) => [box, plan.amounts[index]])).toEqual(fromDirect);
   });
 });

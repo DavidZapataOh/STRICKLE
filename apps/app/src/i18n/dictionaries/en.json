@@ -552,6 +552,15 @@
       "body": "The conversion went through, but the transfer to Arc could not keep the amount you were shown. Nothing is lost: {amount} is in your wallet.",
       "send": "Send it to your vault",
       "tx": "Conversion transaction"
+    },
+    "intent": {
+      "question": "What is this money?",
+      "income": "Income: I was paid",
+      "own": "My own money moving",
+      "unsure": "Not sure — treat it as income",
+      "declareOwn": "Confirm that this is your own money",
+      "declareBody": "You will be asked for one passkey signature. It tells your agent not to set taxes aside for this deposit.",
+      "couldNotRecord": "We could not record that this is your own money; it will be treated as income. You can correct it in Activity."
     }
   },
   "pay": {
@@ -657,6 +666,28 @@
       "unauthorized": "Your session ended. Sign again to continue.",
       "rejected": "Check the fields and try again."
     }
+  },
+  "doubt": {
+    "title": "{amount} arrived and was split as income. {reason}",
+    "reason": {
+      "own-address": "It came from an address you may own",
+      "outlier-size": "It is much larger than your usual payments",
+      "amount-matches-outflow": "It is the same amount you sent out earlier",
+      "unattributed": "We could not see who sent it"
+    },
+    "itWasIncome": "It was income",
+    "itWasMine": "It was my own money",
+    "undo": "Undo",
+    "from": "from {sender}",
+    "corrected": "You marked {amount} as {to} instead of {from}.",
+    "classes": {
+      "income": "income",
+      "own-transfer": "your own money",
+      "refund": "a refund"
+    },
+    "working": "Signing…",
+    "failed": "That did not go through. Try again.",
+    "heading": "Check these deposits"
   },
   "rules": {
     "title": "Rules of your boxes",

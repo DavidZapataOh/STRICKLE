@@ -7,7 +7,8 @@ export type ReceiptKind =
   | "salary" | "salary-trim" | "salary-raise-proposal" | "payment" | "payment-proposal"
   | "taxes-to-local" | "taxes-to-local-proposal" | "structural-change-proposal" | "breaker-halt" | "breaker-reset"
   | "move" | "proposal-cancelled"
-  | "early-payment" | "early-payment-proposal";
+  | "early-payment" | "early-payment-proposal"
+  | "income-doubt" | "reclassified";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -103,6 +104,8 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   "early-payment-proposal": { values: ["net", "discount", "apr"], labels: ["to"] },
   "breaker-halt": { values: [], labels: ["reason"] },
   "breaker-reset": { values: [], labels: ["actor"] },
+  "income-doubt": { values: ["amount"], labels: ["flag"] },
+  reclassified: { values: ["amount"], labels: ["from", "to"] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -122,6 +125,19 @@ const HALT_REASONS: Record<string, Record<Lang, string>> = {
   "cushion-floor": { en: "your cushion would have dropped below its floor", es: "tu colchón bajaría de su piso", "pt-br": "sua reserva ficaria abaixo do piso" },
   "daily-cap": { en: "today's outflows would have passed the daily cap", es: "las salidas de hoy pasarían el tope diario", "pt-br": "as saídas de hoje passariam o teto diário" },
   "signature-required": { en: "an amount above the threshold needed your signature", es: "un monto sobre el umbral necesitaba tu firma", "pt-br": "um valor acima do limite precisava da sua assinatura" },
+};
+
+const DOUBT_REASONS: Record<string, Record<Lang, string>> = {
+  "own-address": { en: "It came from an address you may own", es: "Vino de una dirección que quizá es tuya", "pt-br": "Veio de um endereço que talvez seja seu" },
+  "outlier-size": { en: "It is much larger than your usual payments", es: "Es mucho mayor que tus pagos habituales", "pt-br": "É muito maior que seus pagamentos habituais" },
+  "amount-matches-outflow": { en: "It is the same amount you sent out earlier", es: "Es el mismo monto que enviaste antes", "pt-br": "É o mesmo valor que você enviou antes" },
+  unattributed: { en: "We could not see who sent it", es: "No pudimos ver quién lo envió", "pt-br": "Não conseguimos ver quem enviou" },
+};
+
+const CLASS_NAMES: Record<string, Record<Lang, string>> = {
+  income: { en: "income", es: "ingreso", "pt-br": "renda" },
+  "own-transfer": { en: "your own money", es: "tu propio dinero", "pt-br": "seu próprio dinheiro" },
+  refund: { en: "a refund", es: "un reembolso", "pt-br": "um reembolso" },
 };
 
 type Maker = (v: (key: string) => string, l: (key: string) => string, lang: Lang) => string;
@@ -216,6 +232,16 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l, lang) => `I stopped acting on my own because a safety check failed: ${HALT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money and your controls are unchanged.`,
     es: (_v, l, lang) => `Dejé de actuar por mi cuenta porque falló una verificación de seguridad: ${HALT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero y tus controles no cambiaron.`,
     "pt-br": (_v, l, lang) => `Parei de agir por conta própria porque uma verificação de segurança falhou: ${HALT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro e seus controles não mudaram.`,
+  },
+  "income-doubt": {
+    en: (v, l, lang) => `${v("amount")} arrived and was split as income. ${DOUBT_REASONS[l("flag")]?.[lang] ?? l("flag")}: if it was your own money moving, say so and the taxes set aside for it stay put until your next tax date.`,
+    es: (v, l, lang) => `${v("amount")} llegaron y se repartieron como ingreso. ${DOUBT_REASONS[l("flag")]?.[lang] ?? l("flag")}: si era tu propio dinero moviéndose, dilo y los impuestos apartados para él se quedan quietos hasta tu próxima fecha de pago.`,
+    "pt-br": (v, l, lang) => `${v("amount")} chegaram e foram divididos como renda. ${DOUBT_REASONS[l("flag")]?.[lang] ?? l("flag")}: se era seu próprio dinheiro se movendo, avise e os impostos separados para ele ficam parados até a próxima data de pagamento.`,
+  },
+  reclassified: {
+    en: (v, l, lang) => `You marked ${v("amount")} as ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} instead of ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Taxes already set aside for it stay in your taxes box until your next tax date; if it turns out to be income, the next payments set aside what is missing.`,
+    es: (v, l, lang) => `Marcaste ${v("amount")} como ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} en lugar de ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Los impuestos ya apartados para ese dinero se quedan en tu caja de impuestos hasta tu próxima fecha de pago; si resulta ser ingreso, los próximos pagos apartan lo que falte.`,
+    "pt-br": (v, l, lang) => `Você marcou ${v("amount")} como ${CLASS_NAMES[l("to")]?.[lang] ?? l("to")} em vez de ${CLASS_NAMES[l("from")]?.[lang] ?? l("from")}. Os impostos já separados para esse dinheiro ficam na sua caixa de impostos até a próxima data de pagamento; se for renda, os próximos pagamentos separam o que faltar.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,

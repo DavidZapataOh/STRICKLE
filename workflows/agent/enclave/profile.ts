@@ -61,6 +61,18 @@ export const profileSchema = z
       .default({ proposed: "0", pending: "0", payee: ZERO_ADDRESS, day: 1, lastPaid: "" }),
     limits: z.object({ dailyCap: units, signatureThreshold: units }).strict().default({ dailyCap: "0", signatureThreshold: "0" }),
     history: z.array(z.tuple([date, signed, z.string().max(24)])).max(200).default([]),
+    // What the agent has learned about money in motion, kept small: the owner never submits these (mergeProfile keeps the stored ones).
+    flow: z
+      .object({
+        checkpoint: z.union([units, z.literal("")]),
+        owners: z.array(address).max(8),
+        expect: z.array(z.object({ id: z.string().max(12), asset: z.enum(["USDC", "EURC"]), min: units, max: units, expiresAt: z.number().int().min(0) }).strict()).max(4),
+        sent: z.array(z.tuple([address, z.enum(["U", "E"]), units, date, z.enum(["o", "p"])])).max(12),
+      })
+      .strict()
+      .default({ checkpoint: "", owners: [], expect: [], sent: [] }),
+    arrivals: z.array(z.tuple([z.string().regex(/^[0-9a-f]{10}(-[0-9]{1,2})?$/), date, units, z.enum(["i", "o", "r", "O", "R"]), z.enum(["U", "E"])])).max(40).default([]),
+    taxCatchUp: units.default("0"),
     payrolls: z.array(z.tuple([date, units])).max(24).default([]),
     taxDates: z.array(date).max(12).default([]),
     clockOffsetDays: z.number().int().min(-3650).max(3650).default(0),
@@ -90,6 +102,11 @@ export function encodeProfile(profile: Profile): Uint8Array {
   // The oldest history entries go first when the state would not fit: a vault must never get stuck because its history grew.
   let current = profileSchema.parse(profile);
   let bytes = new TextEncoder().encode(JSON.stringify(canonical(current)));
+  // The arrival ledger goes before the history: it is the more disposable of the two.
+  while (bytes.length > MAX_STATE_PLAINTEXT && current.arrivals.length > 0) {
+    current = { ...current, arrivals: current.arrivals.slice(1) };
+    bytes = new TextEncoder().encode(JSON.stringify(canonical(current)));
+  }
   while (bytes.length > MAX_STATE_PLAINTEXT && current.history.length > 0) {
     current = { ...current, history: current.history.slice(1) };
     bytes = new TextEncoder().encode(JSON.stringify(canonical(current)));
@@ -107,10 +124,14 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 }
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
-  if (!existing) return submitted;
+  // the agent owns these; a first submission cannot seed them
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0" };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
+    flow: existing.flow,
+    arrivals: existing.arrivals,
+    taxCatchUp: existing.taxCatchUp,
     tick: existing.tick,
     nonce: BigInt(existing.nonce) > BigInt(submitted.nonce) ? existing.nonce : submitted.nonce,
     proposals: existing.proposals,

@@ -1,10 +1,14 @@
 "use client";
 
+import type { ArrivalClass } from "@strickle/brain";
 import type { Locale } from "@strickle/design/locale";
 import { useEffect, useRef, useState } from "react";
+import { type Doubt, correctionsOf, doubtsOf } from "@/activity/doubt";
+import { loadAnswered, saveAnswered } from "@/activity/doubt-store";
 import { verifyKeyAgainstNotices } from "@/activity/key-check";
 import { useActivity } from "@/activity/use-activity";
 import type { Session } from "@/account/session";
+import { reclassifyAction } from "@/agent/arrival-actions";
 import { confirmDecision } from "@/agent/confirm";
 import { withProposalLock } from "@/agent/lock";
 import type { FailReason, Phase } from "@/agent/outcome";
@@ -18,8 +22,10 @@ import { fill } from "@/i18n/fill";
 import type { ActivityText } from "@/i18n/slices";
 import { type NoticeKey, loadNoticeKey } from "@/keys/notice-key";
 import { connectWallet } from "@/wallet/passkey";
+import { DoubtCard } from "./DoubtCard";
 import { ProposalCard } from "./ProposalCard";
 import { ReceiptStrip } from "./ReceiptStrip";
+import { ReclassifiedStrip } from "./ReclassifiedStrip";
 import { RestoreKey } from "./RestoreKey";
 
 type Progress = { phase: Phase; reason?: FailReason; decision?: "approve" | "reject"; anotherTab?: boolean };
@@ -31,6 +37,7 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
   const [unverified, setUnverified] = useState(false);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState<Record<string, Progress>>({});
+  const [answered, setAnswered] = useState<ReadonlySet<string>>(() => loadAnswered(session.vault));
   const wallet = useRef<Awaited<ReturnType<typeof connectWallet>> | undefined>(undefined);
 
   useEffect(() => {
@@ -60,6 +67,30 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
     if (!run.ran) set("idle", undefined, true);
   };
 
+  const correct = async (arrivalId: string, to: ArrivalClass, learn?: Doubt["sender"]) => {
+    const set = (phase: Phase, reason?: FailReason) => setProgress((current) => ({ ...current, [arrivalId]: { phase, reason } }));
+    try {
+      wallet.current ??= await connectWallet("login", session.username);
+      const outcome = await sendAgentAction({
+        wallet: wallet.current,
+        vault: session.vault,
+        action: reclassifyAction({ arrivalId, to, ...(learn ? { learn } : {}) }),
+        onPhase: (phase) => set(phase),
+        confirm: async () => true,
+      });
+      // the relay accepted it; the card stays locked until the agent's notice arrives and replaces it
+      set(outcome.phase === "confirmed" ? "waiting" : "failed", outcome.reason);
+      if (outcome.phase === "confirmed") activity.reload();
+    } catch {
+      set("failed");
+    }
+  };
+  const acknowledge = (arrivalId: string) => {
+    const next = new Set(answered).add(arrivalId);
+    setAnswered(next);
+    saveAnswered(session.vault, next);
+  };
+
   if (key === undefined || activity.status === "loading") return <p aria-live="polite">{copy.loading}</p>;
   if (activity.status === "error") {
     return (
@@ -72,6 +103,8 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
     );
   }
 
+  const doubts = doubtsOf(activity.notices, answered);
+  const corrections = correctionsOf(activity.notices);
   const pending = activity.proposals.filter((proposal) => proposal.state === "pending" || progress[proposal.proposalId]);
   return (
     <div className="activity">
@@ -118,6 +151,32 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
               />
             );
           })}
+        </section>
+      ) : null}
+      {doubts.length > 0 || corrections.length > 0 ? (
+        <section aria-labelledby="doubt-heading">
+          <h2 id="doubt-heading" className="section-title">{t.doubt.heading}</h2>
+          {doubts.map((doubt) => (
+            <DoubtCard
+              key={doubt.arrivalId}
+              doubt={doubt}
+              locale={lang}
+              t={t}
+              phase={progress[doubt.arrivalId]?.phase ?? "idle"}
+              onIncome={() => acknowledge(doubt.arrivalId)}
+              onMine={() => void correct(doubt.arrivalId, "own-transfer", doubt.sender ?? undefined)}
+            />
+          ))}
+          {corrections.map((correction) => (
+            <ReclassifiedStrip
+              key={correction.arrivalId}
+              correction={correction}
+              locale={lang}
+              t={t}
+              phase={progress[correction.arrivalId]?.phase ?? "idle"}
+              onUndo={() => void correct(correction.arrivalId, correction.from)}
+            />
+          ))}
         </section>
       ) : null}
       </AgentOnly>

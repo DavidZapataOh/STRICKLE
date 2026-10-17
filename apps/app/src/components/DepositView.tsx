@@ -140,6 +140,29 @@ export function DepositView({ lang, t, state, wallets, vault, onEvent, actions =
           value={state.sourceId}
           onChange={(id) => onEvent({ type: "chain", id })}
         />
+        {!lockedAmount ? (
+          <ChoiceGroup
+            name="deposit-intent"
+            legend={d.intent.question}
+            options={[
+              { value: "income" as const, label: d.intent.income },
+              { value: "own" as const, label: d.intent.own },
+              { value: "unsure" as const, label: d.intent.unsure },
+            ]}
+            value={state.intent}
+            onChange={(value) => onEvent({ type: "intent", value })}
+          />
+        ) : null}
+        {!lockedAmount && state.intent === "own" ? (
+          <p className="note">
+            <strong>{d.intent.declareOwn}</strong> {d.intent.declareBody}
+          </p>
+        ) : null}
+        {state.declareFailed ? (
+          <p className="note" role="status">
+            {d.intent.couldNotRecord}
+          </p>
+        ) : null}
         {!lockedAmount && state.sourceId && usdtChainsFor(state.network).some((chain) => chain.id === state.sourceId) ? (
           <ChoiceGroup
             name="deposit-token"

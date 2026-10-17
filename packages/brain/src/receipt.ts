@@ -2,7 +2,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { type Facts, type Lang, type NumberStyle, type ReceiptKind, template } from "./templates.ts";
 
-export type UndoHow = "redeem" | "sweep" | "move-back" | "restore-rate" | "cancel-proposal";
+export type UndoHow = "redeem" | "sweep" | "move-back" | "restore-rate" | "cancel-proposal" | "reclassify-back";
 export type UndoSummary = { undoable: true; how: UndoHow } | { undoable: false; reason: string };
 
 export interface Receipt {
@@ -45,6 +45,7 @@ const IRREVERSIBLE: Partial<Record<ReceiptKind, string>> = {
   "breaker-halt": "This records a safety stop; there is nothing to undo.",
   "breaker-reset": "This records a human reset; there is nothing to undo.",
   "early-payment": "The payment has left your accounts, so it cannot be taken back.",
+  "income-doubt": "There is nothing to undo; you can mark it as your own money.",
   split: "The money now sits in its boxes under their locks; it can be adjusted by moving between boxes, and the locks apply.",
 };
 
@@ -57,6 +58,7 @@ const REVERSIBLE: Partial<Record<ReceiptKind, UndoHow>> = {
   "salary-raise-proposal": "cancel-proposal",
   "structural-change-proposal": "cancel-proposal",
   "early-payment-proposal": "cancel-proposal",
+  reclassified: "reclassify-back",
 };
 
 export function undoSummary(kind: ReceiptKind, undoes?: string): UndoSummary {
@@ -82,6 +84,7 @@ export const UNDO_KIND: Partial<Record<ReceiptKind, ReceiptKind>> = {
   "salary-raise-proposal": "proposal-cancelled",
   "structural-change-proposal": "proposal-cancelled",
   "early-payment-proposal": "proposal-cancelled",
+  reclassified: "reclassified",
 };
 
 export function buildReceipt(input: { kind: ReceiptKind; ruleId: string; facts: Facts; createdAt: number; sequence: number; undoes?: string; styles?: Partial<Record<Lang, NumberStyle>> }): Receipt {

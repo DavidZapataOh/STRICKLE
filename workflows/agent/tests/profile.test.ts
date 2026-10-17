@@ -231,3 +231,45 @@ describe("tax dates", () => {
     expect(mergeProfile(existing, submitted).taxDates).toEqual(["2026-12-17"]);
   });
 });
+
+describe("the arrival ledger and the flow books", () => {
+  const base = complete;
+  it("parse as empty on every state stored before they existed", () => {
+    expect(base.flow).toEqual({ checkpoint: "", owners: [], expect: [], sent: [] });
+    expect(base.arrivals).toEqual([]);
+    expect(base.taxCatchUp).toBe("0");
+  });
+
+  it("stay under the state ceiling when completely full, next to a full history", () => {
+    const full = {
+      ...base,
+      history: Array.from({ length: 200 }, (_, i) => [`2026-0${1 + (i % 9)}-1${i % 9}`, "123456789012", "deposit"] as [string, string, string]),
+      arrivals: Array.from({ length: 40 }, (_, i) => [`a1b2c3d4e${i % 10}-0`, "2026-11-03", "1200000000", "i", "U"] as [string, string, string, string, string]),
+      flow: { checkpoint: "67534669", owners: Array.from({ length: 8 }, (_, i) => `0x${String(i).repeat(40)}`), expect: Array.from({ length: 4 }, (_, i) => ({ id: `exp-${i}`, asset: "USDC" as const, min: "1000000", max: "2000000", expiresAt: 1_800_000_000 })), sent: Array.from({ length: 12 }, (_, i) => [`0x${String(i % 10).repeat(40)}`, "U", "300000000", "2026-11-07", "o"] as [string, string, string, string, string]) },
+    };
+    expect(encodeProfile(full).length).toBeLessThanOrEqual(MAX_STATE_PLAINTEXT);
+  });
+
+  it("drops the oldest arrivals before it drops any history when the state would not fit", () => {
+    const heavy = { ...base, history: Array.from({ length: 200 }, () => ["2026-11-03", "123456789012345678901234567890", "deposit-with-a-long-name"] as [string, string, string]), arrivals: Array.from({ length: 40 }, (_, i) => [`a1b2c3d4e${i % 10}-0`, "2026-11-03", "1200000000", "i", "U"] as [string, string, string, string, string]) };
+    const decoded = decodeProfile(encodeProfile(heavy));
+    expect(decoded.arrivals.length).toBeLessThan(40);
+    if (decoded.history.length < 200) expect(decoded.arrivals).toHaveLength(0);
+  });
+
+  it("refuses an owner list of more than eight, a ledger of more than forty and a malformed id", () => {
+    expect(() => profileSchema.parse({ ...base, flow: { ...base.flow, owners: Array.from({ length: 9 }, () => `0x${"1".repeat(40)}`) } })).toThrow();
+    expect(() => profileSchema.parse({ ...base, arrivals: Array.from({ length: 41 }, () => ["a1b2c3d4e5", "2026-11-03", "1", "i", "U"]) })).toThrow();
+    expect(() => profileSchema.parse({ ...base, arrivals: [["a1b2c3d4e5-12", "2026-11-03", "1", "i", "U"]] })).not.toThrow();
+    expect(() => profileSchema.parse({ ...base, arrivals: [["not-hex-id!", "2026-11-03", "1", "i", "U"]] })).toThrow();
+  });
+
+  it("a resubmitted profile never overwrites what the agent learned", () => {
+    const existing = { ...base, flow: { ...base.flow, owners: [`0x${"a".repeat(40)}`], checkpoint: "10" }, arrivals: [["a1b2c3d4e5", "2026-11-03", "1", "i", "U"] as [string, string, string, string, string]], taxCatchUp: "5" };
+    const merged = mergeProfile(existing, { ...base, taxRateBps: 1_500 });
+    expect(merged.flow).toEqual(existing.flow);
+    expect(merged.arrivals).toEqual(existing.arrivals);
+    expect(merged.taxCatchUp).toBe("5");
+    expect(merged.taxRateBps).toBe(1_500);
+  });
+});
