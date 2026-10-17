@@ -163,3 +163,20 @@ describe("needsRequote", () => {
     expect(needsRequote(at(null), 0)).toBe(false);
   });
 });
+
+describe("what the deposit is", () => {
+  it("is income unless the user says otherwise, and can be changed before sending", () => {
+    expect(initialDeposit("testnet").intent).toBe("income");
+    expect(run([{ type: "intent", value: "own" }]).intent).toBe("own");
+    expect(run([{ type: "intent", value: "own" }, { type: "intent", value: "unsure" }]).intent).toBe("unsure");
+  });
+  it("does not void a quote, because it does not change what is sent", () => {
+    const quoted = run([{ type: "chain", id: "Base_Sepolia" }, { type: "amount", value: 5_000_000n }, { type: "wallet", wallet, account: "0xabc" as never }, { type: "quoted", quote }]);
+    expect(depositReducer(quoted, { type: "intent", value: "own" }).quote).toBe(quote);
+  });
+  it("remembers that the declaration could not be recorded, and clears it on reset", () => {
+    const failed = run([{ type: "declare-failed" }]);
+    expect(failed.declareFailed).toBe(true);
+    expect(depositReducer(failed, { type: "reset" }).declareFailed).toBe(false);
+  });
+});

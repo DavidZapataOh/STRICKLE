@@ -28,7 +28,7 @@ const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "cont
 
 /** The wallet and kit work of the deposit screen. The bridge code is imported only after a wallet is chosen. */
 /** `endpoint`, `scope` and `target` let a payment link reuse the whole flow: its own routes, its own pending record, and the amount due as the amount (USDC only). */
-export function DepositActive({ lang, t, account, endpoint = "/api/deposits", scope, target }: { lang: Locale; t: DepositText; account: Pick<Account, "vault">; endpoint?: string; scope?: string; target?: bigint }) {
+export function DepositActive({ lang, t, account, endpoint = "/api/deposits", scope, target }: { lang: Locale; t: DepositText; account: Pick<Account, "vault"> & { username?: string }; endpoint?: string; scope?: string; target?: bigint }) {
   const store = useMemo(() => pendingStore(scope), [scope]);
   const [state, dispatch] = useReducer(depositReducer, undefined, () => initialDeposit(appNetwork()));
   const [wallets, setWallets] = useState<InjectedWallet[]>([]);
@@ -221,7 +221,18 @@ export function DepositActive({ lang, t, account, endpoint = "/api/deposits", sc
       }
       connection.module.assertConfirmable(quote);
       const usdt = state.inputToken === "USDT";
-      const created = await fetch(endpoint, json({ vault: account.vault, sourceChain: chosen, sourceAddress: from, amount: quote.amountSent.toString(), speed: chosenSpeed, feeMode: usdt ? "destination" : leg.feeMode, intent: "income", inputToken: state.inputToken }));
+      // "my own money": one passkey signature tells the agent not to set taxes aside for it; if that fails the deposit goes on as income and the screen says so
+      if (state.intent === "own" && account.username !== undefined) {
+        try {
+          const [{ sendAgentAction }, { connectWallet }, { expectAction }] = await Promise.all([import("@/agent/send"), import("@/wallet/passkey"), import("@/agent/arrival-actions")]);
+          const signer = await connectWallet("login", account.username);
+          const outcome = await sendAgentAction({ wallet: signer, vault: account.vault, action: expectAction({ quote, id: `d${Date.now().toString(36)}`, from }), onPhase: () => {}, confirm: async () => true });
+          if (outcome.phase === "failed") dispatch({ type: "declare-failed" });
+        } catch {
+          dispatch({ type: "declare-failed" });
+        }
+      }
+      const created = await fetch(endpoint, json({ vault: account.vault, sourceChain: chosen, sourceAddress: from, amount: quote.amountSent.toString(), speed: chosenSpeed, feeMode: usdt ? "destination" : leg.feeMode, intent: state.intent, inputToken: state.inputToken }));
       const record = (await created.json()) as { status: string; id?: string };
       if (record.status !== "created" || !record.id) throw new Error(`the deposit was not recorded: ${record.status}`);
       const id = record.id;

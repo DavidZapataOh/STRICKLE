@@ -11,11 +11,10 @@ const view = (state = initialDeposit("testnet"), t: typeof en = en, lang: "en" |
   renderToStaticMarkup(<DepositView lang={lang} t={depositText(t)} state={state} wallets={[]} vault="0x8AB41267Adc223EF245c46537870Ae8744b9b3F8" onEvent={() => {}} />);
 
 describe("DepositView", () => {
-  it("offers the listed chains and a decimal amount field, and asks no question about the money", () => {
+  it("offers the listed chains and a decimal amount field, and keeps the deposit steps to chain, intent, amount and speed", () => {
     const out = view();
     expect(out).toContain("Base");
     expect(out).toContain('inputMode="decimal"');
-    expect(out).not.toContain("own money");
   });
 
   it("tells the user when Circle applied another speed than the one chosen", () => {
@@ -115,5 +114,27 @@ describe("errors", () => {
       expect(describeError(code, depositText(en))).toBe(en.deposit.errors[code]);
       expect(describeError(code, depositText(es as typeof en))).toBe(es.deposit.errors[code]);
     }
+  });
+});
+
+describe("the question about the money", () => {
+  it("asks what the money is, with income checked first", () => {
+    const out = view();
+    expect(out).toContain("What is this money?");
+    expect(out).toContain("Income: I was paid");
+    expect(out).toContain("My own money moving");
+    expect(out).toContain("Not sure — treat it as income");
+    expect(out).toMatch(/name="deposit-intent" checked="" value="income"/);
+    expect(out).not.toMatch(/name="deposit-intent" checked="" value="own"/);
+  });
+  it("explains the signature when the user says it is their own money, and says so when it could not be recorded", () => {
+    const own = view({ ...initialDeposit("testnet"), intent: "own" });
+    expect(own).toContain("Confirm that this is your own money");
+    expect(own).toContain("one passkey signature");
+    expect(view({ ...initialDeposit("testnet"), declareFailed: true })).toContain("it will be treated as income");
+    expect(view()).not.toContain("Confirm that this is your own money");
+  });
+  it("is in Spanish too", () => {
+    expect(view(initialDeposit("testnet"), es as typeof en, "es")).toContain("¿Qué es este dinero?");
   });
 });

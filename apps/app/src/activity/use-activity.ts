@@ -57,8 +57,11 @@ export function useActivity(args: { vault: Address; key: NoticeKey | null; local
   const receipts: TimelineReceipt[] = useMemo(() => (loaded.data ? buildReceipts(loaded.data.receipts, locale) : []), [loaded.data, locale]);
   const proposals: TimelineProposal[] = useMemo(() => foldProposals(opened, loaded.at), [opened, loaded.at]);
 
+  const notices = useMemo(() => [...opened].sort((a, b) => (a.id < b.id ? -1 : 1)).flatMap((item) => (item.notice ? [item.notice] : [])), [opened]);
+
   return {
     status: loaded.status,
+    notices,
     receipts,
     proposals,
     sealed,

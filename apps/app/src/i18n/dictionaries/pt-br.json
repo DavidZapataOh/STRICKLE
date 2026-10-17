@@ -552,6 +552,15 @@
       "body": "A conversão foi feita, mas a transferência para a Arc não conseguiu manter o valor que você viu. Nada se perdeu: {amount} estão na sua carteira.",
       "send": "Enviar ao seu cofre",
       "tx": "Transação de conversão"
+    },
+    "intent": {
+      "question": "O que é este dinheiro?",
+      "income": "Renda: me pagaram",
+      "own": "Meu próprio dinheiro em movimento",
+      "unsure": "Não tenho certeza: trate como renda",
+      "declareOwn": "Confirme que este é seu próprio dinheiro",
+      "declareBody": "Pediremos uma assinatura com sua passkey. Ela diz ao seu agente para não separar impostos para este depósito.",
+      "couldNotRecord": "Não conseguimos registrar que este é seu próprio dinheiro; será tratado como renda. Você pode corrigir em Atividade."
     }
   },
   "pay": {
@@ -657,6 +666,28 @@
       "unauthorized": "Sua sessão terminou. Assine de novo para continuar.",
       "rejected": "Confira os campos e tente de novo."
     }
+  },
+  "doubt": {
+    "title": "{amount} chegaram e foram divididos como renda. {reason}",
+    "reason": {
+      "own-address": "Veio de um endereço que talvez seja seu",
+      "outlier-size": "É muito maior que seus pagamentos habituais",
+      "amount-matches-outflow": "É o mesmo valor que você enviou antes",
+      "unattributed": "Não conseguimos ver quem enviou"
+    },
+    "itWasIncome": "Era renda",
+    "itWasMine": "Era meu próprio dinheiro",
+    "undo": "Desfazer",
+    "from": "de {sender}",
+    "corrected": "Você marcou {amount} como {to} em vez de {from}.",
+    "classes": {
+      "income": "renda",
+      "own-transfer": "seu próprio dinheiro",
+      "refund": "um reembolso"
+    },
+    "working": "Assinando…",
+    "failed": "Não foi concluído. Tente de novo.",
+    "heading": "Confira estes depósitos"
   },
   "rules": {
     "title": "Regras das suas caixas",

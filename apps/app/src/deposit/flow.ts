@@ -5,6 +5,7 @@ import type { InjectedWallet } from "../wallet/injected.ts";
 
 export type DepositStep = "chain" | "wallet" | "quote" | "sending" | "waiting" | "arrived" | "failed" | "held";
 export type InputToken = "USDC" | "USDT";
+export type DepositIntent = "income" | "own" | "unsure";
 export type DepositError = "no-wallet" | "rejected" | "wrong-chain" | "insufficient-funds" | "quote-refused" | "quote-expired" | "unavailable" | "timeout" | "cost-too-high" | "stale";
 
 export interface DepositState {
@@ -12,6 +13,10 @@ export interface DepositState {
   network: ArcNetworkName;
   sourceId: string | null;
   inputToken: InputToken;
+  /** What the person says the money is: only "own" does anything (a signed declaration); the others are income. */
+  intent: DepositIntent;
+  /** The signed declaration of own money could not be recorded, so the deposit goes on as income. */
+  declareFailed: boolean;
   swapTx: Hex | null;
   /** What the conversion credited to the wallet, from its receipt. */
   converted: bigint | null;
@@ -31,6 +36,8 @@ export interface DepositState {
 export type DepositEvent =
   | { type: "chain"; id: string }
   | { type: "token"; value: InputToken }
+  | { type: "intent"; value: DepositIntent }
+  | { type: "declare-failed" }
   | { type: "amount"; value: bigint | null }
   | { type: "swapped"; swapTx: Hex; credited: bigint }
   | { type: "held"; amount: bigint; swapTx: Hex }
@@ -51,6 +58,8 @@ export const initialDeposit = (network: ArcNetworkName): DepositState => ({
   network,
   sourceId: null,
   inputToken: "USDC",
+  intent: "income",
+  declareFailed: false,
   swapTx: null,
   converted: null,
   amount: null,
@@ -82,6 +91,10 @@ export function depositReducer(state: DepositState, event: DepositEvent): Deposi
       return EDITABLE.includes(state.step) && event.id !== state.sourceId ? edited(state, { sourceId: event.id }) : state;
     case "token":
       return EDITABLE.includes(state.step) && event.value !== state.inputToken ? edited(state, { inputToken: event.value }) : state;
+    case "intent":
+      return EDITABLE.includes(state.step) ? { ...state, intent: event.value, declareFailed: false } : state;
+    case "declare-failed":
+      return { ...state, declareFailed: true };
     case "swapped":
       return { ...state, swapTx: event.swapTx, converted: event.credited };
     case "held":
