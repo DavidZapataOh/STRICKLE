@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { onrampKey } from "../support/onramp-keys.ts";
 import { getAddress } from "viem";
 import { migrate } from "@strickle/db";
 import { invoiceKeys } from "@strickle/db/invoice-keys";
@@ -12,7 +13,7 @@ import { type CardDeps, handleCardSession, handleCardStatus } from "../../src/se
 
 const keys = invoiceKeys(randomBytes(32).toString("base64"));
 const VAULT = `0x${"ab".repeat(20)}`;
-const config = onrampConfig({ ONRAMP_API_KEY: "TEST_API_KEY:a:b", ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet");
+const config = onrampConfig({ ONRAMP_API_KEY: onrampKey("TEST", "a:b"), ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet");
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let asked: Parameters<CardDeps["mint"]>[0][];
 let deps: (over?: Partial<CardDeps>) => CardDeps;

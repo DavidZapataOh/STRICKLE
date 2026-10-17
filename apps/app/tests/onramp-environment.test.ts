@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { onrampKey } from "./support/onramp-keys.ts";
 import { PRODUCTION, SANDBOX, assetScope, destinationChain, onrampConfig } from "../src/onramp/environment.ts";
 
-const key = "TEST_API_KEY:abc123:def456";
+const key = onrampKey("TEST", "abc123:def456");
 const env = { ONRAMP_API_KEY: key, ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" };
 
 describe("onrampConfig", () => {
@@ -11,7 +12,7 @@ describe("onrampConfig", () => {
   });
 
   it("is production on mainnet", () => {
-    expect(onrampConfig({ ...env, ONRAMP_API_KEY: "LIVE_API_KEY:abc123:def456" }, "mainnet")).toMatchObject({ environment: "production", apiBaseUrl: PRODUCTION.api, widgetBaseUrl: PRODUCTION.widget });
+    expect(onrampConfig({ ...env, ONRAMP_API_KEY: onrampKey("LIVE", "abc123:def456") }, "mainnet")).toMatchObject({ environment: "production", apiBaseUrl: PRODUCTION.api, widgetBaseUrl: PRODUCTION.widget });
   });
 
   it("is off when the key or the embedding domain is missing", () => {
@@ -21,8 +22,8 @@ describe("onrampConfig", () => {
   });
 
   it("refuses a key issued for the other environment", () => {
-    expect(onrampConfig({ ...env, ONRAMP_API_KEY: "LIVE_API_KEY:abc:def" }, "testnet")).toBeNull();
-    expect(onrampConfig({ ...env, ONRAMP_API_KEY: "TEST_API_KEY:abc:def" }, "mainnet")).toBeNull();
+    expect(onrampConfig({ ...env, ONRAMP_API_KEY: onrampKey("LIVE", "abc:def") }, "testnet")).toBeNull();
+    expect(onrampConfig({ ...env, ONRAMP_API_KEY: onrampKey("TEST", "abc:def") }, "mainnet")).toBeNull();
   });
 
   it("refuses an embedding domain that is not a bare hostname", () => {

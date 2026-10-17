@@ -1,4 +1,5 @@
 import { createSign, generateKeyPairSync, randomBytes } from "node:crypto";
+import { onrampKey } from "../support/onramp-keys.ts";
 import { readFileSync } from "node:fs";
 import { readMemoPayments } from "@strickle/arc/memo";
 import { networks } from "@strickle/arc/networks";
@@ -28,7 +29,7 @@ beforeAll(async () => {
   await migrate(db.sql);
   deps = {
     env: { RELAY_IP_PEPPER: "p".repeat(32) }, sql: db.sql, keys, limiter: createLimiter(db.sql), network: "testnet", chainId: 5042002, usdc: USDC, chain,
-    onramp: onrampConfig({ ONRAMP_API_KEY: "TEST_API_KEY:a:b", ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet"),
+    onramp: onrampConfig({ ONRAMP_API_KEY: onrampKey("TEST", "a:b"), ONRAMP_REFERRER_DOMAIN: "app.strickle.xyz" }, "testnet"),
     mint: async (params) => ({ sessionId: "circle-flow-1", sessionToken: "tok", widgetUrl: "https://onramp-sandbox.arc.io/?t=tok", expiresAt: new Date(Date.now() + 1_800_000).toISOString(), destinationWallet: params.destinationAddress }),
   };
 });

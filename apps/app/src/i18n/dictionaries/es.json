@@ -587,7 +587,20 @@
     "copied": "Dirección copiada",
     "copyFailed": "Tu navegador bloqueó el copiado. Selecciona la dirección y cópiala a mano.",
     "noWallet": "No se encontró ninguna billetera en este navegador. Usa la dirección de abajo.",
-    "paymentFailed": "El pago no se completó. No se cobró nada. Inténtalo de nuevo."
+    "paymentFailed": "El pago no se completó. No se cobró nada. Inténtalo de nuevo.",
+    "card": {
+      "option": "Pagar con tarjeta",
+      "body": "Tarjeta de débito, Apple Pay o Google Pay. El servicio de la tarjeta te cobra comisiones; la factura se acredita con lo que llegue.",
+      "minting": "Preparando el formulario de la tarjeta",
+      "waiting": "Esperando a que se confirme el pago",
+      "settled": "Pago recibido.",
+      "blocked": "El navegador integrado de tu app bloquea el formulario de la tarjeta. Abre esta página en tu navegador normal o paga de otra forma.",
+      "closed": "Esta factura ya no se puede pagar con tarjeta.",
+      "unavailable": "Los pagos con tarjeta no están disponibles ahora. Inténtalo de nuevo o paga de otra forma.",
+      "expired": "El pago todavía puede llegar y la factura se actualiza sola. Puedes salir de esta página.",
+      "notCompleted": "El pago con tarjeta no se completó. No se cobró nada.",
+      "retry": "Intentar de nuevo"
+    }
   },
   "invoices": {
     "title": "Facturas",
