@@ -97,6 +97,17 @@ A client can pay an invoice with a debit card, Apple Pay or Google Pay through C
 - **Fees.** The card service's fees come out of what the payer buys, so the invoice shows the amount that arrived, usually partial. No fee, limit or country is stated on the page because none is documented.
 - **Launch checklist (production).** KYB approved; the production key (`LIVE_API_KEY:...`); a notification subscription for the production URL; `ONRAMP_REFERRER_DOMAIN` set to the production host; one real small purchase; the captured production notification compared with `apps/app/tests/fixtures/onramp/settled.json` (provisional until then). No public copy mentions card payments before that purchase has succeeded.
 
+## Arrival classification
+
+The agent reads each deposit as it arrives and decides whether it is income (taxes are set aside) or the person's own money (they are not). Everything else in the split is the same either way.
+
+- **Evidence.** Money counts as not income only with affirmative evidence: a passkey-signed declaration ("this deposit is my own money", a size window and a two-hour expiry), or a return of money the vault sent out within the last 90 days. Anything else is income. An arrival that looks doubtful (an address the person marked as their own, a size ten times their usual, the same amount they sent out, a sender nobody can see) is still split as income and raises one notice, "check this deposit", that the person answers with one signature.
+- **Who sent it.** The sender of a bridged or card deposit is Circle's contract, never the depositor, so it is never read as the person's own address. A declaration is matched by amount window and expiry only.
+- **Windows.** Outflows are remembered for 180 days and matched for 90. The sealed state keeps the newest 12 outflows, 8 owner addresses, 4 declarations and 40 arrivals; when it grows past its budget the oldest history goes first, then the oldest arrivals, never a declaration or a checkpoint.
+- **Log window.** One run reads at most 50,000 blocks of transfers (the public Arc node returned 100,000 blocks in 241 ms and refused 200,000). A vault whose checkpoint is older than that reads only the newest window, and the older remainder is income flagged as unattributed: it is never lost and never blocks the vault. A transfer newer than about ten minutes that the balance read has not caught up with makes the run skip that vault until the next one.
+- **Corrections.** "It was my own money" and "Undo" are signed actions the agent applies to the history and the learned owner addresses. Taxes already set aside for a corrected arrival stay in the taxes box until the next tax date and come back with the usual settlement refund; turning own money back into income asks the next income for a catch-up, so a round trip can over-reserve until that date.
+- **Not yet remembered.** Money the owner withdraws directly from the vault, without the agent, is not recorded as an outflow, so sending it back is income unless the address is already known. A follow-up can scan the vault's withdrawal events now that the log window is measured.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
