@@ -193,3 +193,12 @@ describe("the daily plan notice", () => {
     expect(plans(plan.notices)[0]).toMatchObject({ salary: { binding: "insufficient-history" }, forecast: { basis: "estimate" } });
   });
 });
+
+describe("the salary the agent pays on its own", () => {
+  it("is remembered as money sent to the owner's payee", () => {
+    const due = { ...base, salary: { ...base.salary, day: today.day, lastPaid: "" } };
+    const plan = planTick(due, books(), today, vault, NOW);
+    if (plan.kind !== "salary") throw new Error(`expected a salary, got ${plan.kind}`);
+    expect(plan.next.flow.sent).toEqual([[payee, "U", String(plan.amount), "2026-11-01", "o"]]);
+  });
+});

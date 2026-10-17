@@ -1,5 +1,6 @@
-import type { Asset } from "@strickle/core";
+import { type Asset, type PlainDate, daysBetween, parsePlainDate, formatPlainDate } from "@strickle/core";
 import { type Address, type Hex, hexToBigInt, keccak256, toBytes, toEventSelector } from "viem";
+import type { Profile } from "./profile.ts";
 import { type RpcRequest, logsRangeRequest, topic } from "./rpc.ts";
 
 const TRANSFER_TOPIC = keccak256(toBytes("Transfer(address,address,uint256)"));
@@ -85,4 +86,13 @@ export function attribute(input: { transfers: Transfer[]; unallocated: bigint; h
     sum += transfer.amount;
   }
   return { arrivals, unexplained: input.unallocated - sum, checkpoint: input.head };
+}
+
+const SENT_RETENTION_DAYS = 180;
+const MAX_SENT = 12;
+
+/** Money the vault paid out, remembered so that the same money coming back is recognised as not income: the newest twelve, none older than 180 days. */
+export function appendSent(profile: Profile, entry: { payee: string; amount: bigint; date: PlainDate; kind: "o" | "p"; asset?: "U" | "E" }): Profile["flow"]["sent"] {
+  const kept = profile.flow.sent.filter((old) => daysBetween(parsePlainDate(old[3]), entry.date) <= SENT_RETENTION_DAYS);
+  return [...kept, [entry.payee, entry.asset ?? "U", entry.amount.toString(), formatPlainDate(entry.date), entry.kind] as Profile["flow"]["sent"][number]].slice(-MAX_SENT);
 }
