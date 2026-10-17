@@ -14,3 +14,4 @@ export * from "./parameters.ts";
 export * from "./income.ts";
 export * from "./yield.ts";
 export * from "./yield-budget.ts";
+export * from "./yield-fee.ts";

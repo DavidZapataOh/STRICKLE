@@ -214,10 +214,10 @@ describe("conversions", () => {
 describe("yield moves", () => {
   const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
   const earnFacts = (apy = 420): Facts => ({ kind: "earn", values: { amount: usdc(500_000_000n), apy: { type: "bps", value: apy } }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
-  const backFacts = (): Facts => ({ kind: "earn-back", values: { amount: usdc(500_000_000n) }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
+  const backFacts = (): Facts => ({ kind: "earn-back", values: { amount: usdc(500_000_000n), gain: usdc(12_500_000n), fee: usdc(1_250_000n) }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
   it("keeps the English wording of a deposit and of a withdrawal", () => {
     expect(template(earnFacts(), "en", "en-US")).toBe("Your Profit box put 500.00 USDC to work in EarnKit USDC Vault (Morpho, 4.2% a year when it started). The rate changes and the value can go down; you can take it back at any time.");
-    expect(template(backFacts(), "en", "en-US")).toBe("Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho).");
+    expect(template(backFacts(), "en", "en-US")).toBe("Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho). It earned 12.50 USDC while it was there; the ten percent fee on that, 1.25 USDC, is shown here and is not charged on testnet.");
   });
   it.each(["en", "es", "pt-br"] as const)("names the vault, the protocol and the rate in %s and leaves no placeholder", (lang) => {
     for (const facts of [earnFacts(), backFacts()]) {
@@ -268,6 +268,18 @@ describe("why the agent moved money", () => {
       expect(text).not.toMatch(/[{}]|undefined/);
       for (const part of parts) expect(text).toContain(part);
     }
+  });
+});
+
+describe("the invitation to switch yield on", () => {
+  const invite = (apy = 420): Facts => ({ kind: "yield-invite", values: { apy: { type: "bps", value: apy } }, labels: {} });
+  it("keeps the English wording and quotes the rate", () => {
+    expect(template(invite(), "en", "en-US")).toBe("Your money can work while it waits: a vault pays about 4.2% a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need within sixty days is ever used.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names the rate, warns the value can go down and leaves no placeholder in %s", (lang) => {
+    const text = template(invite(), lang, "en-US");
+    expect(text).not.toMatch(/[{}]|undefined/);
+    expect(text).toContain("4.2%");
   });
 });
 

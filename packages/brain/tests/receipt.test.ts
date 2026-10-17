@@ -150,6 +150,7 @@ describe("receipts of income doubts and corrections", () => {
     expect(undoSummary("earn-back")).toMatchObject({ undoable: false });
     expect(undoSummary("earn-held")).toMatchObject({ undoable: false });
     expect(undoSummary("yield-plan")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-invite")).toMatchObject({ undoable: false });
     expect(undoSummary("yield-back")).toMatchObject({ undoable: false });
     expect(undoSummary("yield-exit")).toEqual({ undoable: false, reason: "The money is back in your box; to put it to work again, ask for it." });
     expect(UNDO_KIND.reclassified).toBe("reclassified");
