@@ -80,6 +80,10 @@ contract BoxVaultEarnTest is Test {
         vault.earnOut(USDC, box, address(yield), shares, minOut, data);
     }
 
+    function test_TheVaultSaysItCanEarn() public view {
+        assertEq(vault.EARN_VERSION(), 1);
+    }
+
     function test_TheFixtureHasTheVerifiedAdaptersSelector() public view {
         assertEq(TestEarnAdapter.execute.selector, vault.ADAPTER_EXECUTE());
     }

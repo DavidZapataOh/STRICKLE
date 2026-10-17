@@ -26,6 +26,8 @@ contract BoxVault is BoxLedger {
     uint16 public constant FEED_LAG_BPS = 50;
     /// @dev `execute` of Circle's Adapter, the only function a swap may call.
     bytes4 public constant ADAPTER_EXECUTE = 0xaa3e079c;
+    /// @dev Present on a vault that can put a box to work through the adapter; an older implementation has no such function.
+    uint8 public constant EARN_VERSION = 1;
 
     struct Proposal {
         address to;
