@@ -1,14 +1,14 @@
 {
   "quote": {
-    "estimatedAmount": "889955",
-    "minAmount": "881055",
+    "estimatedAmount": "889902",
+    "minAmount": "881002",
     "route": {
       "provider": "lifi",
       "steps": [
         {
           "type": "swap",
-          "tool": "fly",
-          "toolName": "Fly",
+          "tool": "kyberswap",
+          "toolName": "Kyberswap",
           "fromToken": {
             "symbol": "USDC",
             "address": "0x3600000000000000000000000000000000000000",
@@ -21,8 +21,8 @@
           },
           "estimate": {
             "fromAmount": "1000000",
-            "toAmount": "889955",
-            "gasCostUSD": "0.0033"
+            "toAmount": "889902",
+            "gasCostUSD": "0.0071"
           }
         }
       ]

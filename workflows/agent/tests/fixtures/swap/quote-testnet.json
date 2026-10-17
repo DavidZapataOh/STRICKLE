@@ -1,7 +1,7 @@
 {
   "quote": {
-    "estimatedAmount": "1143389",
-    "minAmount": "1131955",
+    "estimatedAmount": "1148487",
+    "minAmount": "1137002",
     "route": {
       "provider": "lifi",
       "steps": [
@@ -21,8 +21,8 @@
           },
           "estimate": {
             "fromAmount": "1000000",
-            "toAmount": "1143389",
-            "gasCostUSD": "0.0934"
+            "toAmount": "1148487",
+            "gasCostUSD": "0.1172"
           }
         }
       ]

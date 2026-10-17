@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { toFunctionSelector } from "viem";
+import { createPublicClient, encodeFunctionData, http, parseAbi, toFunctionSelector } from "viem";
 
 const BASE = "https://api.circle.com/v1/stablecoinKits";
 const VAULT = "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8";
@@ -47,3 +47,14 @@ write("adapter-execute-abi.json", [execute]);
 const selector = toFunctionSelector(execute);
 if (selector !== "0xaa3e079c") throw new Error(`execute selector is ${selector}, expected 0xaa3e079c`);
 console.log("selector", selector, createHash("sha256").update(JSON.stringify(execute)).digest("hex").slice(0, 12));
+
+// the two mainnet feed proxies exactly as eth_call returns them, with the block time they were read at
+const feedAbi = parseAbi(["function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)"]);
+const FEEDS = { usdc: "0x84EA90AC252Dc437031461836DB5164219147905", eurc: "0x361b95c10b76Ca3f35C686d423e43A951755Bf23" };
+const mainnet = createPublicClient({ transport: http("https://rpc.blockdaemon.mainnet.arc.io") });
+const block = await mainnet.getBlock();
+const answers = {};
+for (const [name, to] of Object.entries(FEEDS)) {
+  answers[name] = (await mainnet.call({ to, data: encodeFunctionData({ abi: feedAbi, functionName: "latestRoundData" }), blockNumber: block.number })).data;
+}
+write("feeds-mainnet.json", { readAt: Number(block.timestamp), ...answers });

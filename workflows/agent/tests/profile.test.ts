@@ -278,7 +278,7 @@ describe("currencies, swap and rate", () => {
   it("parse as defaults on a profile that never heard of them", () => {
     const parsed = profileSchema.parse(valid);
     expect(parsed.currencies).toEqual({ payroll: "USD", operating: "USD", emergency: "USD", profit: "USD" });
-    expect(parsed.swap).toEqual({ day: "", spent: "0", failures: 0, since: "" });
+    expect(parsed.swap).toEqual({ day: "", spent: "0", failures: 0, since: "", heldOn: "" });
     expect(parsed.rate).toEqual({ usdcUsd: "0", eurcUsd: "0", at: 0 });
   });
   it("accept a euro box and refuse a euro salary or euro taxes", () => {
@@ -288,10 +288,10 @@ describe("currencies, swap and rate", () => {
   });
   it("refuse an unknown currency and more than nine failures", () => {
     expect(profileSchema.safeParse({ ...valid, currencies: { payroll: "GBP", operating: "USD", emergency: "USD", profit: "USD" } }).success).toBe(false);
-    expect(profileSchema.safeParse({ ...valid, swap: { day: "", spent: "0", failures: 10, since: "" } }).success).toBe(false);
+    expect(profileSchema.safeParse({ ...valid, swap: { day: "", spent: "0", failures: 10, since: "", heldOn: "" } }).success).toBe(false);
   });
   it("keep the stored swap counters and rate when the owner resubmits, and the stored currencies unless the submission changes them from the default", () => {
-    const stored = profileSchema.parse({ ...valid, swap: { day: "2026-11-03", spent: "5", failures: 2, since: "2026-11-02" }, rate: { usdcUsd: "99982900", eurcUsd: "112136087", at: 1_792_000_000 }, currencies: { payroll: "EUR", operating: "USD", emergency: "USD", profit: "USD" } });
+    const stored = profileSchema.parse({ ...valid, swap: { day: "2026-11-03", spent: "5", failures: 2, since: "2026-11-02", heldOn: "2026-11-03" }, rate: { usdcUsd: "99982900", eurcUsd: "112136087", at: 1_792_000_000 }, currencies: { payroll: "EUR", operating: "USD", emergency: "USD", profit: "USD" } });
     const resubmitted = profileSchema.parse({ ...valid, taxRateBps: 100 });
     const merged = mergeProfile(stored, resubmitted);
     expect(merged.swap).toEqual(stored.swap);

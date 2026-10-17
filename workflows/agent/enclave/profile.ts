@@ -82,11 +82,11 @@ export const profileSchema = z
       .object({ payroll: currency, operating: currency, emergency: currency, profit: currency })
       .strict()
       .default({ payroll: "USD", operating: "USD", emergency: "USD", profit: "USD" }),
-    // The agent's own bookkeeping of conversions: the daily amount spent and the failure breaker.
+    // The agent's own bookkeeping of conversions: the daily amount spent (in dollars), the failure breaker, the day a currency setting last changed and the last day a held notice was raised.
     swap: z
-      .object({ day: maybeDate, spent: units, failures: bps(0, 9), since: maybeDate })
+      .object({ day: maybeDate, spent: units, failures: bps(0, 9), since: maybeDate, heldOn: maybeDate })
       .strict()
-      .default({ day: "", spent: "0", failures: 0, since: "" }),
+      .default({ day: "", spent: "0", failures: 0, since: "", heldOn: "" }),
     // The last feed answers the agent used (eight decimals), so the app can show them and a restart does not lose them.
     rate: z
       .object({ usdcUsd: units, eurcUsd: units, at: z.number().int().min(0) })
@@ -141,7 +141,7 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
   // the agent owns these; a first submission cannot seed them
-  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,

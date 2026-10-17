@@ -67,3 +67,19 @@ describe("the income notices", () => {
     expect(noticeSchema.safeParse({ ...corrected, to: "gift" }).success).toBe(false);
   });
 });
+
+describe("the conversion notices", () => {
+  const swap = { kind: "swap", box: "payroll", from: "USDC", amountIn: "1000000000", estimatedOut: "890000000", minOut: "881000000", referenceOut: "889900000", deviationBps: 1, feeBps: 2 };
+  const held = { kind: "swap-held", box: "operating", reason: "stale-feed" };
+  it("parse when well formed", () => {
+    expect(noticeSchema.safeParse(swap).success).toBe(true);
+    expect(noticeSchema.safeParse(held).success).toBe(true);
+    expect(noticeSchema.safeParse({ ...swap, deviationBps: -150 }).success).toBe(true);
+  });
+  it("refuse an unknown box, an unknown reason and an extra key", () => {
+    expect(noticeSchema.safeParse({ ...swap, box: "vault" }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...held, reason: "invalid-quote" }).success).toBe(true);
+    expect(noticeSchema.safeParse({ ...held, reason: "bored" }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...swap, extra: 1 }).success).toBe(false);
+  });
+});

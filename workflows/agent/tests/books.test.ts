@@ -17,6 +17,7 @@ import {
   pendingRequest,
   stateLogRequest,
   tickRequests,
+  valuedBooks,
 } from "../enclave/books.ts";
 
 const executor = "0x00000000000000000000000000000000000000dd";
@@ -142,5 +143,65 @@ describe("notice count", () => {
   it("reads noticeCount(vault) from the state contract", () => {
     expect(noticeCountRequest(state, vault)).toMatchObject({ method: "eth_call", params: [{ to: state }, "latest"] });
     expect(decodeNoticeCount(encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n }))).toBe(4n);
+  });
+});
+
+describe("the layout with euros", () => {
+  const swap = { usdcFeed: "0x00000000000000000000000000000000000000f1", eurcFeed: "0x00000000000000000000000000000000000000f2" } as const;
+  const word = (value: bigint) => encodeFunctionResult({ abi: vaultAbi, functionName: "boxBalance", result: value });
+  const head = encodeFunctionResult({ abi: stateAbi, functionName: "head", result: [3n, 90n, 2n] });
+  const count = encodeFunctionResult({ abi: parseAbi(["function noticeCount(address) view returns (uint64)"]), functionName: "noticeCount", result: 4n });
+  const round = (answer: bigint, updatedAt: bigint) => encodeAbiParameters([{ type: "uint80" }, { type: "int256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint80" }], [1n, answer, updatedAt, updatedAt, 1n]);
+  const adapterAbi = parseAbi(["function swapAdapter() view returns (address)", "function swapAdapterFrom() view returns (uint64)"]);
+  const answers = (eurc: bigint[], usdcFeed: Hex, eurcFeed: Hex) => [
+    head,
+    ...[1n, 2n, 3n, 4n, 5n, 6n].map(word),
+    ...[0n, 0n, 0n, 0n, 0n, 0n].map(word),
+    word(0n),
+    count,
+    ...eurc.map(word),
+    usdcFeed,
+    eurcFeed,
+    encodeFunctionResult({ abi: adapterAbi, functionName: "swapAdapter", result: "0x00000000000000000000000000000000000000ad" }),
+    encodeFunctionResult({ abi: adapterAbi, functionName: "swapAdapterFrom", result: 1_000n }),
+  ];
+
+  it("asks for 25 answers: the 15 of before, six euro balances, two feeds and the adapter", () => {
+    const requests = tickRequests(state, vault, swap);
+    expect(requests).toHaveLength(25);
+    const data = (index: number) => (requests[index]?.params[0] as { data: Hex }).data;
+    expect(data(15)).toBe(encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [2, 1] }));
+    expect(data(20)).toBe(encodeFunctionData({ abi: vaultAbi, functionName: "boxBalance", args: [2, 6] }));
+    expect((requests[21]?.params[0] as { to: string }).to).toBe(swap.usdcFeed);
+    expect((requests[22]?.params[0] as { to: string }).to).toBe(swap.eurcFeed);
+  });
+
+  it("values the books in dollars when the feeds are fresh", () => {
+    const decoded = decodeTickBooks(answers([0n, 0n, 0n, 1_000_000n, 0n, 0n], round(100_000_000n, 1_000n), round(112_000_000n, 1_000n)), { now: 1_100, maxAgeSeconds: 3_600 });
+    expect(decoded.books.boxes.operating).toBe(4n + 1_120_000n);
+    expect(decoded.swap?.rate).toEqual({ usdcUsd: 100_000_000n, eurcUsd: 112_000_000n });
+    expect(decoded.swap?.raw.eurc.operating).toBe(1_000_000n);
+    expect(decoded.swap?.raw.usdc.operating).toBe(4n);
+    expect(decoded.swap?.adapter).toEqual({ address: getAddress("0x00000000000000000000000000000000000000ad"), from: 1_000n });
+  });
+
+  it("leaves the euros out of the books, and says so, when a feed is stale or broken", () => {
+    const stale = decodeTickBooks(answers([0n, 0n, 0n, 1_000_000n, 0n, 0n], round(100_000_000n, 1_000n), round(112_000_000n, 1_000n)), { now: 900_000, maxAgeSeconds: 3_600 });
+    expect(stale.books.boxes.operating).toBe(4n);
+    expect(stale.swap?.rate).toBe("stale");
+    const broken = decodeTickBooks(answers([0n, 0n, 0n, 1_000_000n, 0n, 0n], round(0n, 1_000n), round(112_000_000n, 1_000n)), { now: 1_100, maxAgeSeconds: 3_600 });
+    expect(broken.swap?.rate).toBe("stale");
+  });
+
+  it("reads both assets' balances for a deposit and values the other one", () => {
+    expect(booksRequests(state, vault, 1, true)).toHaveLength(7);
+    expect(booksRequests(state, vault, 1)).toHaveLength(4);
+    const decoded = decodeBooks([head, word(1n), word(2n), word(3n), word(10n), word(20n), word(30n)]);
+    expect(decoded.other).toEqual({ operating: 10n, payrollFunded: 20n, emergency: 30n });
+    expect(decodeBooks([head, word(1n), word(2n), word(3n)]).other).toBeUndefined();
+    const rate = { usdcUsd: 100_000_000n, eurcUsd: 112_000_000n };
+    expect(valuedBooks("USDC", { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, rate).operating).toBe(1_000n + 1_120n);
+    expect(valuedBooks("EURC", { operating: 1_120n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, rate).operating).toBe(1_120n + 892n);
+    expect(valuedBooks("USDC", { operating: 5n, payrollFunded: 0n, emergency: 0n }, { operating: 1_000n, payrollFunded: 0n, emergency: 0n }, undefined).operating).toBe(5n);
   });
 });

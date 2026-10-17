@@ -2,11 +2,12 @@
 import type { TeeRuntime } from "@chainlink/cre-sdk";
 import { type Address, type Hex, bytesToHex, getAddress, hexToBigInt, hexToBytes } from "viem";
 import type { Config } from "../config.ts";
-import { booksRequests, decodeBooks, decodeNoticeCount, decodePending, decodeStateLog, noticeCountRequest, onePerVault, pendingRequest, stateLogRequest } from "./books.ts";
+import { booksRequests, decodeBooks, decodeNoticeCount, decodePending, decodeStateLog, noticeCountRequest, onePerVault, pendingRequest, stateLogRequest, valuedBooks } from "./books.ts";
 import { planArrivals } from "./arrivals.ts";
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf } from "./clock.ts";
 import { deliver } from "./deliver.ts";
+import { decodeRate, feedRequests } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { attribute, decodeMoves, decodeTransfers, logWindow, transfersRequest, vaultMovesRequest } from "./flow.ts";
 import { sealNotice } from "./notices.ts";
@@ -19,6 +20,8 @@ import { encodeSplitReport } from "./split-report.ts";
 export const MAX_PER_RUN = 5;
 const LIST_LIMIT = 10;
 const ASSETS = ["USDC", "EURC"] as const;
+const READS_PER_ITEM = 7;
+const STORED_RATE_DAYS = 7;
 
 export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
   const executor = runtime.config.executorAddress as Address;
@@ -31,9 +34,18 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
   if (list.length === 0) return "ok";
 
   const master = parseMaster(runtime.getSecret({ id: "AGENT_MASTER" }).result().value);
-  const answers = ethBatch(runtime, list.flatMap((item) => booksRequests(state, item.vault, item.asset)));
+  const { swap: swapConfig } = runtime.config;
+  const nowSeconds = Math.floor(runtime.now().getTime() / 1000);
+  const answers = ethBatch(runtime, [...list.flatMap((item) => booksRequests(state, item.vault, item.asset, true)), ...feedRequests(swapConfig.usdcFeed as Address, swapConfig.eurcFeed as Address)]);
+  // the feeds are read once per run; a failed or stale read never stops a split, it only means no fresh rate
+  let fresh: ReturnType<typeof decodeRate> = "stale";
+  try {
+    fresh = decodeRate(answers.slice(list.length * READS_PER_ITEM), nowSeconds, swapConfig.maxFeedAgeSeconds);
+  } catch {
+    fresh = "stale";
+  }
   const ready = list
-    .map((item, index) => ({ item, books: decodeBooks(answers.slice(index * 4, index * 4 + 4)) }))
+    .map((item, index) => ({ item, books: decodeBooks(answers.slice(index * READS_PER_ITEM, (index + 1) * READS_PER_ITEM)) }))
     .filter(({ books }) => books.version > 0n)
     .slice(0, MAX_PER_RUN);
   const logs = ready.length === 0 ? [] : ethBatch(runtime, ready.map(({ item, books }) => stateLogRequest(state, item.vault, books.version, books.at)));
@@ -55,15 +67,19 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
       const attribution = attribute({ transfers: decodeTransfers(rawTransfers, token, asset, decodeMoves(moves)), unallocated: item.amount, head });
       // a transfer is in the logs but the balance read has not caught up: this vault waits for the next run
       if (attribution === "race") return;
+      const stored = BigInt(profile.rate.usdcUsd) > 0n && BigInt(profile.rate.eurcUsd) > 0n && nowSeconds - profile.rate.at <= STORED_RATE_DAYS * 86_400 ? { usdcUsd: BigInt(profile.rate.usdcUsd), eurcUsd: BigInt(profile.rate.eurcUsd) } : undefined;
+      const rate = fresh === "stale" ? stored : fresh;
       const plan = planArrivals({
         profile,
-        books: { asset, unallocated: item.amount, operating: books.operating, payrollFunded: books.payrollFunded, emergency: books.emergency },
+        books: { asset, unallocated: item.amount, ...valuedBooks(asset, { operating: books.operating, payrollFunded: books.payrollFunded, emergency: books.emergency }, books.other, rate) },
         arrivals: attribution.arrivals.map((transfer) => ({ id: transfer.id, asset, amount: transfer.amount, sender: transfer.sender, date: today })),
         unexplained: attribution.unexplained,
         checkpoint: attribution.checkpoint,
         today,
-        now: Math.floor(runtime.now().getTime() / 1000),
+        now: nowSeconds,
+        ...(rate ? { rate } : {}),
       });
+      if (fresh !== "stale") plan.next = { ...plan.next, rate: { usdcUsd: fresh.usdcUsd.toString(), eurcUsd: fresh.eurcUsd.toString(), at: nowSeconds } };
       const next = books.version + 1n;
       deliver(
         runtime,
