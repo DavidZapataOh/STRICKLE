@@ -1,4 +1,4 @@
-import { type PlainDate, addDays, isoWeekday, plainDate } from "@strickle/core";
+import { addDays, isoWeekday, plainDate } from "@strickle/core";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { type Obligation, businessDaysBefore, investableNow, redemptionsDue } from "../src/yield-budget.ts";
