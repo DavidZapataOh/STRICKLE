@@ -17,6 +17,7 @@ import {FalseVerifier} from "../fixtures/FalseVerifier.sol";
 import {IPoseidon2} from "../../src/pool/Poseidon2Hasher.sol";
 import {IHonkVerifier} from "../../src/pool/IHonkVerifier.sol";
 import {IScreening, IAssociation} from "../../src/pool/PolicyPool.sol";
+import {Vaults} from "../fixtures/Vaults.sol";
 
 contract FakeVault {
     address public owner;
@@ -46,7 +47,7 @@ contract AgentExecutorTest is Test {
     function setUp() public {
         usdc = new TestToken();
         TestToken eurc = new TestToken();
-        factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(eurc))));
+        factory = new BoxVaultFactory(address(Vaults.newVault(usdc, eurc)));
         state = new AgentState(forwarder, deployer);
         pool = new PolicyPool(
             PolicyPool.Config({

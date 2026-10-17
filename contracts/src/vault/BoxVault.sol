@@ -9,12 +9,21 @@ interface IERC4626Minimal {
     function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets);
 }
 
+interface IPriceFeed {
+    function decimals() external view returns (uint8);
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
+}
+
 /// @notice One vault per user. On top of the ledger it gives one agent a narrow role: allocate what arrived,
 /// pay approved recipients within a rolling cap and above each box's floor, propose larger payments for the
 /// owner to approve, and move a limited share of a box into approved yield vaults and back. The owner can
 /// pause, replace or remove the agent in one transaction.
 contract BoxVault is BoxLedger {
     uint64 public constant PROPOSAL_LIFETIME = 7 days;
+    uint16 public constant MAX_SWAP_SLIPPAGE_BPS = 100;
+    uint16 public constant FEED_LAG_BPS = 50;
+    /// @dev `execute` of Circle's Adapter, the only function a swap may call.
+    bytes4 public constant ADAPTER_EXECUTE = 0xaa3e079c;
 
     struct Proposal {
         address to;
@@ -38,6 +47,13 @@ contract BoxVault is BoxLedger {
     error InvestLimit();
     error InsufficientShares();
     error InvalidBps();
+    error SwapAdapterNotApproved();
+    error WrongSelector();
+    error BelowOracleBound();
+    error StaleFeed();
+    error SwapShort();
+    error SwapOverspent();
+    error BadFeed();
 
     event AgentSet(address indexed agent, uint256 cap, uint32 window);
     event AgentPausedSet(bool paused);
@@ -58,6 +74,11 @@ contract BoxVault is BoxLedger {
     event MaxInvestSet(uint8 indexed box, uint16 bps);
     event Swept(uint8 indexed asset, uint8 indexed box, address indexed vault, uint256 assets, uint256 shares);
     event Redeemed(uint8 indexed asset, uint8 indexed box, address indexed vault, uint256 shares, uint256 assets);
+    event SwapAdapterSet(address indexed adapter, uint64 effectiveAt);
+    event SwapAdapterRevoked(address indexed adapter);
+    event SwapSlippageSet(uint16 bps);
+    event SwapCapSet(uint128 cap, uint32 window);
+    event Swapped(uint8 indexed box, uint8 indexed assetIn, uint256 amountIn, uint256 received);
 
     address public agent;
     bool public agentPaused;
@@ -74,7 +95,28 @@ contract BoxVault is BoxLedger {
     mapping(uint256 id => Proposal) public proposals;
     uint256 public nextProposalId;
 
-    constructor(address usdc, address eurc) BoxLedger(usdc, eurc) {}
+    address public swapAdapter;
+    uint64 public swapAdapterFrom;
+    uint128 public swapCap;
+    uint32 public swapWindow;
+    uint64 public swapWindowStart;
+    uint128 public swapWindowSpent;
+    uint16 private swapSlippage;
+
+    IPriceFeed public immutable USDC_FEED;
+    IPriceFeed public immutable EURC_FEED;
+    uint32 public immutable MAX_FEED_AGE;
+
+    constructor(address usdc, address eurc, address usdcFeed, address eurcFeed, uint32 maxFeedAge)
+        BoxLedger(usdc, eurc)
+    {
+        if (IPriceFeed(usdcFeed).decimals() != 8 || IPriceFeed(eurcFeed).decimals() != 8) {
+            revert BadFeed();
+        }
+        USDC_FEED = IPriceFeed(usdcFeed);
+        EURC_FEED = IPriceFeed(eurcFeed);
+        MAX_FEED_AGE = maxFeedAge;
+    }
 
     modifier onlyAgent() {
         _requireAgent();
@@ -134,6 +176,46 @@ contract BoxVault is BoxLedger {
         if (box == 1) return 5_000;
         if (box == 2 || box == 4) return 0;
         return 10_000;
+    }
+
+    function approveSwapAdapter(address adapter) external onlyOwner {
+        if (swapAdapter != address(0)) revert SwapAdapterNotApproved();
+        swapAdapter = adapter;
+        uint64 effectiveAt = uint64(block.timestamp) + MIN_LOOSEN_DELAY;
+        swapAdapterFrom = effectiveAt;
+        emit SwapAdapterSet(adapter, effectiveAt);
+    }
+
+    function revokeSwapAdapter() external onlyOwner {
+        address adapter = swapAdapter;
+        delete swapAdapter;
+        delete swapAdapterFrom;
+        emit SwapAdapterRevoked(adapter);
+    }
+
+    function setSwapSlippageBps(uint16 bps) external onlyOwner {
+        if (bps < 10 || bps > MAX_SWAP_SLIPPAGE_BPS) revert InvalidBps();
+        swapSlippage = bps;
+        emit SwapSlippageSet(bps);
+    }
+
+    function setSwapCap(uint128 cap, uint32 window) external onlyOwner {
+        swapCap = cap;
+        swapWindow = window;
+        swapWindowStart = 0;
+        swapWindowSpent = 0;
+        emit SwapCapSet(cap, window);
+    }
+
+    function swapSlippageBps() public view returns (uint16) {
+        uint16 set = swapSlippage;
+        return set == 0 ? MAX_SWAP_SLIPPAGE_BPS : set;
+    }
+
+    function minSwapOutput(uint8 assetIn, uint256 amountIn) public view returns (uint256) {
+        (uint256 priceIn, uint256 priceOut) =
+            assetIn == 1 ? (_price(USDC_FEED), _price(EURC_FEED)) : (_price(EURC_FEED), _price(USDC_FEED));
+        return (amountIn * priceIn * (10_000 - swapSlippageBps() - FEED_LAG_BPS)) / (priceOut * 10_000);
     }
 
     function approveProposal(uint256 id) external onlyOwner nonReentrant {
@@ -230,6 +312,33 @@ contract BoxVault is BoxLedger {
         emit Redeemed(asset, box, vault, shares, received);
     }
 
+    /// @notice Converts part of a box to the other asset through the one approved adapter. The price floor comes
+    /// from the feeds, never from the caller, and the ledger moves only by what this vault's own balances prove.
+    function swapBox(uint8 box, uint8 assetIn, uint256 amountIn, uint256 minOut, bytes calldata data)
+        external
+        onlyAgent
+        nonReentrant
+    {
+        _checkBox(box);
+        if (assetIn != 1 && assetIn != 2) revert UnknownAsset();
+        if (amountIn == 0) revert ZeroAmount();
+        if (amountIn > boxBalance[assetIn][box]) revert InsufficientBox();
+        address adapter = _approvedAdapter();
+        if (data.length < 4 || bytes4(data[:4]) != ADAPTER_EXECUTE) revert WrongSelector();
+        if (minOut < minSwapOutput(assetIn, amountIn)) revert BelowOracleBound();
+        _swapSpend(amountIn);
+
+        (uint256 spent, uint256 received) = _runSwap(assetIn, adapter, amountIn, data);
+        if (spent > amountIn) revert SwapOverspent();
+        if (received < minOut) revert SwapShort();
+
+        uint8 assetOut = assetIn == 1 ? 2 : 1;
+        _debit(assetIn, box, spent);
+        boxBalance[assetOut][box] += received;
+        held[assetOut] += received;
+        emit Swapped(box, assetIn, spent, received);
+    }
+
     // ---------------------------------------------------------------- internals
 
     function _requireAgent() private view {
@@ -245,6 +354,45 @@ contract BoxVault is BoxLedger {
         }
         if (windowSpent + amount > agentCap) revert CapExceeded();
         windowSpent += uint128(amount);
+    }
+
+    function _approvedAdapter() private view returns (address adapter) {
+        adapter = swapAdapter;
+        uint64 from = swapAdapterFrom;
+        if (adapter == address(0) || from == 0 || block.timestamp < from) revert SwapAdapterNotApproved();
+    }
+
+    /// @dev What the adapter really took and gave, measured on this vault's own balances.
+    function _runSwap(uint8 assetIn, address adapter, uint256 amountIn, bytes calldata data)
+        private
+        returns (uint256 spent, uint256 received)
+    {
+        IERC20Minimal tokenIn = _token(assetIn);
+        IERC20Minimal tokenOut = _token(assetIn == 1 ? 2 : 1);
+        uint256 inBefore = tokenIn.balanceOf(address(this));
+        uint256 outBefore = tokenOut.balanceOf(address(this));
+        _approve(tokenIn, adapter, amountIn);
+        (bool ok,) = adapter.call(data);
+        _approve(tokenIn, adapter, 0);
+        if (!ok) revert TransferFailed();
+        spent = inBefore - tokenIn.balanceOf(address(this));
+        received = tokenOut.balanceOf(address(this)) - outBefore;
+    }
+
+    function _swapSpend(uint256 amount) private {
+        if (swapCap == 0 || swapWindow == 0) revert CapExceeded();
+        if (block.timestamp >= uint256(swapWindowStart) + swapWindow) {
+            swapWindowStart = uint64(block.timestamp);
+            swapWindowSpent = 0;
+        }
+        if (swapWindowSpent + amount > swapCap) revert CapExceeded();
+        swapWindowSpent += uint128(amount);
+    }
+
+    function _price(IPriceFeed feed) private view returns (uint256) {
+        (, int256 answer,, uint256 updatedAt,) = feed.latestRoundData();
+        if (answer <= 0 || block.timestamp - updatedAt > MAX_FEED_AGE) revert StaleFeed();
+        return uint256(answer);
     }
 
     function _approve(IERC20Minimal token, address spender, uint256 amount) private {

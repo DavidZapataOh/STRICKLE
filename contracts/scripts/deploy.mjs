@@ -4,6 +4,7 @@ import { basename, dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { networks, rpcUrl } from "@strickle/arc/networks";
 import { getAddress } from "viem";
+import { ecbEurcUsdE8 } from "./set-reference-rate.mjs";
 import { privateKeyToAddress } from "viem/accounts";
 
 const contractsDir = new URL("..", import.meta.url).pathname;
@@ -32,17 +33,31 @@ export function libraryArgs(name, manifest, outDir = join(contractsDir, "out")) 
   );
 }
 
+/** A contract deployed twice in one run (the two reference feeds) keeps the second one under `Name#2`. */
+function createdKeys(transactions) {
+  const counts = new Map();
+  const keys = new Map();
+  for (const tx of transactions) {
+    if (!tx.contractName) continue;
+    const count = (counts.get(tx.contractName) ?? 0) + 1;
+    counts.set(tx.contractName, count);
+    keys.set(tx, count === 1 ? tx.contractName : `${tx.contractName}#${count}`);
+  }
+  return keys;
+}
+
 export function recordDeployment({ runFile, manifestFile, chainId }) {
   const run = JSON.parse(readFileSync(runFile, "utf8"));
   const manifest = existsSync(manifestFile)
     ? JSON.parse(readFileSync(manifestFile, "utf8"))
     : { chainId, contracts: {} };
 
+  const keys = createdKeys(run.transactions);
   for (const tx of run.transactions) {
     const creates = tx.transactionType === "CREATE" || tx.transactionType === "CREATE2";
     const receipt = run.receipts.find((r) => r.transactionHash === tx.hash);
     if (!creates || !tx.contractName || !receipt) continue;
-    manifest.contracts[tx.contractName] = {
+    manifest.contracts[keys.get(tx)] = {
       address: getAddress(tx.contractAddress),
       txHash: tx.hash,
       blockNumber: Number(BigInt(receipt.blockNumber)),
@@ -169,9 +184,10 @@ export function deploy({
   if (network !== "local") {
     // Verification runs after the manifest is written: a failure must not hide a live deployment.
     // To retry it, run the same verify-contract command for the address in the manifest.
-    const created = JSON.parse(readFileSync(runFile, "utf8")).transactions.filter((tx) => tx.contractName);
-    for (const { contractName } of created) {
-      const entry = manifest.contracts[contractName];
+    const created = JSON.parse(readFileSync(runFile, "utf8")).transactions;
+    const keys = createdKeys(created);
+    for (const { contractName, ...tx } of created.filter((candidate) => candidate.contractName)) {
+      const entry = manifest.contracts[keys.get(created.find((candidate) => candidate.hash === tx.hash))];
       if (!entry) continue;
       verifyContract({ contractName, entry, manifest, network, chainId, rpc, retries: verifyRetries });
     }
@@ -185,6 +201,7 @@ if (import.meta.main) {
     console.error("usage: npm run deploy -w @strickle/contracts -- <testnet|mainnet> <script path>");
     process.exit(1);
   }
+  if (network === "testnet" && basename(script) === "DeployVault.s.sol") process.env.EURC_USD_E8 ??= String(await ecbEurcUsdE8());
   const confirmed = network === "mainnet" ? await confirmMainnet({ script, address: resolveDeployer({ network }).address }) : undefined;
   deploy({ network, script, rpc: rpcUrl(network), chainId: networks[network].chain.id, confirmed });
 }

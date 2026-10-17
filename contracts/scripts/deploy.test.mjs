@@ -138,6 +138,17 @@ test("recordDeployment ignores transactions without a receipt", () => {
   assert.deepEqual(manifest.contracts, {});
 });
 
+test("recordDeployment keeps a second contract of the same name under its own key", () => {
+  const dir = mkdtempSync(join(tmpdir(), "run-"));
+  const runFile = join(dir, "run-latest.json");
+  const create = (n) => ({ hash: `0x${String(n).repeat(64)}`, transactionType: "CREATE", contractName: "ReferenceFeed", contractAddress: `0x00000000000000000000000000000000000000a${n}` });
+  const receipt = (n) => ({ transactionHash: `0x${String(n).repeat(64)}`, blockNumber: "0x10" });
+  writeFileSync(runFile, JSON.stringify({ transactions: [create(1), create(2)], receipts: [receipt(1), receipt(2)] }));
+  const manifest = recordDeployment({ runFile, manifestFile: join(dir, "manifest.json"), chainId: 1 });
+  assert.equal(manifest.contracts.ReferenceFeed.address, "0x00000000000000000000000000000000000000A1");
+  assert.equal(manifest.contracts["ReferenceFeed#2"].address, "0x00000000000000000000000000000000000000A2");
+});
+
 test("libraryArgs links a verifier to the library addresses recorded in the manifest", () => {
   forge("build");
   const manifest = {

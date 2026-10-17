@@ -6,6 +6,7 @@ import {BoxLedger} from "../../src/vault/BoxLedger.sol";
 import {BoxVault} from "../../src/vault/BoxVault.sol";
 import {BoxVaultFactory} from "../../src/vault/BoxVaultFactory.sol";
 import {TestToken} from "../fixtures/TestToken.sol";
+import {Vaults} from "../fixtures/Vaults.sol";
 
 contract LedgerHandler is Test {
     BoxVault public vault;
@@ -131,7 +132,7 @@ contract BoxLedgerInvariantTest is Test {
     function setUp() public {
         vm.warp(1_900_000_000);
         usdc = new TestToken();
-        BoxVaultFactory factory = new BoxVaultFactory(address(new BoxVault(address(usdc), address(new TestToken()))));
+        BoxVaultFactory factory = new BoxVaultFactory(address(Vaults.newVault(usdc, new TestToken())));
         address owner = makeAddr("owner");
         vault = BoxVault(factory.create(owner));
         handler = new LedgerHandler(vault, usdc, owner);
