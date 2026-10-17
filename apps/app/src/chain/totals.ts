@@ -27,7 +27,9 @@ export interface EarnPosition {
   value: Partial<Record<BoxKind, bigint>>;
 }
 /** What the account says about putting boxes to work; a vault from before it existed has no such function. */
-export type EarnState = { supported: false } | { supported: true; vaults: EarnPosition[]; maxInvestBps: Partial<Record<BoxKind, number>> };
+export type EarnState =
+  | { supported: false; reason: "old" | "unreadable" }
+  | { supported: true; vaults: EarnPosition[]; maxInvestBps: Partial<Record<BoxKind, number>>; invested: Partial<Record<BoxKind, bigint>> };
 
 export interface VaultState {
   boxes: BoxState[];

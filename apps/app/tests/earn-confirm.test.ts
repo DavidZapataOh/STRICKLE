@@ -18,6 +18,7 @@ describe("whether the agent has answered a request", () => {
   it("does not count another box, the other direction, other notices or silence", () => {
     expect(earnAnswered(wrap({ ...put, box: "taxes" }), invest)).toBe(false);
     expect(earnAnswered(wrap({ ...put, deposit: false }), invest)).toBe(false);
+    expect(earnAnswered(wrap({ ...held, deposit: false }), invest)).toBe(false);
     expect(earnAnswered(wrap({ kind: "salary", month: "2026-11", paid: "1", pending: "0" }), invest)).toBe(false);
     expect(earnAnswered([], invest)).toBe(false);
   });

@@ -128,6 +128,17 @@ Known limits:
 - The sealed state records the intent and the counters, never balances. The executor's `Swapped` event reports the amount requested; only the vault's `Swapped` event reports what was received, so use that one to audit a conversion.
 - A conversion cannot be undone at the same price: setting the box back to dollars converts it again at that day's rate.
 
+## Yield
+
+A person can put part of a box to work in a Morpho vault listed by Circle's Earn Kit and take it back. Nothing is promised: the rate changes and the value can go down, and the app says so beside every number.
+
+- **What the vault enforces.** Only the agent puts money in, through the one approved Circle adapter (the same one swaps use, so its approval covers both) and one of the vaults the owner approved, which takes a day to take effect. The output must be at least the yield vault's own preview of the shares or assets, less the vault's slippage setting (at most 100 bps, the same setting that bounds swaps). The ledger moves only by balances the vault measured, the approval is zero after every call, a deposit cannot pass the box's investable share or take it under its floor, and a deposit that returns no shares fails. The salary box is never offered.
+- **Getting money out.** The owner can always take a box's money out, with or without the agent and with no vault approval, so revoking a vault or pausing the agent never traps it. If the adapter is revoked, the older direct `redeem` remains.
+- **What the agent adds.** It checks every bundle Circle returns before it signs: the target is the yield vault, the function is `deposit` or `redeem`, the adapter is both receiver and owner, every beneficiary is the box vault, the amounts match, the deadline is two to sixty minutes away. A withdrawal must redeem within 1% of the shares the amount needs. A request waits at most a day; three failures in a row clear the requests and tell the owner; a hold is told once a day.
+- **Vaults.** The app and the agent list the same vault (`EarnKit USDC Vault`, Morpho, on Arc testnet); a test fails if the two lists differ. Mainnet lists none.
+- **Accounts.** A vault created before the redeploy has no `EARN_VERSION` and shows "not available"; an account whose read failed shows "could not be read", not that.
+- **Known limits.** `invested` (the principal) is kept per box, not per yield vault, so with two vaults in one box a full withdrawal from one wipes the other's principal and loosens the investable-share check. The app offers one vault per box today. The contract has about 60 bytes of runtime size left, so anything new goes into a library or a new implementation. The agent's request to Circle names the box vault, the yield vault and the amount, which the move publishes on chain a moment later.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.

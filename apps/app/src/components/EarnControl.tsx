@@ -14,7 +14,7 @@ import type { VaultQuote } from "@/yield/vaults";
 import { EditRow } from "./EditRow";
 
 /** One box that may earn: what it holds in the vault, what it holds in cash, and the share of it the vault lets the agent move. */
-export type EarnRow = { box: InvestBox; position: bigint; available: bigint; maxInvestBps: number };
+export type EarnRow = { box: InvestBox; position: bigint; available: bigint; room: bigint; maxInvestBps: number };
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
@@ -28,7 +28,9 @@ export function EarnControl({ lang, t, status, rows, quote, working = false, mes
         ? fill(e.status.pending, { date: dateText(isoDay(status.from), lang) })
         : status.kind === "not-allowed"
           ? e.status.notAllowed
-          : e.status.unavailable;
+          : status.kind === "unreadable"
+            ? e.status.unreadable
+            : e.status.unavailable;
   const closed = status.kind !== "active" || working;
   const rowText = { changeLabel: t.settings.change, saveLabel: t.settings.save, cancelLabel: t.settings.cancel };
   return (

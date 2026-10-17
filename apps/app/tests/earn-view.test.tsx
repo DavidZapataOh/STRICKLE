@@ -10,9 +10,9 @@ import type { EarnStatus } from "../src/yield/status.ts";
 const EARN = "0xAabbeF1D3971c710276ed41eC791BbE14CdB8E88" as const;
 const quote = { address: EARN, name: "EarnKit USDC Vault", protocol: "Morpho", apyBps: 420, asOf: "2026-10-17T20:10:04Z" };
 const rows: EarnRow[] = [
-  { box: "profit", position: 3_003_174n, available: 4_000_000_000n, maxInvestBps: 10_000 },
-  { box: "taxes", position: 0n, available: 2_000_000_000n, maxInvestBps: 5_000 },
-  { box: "operating", position: 0n, available: 5_000_000_000n, maxInvestBps: 0 },
+  { box: "profit", position: 3_003_174n, available: 4_000_000_000n, room: 4_000_000_000n, maxInvestBps: 10_000 },
+  { box: "taxes", position: 0n, available: 2_000_000_000n, room: 1_000_000_000n, maxInvestBps: 5_000 },
+  { box: "operating", position: 0n, available: 5_000_000_000n, room: 0n, maxInvestBps: 0 },
 ];
 const view = (status: EarnStatus, over: { dictionary?: typeof en; lang?: "en" | "es" | "pt-br"; quote?: typeof quote | undefined; rows?: EarnRow[] } = {}) =>
   renderToStaticMarkup(
@@ -50,6 +50,7 @@ describe("EarnControl", () => {
     [{ kind: "pending", from: 1_800_000_000 }, "Ready on"],
     [{ kind: "unavailable" }, "created before this existed"],
     [{ kind: "not-allowed", needs: ["vault"] }, "Not allowed on this account yet."],
+    [{ kind: "unreadable" }, "could not be read right now"],
   ] as [EarnStatus, string][])("says each state of the chain: %#", (status, text) => {
     expect(view(status)).toContain(text);
   });

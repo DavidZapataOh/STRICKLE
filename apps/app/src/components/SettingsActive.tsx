@@ -26,6 +26,7 @@ import { isPasskeyCancelled } from "@/wallet/errors";
 import { earnVaultsFor } from "@/config/earn";
 import { earnAction, INVEST_BOXES } from "@/yield/actions";
 import { earnSetupCalls } from "@/yield/calls";
+import { investRoom } from "@/yield/room";
 import { earnStatus } from "@/yield/status";
 import { useEarn } from "@/yield/use-earn";
 import type { VaultQuote } from "@/yield/vaults";
@@ -134,7 +135,12 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   const earnPosition = offered && extras.vault.earn?.supported ? extras.vault.earn.vaults.find((row) => row.vault.toLowerCase() === offered.address.toLowerCase()) : undefined;
   const earnRows: EarnRow[] =
     offered && extras.vault.earn?.supported
-      ? INVEST_BOXES.map((box) => ({ box, position: earnPosition?.value[box] ?? 0n, available: extras.vault.boxes.find((candidate) => candidate.kind === box)?.usdc ?? 0n, maxInvestBps: extras.vault.earn?.supported ? (extras.vault.earn.maxInvestBps[box] ?? 0) : 0 }))
+      ? INVEST_BOXES.map((box) => {
+          const cash = extras.vault.boxes.find((candidate) => candidate.kind === box)?.usdc ?? 0n;
+          const bps = extras.vault.earn?.supported ? (extras.vault.earn.maxInvestBps[box] ?? 0) : 0;
+          const put = extras.vault.earn?.supported ? (extras.vault.earn.invested[box] ?? 0n) : 0n;
+          return { box, position: earnPosition?.value[box] ?? 0n, available: cash, room: investRoom({ cash, working: put, maxBps: bps }), maxInvestBps: bps };
+        })
       : [];
   const earnMessage = earnRun.phase === "confirmed" ? t.earn.requested : earnRun.phase !== "idle" ? s.phase[earnRun.phase] : txPhase !== "idle" ? t.pause[txPhase] : undefined;
   const moveEarn = async (kind: "invest" | "divest", box: (typeof INVEST_BOXES)[number], text: string): Promise<void> => {
@@ -143,6 +149,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
     if (!result.ok) throw new Error(t.earn.errors[result.error]);
     const row = earnRows.find((candidate) => candidate.box === box);
     if (kind === "invest" && BigInt(result.action.amount) > (row?.available ?? 0n)) throw new Error(t.earn.errors.tooMuch);
+    if (kind === "invest" && BigInt(result.action.amount) > (row?.room ?? 0n)) throw new Error(t.earn.errors.limit);
     await earnRun.run(result.action);
   };
 

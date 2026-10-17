@@ -16,11 +16,20 @@ const INVESTABLE = [
   ["profit", 6],
 ] as const satisfies readonly (readonly [BoxKind, number])[];
 
-/** An implementation from before yield existed has no `EARN_VERSION`, so the call reverting means "not available"; any other failure is also treated as not available, never as a broken screen. */
+const isRevert = (error: unknown): boolean => {
+  const named = (error as { walk?: (test: (cause: unknown) => boolean) => unknown }).walk?.((cause) => ["ContractFunctionRevertedError", "ContractFunctionZeroDataError"].includes((cause as { name?: string }).name ?? ""));
+  return Boolean(named) || /revert|zero data/i.test(String((error as { message?: string }).message ?? ""));
+};
+
+/** An implementation from before yield existed has no `EARN_VERSION`, so that call reverting means "old"; a failed read of anything is "unreadable", never a false claim about the account and never a broken screen. */
 export async function readEarn(vault: Address, offered: readonly EarnVault[], client: PublicClient): Promise<EarnState> {
   const call = <T,>(address: Address, abi: typeof vaultReadAbi | typeof yieldAbi, functionName: string, args?: readonly unknown[]) => client.readContract({ address, abi, functionName, args } as never) as Promise<T>;
   try {
     await call<number>(vault, vaultReadAbi, "EARN_VERSION");
+  } catch (error) {
+    return { supported: false, reason: isRevert(error) ? "old" : "unreadable" };
+  }
+  try {
     const maxInvestBps = Object.fromEntries(await Promise.all(INVESTABLE.map(async ([kind, id]) => [kind, Number(await call<number>(vault, vaultReadAbi, "maxInvestBps", [id]))] as const)));
     const vaults = await Promise.all(
       offered.map(async (entry) => {
@@ -31,9 +40,10 @@ export async function readEarn(vault: Address, offered: readonly EarnVault[], cl
         return { vault: entry.address, approvedFrom, shares: Object.fromEntries(owned), value: Object.fromEntries(worth) };
       }),
     );
-    return { supported: true, vaults, maxInvestBps };
+    const principal = Object.fromEntries(await Promise.all(INVESTABLE.map(async ([kind, id]) => [kind, await call<bigint>(vault, vaultReadAbi, "invested", [1, id])] as const)));
+    return { supported: true, vaults, maxInvestBps, invested: principal };
   } catch {
-    return { supported: false };
+    return { supported: false, reason: "unreadable" };
   }
 }
 

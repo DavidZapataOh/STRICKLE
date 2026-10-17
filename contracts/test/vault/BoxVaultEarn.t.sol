@@ -229,11 +229,11 @@ contract BoxVaultEarnTest is Test {
         vm.prank(owner);
         vault.setRule(PROFIT, rule);
         _deposit(PROFIT, 500e6);
-        uint256 minOut = _floor(yield.previewDeposit(1));
-        bytes memory data = adapter.payload(address(usdc), 1);
+        uint256 minOut = _floor(yield.previewDeposit(2));
+        bytes memory data = adapter.payload(address(usdc), 2);
         vm.expectRevert(BoxVault.BelowFloor.selector);
         vm.prank(agent);
-        vault.earnIn(USDC, PROFIT, address(yield), 1, minOut, data);
+        vault.earnIn(USDC, PROFIT, address(yield), 2, minOut, data);
     }
 
     function test_RevertsForAVaultTheOwnerDidNotApproveOrOfTheWrongAsset() public {
@@ -309,9 +309,20 @@ contract BoxVaultEarnTest is Test {
         vault.earnIn(USDC, PROFIT, address(yield), 500e6, bound - 1, data);
     }
 
+    function test_ADepositThatReturnsNoSharesIsRefusedEvenWhenTheBoundRoundsToZero() public {
+        // at this share price one unit previews to zero shares, so the bound is zero: an adapter that keeps the unit and returns nothing must still fail
+        assertEq(yield.previewDeposit(1), 0);
+        adapter.setMode(TestEarnAdapter.Mode.Short);
+        bytes memory data = adapter.payload(address(usdc), 1);
+        vm.expectRevert(BoxVault.AdapterShort.selector);
+        vm.prank(agent);
+        vault.earnIn(USDC, PROFIT, address(yield), 1, 0, data);
+    }
+
     function test_OneUnitAmountsAndTheRoundingOfShares() public {
-        uint256 shares = _deposit(PROFIT, 1);
-        assertEq(vault.sharesOf(address(yield), PROFIT), shares);
-        assertEq(vault.invested(USDC, PROFIT), 1);
+        uint256 shares = _deposit(PROFIT, 2);
+        assertEq(shares, 1);
+        assertEq(vault.sharesOf(address(yield), PROFIT), 1);
+        assertEq(vault.invested(USDC, PROFIT), 2);
     }
 }

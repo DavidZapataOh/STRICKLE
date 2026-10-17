@@ -445,7 +445,7 @@ contract BoxVault is BoxLedger {
         uint256 spent = tokenBefore - _token(asset).balanceOf(address(this));
         uint256 shares = IERC20Minimal(vault).balanceOf(address(this)) - sharesBefore;
         if (spent > amount) revert AdapterOverspent();
-        if (shares < minOut) revert AdapterShort();
+        if (shares < minOut || shares == 0) revert AdapterShort();
         _creditEarn(asset, box, vault, spent, shares);
     }
 

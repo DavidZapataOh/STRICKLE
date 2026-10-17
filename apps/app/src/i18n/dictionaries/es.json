@@ -860,17 +860,18 @@
       "active": "Listo.",
       "pending": "Listo el {date}: tu vault espera un día después de que la apruebas.",
       "unavailable": "No disponible en esta cuenta: se creó antes de que esto existiera.",
-      "notAllowed": "Todavía no está permitido en esta cuenta."
+      "notAllowed": "Todavía no está permitido en esta cuenta.",
+      "unreadable": "No se pudo leer esta cuenta ahora. Inténtalo de nuevo en un momento."
     },
     "allow": "Permitir poner dinero a trabajar",
     "allowing": "Esperando tu firma…",
-    "allowFailed": "No se completó. Inténtalo de nuevo.",
     "requested": "Solicitado. El agente lo ejecuta enseguida; el resultado está en Actividad.",
     "errors": {
       "amount": "Escribe un monto mayor que cero, con hasta seis decimales.",
       "box": "Esta cajita no puede rendir.",
       "vault": "Esa vault no está disponible.",
-      "tooMuch": "La cajita tiene menos que eso."
+      "tooMuch": "La cajita tiene menos que eso.",
+      "limit": "Eso es más de lo que esta cajita deja que el agente ponga a trabajar ahora."
     }
   }
 }

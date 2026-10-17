@@ -51,7 +51,7 @@ describe("the signed request to put money to work or take it back", () => {
 });
 
 describe("what the account can do about yield", () => {
-  const live = { supported: true as const, vaults: [{ vault: EARN, approvedFrom: 1_000, shares: {}, value: {} }], maxInvestBps: { taxes: 5_000, payroll: 0, operating: 0, emergency: 10_000, profit: 10_000 } };
+  const live = { supported: true as const, vaults: [{ vault: EARN, approvedFrom: 1_000, shares: {}, value: {} }], maxInvestBps: { taxes: 5_000, payroll: 0, operating: 0, emergency: 10_000, profit: 10_000 }, invested: {} };
   const conversions = { supported: true as const, adapter: ADAPTER, from: 1_000, cap: 5n, window: 86_400 };
   const status = (over: Record<string, unknown> = {}) => earnStatus({ earn: live, conversions, expectedAdapter: ADAPTER, vault: EARN, now: 2_000, ...over } as never);
 
@@ -71,9 +71,13 @@ describe("what the account can do about yield", () => {
   });
 
   it("is unavailable on an account from before yield existed, and when another adapter is set", () => {
-    expect(status({ earn: { supported: false } })).toEqual({ kind: "unavailable" });
+    expect(status({ earn: { supported: false, reason: "old" } })).toEqual({ kind: "unavailable" });
     expect(status({ earn: undefined })).toEqual({ kind: "unavailable" });
     expect(status({ conversions: { ...conversions, adapter: EARN } })).toEqual({ kind: "unavailable" });
+  });
+
+  it("says it could not read, rather than that the account is old, when the read failed", () => {
+    expect(status({ earn: { supported: false, reason: "unreadable" } })).toEqual({ kind: "unreadable" });
   });
 
   it("is unavailable for a vault the account has no row for", () => {
@@ -90,5 +94,21 @@ describe("the owner's calls that allow yield", () => {
     expect(both.map((call) => call.to)).toEqual([VAULT, VAULT]);
     expect(both.map((call) => decode(call))).toEqual([{ functionName: "approveSwapAdapter", args: [ADAPTER] }, { functionName: "approveVault", args: [EARN] }]);
     expect(earnSetupCalls({ vault: VAULT, adapter: ADAPTER, earnVault: EARN, needs: ["vault"] }).map((call) => decode(call).functionName)).toEqual(["approveVault"]);
+  });
+});
+
+describe("how much a box may still put to work", async () => {
+  const { investRoom } = await import("../src/yield/room.ts");
+
+  it("is the box's share of everything it holds, less what already works", () => {
+    expect(investRoom({ cash: 1_000_000_000n, working: 0n, maxBps: 5_000 })).toBe(500_000_000n);
+    expect(investRoom({ cash: 500_000_000n, working: 500_000_000n, maxBps: 5_000 })).toBe(0n);
+    expect(investRoom({ cash: 600_000_000n, working: 400_000_000n, maxBps: 5_000 })).toBe(100_000_000n);
+  });
+
+  it("is never more than the cash, nor below zero, and zero where no share is allowed", () => {
+    expect(investRoom({ cash: 10n, working: 0n, maxBps: 10_000 })).toBe(10n);
+    expect(investRoom({ cash: 100n, working: 900n, maxBps: 5_000 })).toBe(0n);
+    expect(investRoom({ cash: 5_000_000_000n, working: 0n, maxBps: 0 })).toBe(0n);
   });
 });

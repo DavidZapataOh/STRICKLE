@@ -5,7 +5,7 @@ import type { Config } from "../config.ts";
 import { BOX_ID } from "./cascade.ts";
 import { circleEarn } from "./earn-call.ts";
 import { earnAllowed } from "./earn-allowed.ts";
-import { type EarnOutcome, type EarnReads, earnMove } from "./earn-handle.ts";
+import { type EarnOutcome, type EarnReads, earnMove, expireStale } from "./earn-handle.ts";
 import { decodeEarnFirst, decodeEarnPreview, earnFirstReads, earnPreviewRead } from "./earn-reads.ts";
 import type { Profile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
@@ -35,6 +35,7 @@ export function earnFor(runtime: TeeRuntime<Config>, input: { profile: Profile; 
       allowed: (move) => earnAllowed(profile, input.books, input.today, move),
     });
   } catch {
-    return { kind: "none", next: profile };
+    // a vault that cannot answer costs this run, but a request that has waited a day is dropped and told
+    return expireStale({ profile, config: runtime.config, now: input.nowSeconds }) ?? { kind: "none", next: profile };
   }
 }

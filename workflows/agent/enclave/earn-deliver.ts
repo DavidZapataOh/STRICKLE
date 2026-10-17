@@ -22,7 +22,12 @@ export function deliverEarn(runtime: TeeRuntime<Config>, input: { executor: Addr
     return { version: next, notices: outcome.notices };
   } catch {
     // the vault refused the move, which leaves the state where it was: count the failure the way a refused bundle is counted
-    deliver(runtime, executor, encodeTickReport({ vault, next, ciphertext: seal(outcome.failed.next, next) }));
-    return { version: next, notices: outcome.failed.notices };
+    try {
+      deliver(runtime, executor, encodeTickReport({ vault, next, ciphertext: seal(outcome.failed.next, next) }));
+      return { version: next, notices: outcome.failed.notices };
+    } catch {
+      // the move itself may have landed even though the answer did not come back: the state is left where it is and the next run reads the chain again
+      return { version: input.version, notices: [] };
+    }
   }
 }

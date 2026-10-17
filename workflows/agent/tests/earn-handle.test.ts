@@ -4,7 +4,7 @@ import { plainDate } from "@strickle/core";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { Config } from "../config.ts";
-import { type EarnReads, earnMove, minOutFor } from "../enclave/earn-handle.ts";
+import { type EarnReads, earnMove, expireStale, minOutFor } from "../enclave/earn-handle.ts";
 import type { Profile } from "../enclave/profile.ts";
 import { profileOf } from "./support.ts";
 
@@ -100,6 +100,21 @@ describe("a withdrawal", () => {
     expect(result).toMatchObject({ kind: "held", notices: [{ kind: "earn-held", reason: "invalid-bundle" }] });
   });
 
+  it("is refused when the bundle redeems far fewer shares than the amount asked for", () => {
+    const tiny = bundle("withdraw.json");
+    tiny.data.executionParams.instructions[0].amountToApprove = "1";
+    tiny.data.executionParams.instructions[0].data = `${tiny.data.executionParams.instructions[0].data.slice(0, 10)}${"0".repeat(63)}1${tiny.data.executionParams.instructions[0].data.slice(74)}`;
+    const result = outMove(withPending([out]), { quote: (path: string) => (path === "/withdraw" ? tiny : quoteOf()(path)) });
+    expect(result).toMatchObject({ kind: "held", notices: [{ kind: "earn-held", reason: "invalid-bundle" }] });
+  });
+
+  it("reports what the shares are worth, not what was asked for", () => {
+    const result = outMove(withPending([{ ...out, amount: "1999999" }]));
+    if (result.kind !== "earn") throw new Error(result.kind);
+    const notice = result.notices[0];
+    expect(notice).toMatchObject({ kind: "earn", amount: ((3_003_174n * 1_997_885_511_423_141_916n) / 3_000_000_000_000_000_000n).toString() });
+  });
+
   it("drops the request when the box owns no shares", () => {
     const result = outMove(withPending([out]), { reads: reads({ owned: 0n }) });
     expect(result).toMatchObject({ kind: "held", next: { earn: { pending: [] } }, notices: [{ kind: "earn-held", reason: "insufficient" }] });
@@ -178,5 +193,17 @@ describe("the minimum", () => {
         expect(minOutFor(preview, slippage)).toBeLessThanOrEqual(preview);
       }),
     );
+  });
+});
+
+describe("a request that could never be read", () => {
+  it("expires after a day even when the reads that would have carried it out keep failing", () => {
+    const old = withPending([pending({ at: NOW - 86_401 }), pending({ id: "i2", box: "taxes", at: NOW - 10 })]);
+    expect(expireStale({ profile: old, config, now: NOW })).toMatchObject({ kind: "held", next: { earn: { pending: [{ id: "i2" }] } }, notices: [{ kind: "earn-held", reason: "expired", box: "profit", name: "EarnKit USDC Vault" }] });
+  });
+
+  it("leaves a young request, an empty list and a halted profile alone", () => {
+    expect(expireStale({ profile: withPending([pending()]), config, now: NOW })).toBeUndefined();
+    expect(expireStale({ profile: profileOf(), config, now: NOW })).toBeUndefined();
   });
 });

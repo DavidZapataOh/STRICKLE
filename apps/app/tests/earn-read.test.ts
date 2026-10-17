@@ -15,6 +15,7 @@ function client(over: { version?: number | "missing"; shares?: Record<number, bi
         if (over.version === "missing") throw new Error("execution reverted");
         return over.version ?? 1;
       }
+      if (functionName === "invested") return Number(args?.[1]) === BOX.profit ? 3_000_000n : 0n;
       if (functionName === "vaultApprovedFrom") return over.approved ?? 1_900_000_000n;
       if (functionName === "sharesOf") return shares[Number(args?.[1])] ?? 0n;
       if (functionName === "maxInvestBps") return Number(args?.[0]) === BOX.payroll || Number(args?.[0]) === BOX.operating ? 0 : 10_000;
@@ -26,7 +27,7 @@ function client(over: { version?: number | "missing"; shares?: Record<number, bi
 
 describe("reading what a vault has put to work", () => {
   it("says it is not supported when the vault has no earn version", async () => {
-    expect(await readEarn(VAULT, offered, client({ version: "missing" }))).toEqual({ supported: false });
+    expect(await readEarn(VAULT, offered, client({ version: "missing" }))).toEqual({ supported: false, reason: "old" });
   });
 
   it("reads the approval, the shares per box and what they are worth, and each box's investable share", async () => {
@@ -34,6 +35,7 @@ describe("reading what a vault has put to work", () => {
     if (!state.supported) throw new Error("unsupported");
     expect(state.vaults).toEqual([{ vault: EARN, approvedFrom: 1_900_000_000, shares: { profit: 3_000_000_000_000_000_000n }, value: { profit: 3_003_174n } }]);
     expect(state.maxInvestBps).toEqual({ taxes: 10_000, payroll: 0, operating: 0, emergency: 10_000, profit: 10_000 });
+    expect(state.invested).toMatchObject({ profit: 3_000_000n, taxes: 0n });
   });
 
   it("leaves out boxes that hold no shares and never reads the salary box", async () => {
@@ -43,9 +45,11 @@ describe("reading what a vault has put to work", () => {
     expect(Object.keys(state.maxInvestBps)).not.toContain("salary");
   });
 
-  it("is not supported when a read fails midway, never a broken screen", async () => {
+  it("is unreadable, not old, when a read fails for any reason but a revert", async () => {
     const broken = { readContract: async ({ functionName }: { functionName: string }) => { if (functionName === "EARN_VERSION") return 1; throw new Error("rate limited"); } } as unknown as PublicClient;
-    expect(await readEarn(VAULT, offered, broken)).toEqual({ supported: false });
+    expect(await readEarn(VAULT, offered, broken)).toEqual({ supported: false, reason: "unreadable" });
+    const down = { readContract: async () => { throw new Error("fetch failed"); } } as unknown as PublicClient;
+    expect(await readEarn(VAULT, offered, down)).toEqual({ supported: false, reason: "unreadable" });
   });
 });
 

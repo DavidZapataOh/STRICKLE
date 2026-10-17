@@ -860,17 +860,18 @@
       "active": "Ready.",
       "pending": "Ready on {date}: your vault waits a day after you approve it.",
       "unavailable": "Not available on this account: it was created before this existed.",
-      "notAllowed": "Not allowed on this account yet."
+      "notAllowed": "Not allowed on this account yet.",
+      "unreadable": "This account could not be read right now. Try again in a moment."
     },
     "allow": "Allow putting money to work",
     "allowing": "Waiting for your signature…",
-    "allowFailed": "That did not go through. Try again.",
     "requested": "Requested. The agent carries it out right away; the result is in Activity.",
     "errors": {
       "amount": "Enter an amount above zero, with up to six decimals.",
       "box": "This box cannot earn.",
       "vault": "That vault is not available.",
-      "tooMuch": "The box holds less than that."
+      "tooMuch": "The box holds less than that.",
+      "limit": "That is more than this box lets the agent put to work right now."
     }
   }
 }

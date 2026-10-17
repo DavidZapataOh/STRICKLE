@@ -133,7 +133,7 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
       }
 
       // the owner's requests to put money to work or take it back: one on-chain move per vault per run, after any conversion has had its turn
-      if (conversion.kind === "none") {
+      if (conversion.kind === "none" || conversion.kind === "held") {
         const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: conversion.next, vault, books: tickBooks, today, nowSeconds }), seal });
         version = moved.version;
         notices.push(...moved.notices);

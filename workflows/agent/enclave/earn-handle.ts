@@ -34,6 +34,15 @@ export type EarnOutcome =
 /** The least the vault will accept: the preview less the vault's own slippage, rounded up the way the vault rounds it, so it is never looser than the vault's floor. */
 export const minOutFor = (preview: bigint, slippageBps: number): bigint => (preview * BigInt(10_000 - slippageBps) + 9_999n) / 10_000n;
 
+/** The oldest request, dropped with a told reason when it is past its day: the reads that would have carried it out may be failing for good, and it must not wait for ever or block new requests. */
+export function expireStale(input: { profile: Profile; config: Config; now: number }): EarnOutcome | undefined {
+  const intent = [...input.profile.earn.pending].sort((a, b) => a.at - b.at)[0];
+  if (!intent || input.now - intent.at <= EARN_REQUEST_SECONDS) return undefined;
+  const name = input.config.earn.vaults.find((entry) => entry.address.toLowerCase() === intent.vault.toLowerCase())?.name ?? "";
+  const rest = input.profile.earn.pending.filter((entry) => entry !== intent);
+  return { kind: "held", next: { ...input.profile, earn: { ...input.profile.earn, pending: rest } }, notices: [{ kind: "earn-held", box: intent.box, deposit: intent.deposit, name, reason: "expired" }] };
+}
+
 /**
  * One move for one vault: take the owner's oldest request, ask Circle for the bundle, check it and return what to deliver. Circle's answer is
  * untrusted, so every outcome that is not a fully checked bundle keeps the money where it is and costs at most one counted failure.
@@ -98,12 +107,13 @@ export function earnMove(input: { profile: Profile; vault: Address; reads: EarnR
   }
   const checked = checkEarnBundle({ response, vault: input.vault, earnVault, adapter: config.swap.adapter as Address, usdc: input.usdc, deposit: intent.deposit, assets: asked, ownedShares: reads.owned, now });
   if (!checked.ok) return failure("invalid-bundle");
-  if (!intent.deposit && checked.amount > (shares * 101n) / 100n + 1n) return failure("invalid-bundle");
+  // the bundle may differ a little from the preview, never by much either way: a withdrawal of almost nothing is not the one that was asked for
+  if (!intent.deposit && (checked.amount > (shares * 101n) / 100n + 1n || checked.amount < (shares * 99n) / 100n)) return failure("invalid-bundle");
 
   const slippage = Math.min(config.swap.maxSlipBps, reads.slippageBps);
   const worth = intent.deposit ? reads.previewShares : (reads.position * checked.amount + reads.owned - 1n) / reads.owned + 1n;
   const next: Profile = { ...without(rest), earn: { ...profile.earn, pending: rest, failures: 0 } };
-  const notice: Notice = { kind: "earn", box: intent.box, deposit: intent.deposit, name, protocol: known.protocol, vault: earnVault, amount: assets.toString(), counter: (intent.deposit ? reads.previewShares : checked.amount).toString(), apyBps };
+  const notice: Notice = { kind: "earn", box: intent.box, deposit: intent.deposit, name, protocol: known.protocol, vault: earnVault, amount: (intent.deposit ? assets : (reads.position * checked.amount) / reads.owned).toString(), counter: (intent.deposit ? reads.previewShares : checked.amount).toString(), apyBps };
   // if the delivered report reverts on chain, the vault refused it under a limit the enclave cannot see (the box's floor, its invest share)
   const reverted = failure("vault-refused");
   return {

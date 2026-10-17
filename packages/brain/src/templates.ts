@@ -167,7 +167,7 @@ const SWAP_REASONS: Record<string, Record<Lang, string>> = {
 
 const EARN_REASONS: Record<string, Record<Lang, string>> = {
   "adapter-not-approved": { en: "the agent's service is not active on your account yet, which takes a day after you approve it", es: "el servicio del agente aún no está activo en tu cuenta, lo cual tarda un día tras aprobarlo", "pt-br": "o serviço do agente ainda não está ativo na sua conta, o que leva um dia após você aprovar" },
-  "vault-not-approved": { en: "this vault is not approved on your account yet, which takes a day after you approve it", es: "esta vault aún no está aprobada en tu cuenta, lo cual tarda un día tras aprobarla", "pt-br": "esta vault ainda não está aprovada na sua conta, o que leva um dia após você aprovar" },
+  "vault-not-approved": { en: "this vault is not approved on your account yet, which takes a day after you approve it", es: "esta vault aún no está aprobada en tu cuenta, lo cual tarda un día tras aprobarla", "pt-br": "este vault ainda não está aprovado na sua conta, o que leva um dia após você aprovar" },
   "quote-unavailable": { en: "Circle's service did not answer", es: "el servicio de Circle no respondió", "pt-br": "o serviço da Circle não respondeu" },
   "invalid-bundle": { en: "Circle's answer did not match what was asked, so the agent refused it", es: "la respuesta de Circle no coincidía con lo pedido, así que el agente la rechazó", "pt-br": "a resposta da Circle não correspondia ao pedido, então o agente a recusou" },
   "vault-refused": { en: "your vault refused it under its own limits", es: "tu vault lo rechazó según sus propios límites", "pt-br": "seu vault recusou conforme seus próprios limites" },
