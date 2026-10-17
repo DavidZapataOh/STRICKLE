@@ -587,7 +587,20 @@
     "copied": "Endereço copiado",
     "copyFailed": "Seu navegador bloqueou a cópia. Selecione o endereço e copie manualmente.",
     "noWallet": "Nenhuma carteira foi encontrada neste navegador. Use o endereço abaixo.",
-    "paymentFailed": "O pagamento não foi concluído. Nada foi cobrado. Tente de novo."
+    "paymentFailed": "O pagamento não foi concluído. Nada foi cobrado. Tente de novo.",
+    "card": {
+      "option": "Pagar com cartão",
+      "body": "Cartão de débito, Apple Pay ou Google Pay. O serviço do cartão cobra taxas de você; a fatura é creditada com o que chegar.",
+      "minting": "Preparando o formulário do cartão",
+      "waiting": "Aguardando a confirmação do pagamento",
+      "settled": "Pagamento recebido.",
+      "blocked": "O navegador interno do seu app bloqueia o formulário do cartão. Abra esta página no seu navegador comum ou pague de outra forma.",
+      "closed": "Esta fatura não pode mais ser paga com cartão.",
+      "unavailable": "Os pagamentos com cartão não estão disponíveis agora. Tente de novo ou pague de outra forma.",
+      "expired": "O pagamento ainda pode chegar. A fatura se atualiza quando chegar e você pode sair desta página.",
+      "notCompleted": "O pagamento com cartão não foi concluído.",
+      "retry": "Tentar de novo"
+    }
   },
   "invoices": {
     "title": "Faturas",
@@ -635,7 +648,8 @@
     "suggestion": {
       "title": "Chegou um pagamento de {amount} de {payer}. É desta fatura?",
       "confirm": "Sim, é",
-      "dismiss": "Não é esta"
+      "dismiss": "Não é esta",
+      "viaCard": "Pode ser um pagamento com cartão: o valor é o que chegou depois das taxas do cartão."
     },
     "errors": {
       "rate-limited": "Tentativas demais. Aguarde um momento e tente de novo.",

@@ -9,6 +9,7 @@ import type { Locale } from "@/i18n/config";
 import type { PayText } from "@/i18n/slices";
 import type { PublicInvoice } from "@/server/pay";
 import { type InjectedWallet, discoverWallets } from "@/wallet/injected";
+import { CardPay } from "./CardPay";
 import { DepositActive } from "./DepositActive";
 import { type PayPhase, PayView } from "./PayView";
 
@@ -18,7 +19,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 /** The wallet side of the payer's page: pay on Arc with a memo, pay from another chain through the deposit flow, or copy the address. */
-export function PayActive({ lang, t, token, invoice, start, onPaid }: { lang: Locale; t: PayText; token: string; invoice: PublicInvoice; start: "arc" | "other"; onPaid: () => void }) {
+export function PayActive({ lang, t, token, invoice, start, onPaid }: { lang: Locale; t: PayText; token: string; invoice: PublicInvoice; start: "arc" | "other" | "card"; onPaid: () => void }) {
   const [phase, setPhase] = useState<PayPhase>("idle");
   const [wallets, setWallets] = useState<InjectedWallet[]>([]);
   const [otherOpen, setOtherOpen] = useState(start === "other");
@@ -115,8 +116,10 @@ export function PayActive({ lang, t, token, invoice, start, onPaid }: { lang: Lo
       phase={phase}
       wallets={wallets}
       otherOpen={otherOpen}
+      cardOpen={start === "card"}
+      cardSlot={<CardPay t={t} token={token} autostart onPaid={onPaid} />}
       copyNote={copyNote}
-      actions={{ arc: () => void connect(), pick: (wallet) => void pay(wallet), other: () => setOtherOpen(true), copy: () => void copy() }}
+      actions={{ arc: () => void connect(), pick: (wallet) => void pay(wallet), other: () => setOtherOpen(true), card: () => {}, copy: () => void copy() }}
       otherSlot={<DepositActive lang={lang} t={t} account={{ vault: invoice.vault }} endpoint={`/api/pay/${token}/deposits`} scope={token} target={remaining} />}
     />
   );

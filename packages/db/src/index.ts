@@ -10,3 +10,4 @@ export * from "./wave.ts";
 export * from "./deposits.ts";
 export * from "./invoice-keys.ts";
 export * from "./payments.ts";
+export * from "./onramp.ts";

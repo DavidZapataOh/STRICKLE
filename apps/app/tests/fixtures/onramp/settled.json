@@ -1,0 +1,14 @@
+{
+  "_provisional": true,
+  "notificationType": "onramp.deposit.settled",
+  "notification": {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "sessionId": "provisional-session",
+    "userId": "00000000-0000-4000-8000-000000000002",
+    "destinationAddress": "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8",
+    "destinationChain": "Arc_Testnet",
+    "amount": "5.00",
+    "tokenSymbol": "USDC",
+    "transactionHash": "0xfbe239f1910a1d183c11bea323ea0389f98cac3f1a1010ff5786276cad7498cc"
+  }
+}

@@ -6,7 +6,7 @@ import es from "../src/i18n/dictionaries/es.json";
 import { payText } from "../src/i18n/slices.ts";
 import type { PublicInvoice } from "../src/server/pay.ts";
 
-const base: PublicInvoice = { label: "Website redesign", payeeName: "Ana Studio", note: "October", amount: "100000000", paid: "0", remaining: "100000000", status: "open", expiresAt: null, expired: false, closed: false, vault: "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8", memoId: `0x${"ab".repeat(32)}`, chainId: 5042002, usdc: "0x3600000000000000000000000000000000000000" };
+const base: PublicInvoice = { label: "Website redesign", payeeName: "Ana Studio", note: "October", amount: "100000000", paid: "0", remaining: "100000000", status: "open", expiresAt: null, expired: false, closed: false, vault: "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8", memoId: `0x${"ab".repeat(32)}`, chainId: 5042002, usdc: "0x3600000000000000000000000000000000000000", cardAvailable: false };
 const view = (invoice: Partial<PublicInvoice> = {}, t: typeof en = en, lang: "en" | "es" | "pt-br" = "en", phase: "idle" | "needEoa" | "thanks" = "idle") =>
   renderToStaticMarkup(<PayView lang={lang} t={payText(t)} invoice={{ ...base, ...invoice }} phase={phase} actions={{ arc: () => {}, other: () => {}, copy: () => {} }} otherOpen={false} />);
 

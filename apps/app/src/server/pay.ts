@@ -25,6 +25,7 @@ export interface PublicInvoice {
   memoId: Hex;
   chainId: number;
   usdc: Address;
+  cardAvailable: boolean;
 }
 
 export type PayResult =
@@ -41,6 +42,8 @@ export interface PayDeps {
   network: ArcNetworkName;
   chainId: number;
   usdc: Address;
+  /** Card payments, when the server is configured for them; a later rail adds its own flag. */
+  onramp?: { environment: "sandbox" | "production" } | null;
 }
 
 const STATUS: Record<PayResult["status"], number> = { ok: 200, claimed: 200, "not-found": 404, "rate-limited": 429, rejected: 400, unavailable: 502, misconfigured: 503 };
@@ -72,6 +75,7 @@ const toPublic = (link: LinkView, deps: PayDeps, now: number): PublicInvoice => 
     memoId: link.memoId,
     chainId: deps.chainId,
     usdc: deps.usdc,
+    cardAvailable: deps.onramp != null && !(link.status === "paid" || link.status === "void" || link.revoked) && !(link.expiresAt !== null && link.expiresAt.getTime() < now),
   };
 };
 

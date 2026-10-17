@@ -12,7 +12,8 @@
     "./snapshots": "./src/snapshots.ts",
     "./deposits": "./src/deposits.ts",
     "./invoice-keys": "./src/invoice-keys.ts",
-    "./payments": "./src/payments.ts"
+    "./payments": "./src/payments.ts",
+    "./onramp": "./src/onramp.ts"
   },
   "scripts": {
     "lint": "eslint .",

@@ -12,7 +12,7 @@ import { renderWithAppCss } from "./support/render-audit.ts";
 
 const dictionaries = { en, es, "pt-br": pt } as const;
 const invoice = (over: Partial<SerializedInvoice> = {}): SerializedInvoice => ({ id: "11111111-1111-4111-8111-111111111111", label: "Website redesign", payeeName: "Ana Studio", note: "", amount: "100000000", paid: "0", status: "open", expiresAt: "2026-12-01T00:00:00.000Z", createdAt: "2026-11-01T00:00:00.000Z", token: "Abcdefghijklmnopqrstuv", suggestions: [], payments: [], ...over });
-const suggestion = { id: "55555555-5555-4555-8555-555555555555", amount: "100000000", payer: "0x14b5e469720A4cb071772258D9ac8f0B37Ab8D9A", txHash: `0x${"ab".repeat(32)}`, at: "2026-11-02T00:00:00.000Z" };
+const suggestion = { id: "55555555-5555-4555-8555-555555555555", amount: "100000000", payer: "0x14b5e469720A4cb071772258D9ac8f0B37Ab8D9A", txHash: `0x${"ab".repeat(32)}`, at: "2026-11-02T00:00:00.000Z", viaCard: false };
 const ready = (invoices: SerializedInvoice[], over: Partial<Extract<InvoicesState, { status: "ready" }>> = {}): InvoicesState => ({ status: "ready", invoices, busy: false, error: null, confirming: null, copied: null, ...over });
 const states: Record<string, InvoicesState> = {
   empty: ready([]),

@@ -17,7 +17,7 @@ type State = { status: "loading" } | { status: "notFound" } | { status: "error" 
 export function PayScreen({ lang, t, token }: { lang: Locale; t: PayText; token: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [round, setRound] = useState(0);
-  const [start, setStart] = useState<"arc" | "other" | null>(null);
+  const [start, setStart] = useState<"arc" | "other" | "card" | null>(null);
   const [copyNote, setCopyNote] = useState("");
 
   useEffect(() => {
@@ -59,5 +59,5 @@ export function PayScreen({ lang, t, token }: { lang: Locale; t: PayText; token:
       setCopyNote(t.pay.copyFailed);
     }
   }
-  return <PayView lang={lang} t={t} invoice={invoice} phase="idle" otherOpen={false} copyNote={copyNote} actions={{ arc: () => setStart("arc"), other: () => setStart("other"), copy: () => void copy() }} />;
+  return <PayView lang={lang} t={t} invoice={invoice} phase="idle" otherOpen={false} copyNote={copyNote} actions={{ arc: () => setStart("arc"), other: () => setStart("other"), card: () => setStart("card"), copy: () => void copy() }} />;
 }

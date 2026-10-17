@@ -109,7 +109,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium-headless-shell
-      - run: npm run build -w app
+      # made-up sandbox-form values: the build bakes the pay page's headers in, and nothing here mints a session
+      - run: ONRAMP_API_KEY="TEST_$(echo API)_KEY:ci:ci" ONRAMP_REFERRER_DOMAIN=app.strickle.xyz npm run build -w app
       - run: npm run test:integration -w @strickle/db
       - run: npm run test:integration -w app
 

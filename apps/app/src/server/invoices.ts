@@ -20,7 +20,7 @@ export interface SerializedInvoice {
   expiresAt: string | null;
   createdAt: string;
   token: string;
-  suggestions: { id: string; amount: string; payer: string; txHash: string; at: string }[];
+  suggestions: { id: string; amount: string; payer: string; txHash: string; at: string; viaCard: boolean }[];
   payments: { amount: string; state: string; rail: string; late: boolean; txHash: string; at: string }[];
 }
 
@@ -45,7 +45,7 @@ const serialize = (item: InvoiceListItem): SerializedInvoice => ({
   expiresAt: item.expiresAt ? item.expiresAt.toISOString() : null,
   createdAt: item.createdAt.toISOString(),
   token: item.token,
-  suggestions: item.suggestions.map((s) => ({ id: s.id, amount: s.amount.toString(), payer: s.payer, txHash: s.txHash, at: s.at.toISOString() })),
+  suggestions: item.suggestions.map((s) => ({ id: s.id, amount: s.amount.toString(), payer: s.payer, txHash: s.txHash, at: s.at.toISOString(), viaCard: s.viaCard })),
   payments: item.payments.map((p) => ({ amount: p.amount.toString(), state: p.state, rail: p.rail, late: p.late, txHash: p.txHash, at: p.at.toISOString() })),
 });
 

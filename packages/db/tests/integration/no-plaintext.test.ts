@@ -52,11 +52,13 @@ describe("a dump of the database", () => {
 
   it("has exactly the reviewed columns, so a new column cannot slip in unnoticed", async () => {
     // Adding a column means adding it here on purpose: sealed values must be bytea,
-    // and nothing that can hold an amount may be text, numeric or json.
+    // and nothing that can hold an amount may be text, numeric or json (the exceptions are named below).
     // metric_snapshots holds public, chain-derived aggregates (what /api/metrics serves) and the collector's resume state: vault and owner addresses that
     // are already public through the factory's events and two running totals, never an amount per user. It is the one deliberate exception to "no json".
     // deposit_intents holds only facts already public on the source chain and on Arc (vault, sender, amount, transaction hashes) and the depositor's own income/own/unsure declaration.
     // The invoice tables hold the freelancer's typed text only sealed (invoices.sealed), a hash of the link token, the invoice amount and the payments matched to it: amounts and addresses that are already public on Arc, never client data.
+    // circle_webhook_events keeps the raw, signature-verified notification as jsonb (the second deliberate json column after metric snapshots): it carries Circle's own fields about a purchase, never a user's text, and is kept so the undocumented real shape can be read.
+    // onramp_sessions holds only a link id, a public vault address and a status.
     // The access tables hold only the hash of an invitation code, its label and times, and a random session id.
     // The rate tables hold a keyed hash of an address or a public vault address, a count and a time: no amount, no user data.
     const reviewed = [
@@ -69,6 +71,11 @@ describe("a dump of the database", () => {
       "agent_state.updated_at:timestamp with time zone",
       "agent_state.user_id:uuid",
       "agent_state.version:integer",
+      "circle_webhook_events.applied_at:timestamp with time zone",
+      "circle_webhook_events.notification_id:text",
+      "circle_webhook_events.payload:jsonb",
+      "circle_webhook_events.received_at:timestamp with time zone",
+      "circle_webhook_events.type:text",
       "deposit_intents.amount:bigint",
       "deposit_intents.burn_tx:text",
       "deposit_intents.created_at:timestamp with time zone",
@@ -118,6 +125,14 @@ describe("a dump of the database", () => {
       "mirror_boxes.kind:text",
       "mirror_boxes.updated_at:timestamp with time zone",
       "mirror_boxes.user_id:uuid",
+      "onramp_sessions.circle_session_id:text",
+      "onramp_sessions.created_at:timestamp with time zone",
+      "onramp_sessions.expires_at:timestamp with time zone",
+      "onramp_sessions.id:uuid",
+      "onramp_sessions.link_id:uuid",
+      "onramp_sessions.settled_tx:text",
+      "onramp_sessions.status:text",
+      "onramp_sessions.vault:text",
       "owner_nonces.deadline:timestamp with time zone",
       "owner_nonces.nonce:text",
       "owner_nonces.vault:text",
@@ -132,6 +147,7 @@ describe("a dump of the database", () => {
       "payment_links.version:integer",
       "payments.amount:bigint",
       "payments.at:timestamp with time zone",
+      "payments.card_session_id:uuid",
       "payments.chain_id:integer",
       "payments.created_at:timestamp with time zone",
       "payments.id:uuid",

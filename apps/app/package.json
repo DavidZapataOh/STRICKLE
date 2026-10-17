@@ -20,6 +20,7 @@
     "record-metrics": "node --env-file-if-exists=../../../.env scripts/record-metrics.ts"
   },
   "dependencies": {
+    "@circle-fin/onramp-kit": "1.0.4",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",
     "@strickle/agent": "*",

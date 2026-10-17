@@ -587,7 +587,20 @@
     "copied": "Address copied",
     "copyFailed": "Your browser blocked copying. Select the address and copy it by hand.",
     "noWallet": "No wallet was found in this browser. Use the address below.",
-    "paymentFailed": "The payment did not go through. Nothing was charged. Try again."
+    "paymentFailed": "The payment did not go through. Nothing was charged. Try again.",
+    "card": {
+      "option": "Pay with card",
+      "body": "Debit card, Apple Pay or Google Pay. The card service charges you fees; the invoice is credited with what arrives.",
+      "minting": "Preparing the card form",
+      "waiting": "Waiting for the payment to be confirmed",
+      "settled": "Payment received.",
+      "blocked": "Your in-app browser blocks the card form. Open this page in your regular browser, or pay another way.",
+      "closed": "This invoice can no longer be paid by card.",
+      "unavailable": "Card payments are not available right now. Try again or pay another way.",
+      "expired": "The payment may still arrive. The invoice updates when it does, and you can leave this page.",
+      "notCompleted": "The card payment was not completed.",
+      "retry": "Try again"
+    }
   },
   "invoices": {
     "title": "Invoices",
@@ -635,7 +648,8 @@
     "suggestion": {
       "title": "A payment of {amount} arrived from {payer}. Is it for this invoice?",
       "confirm": "Yes, it is",
-      "dismiss": "Not this one"
+      "dismiss": "Not this one",
+      "viaCard": "This may be a card payment: the amount is what arrived after the card's fees."
     },
     "errors": {
       "rate-limited": "Too many tries. Wait a moment and try again.",

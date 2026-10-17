@@ -15,12 +15,13 @@ export interface PayActions {
   pick?(wallet: InjectedWallet): void;
   other(): void;
   copy(): void;
+  card?(): void;
 }
 
 /** Each way to pay is an entry here; a later rail adds one. */
 type Option = { id: string; title: string; body: ReactNode };
 
-export function PayView({ lang, t, invoice, phase, actions, otherOpen, otherSlot, copyNote, wallets = [] }: { wallets?: InjectedWallet[]; lang: Locale; t: PayText; invoice: PublicInvoice; phase: PayPhase; actions: PayActions; otherOpen: boolean; otherSlot?: ReactNode; copyNote?: string }) {
+export function PayView({ lang, t, invoice, phase, actions, otherOpen, otherSlot, cardSlot, cardOpen = false, copyNote, wallets = [] }: { cardSlot?: ReactNode; cardOpen?: boolean; wallets?: InjectedWallet[]; lang: Locale; t: PayText; invoice: PublicInvoice; phase: PayPhase; actions: PayActions; otherOpen: boolean; otherSlot?: ReactNode; copyNote?: string }) {
   const p = t.pay;
   const amount = BigInt(invoice.amount);
   const paid = BigInt(invoice.paid);
@@ -71,6 +72,24 @@ export function PayView({ lang, t, invoice, phase, actions, otherOpen, otherSlot
             </button>
           ),
         },
+        ...(invoice.cardAvailable
+          ? [
+              {
+                id: "card",
+                title: p.card.option,
+                body: cardOpen ? (
+                  cardSlot
+                ) : (
+                  <>
+                    <p>{p.card.body}</p>
+                    <button type="button" className="btn" onClick={actions.card}>
+                      {p.card.option}
+                    </button>
+                  </>
+                ),
+              },
+            ]
+          : []),
         {
           id: "direct",
           title: p.options.direct,

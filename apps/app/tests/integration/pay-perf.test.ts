@@ -8,6 +8,9 @@ import { createTestDatabase } from "@strickle/db/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { securityHeaders } from "../../src/security-headers.ts";
 
+type Policy = { allowsFeature(feature: string, origin?: string): boolean };
+type Doc = { permissionsPolicy?: Policy; featurePolicy?: Policy };
+
 // Needs `npm run build` first. The server is the real production build on a database of its own.
 const PORT = 3299;
 const BASE = `http://localhost:${PORT}`;
@@ -55,6 +58,45 @@ describe("the payer's page in production", () => {
     expect(csp).toMatch(/iris-api/);
     expect(csp).not.toMatch(/https:\/\/api\.circle\.com/);
   });
+
+  it("lets the card widget's origin, and no other, use the camera, microphone, payment and clipboard on this page only", async (ctx) => {
+    const csp = (await fetch(`${BASE}/en/pay/${token}`)).headers.get("content-security-policy") ?? "";
+    // the policy is baked in at build time: a build without the card variables has no widget to allow
+    if (!csp.includes("frame-src")) return ctx.skip();
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      await page.goto(`${BASE}/en/pay/${token}`, { waitUntil: "domcontentloaded" });
+      const check = () =>
+        page.evaluate(
+          ({ widget }) => {
+            const policy = (((document as unknown as Doc).permissionsPolicy ?? (document as unknown as Doc).featurePolicy) as Policy);
+            const features = ["camera", "microphone", "payment", "clipboard-read", "clipboard-write"];
+            return { widget: features.filter((feature) => !policy.allowsFeature(feature, widget)), stranger: features.filter((feature) => policy.allowsFeature(feature, "https://example.com")) };
+          },
+          { widget: "https://onramp-sandbox.arc.io" },
+        );
+      expect(await check()).toMatchObject({ widget: [], stranger: [] });
+      const frame = await page.evaluate(
+        () =>
+          new Promise<string>((resolve) => {
+            document.addEventListener("securitypolicyviolation", (event) => resolve(event.violatedDirective));
+            const iframe = document.createElement("iframe");
+            iframe.src = "https://onramp-sandbox.arc.io/";
+            iframe.onload = () => resolve("loaded");
+            iframe.onerror = () => resolve("error");
+            document.body.append(iframe);
+            setTimeout(() => resolve("loaded"), 4000);
+          }),
+      );
+      expect(frame).not.toMatch(/frame-src/);
+      await page.goto(`${BASE}/en/settings`, { waitUntil: "domcontentloaded" });
+      const elsewhere = await page.evaluate(() => (((document as unknown as Doc).permissionsPolicy ?? (document as unknown as Doc).featurePolicy) as Policy).allowsFeature("payment", "https://onramp-sandbox.arc.io"));
+      expect(elsewhere).toBe(false);
+    } finally {
+      await browser.close();
+    }
+  }, 60_000);
 
   it("keeps the default permissions on every other route", async () => {
     const response = await fetch(`${BASE}/en/settings`);
