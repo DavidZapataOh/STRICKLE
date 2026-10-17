@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
 import { getPublicClient } from "@/chain/client";
 import { fetchLogs } from "@/chain/logs";
-import { latestHeld, latestPlan } from "@/chain/plan";
+import { latestHeld, latestPlan, openedNotices } from "@/chain/plan";
+import { earnTotals } from "@/activity/earn";
 import { type BoxState, type VaultState, readVault } from "@/chain/vault";
 import { conversionStatus, swapSetupCalls } from "@/boxes/currency";
 import { appNetwork } from "@/config/network";
@@ -52,7 +53,7 @@ async function fetchQuote(): Promise<VaultQuote | undefined> {
   }
 }
 
-type Extras = { quote?: VaultQuote; yieldEnabled?: boolean; agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
+type Extras = { quote?: VaultQuote; yieldEnabled?: boolean; totals?: { gain: bigint; fee: bigint }; agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
 
 /** What is in force for a signed-in account, and the changes the person can make: the vault's own through the owner's transaction, the agent's through a signed request. */
 export function SettingsActive({ lang, t, account }: { lang: Locale; t: SettingsText; account: Account }) {
@@ -74,7 +75,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         const payees = plan ? [{ box: 3, who: plan.settings.payee as Address }] : [];
         const [chain, vaultState, quote] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault), fetchQuote()]);
         const now = Math.floor(Date.now() / 1000);
-        setExtras({ quote, yieldEnabled: plan?.settings.yieldEnabled, agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
+        setExtras({ quote, yieldEnabled: plan?.settings.yieldEnabled, totals: key && logs ? earnTotals(openedNotices(logs, key, vault).map((entry) => ({ notice: entry.notice, timestamp: 0 }))) : undefined, agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
         setState({ status: "ready", model: settingsModel({ chain, plan, todayIso: new Date(now * 1000).toISOString().slice(0, 10), now }) });
       } catch {
         setState((current) => (current.status === "ready" ? current : { status: "error" }));
@@ -290,6 +291,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
           working={working || earnRun.phase === "signing" || earnRun.phase === "sending" || earnRun.phase === "busy" || earnRun.phase === "waiting" || txPhase === "signing" || txPhase === "confirming"}
           message={earnMessage}
           automatic={extras.yieldEnabled}
+          totals={extras.totals}
           onSwitch={(enabled) => apply(yieldChange(enabled))}
           onMove={moveEarn}
           onAllow={() => {

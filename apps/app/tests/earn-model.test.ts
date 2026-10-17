@@ -129,3 +129,19 @@ describe("the yield switch", async () => {
     expect(settingsMatch({ yieldEnabled: false }, settings)).toBe(true);
   });
 });
+
+
+describe("what the withdrawals have earned", async () => {
+  const { earnTotals } = await import("../src/activity/earn.ts");
+  const out = (gain: string, fee: string) => ({ notice: { kind: "earn" as const, box: "profit" as const, deposit: false, name: "v", protocol: "Morpho", vault: EARN, amount: "1", counter: "1", apyBps: 0, gain, fee }, timestamp: 1 });
+
+  it("adds the gain and the fee of every withdrawal and ignores deposits and other notices", () => {
+    const deposit = { notice: { ...out("0", "0").notice, deposit: true, gain: undefined, fee: undefined }, timestamp: 2 };
+    const other = { notice: { kind: "salary" as const, month: "2026-11", paid: "1", pending: "0" }, timestamp: 3 };
+    expect(earnTotals([out("2114", "211"), deposit, other, out("1000", "100")])).toEqual({ gain: 3_114n, fee: 311n });
+  });
+
+  it("is zero when there is nothing", () => {
+    expect(earnTotals([])).toEqual({ gain: 0n, fee: 0n });
+  });
+});

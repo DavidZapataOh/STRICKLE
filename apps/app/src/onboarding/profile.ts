@@ -46,6 +46,8 @@ export function buildProfile({ answers, diagnosis, owner, today, userKey }: { an
     userKey,
     salary: { proposed: goal.toString(), pending: "0", payee: owner, day: answers.payday, lastPaid: "" },
     limits: { dailyCap: goal.toString(), signatureThreshold: "0" },
+    // people who already get paid in digital dollars start with idle money put to work; everyone else is invited after a few weeks of history, and either can change it
+    yield: { enabled: answers.collection === "stablecoin", day: "" },
     history: estimateHistory({ monthlyIncomeUsd: answers.monthlyIncomeUsd, paymentsPerMonth: answers.paymentsPerMonth, paymentDays: answers.paymentDays, today }),
   });
 }

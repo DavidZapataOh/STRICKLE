@@ -878,6 +878,10 @@
       "explain": "When this is on, the agent only puts to work what a box does not need within sixty days, takes it back five business days before a payment, and never puts more than half of the taxes box to work. Rates change and the value can go down.",
       "on": "On",
       "off": "Off"
+    },
+    "totals": {
+      "line": "Earned so far: {gain}. Fee on that, shown and not charged on testnet: {fee}.",
+      "none": "Nothing earned yet."
     }
   }
 }

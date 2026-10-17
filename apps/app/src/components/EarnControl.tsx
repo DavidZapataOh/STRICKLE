@@ -20,7 +20,7 @@ export type EarnRow = { box: InvestBox; position: bigint; available: bigint; roo
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
 /** The yield vault, its live rate, and for every box that may earn where it stands and the two moves a person can ask for. The interactive parts come in as props. */
-export function EarnControl({ lang, t, status, rows, quote, automatic, working = false, message, onSwitch, onMove, onAllow }: { lang: Locale; t: SettingsText; status: EarnStatus; rows: readonly EarnRow[]; quote?: VaultQuote; /** The owner's setting as the agent's plan reports it; absent until the plan has been read. */ automatic?: boolean; working?: boolean; message?: string; onSwitch?: (enabled: boolean) => Promise<void>; onMove: (kind: "invest" | "divest", box: InvestBox, dollars: string) => Promise<void>; onAllow?: () => void }) {
+export function EarnControl({ lang, t, status, rows, quote, automatic, totals, working = false, message, onSwitch, onMove, onAllow }: { lang: Locale; t: SettingsText; status: EarnStatus; rows: readonly EarnRow[]; quote?: VaultQuote; /** The owner's setting as the agent's plan reports it; absent until the plan has been read. */ automatic?: boolean; /** What the withdrawals have earned and the ten percent fee on it; absent until the notices have been read. */ totals?: { gain: bigint; fee: bigint }; working?: boolean; message?: string; onSwitch?: (enabled: boolean) => Promise<void>; onMove: (kind: "invest" | "divest", box: InvestBox, dollars: string) => Promise<void>; onAllow?: () => void }) {
   const e = t.earn;
   const statusText =
     status.kind === "active"
@@ -53,6 +53,9 @@ export function EarnControl({ lang, t, status, rows, quote, automatic, working =
           {working ? e.allowing : e.allow}
         </button>
       ) : null}
+      {totals === undefined ? null : (
+        <p className="note">{totals.gain > 0n ? fill(e.totals.line, { gain: formatMoney(totals.gain, lang), fee: formatMoney(totals.fee, lang) }) : e.totals.none}</p>
+      )}
       {automatic === undefined ? null : (
         <div className="earn-auto">
           <p className="note">{e.auto.explain}</p>

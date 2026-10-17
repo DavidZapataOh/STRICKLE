@@ -6,7 +6,7 @@ import type { Locale } from "@strickle/design/locale";
 const STYLE: Record<Locale, NumberStyle> = { en: "en-US", es: "es-MX", "pt-br": "pt-BR" };
 const usdc = (units: string): FactValue => ({ type: "amount", units: BigInt(units), decimals: 6, symbol: "USDC" });
 
-export type EarnLine = { id: string; kind: "earn" | "earn-back" | "earn-held" | "yield-exit" | "yield-plan" | "yield-back"; text: string; timestamp: number };
+export type EarnLine = { id: string; kind: "earn" | "earn-back" | "earn-held" | "yield-exit" | "yield-plan" | "yield-back" | "yield-invite"; text: string; timestamp: number };
 export type TimedNotice = { notice: Notice; timestamp: number };
 
 /** The yield notices as the brain's fixed sentences; the agent never writes a sentence of its own. */
@@ -18,8 +18,11 @@ export function earnLines(notices: readonly TimedNotice[], lang: Locale, boxName
       const kind = notice.deposit ? "earn" : "earn-back";
       const facts: Facts = notice.deposit
         ? { kind, values: { amount: usdc(notice.amount), apy: { type: "bps", value: notice.apyBps } }, labels: { label, vault: notice.name, protocol: notice.protocol } }
-        : { kind, values: { amount: usdc(notice.amount) }, labels: { label, vault: notice.name, protocol: notice.protocol } };
+        : { kind, values: { amount: usdc(notice.amount), gain: usdc(notice.gain ?? "0"), fee: usdc(notice.fee ?? "0") }, labels: { label, vault: notice.name, protocol: notice.protocol } };
       lines.push({ id: `${kind}-${index}`, kind, text: template(facts, lang as Lang, STYLE[lang]), timestamp });
+    } else if (notice.kind === "yield-invite") {
+      const facts: Facts = { kind: "yield-invite", values: { apy: { type: "bps", value: notice.apyBps } }, labels: {} };
+      lines.push({ id: `yield-invite-${index}`, kind: "yield-invite", text: template(facts, lang as Lang, STYLE[lang]), timestamp });
     } else if (notice.kind === "yield-plan") {
       const facts: Facts = { kind: "yield-plan", values: { amount: usdc(notice.amount), kept: usdc(notice.kept), needed: usdc(notice.needed) }, labels: { label } };
       lines.push({ id: `yield-plan-${index}`, kind: "yield-plan", text: template(facts, lang as Lang, STYLE[lang]), timestamp });
@@ -35,4 +38,16 @@ export function earnLines(notices: readonly TimedNotice[], lang: Locale, boxName
     }
   });
   return lines;
+}
+
+/** What the withdrawals have earned over what went in, and the ten percent fee on it, summed over the notices the person can open. */
+export function earnTotals(notices: readonly TimedNotice[]): { gain: bigint; fee: bigint } {
+  let gain = 0n;
+  let fee = 0n;
+  for (const { notice } of notices) {
+    if (notice.kind !== "earn" || notice.deposit) continue;
+    gain += BigInt(notice.gain ?? "0");
+    fee += BigInt(notice.fee ?? "0");
+  }
+  return { gain, fee };
 }

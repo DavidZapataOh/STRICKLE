@@ -14,9 +14,9 @@ const rows: EarnRow[] = [
   { box: "taxes", position: 0n, available: 2_000_000_000n, room: 1_000_000_000n, maxInvestBps: 5_000 },
   { box: "operating", position: 0n, available: 5_000_000_000n, room: 0n, maxInvestBps: 0 },
 ];
-const view = (status: EarnStatus, over: { dictionary?: typeof en; lang?: "en" | "es" | "pt-br"; quote?: typeof quote | undefined; rows?: EarnRow[]; automatic?: boolean } = {}) =>
+const view = (status: EarnStatus, over: { dictionary?: typeof en; lang?: "en" | "es" | "pt-br"; quote?: typeof quote | undefined; rows?: EarnRow[]; automatic?: boolean; totals?: { gain: bigint; fee: bigint } } = {}) =>
   renderToStaticMarkup(
-    <EarnControl lang={over.lang ?? "en"} t={settingsText((over.dictionary ?? en) as typeof en)} status={status} rows={over.rows ?? rows} quote={"quote" in over ? over.quote : quote} automatic={over.automatic} onSwitch={async () => undefined} onMove={async () => undefined} />,
+    <EarnControl lang={over.lang ?? "en"} t={settingsText((over.dictionary ?? en) as typeof en)} status={status} rows={over.rows ?? rows} quote={"quote" in over ? over.quote : quote} automatic={over.automatic} totals={over.totals} onSwitch={async () => undefined} onMove={async () => undefined} />,
   );
 
 describe("EarnControl", () => {
@@ -87,5 +87,13 @@ describe("EarnControl", () => {
   it("closes the switch where it cannot work and hides it where the plan has not said", () => {
     expect(view({ kind: "unavailable" }, { automatic: false })).toContain('<fieldset class="choices" disabled=""');
     expect(view({ kind: "active" }, { automatic: undefined })).not.toContain("Let the agent put idle money to work");
+  });
+
+  it("says what the withdrawals have earned and the fee on it, honestly about it not being charged on testnet", () => {
+    const out = view({ kind: "active" }, { totals: { gain: 12_500_000n, fee: 1_250_000n } });
+    expect(out).toContain("Earned so far: US$12.50.");
+    expect(out).toContain("Fee on that, shown and not charged on testnet: US$1.25.");
+    expect(view({ kind: "active" }, { totals: { gain: 0n, fee: 0n } })).toContain("Nothing earned yet.");
+    expect(view({ kind: "active" })).not.toContain("Earned so far");
   });
 });

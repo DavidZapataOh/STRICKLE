@@ -878,6 +878,10 @@
       "explain": "Quando isto está ligado, o agente só coloca para trabalhar o que uma caixinha não precisa em sessenta dias, traz de volta cinco dias úteis antes de um pagamento e nunca coloca mais da metade da caixinha de impostos para trabalhar. As taxas mudam e o valor pode cair.",
       "on": "Ligado",
       "off": "Desligado"
+    },
+    "totals": {
+      "line": "Rendido até agora: {gain}. Taxa sobre isso, mostrada e não cobrada na testnet: {fee}.",
+      "none": "Ainda não rendeu nada."
     }
   }
 }
