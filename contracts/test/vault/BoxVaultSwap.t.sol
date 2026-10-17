@@ -227,11 +227,11 @@ contract BoxVaultSwapTest is Test {
         bytes memory data = adapter.payload(address(usdc), 1_000e6);
         adapter.setMode(TestSwapAdapter.Mode.Short);
         vm.prank(agent);
-        vm.expectRevert(BoxVault.SwapShort.selector);
+        vm.expectRevert(BoxVault.AdapterShort.selector);
         vault.swapBox(PAYROLL, USDC, 1_000e6, minOut + 20e6, data);
         adapter.setMode(TestSwapAdapter.Mode.ToStranger);
         vm.prank(agent);
-        vm.expectRevert(BoxVault.SwapShort.selector);
+        vm.expectRevert(BoxVault.AdapterShort.selector);
         vault.swapBox(PAYROLL, USDC, 1_000e6, minOut, data);
         adapter.setMode(TestSwapAdapter.Mode.Overspend);
         vm.prank(agent);

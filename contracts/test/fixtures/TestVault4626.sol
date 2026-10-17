@@ -9,6 +9,7 @@ contract TestVault4626 {
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
     bool public failRedeem;
+    mapping(address owner => mapping(address spender => uint256)) public allowance;
 
     constructor(TestToken token_) {
         token = token_;
@@ -23,7 +24,7 @@ contract TestVault4626 {
     }
 
     function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
-        shares = totalSupply == 0 || totalAssets() == 0 ? assets : (assets * totalSupply) / totalAssets();
+        shares = previewDeposit(assets);
         token.transferFrom(msg.sender, address(this), assets);
         balanceOf[receiver] += shares;
         totalSupply += shares;
@@ -32,10 +33,36 @@ contract TestVault4626 {
     function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets) {
         require(!failRedeem, "redeem disabled");
         require(msg.sender == from, "owner only");
-        assets = (shares * totalAssets()) / totalSupply;
+        assets = previewRedeem(shares);
         balanceOf[from] -= shares;
         totalSupply -= shares;
         token.transfer(receiver, assets);
+    }
+
+    function previewDeposit(uint256 assets) public view returns (uint256) {
+        return totalSupply == 0 || totalAssets() == 0 ? assets : (assets * totalSupply) / totalAssets();
+    }
+
+    function previewRedeem(uint256 shares) public view returns (uint256) {
+        return totalSupply == 0 ? shares : (shares * totalAssets()) / totalSupply;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        allowance[from][msg.sender] -= amount;
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        return true;
     }
 
     function convertToAssets(uint256 shares) external view returns (uint256) {

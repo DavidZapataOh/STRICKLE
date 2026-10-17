@@ -7,6 +7,8 @@ interface IERC4626Minimal {
     function asset() external view returns (address);
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
     function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets);
+    function previewDeposit(uint256 assets) external view returns (uint256);
+    function previewRedeem(uint256 shares) external view returns (uint256);
 }
 
 interface IPriceFeed {
@@ -52,8 +54,8 @@ contract BoxVault is BoxLedger {
     error WrongSelector();
     error BelowOracleBound();
     error StaleFeed();
-    error SwapShort();
-    error SwapOverspent();
+    error AdapterShort();
+    error AdapterOverspent();
     error BadFeed();
 
     event AgentSet(address indexed agent, uint256 cap, uint32 window);
@@ -80,6 +82,9 @@ contract BoxVault is BoxLedger {
     event SwapSlippageSet(uint16 bps);
     event SwapCapSet(uint128 cap, uint32 window);
     event Swapped(uint8 indexed box, uint8 indexed assetIn, uint256 amountIn, uint256 received);
+    event Earned(
+        uint8 indexed asset, uint8 indexed box, address indexed vault, bool deposit, uint256 amountIn, uint256 received
+    );
 
     address public agent;
     bool public agentPaused;
@@ -195,7 +200,7 @@ contract BoxVault is BoxLedger {
     }
 
     function setSwapSlippageBps(uint16 bps) external onlyOwner {
-        if (bps < 10 || bps > MAX_SWAP_SLIPPAGE_BPS) revert InvalidBps();
+        _checkBps(bps);
         swapSlippage = bps;
         emit SwapSlippageSet(bps);
     }
@@ -208,6 +213,7 @@ contract BoxVault is BoxLedger {
         emit SwapCapSet(cap, window);
     }
 
+    /// @notice The slippage bound for every move through the adapter, swaps and Earn alike.
     function swapSlippageBps() public view returns (uint16) {
         uint16 set = swapSlippage;
         return set == 0 ? MAX_SWAP_SLIPPAGE_BPS : set;
@@ -272,13 +278,7 @@ contract BoxVault is BoxLedger {
     function sweepToVault(uint8 asset, uint8 box, address vault, uint256 assets) external onlyAgent nonReentrant {
         _checkBox(box);
         IERC20Minimal token = _token(asset);
-        uint64 from = vaultApprovedFrom[vault];
-        if (from == 0 || block.timestamp < from) revert VaultNotApproved();
-        if (IERC4626Minimal(vault).asset() != address(token)) revert VaultAssetMismatch();
-        if (assets == 0) revert ZeroAmount();
-        if (assets > boxBalance[asset][box]) revert InsufficientBox();
-        uint256 base = boxBalance[asset][box] + invested[asset][box];
-        if ((invested[asset][box] + assets) * 10_000 > uint256(maxInvestBps(box)) * base) revert InvestLimit();
+        _requireInvestable(asset, box, vault, assets);
 
         uint256 before = token.balanceOf(address(this));
         _approve(token, vault, assets);
@@ -301,17 +301,41 @@ contract BoxVault is BoxLedger {
         uint256 owned = sharesOf[vault][box];
         if (shares == 0) revert ZeroAmount();
         if (shares > owned) revert InsufficientShares();
-        uint256 principal = shares == owned ? invested[asset][box] : (invested[asset][box] * shares) / owned;
 
         uint256 before = token.balanceOf(address(this));
         IERC4626Minimal(vault).redeem(shares, address(this), address(this));
         uint256 received = token.balanceOf(address(this)) - before;
-
-        sharesOf[vault][box] = owned - shares;
-        invested[asset][box] -= principal;
-        boxBalance[asset][box] += received;
-        held[asset] += received;
+        _settleRedeem(asset, box, vault, owned, shares, received);
         emit Redeemed(asset, box, vault, shares, received);
+    }
+
+    /// @notice Puts a box to work in an approved yield vault through the one approved Circle adapter. The output
+    /// bound comes from the yield vault's own share price, never from the caller, and the ledger moves only by
+    /// what this vault's own balances prove.
+    function earnIn(uint8 asset, uint8 box, address vault, uint256 amount, uint256 minOut, bytes calldata data)
+        external
+        onlyAgent
+        nonReentrant
+    {
+        _earnGuard(box, data);
+        _requireInvestable(asset, box, vault, amount);
+        if (minOut < _earnFloor(IERC4626Minimal(vault).previewDeposit(amount))) revert BelowOracleBound();
+        _earnIn(asset, box, vault, amount, minOut, data);
+    }
+
+    /// @notice Takes a box back out of a yield vault the same way. The owner can also do this, with no vault
+    /// approval needed, so the owner never depends on the agent to get money out.
+    function earnOut(uint8 asset, uint8 box, address vault, uint256 shares, uint256 minOut, bytes calldata data)
+        external
+        nonReentrant
+    {
+        if (msg.sender != owner) _requireAgent();
+        _earnGuard(box, data);
+        if (shares == 0) revert ZeroAmount();
+        if (IERC4626Minimal(vault).asset() != address(_token(asset))) revert VaultAssetMismatch();
+        if (shares > sharesOf[vault][box]) revert InsufficientShares();
+        if (minOut < _earnFloor(IERC4626Minimal(vault).previewRedeem(shares))) revert BelowOracleBound();
+        _earnOut(asset, box, vault, shares, minOut, data);
     }
 
     /// @notice Converts part of a box to the other asset through the one approved adapter. The price floor comes
@@ -325,14 +349,14 @@ contract BoxVault is BoxLedger {
         if (assetIn != 1 && assetIn != 2) revert UnknownAsset();
         if (amountIn == 0) revert ZeroAmount();
         if (amountIn > boxBalance[assetIn][box]) revert InsufficientBox();
-        address adapter = _approvedAdapter();
+        _approvedAdapter();
         if (data.length < 4 || bytes4(data[:4]) != ADAPTER_EXECUTE) revert WrongSelector();
         if (minOut < minSwapOutput(assetIn, amountIn)) revert BelowOracleBound();
         _swapSpend(amountIn);
 
-        (uint256 spent, uint256 received) = _runSwap(assetIn, adapter, amountIn, data);
-        if (spent > amountIn) revert SwapOverspent();
-        if (received < minOut) revert SwapShort();
+        (uint256 spent, uint256 received) = _runSwap(assetIn, amountIn, data);
+        if (spent > amountIn) revert AdapterOverspent();
+        if (received < minOut) revert AdapterShort();
 
         uint8 assetOut = assetIn == 1 ? 2 : 1;
         _debit(assetIn, box, spent);
@@ -349,14 +373,100 @@ contract BoxVault is BoxLedger {
         if (agentPaused) revert AgentIsPaused();
     }
 
-    function _spendCap(uint256 amount) private {
-        if (agentCap == 0 || agentWindow == 0) revert CapExceeded();
-        if (block.timestamp >= uint256(windowStart) + agentWindow) {
-            windowStart = uint64(block.timestamp);
-            windowSpent = 0;
+    function _roll(uint256 amount, uint256 cap, uint32 window, uint64 start, uint128 spent)
+        private
+        view
+        returns (uint64, uint128)
+    {
+        if (cap == 0 || window == 0) revert CapExceeded();
+        if (block.timestamp >= uint256(start) + window) {
+            start = uint64(block.timestamp);
+            spent = 0;
         }
-        if (windowSpent + amount > agentCap) revert CapExceeded();
-        windowSpent += uint128(amount);
+        if (spent + amount > cap) revert CapExceeded();
+        return (start, spent + uint128(amount));
+    }
+
+    function _spendCap(uint256 amount) private {
+        (windowStart, windowSpent) = _roll(amount, agentCap, agentWindow, windowStart, windowSpent);
+    }
+
+    function _checkBps(uint16 bps) private pure {
+        if (bps < 10 || bps > MAX_SWAP_SLIPPAGE_BPS) revert InvalidBps();
+    }
+
+    function _requireInvestable(uint8 asset, uint8 box, address vault, uint256 assets) private view {
+        uint64 from = vaultApprovedFrom[vault];
+        if (from == 0 || block.timestamp < from) revert VaultNotApproved();
+        if (IERC4626Minimal(vault).asset() != address(_token(asset))) revert VaultAssetMismatch();
+        if (assets == 0) revert ZeroAmount();
+        if (assets > boxBalance[asset][box]) revert InsufficientBox();
+        uint256 base = boxBalance[asset][box] + invested[asset][box];
+        if ((invested[asset][box] + assets) * 10_000 > uint256(maxInvestBps(box)) * base) revert InvestLimit();
+    }
+
+    function _settleRedeem(uint8 asset, uint8 box, address vault, uint256 owned, uint256 spent, uint256 received)
+        private
+    {
+        uint256 principal = spent == owned ? invested[asset][box] : (invested[asset][box] * spent) / owned;
+        sharesOf[vault][box] = owned - spent;
+        invested[asset][box] -= principal;
+        boxBalance[asset][box] += received;
+        held[asset] += received;
+    }
+
+    function _earnGuard(uint8 box, bytes calldata data) private view {
+        _checkBox(box);
+        _approvedAdapter();
+        if (data.length < 4 || bytes4(data[:4]) != ADAPTER_EXECUTE) revert WrongSelector();
+    }
+
+    function _earnFloor(uint256 expected) private view returns (uint256) {
+        return (expected * (10_000 - swapSlippageBps()) + 9_999) / 10_000;
+    }
+
+    function _adapterCall(IERC20Minimal token, uint256 amount, bytes calldata data) private {
+        address adapter = swapAdapter;
+        _approve(token, adapter, amount);
+        (bool ok,) = adapter.call(data);
+        _approve(token, adapter, 0);
+        if (!ok) revert TransferFailed();
+    }
+
+    /// @dev What the adapter really took and gave, measured on this vault's own balances.
+    function _earnIn(uint8 asset, uint8 box, address vault, uint256 amount, uint256 minOut, bytes calldata data)
+        private
+    {
+        uint256 tokenBefore = _token(asset).balanceOf(address(this));
+        uint256 sharesBefore = IERC20Minimal(vault).balanceOf(address(this));
+        _adapterCall(_token(asset), amount, data);
+        uint256 spent = tokenBefore - _token(asset).balanceOf(address(this));
+        uint256 shares = IERC20Minimal(vault).balanceOf(address(this)) - sharesBefore;
+        if (spent > amount) revert AdapterOverspent();
+        if (shares < minOut) revert AdapterShort();
+        _creditEarn(asset, box, vault, spent, shares);
+    }
+
+    function _creditEarn(uint8 asset, uint8 box, address vault, uint256 spent, uint256 shares) private {
+        _debit(asset, box, spent);
+        if (boxBalance[asset][box] < rules[box].floor) revert BelowFloor();
+        invested[asset][box] += spent;
+        sharesOf[vault][box] += shares;
+        emit Earned(asset, box, vault, true, spent, shares);
+    }
+
+    function _earnOut(uint8 asset, uint8 box, address vault, uint256 shares, uint256 minOut, bytes calldata data)
+        private
+    {
+        uint256 tokenBefore = _token(asset).balanceOf(address(this));
+        uint256 sharesBefore = IERC20Minimal(vault).balanceOf(address(this));
+        _adapterCall(IERC20Minimal(vault), shares, data);
+        uint256 spent = sharesBefore - IERC20Minimal(vault).balanceOf(address(this));
+        uint256 received = _token(asset).balanceOf(address(this)) - tokenBefore;
+        if (spent > shares) revert AdapterOverspent();
+        if (received < minOut) revert AdapterShort();
+        _settleRedeem(asset, box, vault, sharesOf[vault][box], spent, received);
+        emit Earned(asset, box, vault, false, spent, received);
     }
 
     function _approvedAdapter() private view returns (address adapter) {
@@ -366,7 +476,7 @@ contract BoxVault is BoxLedger {
     }
 
     /// @dev What the adapter really took and gave, measured on this vault's own balances.
-    function _runSwap(uint8 assetIn, address adapter, uint256 amountIn, bytes calldata data)
+    function _runSwap(uint8 assetIn, uint256 amountIn, bytes calldata data)
         private
         returns (uint256 spent, uint256 received)
     {
@@ -374,22 +484,13 @@ contract BoxVault is BoxLedger {
         IERC20Minimal tokenOut = _token(assetIn == 1 ? 2 : 1);
         uint256 inBefore = tokenIn.balanceOf(address(this));
         uint256 outBefore = tokenOut.balanceOf(address(this));
-        _approve(tokenIn, adapter, amountIn);
-        (bool ok,) = adapter.call(data);
-        _approve(tokenIn, adapter, 0);
-        if (!ok) revert TransferFailed();
+        _adapterCall(tokenIn, amountIn, data);
         spent = inBefore - tokenIn.balanceOf(address(this));
         received = tokenOut.balanceOf(address(this)) - outBefore;
     }
 
     function _swapSpend(uint256 amount) private {
-        if (swapCap == 0 || swapWindow == 0) revert CapExceeded();
-        if (block.timestamp >= uint256(swapWindowStart) + swapWindow) {
-            swapWindowStart = uint64(block.timestamp);
-            swapWindowSpent = 0;
-        }
-        if (swapWindowSpent + amount > swapCap) revert CapExceeded();
-        swapWindowSpent += uint128(amount);
+        (swapWindowStart, swapWindowSpent) = _roll(amount, swapCap, swapWindow, swapWindowStart, swapWindowSpent);
     }
 
     function _price(IPriceFeed feed) private view returns (uint256) {
