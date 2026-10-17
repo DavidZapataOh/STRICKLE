@@ -1,0 +1,134 @@
+{
+  "data": {
+    "vaults": [
+      {
+        "address": "0x8f2d33b5d4b9b5f02df635ae308f7b4c9da8d2dc",
+        "chain": "ARC-TESTNET",
+        "name": "MockMorphoVault (Arc Testnet)",
+        "protocol": "MORPHO",
+        "asset": "USDC",
+        "assetAddress": "0x3600000000000000000000000000000000000000",
+        "productType": "vault",
+        "asOf": "2026-10-17T20:18:31Z",
+        "vaultAddress": "0x8f2d33b5d4b9b5f02df635ae308f7b4c9da8d2dc",
+        "currentApy": 0.035,
+        "nativeApy": 0,
+        "vaultFee": 0,
+        "totalDeposits": {
+          "raw": "0",
+          "decimals": 6
+        },
+        "liquidity": {
+          "raw": "1000000000000",
+          "decimals": 6
+        },
+        "status": "active",
+        "circleGuarded": false,
+        "manager": null,
+        "apyProfile": {
+          "current": 0.035,
+          "native": 0,
+          "d7": null,
+          "d30": null,
+          "d90": null,
+          "rewardShare": 1,
+          "source": "morpho:avgNetApy",
+          "asOf": "2026-10-17T20:18:31Z"
+        },
+        "fee": {
+          "performance": null,
+          "management": null
+        },
+        "liquidityProfile": {
+          "totalDeposits": {
+            "raw": "0",
+            "decimals": 6
+          },
+          "available": {
+            "raw": "1000000000000",
+            "decimals": 6
+          },
+          "totalSupply": {
+            "raw": "0",
+            "decimals": 18
+          },
+          "status": "active"
+        },
+        "riskSignals": {
+          "circleSentinel": false,
+          "warnings": [],
+          "earnKitWarnings": []
+        },
+        "rewards": [],
+        "collateral": []
+      },
+      {
+        "address": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+        "chain": "ARC-TESTNET",
+        "name": "EarnKit USDC Vault (Arc Testnet)",
+        "protocol": "MORPHO",
+        "asset": "USDC",
+        "assetAddress": "0x3600000000000000000000000000000000000000",
+        "productType": "vault",
+        "asOf": "2026-10-17T20:18:31Z",
+        "vaultAddress": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+        "currentApy": 0.042,
+        "nativeApy": 0,
+        "vaultFee": 0,
+        "totalDeposits": {
+          "raw": "0",
+          "decimals": 6
+        },
+        "liquidity": {
+          "raw": "1000000000000",
+          "decimals": 6
+        },
+        "status": "active",
+        "circleGuarded": false,
+        "manager": null,
+        "apyProfile": {
+          "current": 0.042,
+          "native": 0,
+          "d7": null,
+          "d30": null,
+          "d90": null,
+          "rewardShare": 1,
+          "source": "morpho:avgNetApy",
+          "asOf": "2026-10-17T20:18:31Z"
+        },
+        "fee": {
+          "performance": null,
+          "management": null
+        },
+        "liquidityProfile": {
+          "totalDeposits": {
+            "raw": "0",
+            "decimals": 6
+          },
+          "available": {
+            "raw": "1000000000000",
+            "decimals": 6
+          },
+          "totalSupply": {
+            "raw": "0",
+            "decimals": 18
+          },
+          "status": "active"
+        },
+        "riskSignals": {
+          "circleSentinel": false,
+          "warnings": [],
+          "earnKitWarnings": []
+        },
+        "rewards": [],
+        "collateral": []
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "pageSize": 100,
+      "totalCount": 2,
+      "totalPages": 1
+    }
+  }
+}

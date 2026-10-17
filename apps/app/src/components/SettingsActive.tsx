@@ -23,8 +23,15 @@ import { sendOwnerCalls } from "@/settings/send";
 import { type TxPhase, runTx } from "@/settings/tx";
 import { useAdjust } from "@/settings/use-adjust";
 import { isPasskeyCancelled } from "@/wallet/errors";
+import { earnVaultsFor } from "@/config/earn";
+import { earnAction, INVEST_BOXES } from "@/yield/actions";
+import { earnSetupCalls } from "@/yield/calls";
+import { earnStatus } from "@/yield/status";
+import { useEarn } from "@/yield/use-earn";
+import type { VaultQuote } from "@/yield/vaults";
 import { AgentOnly } from "@/lib/agent-only";
 import { ALL_DOLLARS, CurrencyControl } from "./CurrencyControl";
+import { EarnControl, type EarnRow } from "./EarnControl";
 import { EditRow } from "./EditRow";
 import { RulesPanel } from "./RulesPanel";
 import { ShareLink } from "./ShareLink";
@@ -33,7 +40,18 @@ import { type SettingsState, SettingsView } from "./SettingsView";
 const dollars = (units: bigint): string => String(units / 1_000_000n);
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
+/** The live yield of the vault, best effort: a service that is down is no rate, never a broken screen. */
+async function fetchQuote(): Promise<VaultQuote | undefined> {
+  try {
+    const response = await fetch("/api/vaults");
+    const body = (await response.json()) as { vaults?: VaultQuote[] };
+    return body.vaults?.[0];
+  } catch {
+    return undefined;
+  }
+}
+
+type Extras = { quote?: VaultQuote; agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
 
 /** What is in force for a signed-in account, and the changes the person can make: the vault's own through the owner's transaction, the agent's through a signed request. */
 export function SettingsActive({ lang, t, account }: { lang: Locale; t: SettingsText; account: Account }) {
@@ -43,6 +61,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   const [txPhase, setTxPhase] = useState<TxPhase>("idle");
   const [round, setRound] = useState(0);
   const adjust = useAdjust(account);
+  const earnRun = useEarn(account);
   const { vault } = account;
 
   useEffect(() => {
@@ -52,9 +71,9 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         const logs = key ? ((await fetchLogs("notice", vault).catch(() => null))?.logs ?? null) : null;
         const plan = key && logs ? latestPlan(logs, key, vault) : null;
         const payees = plan ? [{ box: 3, who: plan.settings.payee as Address }] : [];
-        const [chain, vaultState] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault)]);
+        const [chain, vaultState, quote] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault), fetchQuote()]);
         const now = Math.floor(Date.now() / 1000);
-        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
+        setExtras({ quote, agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
         setState({ status: "ready", model: settingsModel({ chain, plan, todayIso: new Date(now * 1000).toISOString().slice(0, 10), now }) });
       } catch {
         setState((current) => (current.status === "ready" ? current : { status: "error" }));
@@ -109,6 +128,23 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   };
   const field = (form: FormData, name: string) => String(form.get(name) ?? "");
   const working = adjust.phase === "signing" || adjust.phase === "sending" || adjust.phase === "busy" || adjust.phase === "waiting";
+
+  const offered = earnVaultsFor(appNetwork())[0];
+  const earnState = offered ? earnStatus({ earn: extras.vault.earn, conversions: extras.vault.conversions, expectedAdapter: networks[appNetwork()].swapAdapter, vault: offered.address, now: extras.vault.now }) : ({ kind: "unavailable" } as const);
+  const earnPosition = offered && extras.vault.earn?.supported ? extras.vault.earn.vaults.find((row) => row.vault.toLowerCase() === offered.address.toLowerCase()) : undefined;
+  const earnRows: EarnRow[] =
+    offered && extras.vault.earn?.supported
+      ? INVEST_BOXES.map((box) => ({ box, position: earnPosition?.value[box] ?? 0n, available: extras.vault.boxes.find((candidate) => candidate.kind === box)?.usdc ?? 0n, maxInvestBps: extras.vault.earn?.supported ? (extras.vault.earn.maxInvestBps[box] ?? 0) : 0 }))
+      : [];
+  const earnMessage = earnRun.phase === "confirmed" ? t.earn.requested : earnRun.phase !== "idle" ? s.phase[earnRun.phase] : txPhase !== "idle" ? t.pause[txPhase] : undefined;
+  const moveEarn = async (kind: "invest" | "divest", box: (typeof INVEST_BOXES)[number], text: string): Promise<void> => {
+    if (!offered) throw new Error(t.earn.errors.vault);
+    const result = earnAction({ kind, box, vault: offered.address, dollars: text }, [offered]);
+    if (!result.ok) throw new Error(t.earn.errors[result.error]);
+    const row = earnRows.find((candidate) => candidate.box === box);
+    if (kind === "invest" && BigInt(result.action.amount) > (row?.available ?? 0n)) throw new Error(t.earn.errors.tooMuch);
+    await earnRun.run(result.action);
+  };
 
   const slots = {
     resume: (
@@ -236,6 +272,25 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         }
       />
       </AgentOnly>
+    ),
+    earn: (
+        <EarnControl
+          lang={lang}
+          t={t}
+          status={earnState}
+          rows={earnRows}
+          quote={extras.quote}
+          working={working || earnRun.phase === "signing" || earnRun.phase === "sending" || earnRun.phase === "busy" || earnRun.phase === "waiting" || txPhase === "signing" || txPhase === "confirming"}
+          message={earnMessage}
+          onMove={moveEarn}
+          onAllow={() => {
+            if (earnState.kind !== "not-allowed" || !offered) return;
+            void ownerTx(earnSetupCalls({ vault, adapter: networks[appNetwork()].swapAdapter, earnVault: offered.address, needs: earnState.needs }), async () => {
+              const read = await readVault(vault);
+              return earnStatus({ earn: read.earn, conversions: read.conversions, expectedAdapter: networks[appNetwork()].swapAdapter, vault: offered.address, now: read.now }).kind !== "not-allowed";
+            });
+          }}
+        />
     ),
     rules: (
       <RulesPanel

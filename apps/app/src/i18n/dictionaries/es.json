@@ -840,5 +840,37 @@
     "saved": "Guardado. El agente empieza a convertir en menos de un día.",
     "saving": "Guardando…",
     "activityTitle": "Conversiones"
+  },
+  "earn": {
+    "title": "Pon tu dinero a trabajar",
+    "activityTitle": "Dinero a trabajar",
+    "explain": "Una cajita puede rendir en una vault de rendimiento. La tasa cambia, el valor puede bajar y puedes retirar tu dinero cuando quieras. El agente solo mueve lo que pides, dentro de los límites de tu vault, y muestra cada movimiento en Actividad.",
+    "rate": "Tasa ahora: {apy} al año, según publica la vault.",
+    "rateDown": "La tasa no está disponible ahora.",
+    "position": "En la vault: {amount}",
+    "positionNone": "Todavía no hay nada en la vault.",
+    "invest": "Poner a trabajar",
+    "divest": "Retirar",
+    "amount": "Monto en dólares",
+    "limit": {
+      "share": "Hasta {share} de esta cajita puede ponerse a trabajar.",
+      "none": "Esta cajita no está configurada para poner dinero a trabajar."
+    },
+    "status": {
+      "active": "Listo.",
+      "pending": "Listo el {date}: tu vault espera un día después de que la apruebas.",
+      "unavailable": "No disponible en esta cuenta: se creó antes de que esto existiera.",
+      "notAllowed": "Todavía no está permitido en esta cuenta."
+    },
+    "allow": "Permitir poner dinero a trabajar",
+    "allowing": "Esperando tu firma…",
+    "allowFailed": "No se completó. Inténtalo de nuevo.",
+    "requested": "Solicitado. El agente lo ejecuta enseguida; el resultado está en Actividad.",
+    "errors": {
+      "amount": "Escribe un monto mayor que cero, con hasta seis decimales.",
+      "box": "Esta cajita no puede rendir.",
+      "vault": "Esa vault no está disponible.",
+      "tooMuch": "La cajita tiene menos que eso."
+    }
   }
 }

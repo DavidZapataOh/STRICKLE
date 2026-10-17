@@ -840,5 +840,37 @@
     "saved": "Salvo. O agente começa a converter em menos de um dia.",
     "saving": "Salvando…",
     "activityTitle": "Conversões"
+  },
+  "earn": {
+    "title": "Coloque seu dinheiro para trabalhar",
+    "activityTitle": "Dinheiro trabalhando",
+    "explain": "Uma caixinha pode render em uma vault de rendimento. A taxa muda, o valor pode cair e você pode retirar seu dinheiro quando quiser. O agente só move o que você pede, dentro dos limites do seu vault, e mostra cada movimento em Atividade.",
+    "rate": "Taxa agora: {apy} ao ano, conforme publicada pela vault.",
+    "rateDown": "A taxa não está disponível agora.",
+    "position": "Na vault: {amount}",
+    "positionNone": "Ainda não há nada na vault.",
+    "invest": "Colocar para trabalhar",
+    "divest": "Retirar",
+    "amount": "Valor em dólares",
+    "limit": {
+      "share": "Até {share} desta caixinha pode ser colocado para trabalhar.",
+      "none": "Esta caixinha não está configurada para colocar dinheiro para trabalhar."
+    },
+    "status": {
+      "active": "Pronto.",
+      "pending": "Pronto em {date}: seu vault espera um dia depois que você aprova.",
+      "unavailable": "Indisponível nesta conta: ela foi criada antes disso existir.",
+      "notAllowed": "Ainda não permitido nesta conta."
+    },
+    "allow": "Permitir colocar dinheiro para trabalhar",
+    "allowing": "Aguardando sua assinatura…",
+    "allowFailed": "Não foi concluído. Tente de novo.",
+    "requested": "Solicitado. O agente executa na hora; o resultado está em Atividade.",
+    "errors": {
+      "amount": "Digite um valor maior que zero, com até seis casas decimais.",
+      "box": "Esta caixinha não pode render.",
+      "vault": "Essa vault não está disponível.",
+      "tooMuch": "A caixinha tem menos que isso."
+    }
   }
 }

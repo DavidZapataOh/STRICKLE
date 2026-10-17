@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { type Doubt, correctionsOf, doubtsOf } from "@/activity/doubt";
 import { loadAnswered, saveAnswered } from "@/activity/doubt-store";
 import { conversionLines } from "@/activity/conversion";
+import { earnLines } from "@/activity/earn";
+import { dateTimeText } from "@/activity/format";
 import { verifyKeyAgainstNotices } from "@/activity/key-check";
 import { useActivity } from "@/activity/use-activity";
 import type { Session } from "@/account/session";
@@ -108,6 +110,7 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
   const corrections = correctionsOf(activity.notices);
   const plan = [...activity.notices].reverse().find((notice) => notice.kind === "plan");
   const conversions = conversionLines([...activity.notices].reverse(), lang, t.boxes, plan?.kind === "plan" ? (plan.settings.currencies ?? {}) : {});
+  const earned = earnLines([...activity.timedNotices].reverse(), lang, t.boxes);
   const pending = activity.proposals.filter((proposal) => proposal.state === "pending" || progress[proposal.proposalId]);
   return (
     <div className="activity">
@@ -188,6 +191,16 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
           {conversions.slice(0, 10).map((line) => (
             <p key={line.id} className="activity-note" data-kind={line.kind}>
               {line.text}
+            </p>
+          ))}
+        </section>
+      ) : null}
+      {earned.length > 0 ? (
+        <section aria-labelledby="earn-title">
+          <h2 id="earn-title" className="section-title">{t.earn.activityTitle}</h2>
+          {earned.slice(0, 10).map((line) => (
+            <p key={line.id} className="activity-note" data-kind={line.kind}>
+              <time dateTime={new Date(line.timestamp * 1000).toISOString()}>{dateTimeText(line.timestamp, lang)}</time> {line.text}
             </p>
           ))}
         </section>
