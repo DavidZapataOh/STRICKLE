@@ -23,8 +23,11 @@ export interface Attribution {
   checkpoint: bigint;
 }
 
-/** The widest block range one read asks of the RPC: the public Arc node accepted 100,000 blocks and refused 200,000 when the fixtures were captured. */
-export const MAX_LOG_SPAN = 100_000n;
+/** The widest block range one read asks of the RPC: the public Arc node accepted 100,000 blocks and refused 200,000, so half of what it accepted leaves room for a slower endpoint. */
+export const MAX_LOG_SPAN = 50_000n;
+
+/** The first block to read: just after the checkpoint, or the newest window when the backlog is wider than one read (the rest is treated as income nobody can attribute, so a vault is never stuck). */
+export const logWindow = (head: bigint, sinceCheckpoint: bigint): bigint => (head - sinceCheckpoint + 1n > MAX_LOG_SPAN ? head - MAX_LOG_SPAN + 1n : sinceCheckpoint);
 
 /** About ten minutes of Arc blocks: a log newer than this may belong to a deposit the balance read has not seen yet. */
 export const RACE_BLOCKS = 1_200n;

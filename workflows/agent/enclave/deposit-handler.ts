@@ -8,7 +8,7 @@ import { ASSET_ID } from "./cascade.ts";
 import { todayOf } from "./clock.ts";
 import { deliver } from "./deliver.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
-import { MAX_LOG_SPAN, attribute, decodeMoves, decodeTransfers, transfersRequest, vaultMovesRequest } from "./flow.ts";
+import { attribute, decodeMoves, decodeTransfers, logWindow, transfersRequest, vaultMovesRequest } from "./flow.ts";
 import { sealNotice } from "./notices.ts";
 import { ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
@@ -48,9 +48,9 @@ export const onDepositPoll = (runtime: TeeRuntime<Config>): string => {
       const profile = decodeProfile(decryptState(master, vault, books.version, decodeStateLog(logs[position])));
       const today = todayOf(runtime.now(), runtime.config.sandboxClock ? profile.clockOffsetDays : 0);
       const token = (asset === "USDC" ? runtime.config.usdcAddress : runtime.config.eurcAddress) as Address;
-      // what arrived since the last checkpoint; a backlog wider than one read is treated as income nobody can attribute, so a vault is never stuck
+      // what arrived since the last checkpoint
       const sinceCheckpoint = profile.flow.checkpoint !== "" ? BigInt(profile.flow.checkpoint) + 1n : books.at;
-      const from = head - sinceCheckpoint + 1n > MAX_LOG_SPAN ? head - MAX_LOG_SPAN + 1n : sinceCheckpoint;
+      const from = logWindow(head, sinceCheckpoint);
       const [moves, rawTransfers, noticeAnswer] = ethBatch(runtime, [vaultMovesRequest(vault, from, head), transfersRequest(token, vault, from, head), noticeCountRequest(state, vault)]);
       const attribution = attribute({ transfers: decodeTransfers(rawTransfers, token, asset, decodeMoves(moves)), unallocated: item.amount, head });
       // a transfer is in the logs but the balance read has not caught up: this vault waits for the next run
