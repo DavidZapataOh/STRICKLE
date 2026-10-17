@@ -1,6 +1,6 @@
 // workflows/agent/tests/rpc.test.ts
 import { describe, expect, it } from "vitest";
-import { batchBody, callRequest, codeRequest, decodeOwner, decodeVaultOf, firstLogData, isContract, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
+import { batchBody, callRequest, codeRequest, decodeOwner, decodeVaultOf, firstLogData, isContract, logsRangeRequest, logsRequest, ownerRequest, parseBatch, topic, vaultOfRequest } from "../enclave/rpc.ts";
 
 const to = "0x00000000000000000000000000000000000000aa";
 const decode = (body: string) => JSON.parse(Buffer.from(body, "base64").toString("utf8"));
@@ -92,5 +92,14 @@ describe("code", () => {
     expect(codeRequest(to)).toEqual({ method: "eth_getCode", params: [to, "latest"] });
     expect(isContract("0x6080")).toBe(true);
     expect(isContract("0x")).toBe(false);
+  });
+});
+
+describe("logsRangeRequest", () => {
+  it("asks a block range, with an optional address and topics that may be alternatives", () => {
+    const request = logsRangeRequest(to, 100n, 200n, [topic(1n), null, [topic(2n), topic(3n)]]);
+    expect(request.method).toBe("eth_getLogs");
+    expect(request.params).toEqual([{ address: to, fromBlock: "0x64", toBlock: "0xc8", topics: [topic(1n), null, [topic(2n), topic(3n)]] }]);
+    expect((logsRangeRequest(undefined, 1n, 2n, []).params[0] as { address?: string }).address).toBeUndefined();
   });
 });

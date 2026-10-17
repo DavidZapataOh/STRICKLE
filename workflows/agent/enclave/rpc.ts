@@ -25,6 +25,12 @@ export const logsRequest = (address: Address, block: bigint, topics: Hex[]): Rpc
   params: [{ address, fromBlock: blockTag(block), toBlock: blockTag(block), topics }],
 });
 
+/** A block range, for reading what arrived since a checkpoint; a topic may be a list of alternatives. */
+export const logsRangeRequest = (address: Address | undefined, from: bigint, to: bigint, topics: (Hex | Hex[] | null)[]): RpcRequest => ({
+  method: "eth_getLogs",
+  params: [{ ...(address === undefined ? {} : { address }), fromBlock: blockTag(from), toBlock: blockTag(to), topics }],
+});
+
 export const ownerRequest = (vault: Address): RpcRequest => callRequest(vault, encodeFunctionData({ abi: ownerAbi, functionName: "owner" }), "latest");
 export const decodeOwner = (result: unknown): Address => decodeFunctionResult({ abi: ownerAbi, functionName: "owner", data: result as Hex });
 export const vaultOfRequest = (factory: Address, owner: Address): RpcRequest => callRequest(factory, encodeFunctionData({ abi: factoryAbi, functionName: "vaultOf", args: [owner] }), "latest");
