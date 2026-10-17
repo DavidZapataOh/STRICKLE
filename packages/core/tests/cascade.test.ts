@@ -225,3 +225,20 @@ describe("split cascade: properties", () => {
     );
   });
 });
+
+describe("a tax catch-up", () => {
+  const base = { asset: "USDC" as const, taxRateBps: 2_000, taxBufferBps: 10_500, payrollDue: 0n, payrollFunded: 0n, dailySpend: 0n, operatingBalance: 0n, salaryOwed: 0n, emergencyTarget: 0n, emergencyBalance: 0n };
+  it("adds to the reserve this payment owes by itself", () => {
+    const plain = allocatePayment(money("USDC", 1_000_000_000n), base);
+    const caught = allocatePayment(money("USDC", 1_000_000_000n), { ...base, taxExtra: 50_000_000n });
+    expect(caught.byBox.taxes.units).toBe(plain.byBox.taxes.units + 50_000_000n);
+  });
+  it("never takes more than the payment, nor more than the liability that is left", () => {
+    expect(allocatePayment(money("USDC", 10_000_000n), { ...base, taxExtra: 999_000_000n }).byBox.taxes.units).toBe(10_000_000n);
+    const capped = allocatePayment(money("USDC", 1_000_000_000n), { ...base, taxExtra: 500_000_000n, taxLiabilityRemaining: 300_000_000n });
+    expect(capped.byBox.taxes.units).toBe(300_000_000n);
+  });
+  it("rejects a negative catch-up", () => {
+    expect(() => allocatePayment(money("USDC", 1n), { ...base, taxExtra: -1n })).toThrow(RangeError);
+  });
+});

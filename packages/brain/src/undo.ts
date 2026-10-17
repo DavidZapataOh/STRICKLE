@@ -7,7 +7,8 @@ export type UndoStep =
   | { kind: "redeem"; amount: bigint }
   | { kind: "move"; from: "emergency"; to: "operating"; amount: bigint }
   | { kind: "restore-rate"; bps: number }
-  | { kind: "cancel-proposal" };
+  | { kind: "cancel-proposal" }
+  | { kind: "reclassify-back" };
 
 export type UndoPlan = { undoable: true; steps: UndoStep[]; waitsUntil?: number } | { undoable: false; reason: string; violations?: Violation[] };
 
@@ -44,11 +45,15 @@ export function undoPlan(receipt: Receipt, state: { snapshot: Snapshot; now: num
     case "cancel-proposal":
       steps = [{ kind: "cancel-proposal" }];
       break;
+    case "reclassify-back":
+      // a correction moves no money by itself: the owner signs the opposite classification
+      steps = [{ kind: "reclassify-back" }];
+      break;
   }
 
   let snapshot = state.snapshot;
   for (const step of steps) {
-    if (step.kind === "restore-rate" || step.kind === "cancel-proposal") continue;
+    if (step.kind === "restore-rate" || step.kind === "cancel-proposal" || step.kind === "reclassify-back") continue;
     const action: Action = step.kind === "move"
       ? { kind: "move", from: step.from, to: step.to, amount: step.amount, ownerRequest: { requestedAt: state.now, now: waitsUntil ?? state.now } }
       : { kind: step.kind, amount: step.amount };

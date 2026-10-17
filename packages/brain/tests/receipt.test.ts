@@ -139,3 +139,14 @@ describe("undoSummary", () => {
     expect(undoSummary("vault-redeem", "abc")).toMatchObject({ undoable: false });
   });
 });
+
+describe("receipts of income doubts and corrections", () => {
+  it("a correction can be undone by correcting back, and nothing can be undone about a doubt", () => {
+    expect(undoSummary("reclassified")).toEqual({ undoable: true, how: "reclassify-back" });
+    expect(undoSummary("income-doubt")).toMatchObject({ undoable: false });
+    expect(UNDO_KIND.reclassified).toBe("reclassified");
+  });
+  it("an undo of a correction is itself not undoable", () => {
+    expect(undoSummary("reclassified", "some-receipt")).toMatchObject({ undoable: false });
+  });
+});

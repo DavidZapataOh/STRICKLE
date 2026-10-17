@@ -147,3 +147,27 @@ describe("placeholderTemplate", () => {
     expect(() => placeholderTemplate({ kind: "payment", values: {}, labels: { to: "x" } }, "en")).toThrow(/amount/);
   });
 });
+
+describe("income doubts and corrections", () => {
+  const facts = (kind: "income-doubt" | "reclassified", labels: Record<string, string>): Facts => ({ kind, values: { amount: usdc(500_000_000n) }, labels });
+  it.each(["en", "es", "pt-br"] as const)("the doubt names its reason in %s and leaves no placeholder", (lang) => {
+    for (const flag of ["own-address", "outlier-size", "amount-matches-outflow", "unattributed"]) {
+      const text = template(facts("income-doubt", { flag }), lang, "en-US");
+      expect(text).toContain("500.00 USDC");
+      expect(text).not.toMatch(/[{}]/);
+    }
+  });
+  it("gives each reason its own words", () => {
+    const texts = ["own-address", "outlier-size", "amount-matches-outflow", "unattributed"].map((flag) => template(facts("income-doubt", { flag }), "en", "en-US"));
+    expect(new Set(texts).size).toBe(4);
+    expect(texts[1]).toContain("much larger than your usual payments");
+  });
+  it.each(["en", "es", "pt-br"] as const)("a correction says from what to what in %s", (lang) => {
+    const text = template(facts("reclassified", { from: "income", to: "own-transfer" }), lang, "en-US");
+    expect(text).toContain("500.00 USDC");
+    expect(text).not.toMatch(/[{}]|own-transfer/);
+  });
+  it("keeps the English wording the plan fixed", () => {
+    expect(template(facts("reclassified", { from: "income", to: "own-transfer" }), "en", "en-US")).toContain("Taxes already set aside for it stay in your taxes box until your next tax date");
+  });
+});

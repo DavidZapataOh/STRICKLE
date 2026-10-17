@@ -20,6 +20,8 @@ export interface CascadeState {
   taxBufferBps: number;
   /** What is still unreserved of the tax liability, already including the buffer; caps the reserve. */
   taxLiabilityRemaining?: bigint;
+  /** An additional tax reserve this payment owes on top of its own rate (a correction that turned own money into income); still capped by the liability left and by the payment. */
+  taxExtra?: bigint;
   /** What the payroll and bills due in the next 30 days will cost (P90) and what is already set aside. */
   payrollDue: bigint;
   payrollFunded: bigint;
@@ -93,6 +95,7 @@ function validate(payment: Money, state: CascadeState): { floorDays: bigint; tar
     emergencyTarget: state.emergencyTarget,
     emergencyBalance: state.emergencyBalance,
     ...(state.taxLiabilityRemaining === undefined ? {} : { taxLiabilityRemaining: state.taxLiabilityRemaining }),
+    ...(state.taxExtra === undefined ? {} : { taxExtra: state.taxExtra }),
   })) {
     positive(value, name);
   }
@@ -103,7 +106,7 @@ function validate(payment: Money, state: CascadeState): { floorDays: bigint; tar
 export function computeNeeds(payment: Money, state: CascadeState): Record<Need, bigint> {
   const { floorDays, targetDays, payrollShareBps } = validate(payment, state);
   const taxFactor = BigInt(state.taxRateBps) * BigInt(state.taxBufferBps);
-  const taxReserve = mulDiv(payment.units, taxFactor, BPS * BPS, "ceil");
+  const taxReserve = mulDiv(payment.units, taxFactor, BPS * BPS, "ceil") + (state.taxExtra ?? 0n);
   const floorDeficit = atLeastZero(floorDays * state.dailySpend - state.operatingBalance);
   const targetDeficit = atLeastZero(targetDays * state.dailySpend - state.operatingBalance);
   return {
