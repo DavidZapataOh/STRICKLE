@@ -240,3 +240,17 @@ describe("yield moves", () => {
     expect(template(held("quote-unavailable"), "en", "en-US")).toBe("Your Profit box's move with EarnKit USDC Vault is on hold: Circle's service did not answer. Your money stays where it is and everything else keeps working.");
   });
 });
+
+describe("a vault that was left", () => {
+  const exit = (reason: string): Facts => ({ kind: "yield-exit", values: {}, labels: { label: "Profit", vault: "EarnKit USDC Vault", reason } });
+  const reasons = ["price-drop", "rate-spike", "inactive", "illiquid"];
+  it("keeps the English wording and names the reason", () => {
+    expect(template(exit("price-drop"), "en", "en-US")).toBe("Your Profit box's money was taken out of EarnKit USDC Vault because its share price fell. It is back in your box as cash; to put it to work again, ask for it.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("gives each reason its own sentence in %s and leaves no placeholder", (lang) => {
+    const texts = reasons.map((reason) => template(exit(reason), lang, "en-US"));
+    for (const text of texts) expect(text).not.toMatch(/[{}]|price-drop|rate-spike|illiquid/);
+    expect(new Set(texts).size).toBe(reasons.length);
+  });
+});
+

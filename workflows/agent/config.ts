@@ -26,6 +26,9 @@ const earnSchema = z
     circleUrl: z.string().regex(/^https:\/\/[^/]+$/),
     gas: z.string().regex(/^[0-9]+$/),
     // the yield vaults an owner may point a box at: the name and the protocol are what the person reads, the address is what the agent checks
+    limits: z
+      .object({ perVaultBps: z.number().int().min(1).max(10_000), perProtocolBps: z.number().int().min(1).max(10_000), liquidityShareBps: z.number().int().min(1).max(10_000), minApyBps: z.number().int().min(0).max(100_000) })
+      .strict(),
     vaults: z.array(z.object({ address, name: z.string().min(1).max(40), protocol: z.string().min(1).max(24) }).strict()).min(1).max(4),
   })
   .strict();

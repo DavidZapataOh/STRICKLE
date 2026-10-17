@@ -1,5 +1,6 @@
 // workflows/agent/tests/profile.test.ts
 import { describe, expect, it } from "vitest";
+import { profileOf } from "./support.ts";
 import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, ZERO_KEY, decodeProfile, encodeProfile, mergeProfile, profileSchema } from "../enclave/profile.ts";
 
 const valid = {
@@ -297,6 +298,24 @@ describe("currencies, swap and rate", () => {
     expect(merged.swap).toEqual(stored.swap);
     expect(merged.rate).toEqual(stored.rate);
     expect(merged.currencies.payroll).toBe("EUR");
+  });
+});
+
+describe("the yield watch in the profile", () => {
+  const watch = { at: 1_790_000_000, vaults: [{ id: "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88", price: "1001058", apyBps: 420, active: true }] };
+
+  it("starts empty, round-trips, and is the agent's: a submission cannot seed or overwrite it", () => {
+    expect(profileOf().yieldWatch).toEqual({ at: 0, vaults: [] });
+    const stored = profileOf({ yieldWatch: watch });
+    expect(decodeProfile(encodeProfile(stored)).yieldWatch).toEqual(watch);
+    expect(mergeProfile(stored, profileOf()).yieldWatch).toEqual(watch);
+    expect(mergeProfile(undefined, stored).yieldWatch).toEqual({ at: 0, vaults: [] });
+  });
+
+  it("holds at most four vaults and refuses malformed ones", () => {
+    const row = watch.vaults[0];
+    expect(() => profileOf({ yieldWatch: { at: 0, vaults: [row, row, row, row, row] } })).toThrow();
+    expect(() => profileOf({ yieldWatch: { at: 0, vaults: [{ ...row, price: "-1" }] } })).toThrow();
   });
 });
 

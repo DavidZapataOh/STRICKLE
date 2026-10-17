@@ -15,10 +15,20 @@ describe("whether the brain lets a move through", () => {
     expect(earnAllowed(profileOf(), invested, today, move(false, 500_000_000n))).toBe(true);
   });
 
-  it("refuses to put to work more than the vault holds in cash, and to take back more than is invested", () => {
+  it("lets a position that has earned be taken back whole, even though it is worth more than what went in", () => {
+    // 1,000 went in and the position is worth 1,030 now: taking all of it back must never be refused for being larger than the principal
+    expect(earnAllowed(profileOf(), invested, today, move(false, 1_030_000_000n))).toBe(true);
+    expect(earnAllowed(profileOf(), rich, today, move(false, 1_000_000_000n))).toBe(true);
+  });
+
+  it("refuses to put to work more than the vault holds in cash", () => {
     expect(earnAllowed(profileOf(), rich, today, move(true, 99_000_000_000n))).toBe(false);
-    expect(earnAllowed(profileOf(), rich, today, move(false, 1n))).toBe(false);
-    expect(earnAllowed(profileOf(), invested, today, move(false, 1_000_000_001n))).toBe(false);
+  });
+
+  it("never refuses a withdrawal, not even from a tight account", () => {
+    const due = profileOf({ payrolls: [["2026-11-02", "3000000000"]] });
+    const tight = { boxes: { ...zero, payroll: 3_000_000_000n }, invested: { ...zero, payroll: 1n }, unallocated: 0n };
+    expect(earnAllowed(due, tight, today, { deposit: false, box: "payroll", amount: 1n })).toBe(true);
   });
 
   it("refuses when the cash left would not cover the payroll due tomorrow, and allows it when it would", () => {

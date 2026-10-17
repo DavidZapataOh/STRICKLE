@@ -10,6 +10,7 @@ import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
 import { deliverEarn } from "./earn-deliver.ts";
 import { earnFor } from "./earn-run.ts";
+import { watchFor } from "./yield-run.ts";
 import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
@@ -134,7 +135,16 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
 
       // the owner's requests to put money to work or take it back: one on-chain move per vault per run, after any conversion has had its turn
       if (conversion.kind === "none" || conversion.kind === "held") {
-        const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: conversion.next, vault, books: tickBooks, today, nowSeconds }), seal });
+        // what the account holds in yield vaults is looked at first: a vault that misbehaves becomes withdrawals that this same run carries out
+        const watched = watchFor(runtime, { profile: conversion.next, vault, nowSeconds });
+        let ahead = conversion.next;
+        if (JSON.stringify(watched.next) !== JSON.stringify(conversion.next)) {
+          version += 1n;
+          deliver(runtime, executor, encodeTickReport({ vault, next: version, ciphertext: seal(watched.next, version) }));
+          notices.push(...watched.notices);
+          ahead = watched.next;
+        }
+        const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: ahead, vault, books: tickBooks, today, nowSeconds }), seal });
         version = moved.version;
         notices.push(...moved.notices);
       }

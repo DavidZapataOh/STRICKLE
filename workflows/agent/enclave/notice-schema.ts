@@ -64,6 +64,8 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   // for a deposit `amount` is the dollars put to work and `counter` the shares received; for a withdrawal `amount` is the dollars taken back and `counter` the shares redeemed
   z.object({ kind: z.literal("earn"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), protocol: z.string().max(24), vault: address, amount: units, counter: units, apyBps: z.number().int().min(0).max(100_000) }).strict(),
   z.object({ kind: z.literal("earn-held"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), reason: z.enum(["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"]) }).strict(),
+  // the agent took everything out of a vault that misbehaved, one notice per box
+  z.object({ kind: z.literal("yield-exit"), box: earnBox, name: z.string().max(40), reason: z.enum(["price-drop", "rate-spike", "inactive", "illiquid"]) }).strict(),
   planNoticeSchema,
 ]);
 

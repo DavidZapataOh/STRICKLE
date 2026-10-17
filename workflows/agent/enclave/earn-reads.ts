@@ -45,3 +45,27 @@ export const earnPreviewRead = (earnVault: Address, deposit: boolean, amount: bi
 export function decodeEarnPreview(answer: unknown, deposit: boolean): bigint {
   return decodeFunctionResult({ abi: yieldAbi, functionName: deposit ? "previewDeposit" : "previewRedeem", data: answer as `0x${string}` });
 }
+
+const HELD_BOXES = [
+  ["taxes", 1],
+  ["payroll", 2],
+  ["operating", 4],
+  ["emergency", 5],
+  ["profit", 6],
+] as const;
+const ONE_SHARE = 10n ** 18n;
+
+/** What an account holds in one yield vault: its shares in each box that may hold any (the salary box never does) and the price of a share, from the yield vault itself. */
+export const holdingsReads = (vault: Address, earnVault: Address): RpcRequest[] => [
+  ...HELD_BOXES.map(([, id]) => callRequest(vault, encodeFunctionData({ abi: vaultAbi, functionName: "sharesOf", args: [earnVault, id] }), "latest")),
+  callRequest(earnVault, encodeFunctionData({ abi: yieldAbi, functionName: "previewRedeem", args: [ONE_SHARE] }), "latest"),
+];
+
+export function decodeHoldings(answers: unknown[]): { shares: Partial<Record<(typeof HELD_BOXES)[number][0], bigint>>; price: bigint } {
+  const shares: Partial<Record<(typeof HELD_BOXES)[number][0], bigint>> = {};
+  HELD_BOXES.forEach(([kind], index) => {
+    const value = decodeFunctionResult({ abi: vaultAbi, functionName: "sharesOf", data: answers[index] as `0x${string}` });
+    if (value > 0n) shares[kind] = value;
+  });
+  return { shares, price: decodeFunctionResult({ abi: yieldAbi, functionName: "previewRedeem", data: answers[HELD_BOXES.length] as `0x${string}` }) };
+}

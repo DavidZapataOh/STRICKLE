@@ -149,6 +149,7 @@ describe("receipts of income doubts and corrections", () => {
     expect(undoSummary("earn")).toEqual({ undoable: false, reason: "The move was made at that moment's share price; to reverse it, take the money back out." });
     expect(undoSummary("earn-back")).toMatchObject({ undoable: false });
     expect(undoSummary("earn-held")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-exit")).toEqual({ undoable: false, reason: "The money is back in your box; to put it to work again, ask for it." });
     expect(UNDO_KIND.reclassified).toBe("reclassified");
   });
   it("an undo of a correction is itself not undoable", () => {

@@ -10,7 +10,7 @@ export type ReceiptKind =
   | "early-payment" | "early-payment-proposal"
   | "income-doubt" | "reclassified"
   | "swap" | "swap-held"
-  | "earn" | "earn-back" | "earn-held";
+  | "earn" | "earn-back" | "earn-held" | "yield-exit";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -119,6 +119,7 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   earn: { values: ["amount", "apy"], labels: ["label", "vault", "protocol"] },
   "earn-back": { values: ["amount"], labels: ["label", "vault", "protocol"] },
   "earn-held": { values: [], labels: ["label", "vault", "reason"] },
+  "yield-exit": { values: [], labels: ["label", "vault", "reason"] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -174,6 +175,13 @@ const EARN_REASONS: Record<string, Record<Lang, string>> = {
   failures: { en: "it failed three times in a row, so ask again when you want to retry", es: "falló tres veces seguidas, así que vuelve a pedirlo cuando quieras reintentar", "pt-br": "falhou três vezes seguidas, então peça de novo quando quiser tentar outra vez" },
   insufficient: { en: "the box does not hold that much", es: "la cajita no tiene tanto", "pt-br": "a caixinha não tem tanto" },
   expired: { en: "it was not carried out within a day", es: "no se llevó a cabo en un día", "pt-br": "não foi executado em um dia" },
+};
+
+const EXIT_REASONS: Record<string, Record<Lang, string>> = {
+  "price-drop": { en: "its share price fell", es: "el precio de su participación bajó", "pt-br": "o preço da sua cota caiu" },
+  "rate-spike": { en: "its rate jumped to an unusual level", es: "su tasa saltó a un nivel inusual", "pt-br": "sua taxa saltou para um nível incomum" },
+  inactive: { en: "it stopped accepting money", es: "dejó de aceptar dinero", "pt-br": "deixou de aceitar dinheiro" },
+  illiquid: { en: "it no longer holds enough to pay everyone back at once", es: "ya no tiene lo suficiente para devolver a todos a la vez", "pt-br": "não tem mais o suficiente para devolver a todos de uma vez" },
 };
 
 const CURRENCY_NAMES: Record<string, Record<Lang, string>> = {
@@ -315,6 +323,11 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l, lang) => `Your ${l("label")} box's move with ${l("vault")} is on hold: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays where it is and everything else keeps working.`,
     es: (_v, l, lang) => `El movimiento de tu cajita ${l("label")} con ${l("vault")} está en pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda donde está y todo lo demás sigue funcionando.`,
     "pt-br": (_v, l, lang) => `O movimento da sua caixinha ${l("label")} com ${l("vault")} está em pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica onde está e todo o resto continua funcionando.`,
+  },
+  "yield-exit": {
+    en: (_v, l, lang) => `Your ${l("label")} box's money was taken out of ${l("vault")} because ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. It is back in your box as cash; to put it to work again, ask for it.`,
+    es: (_v, l, lang) => `El dinero de tu cajita ${l("label")} se sacó de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volvió a tu cajita como efectivo; para ponerlo a trabajar otra vez, pídelo.`,
+    "pt-br": (_v, l, lang) => `O dinheiro da sua caixinha ${l("label")} foi retirado de ${l("vault")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Voltou para a sua caixinha em dinheiro; para colocá-lo para trabalhar de novo, peça.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,
