@@ -9,6 +9,7 @@ const EARN = "0xAabbeF1D3971c710276ed41eC791BbE14CdB8E88";
 const put: Notice = { kind: "earn", box: "profit", deposit: true, name: "EarnKit USDC Vault", protocol: "Morpho", vault: EARN, amount: "500000000", counter: "498000000000000000000", apyBps: 420 };
 const back: Notice = { ...put, deposit: false, apyBps: 0 };
 const held: Notice = { kind: "earn-held", box: "profit", deposit: true, name: "EarnKit USDC Vault", reason: "quote-unavailable" };
+const exited: Notice = { kind: "yield-exit", box: "profit", name: "EarnKit USDC Vault", reason: "price-drop" };
 const other: Notice = { kind: "salary", month: "2026-11", paid: "1000000", pending: "0" };
 const at = (notice: Notice, timestamp = 1_792_000_000) => ({ notice, timestamp });
 
@@ -29,5 +30,11 @@ describe("earnLines", () => {
     expect(lines.map((line) => line.kind)).toEqual(["earn", "earn-back", "earn-held"]);
     expect(new Set(lines.map((line) => line.id)).size).toBe(3);
     expect(lines.map((line) => line.timestamp)).toEqual([10, 30, 40]);
+  });
+
+  it("writes a vault that was left, in the three languages, with the reason", () => {
+    expect(earnLines([at(exited)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-exit", text: "Your Profit box's money was taken out of EarnKit USDC Vault because its share price fell. It is back in your box as cash; to put it to work again, ask for it." });
+    expect(earnLines([at(exited)], "es", es.boxes)[0]?.text).toContain("el precio de su participación bajó");
+    expect(earnLines([at(exited)], "pt-br", ptBr.boxes)[0]?.text).toContain("o preço da sua cota caiu");
   });
 });
