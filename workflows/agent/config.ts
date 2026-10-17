@@ -21,6 +21,15 @@ const swapSchema = z
   })
   .strict();
 
+const earnSchema = z
+  .object({
+    circleUrl: z.string().regex(/^https:\/\/[^/]+$/),
+    gas: z.string().regex(/^[0-9]+$/),
+    // the yield vaults an owner may point a box at: the name and the protocol are what the person reads, the address is what the agent checks
+    vaults: z.array(z.object({ address, name: z.string().min(1).max(40), protocol: z.string().min(1).max(24) }).strict()).min(1).max(4),
+  })
+  .strict();
+
 export const configSchema = z
   .object({
   schedule: z.string().min(1),
@@ -41,8 +50,10 @@ export const configSchema = z
   usdcAddress: address,
   eurcAddress: address,
   swap: swapSchema,
+  earn: earnSchema,
   })
   .refine((config) => !(config.chainId === 5042 && config.swap.sandboxFx), { message: "sandboxFx is for testnet only" });
 
 export type Config = z.infer<typeof configSchema>;
 export type SwapConfig = Config["swap"];
+export type EarnConfig = Config["earn"];

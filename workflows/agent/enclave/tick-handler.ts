@@ -8,6 +8,8 @@ import { SWAP_READS_PER_VAULT, type SwapReadout, decodeDelegated, decodeHead, de
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
+import { deliverEarn } from "./earn-deliver.ts";
+import { earnFor } from "./earn-run.ts";
 import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
@@ -128,6 +130,13 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
             notices.push(...conversion.failed.notices);
           }
         }
+      }
+
+      // the owner's requests to put money to work or take it back: one on-chain move per vault per run, after any conversion has had its turn
+      if (conversion.kind === "none") {
+        const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: conversion.next, vault, books: tickBooks, today, nowSeconds }), seal });
+        version = moved.version;
+        notices.push(...moved.notices);
       }
 
       if (profile.userKey !== ZERO_KEY && notices.length > 0) {

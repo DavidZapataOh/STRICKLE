@@ -87,6 +87,17 @@ export const profileSchema = z
       .object({ day: maybeDate, spent: units, failures: bps(0, 9), since: maybeDate, heldOn: maybeDate })
       .strict()
       .default({ day: "", spent: "0", failures: 0, since: "", heldOn: "" }),
+    // Money the owner asked to put to work or take back, waiting for the next tick, and the agent's own breaker for it: only intent and counters, never balances.
+    earn: z
+      .object({
+        pending: z
+          .array(z.object({ id: z.string().regex(/^[a-z0-9-]{1,24}$/), box: z.enum(["taxes", "payroll", "operating", "emergency", "profit"]), vault: address, amount: units, deposit: z.boolean(), at: z.number().int().min(0) }).strict())
+          .max(4),
+        failures: bps(0, 9),
+        heldOn: maybeDate,
+      })
+      .strict()
+      .default({ pending: [], failures: 0, heldOn: "" }),
     // The last feed answers the agent used (eight decimals), so the app can show them and a restart does not lose them.
     rate: z
       .object({ usdcUsd: units, eurcUsd: units, at: z.number().int().min(0) })
@@ -141,7 +152,7 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
   // the agent owns these; a first submission cannot seed them
-  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, earn: { pending: [], failures: 0, heldOn: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
@@ -149,6 +160,7 @@ export function mergeProfile(existing: Profile | undefined, submitted: Profile):
     arrivals: existing.arrivals,
     taxCatchUp: existing.taxCatchUp,
     swap: existing.swap,
+    earn: existing.earn,
     rate: existing.rate,
     currencies: Object.values(existing.currencies).some((value) => value !== "USD") ? existing.currencies : submitted.currencies,
     tick: existing.tick,

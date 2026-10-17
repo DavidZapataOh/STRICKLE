@@ -7,6 +7,7 @@ const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const hash32 = z.string().regex(/^0x[0-9a-f]{64}$/);
 
 const swapBox = z.enum(["payroll", "operating", "emergency", "profit", "taxes", "salary"]);
+const earnBox = z.enum(["taxes", "payroll", "operating", "emergency", "profit"]);
 
 export const BINDINGS = ["full", "taxes-not-covered", "insufficient-history", "spend-unknown", "cushion-floor", "scenario-risk", "salary-box"] as const;
 
@@ -60,6 +61,9 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("reclassified"), arrivalId: z.string(), amount: units, from: z.enum(["income", "own-transfer", "refund"]), to: z.enum(["income", "own-transfer", "refund"]) }).strict(),
   z.object({ kind: z.literal("swap"), box: swapBox, from: z.enum(["USDC", "EURC"]), amountIn: units, estimatedOut: units, minOut: units, referenceOut: units, deviationBps: z.number().int(), feeBps: z.number().int().min(0).max(10_000) }).strict(),
   z.object({ kind: z.literal("swap-held"), box: swapBox, reason: z.enum(["worse-than-reference", "better-than-reference", "stale-feed", "adapter-not-approved", "failures", "daily-cap", "invalid-quote", "quote-unavailable", "vault-refused"]) }).strict(),
+  // for a deposit `amount` is the dollars put to work and `counter` the shares received; for a withdrawal `amount` is the dollars taken back and `counter` the shares redeemed
+  z.object({ kind: z.literal("earn"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), protocol: z.string().max(24), vault: address, amount: units, counter: units, apyBps: z.number().int().min(0).max(100_000) }).strict(),
+  z.object({ kind: z.literal("earn-held"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), reason: z.enum(["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"]) }).strict(),
   planNoticeSchema,
 ]);
 

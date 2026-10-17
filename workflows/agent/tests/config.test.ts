@@ -33,6 +33,11 @@ const valid = {
     sandboxFx: true,
     maxFeedAgeSeconds: 2_592_000,
   },
+  earn: {
+    circleUrl: "https://api.circle.com",
+    gas: "1500000",
+    vaults: [{ address: "0xAabbeF1D3971c710276ed41eC791BbE14CdB8E88", name: "EarnKit USDC Vault", protocol: "Morpho" }],
+  },
 };
 
 describe("configSchema", () => {
@@ -42,6 +47,14 @@ describe("configSchema", () => {
 
   it.each(["factoryAddress", "heartbeatAddress", "usdcAddress", "eurcAddress"])("rejects a malformed %s", (key) => {
     expect(() => configSchema.parse({ ...valid, [key]: "0x123" })).toThrow();
+  });
+
+  it("needs at least one yield vault, at most four, each with a real address", () => {
+    const vault = valid.earn.vaults[0];
+    expect(() => configSchema.parse({ ...valid, earn: { ...valid.earn, vaults: [] } })).toThrow();
+    expect(() => configSchema.parse({ ...valid, earn: { ...valid.earn, vaults: [vault, vault, vault, vault, vault] } })).toThrow();
+    expect(() => configSchema.parse({ ...valid, earn: { ...valid.earn, vaults: [{ ...vault, address: "0x1" }] } })).toThrow();
+    expect(() => configSchema.parse({ ...valid, earn: { ...valid.earn, circleUrl: "http://api.circle.com" } })).toThrow();
   });
 
   it("rejects a malformed executor address", () => {
