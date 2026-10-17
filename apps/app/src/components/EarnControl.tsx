@@ -11,6 +11,7 @@ import type { SettingsText } from "@/i18n/slices";
 import type { InvestBox } from "@/yield/actions";
 import type { EarnStatus } from "@/yield/status";
 import type { VaultQuote } from "@/yield/vaults";
+import { ChoiceGroup } from "@/ui/ChoiceGroup";
 import { EditRow } from "./EditRow";
 
 /** One box that may earn: what it holds in the vault, what it holds in cash, and the share of it the vault lets the agent move. */
@@ -19,7 +20,7 @@ export type EarnRow = { box: InvestBox; position: bigint; available: bigint; roo
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
 /** The yield vault, its live rate, and for every box that may earn where it stands and the two moves a person can ask for. The interactive parts come in as props. */
-export function EarnControl({ lang, t, status, rows, quote, working = false, message, onMove, onAllow }: { lang: Locale; t: SettingsText; status: EarnStatus; rows: readonly EarnRow[]; quote?: VaultQuote; working?: boolean; message?: string; onMove: (kind: "invest" | "divest", box: InvestBox, dollars: string) => Promise<void>; onAllow?: () => void }) {
+export function EarnControl({ lang, t, status, rows, quote, automatic, working = false, message, onSwitch, onMove, onAllow }: { lang: Locale; t: SettingsText; status: EarnStatus; rows: readonly EarnRow[]; quote?: VaultQuote; /** The owner's setting as the agent's plan reports it; absent until the plan has been read. */ automatic?: boolean; working?: boolean; message?: string; onSwitch?: (enabled: boolean) => Promise<void>; onMove: (kind: "invest" | "divest", box: InvestBox, dollars: string) => Promise<void>; onAllow?: () => void }) {
   const e = t.earn;
   const statusText =
     status.kind === "active"
@@ -52,6 +53,22 @@ export function EarnControl({ lang, t, status, rows, quote, working = false, mes
           {working ? e.allowing : e.allow}
         </button>
       ) : null}
+      {automatic === undefined ? null : (
+        <div className="earn-auto">
+          <p className="note">{e.auto.explain}</p>
+          <ChoiceGroup
+            name="earn-auto"
+            legend={e.auto.title}
+            options={[
+              { value: "on" as const, label: e.auto.on },
+              { value: "off" as const, label: e.auto.off },
+            ]}
+            value={automatic ? "on" : "off"}
+            onChange={(next) => void onSwitch?.(next === "on").catch(() => undefined)}
+            disabled={status.kind === "unavailable" || status.kind === "unreadable" || working}
+          />
+        </div>
+      )}
       {rows.map((row) => (
         <div key={row.box} className="earn-box" data-box={row.box}>
           <h3 className="section-title">{t.boxes[row.box]}</h3>

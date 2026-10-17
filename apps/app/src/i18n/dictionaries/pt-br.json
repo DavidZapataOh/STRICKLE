@@ -872,6 +872,12 @@
       "vault": "Esse vault não está disponível.",
       "tooMuch": "A caixinha tem menos que isso.",
       "limit": "Isso é mais do que esta caixinha deixa o agente colocar para trabalhar agora."
+    },
+    "auto": {
+      "title": "Deixe o agente colocar o dinheiro parado para trabalhar",
+      "explain": "Quando isto está ligado, o agente só coloca para trabalhar o que uma caixinha não precisa em sessenta dias, traz de volta cinco dias úteis antes de um pagamento e nunca coloca mais da metade da caixinha de impostos para trabalhar. As taxas mudam e o valor pode cair.",
+      "on": "Ligado",
+      "off": "Desligado"
     }
   }
 }

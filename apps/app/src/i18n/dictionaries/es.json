@@ -872,6 +872,12 @@
       "vault": "Esa vault no está disponible.",
       "tooMuch": "La cajita tiene menos que eso.",
       "limit": "Eso es más de lo que esta cajita deja que el agente ponga a trabajar ahora."
+    },
+    "auto": {
+      "title": "Deja que el agente ponga a trabajar el dinero ocioso",
+      "explain": "Cuando esto está activado, el agente solo pone a trabajar lo que una cajita no necesita en sesenta días, lo trae de vuelta cinco días hábiles antes de un pago y nunca pone a trabajar más de la mitad de la cajita de impuestos. Las tasas cambian y el valor puede bajar.",
+      "on": "Activado",
+      "off": "Desactivado"
     }
   }
 }

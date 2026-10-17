@@ -10,6 +10,8 @@ const put: Notice = { kind: "earn", box: "profit", deposit: true, name: "EarnKit
 const back: Notice = { ...put, deposit: false, apyBps: 0 };
 const held: Notice = { kind: "earn-held", box: "profit", deposit: true, name: "EarnKit USDC Vault", reason: "quote-unavailable" };
 const exited: Notice = { kind: "yield-exit", box: "profit", name: "EarnKit USDC Vault", reason: "price-drop" };
+const plan: Notice = { kind: "yield-plan", box: "profit", amount: "10000000000", kept: "1500000000", needed: "1200000000" };
+const backNotice: Notice = { kind: "yield-back", box: "payroll", amount: "2525000000", payment: "3000000000", due: "2026-11-04" };
 const other: Notice = { kind: "salary", month: "2026-11", paid: "1000000", pending: "0" };
 const at = (notice: Notice, timestamp = 1_792_000_000) => ({ notice, timestamp });
 
@@ -36,5 +38,11 @@ describe("earnLines", () => {
     expect(earnLines([at(exited)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-exit", text: "Your Profit box's money was taken out of EarnKit USDC Vault because its share price fell. It is back in your box as cash; to put it to work again, ask for it." });
     expect(earnLines([at(exited)], "es", es.boxes)[0]?.text).toContain("el precio de su participación bajó");
     expect(earnLines([at(exited)], "pt-br", ptBr.boxes)[0]?.text).toContain("o preço da sua cota caiu");
+  });
+
+  it("explains what the agent kept and put to work, and why it brought money back, with the date", () => {
+    expect(earnLines([at(plan)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-plan", text: "Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due within sixty days, and put 10,000.00 USDC to work. The rate changes and the value can go down." });
+    expect(earnLines([at(backNotice)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-back", text: "Your Payroll box brought 2,525.00 USDC back from the vault because 3,000.00 USDC is due on Nov 4, 2026: the money is ready five business days before." });
+    expect(earnLines([at(backNotice)], "es", es.boxes)[0]?.text).toContain("4 nov 2026");
   });
 });

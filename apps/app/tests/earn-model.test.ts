@@ -112,3 +112,20 @@ describe("how much a box may still put to work", async () => {
     expect(investRoom({ cash: 5_000_000_000n, working: 0n, maxBps: 0 })).toBe(0n);
   });
 });
+
+
+describe("the yield switch", async () => {
+  const { yieldChange, settingsMatch } = await import("../src/settings/adjust.ts");
+
+  it("is a signed adjust of one setting", () => {
+    expect(yieldChange(true)).toEqual({ ok: true, action: { kind: "adjust", changes: { yieldEnabled: true } } });
+    expect(yieldChange(false)).toEqual({ ok: true, action: { kind: "adjust", changes: { yieldEnabled: false } } });
+  });
+
+  it("is confirmed when the agent's own plan shows the setting in force", () => {
+    const settings = { proposed: "1", day: 1, payee: "0x00000000000000000000000000000000000000b2", dailyCap: "1", signatureThreshold: "1", floorDays: 14, targetDays: 42, halted: false, haltCodes: [] };
+    expect(settingsMatch({ yieldEnabled: true }, { ...settings, yieldEnabled: true })).toBe(true);
+    expect(settingsMatch({ yieldEnabled: true }, { ...settings, yieldEnabled: false })).toBe(false);
+    expect(settingsMatch({ yieldEnabled: false }, settings)).toBe(true);
+  });
+});

@@ -30,7 +30,7 @@ for (const lang of ["en", "es", "pt-br"] as const) {
   for (const [name, status] of Object.entries(statuses)) {
     for (const withQuote of [true, false]) {
       test(`${lang} earn control (${name}${withQuote ? "" : ", no rate"}) fits every viewport`, async ({ page, baseURL }) => {
-        const props = { lang, t, status, rows, quote: withQuote ? quote : undefined, message: "x".repeat(10), onMove: async () => undefined };
+        const props = { lang, t, status, rows, quote: withQuote ? quote : undefined, automatic: withQuote, message: "x".repeat(10), onSwitch: async () => undefined, onMove: async () => undefined };
         await renderWithAppCss(page, baseURL as string, createElement(EarnControl, props), lang);
         expect(await audit(page)).toEqual([]);
       });

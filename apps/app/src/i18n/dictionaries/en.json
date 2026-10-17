@@ -872,6 +872,12 @@
       "vault": "That vault is not available.",
       "tooMuch": "The box holds less than that.",
       "limit": "That is more than this box lets the agent put to work right now."
+    },
+    "auto": {
+      "title": "Let the agent put idle money to work",
+      "explain": "When this is on, the agent only puts to work what a box does not need within sixty days, takes it back five business days before a payment, and never puts more than half of the taxes box to work. Rates change and the value can go down.",
+      "on": "On",
+      "off": "Off"
     }
   }
 }
