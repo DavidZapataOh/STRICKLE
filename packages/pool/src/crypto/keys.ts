@@ -3,7 +3,7 @@ import { hkdf } from "@noble/hashes/hkdf.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { randomBytes } from "@noble/hashes/utils.js";
 
-export const Point = ristretto255.Point;
+export const Point: typeof ristretto255.Point = ristretto255.Point;
 export const ORDER = Point.Fn.ORDER;
 
 export interface ViewKey {
