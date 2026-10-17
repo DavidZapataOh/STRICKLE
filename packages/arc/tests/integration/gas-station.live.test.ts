@@ -72,6 +72,7 @@ describe.skipIf(!process.env.CIRCLE_API_KEY_TESTNET && !process.env.REQUIRE_CIRC
     const block = await sendOneUsdc(eoa, sca);
     const spent = await nativeSpent(eoa, block);
     expect(spent).toBeGreaterThan(ONE_USDC_NATIVE);
-    expect(spent).toBeLessThan(parseUnits("1.01", 18));
+    // the gas price moves with the network: the control only has to show that an externally owned account pays gas on top
+    expect(spent).toBeLessThan(parseUnits("1.1", 18));
   });
 });

@@ -46,7 +46,8 @@ export async function executeUsdtDeposit(deps: { swapKit: DepositSwapKit; kit: D
     tokenIn: swap.tokenIn.address,
     tokenOut: "USDC",
     amountIn: formatAmount(swap.amountIn),
-    config: { slippageBps: swap.slippageBps, stopLimit: swap.minOut.toString(), allowanceStrategy: "approve" },
+    // the kit takes the stop limit as a decimal amount and scales it itself (base units made it a million times too high), and the service refuses a stop limit together with a slippage it would have to override
+    config: { stopLimit: formatAmount(swap.minOut), allowanceStrategy: "approve" },
   } as Parameters<DepositSwapKit["swap"]>[0]);
   const swapTx = result.txHash as Hex;
   const receipt = await deps.client.waitForTransactionReceipt({ hash: swapTx });

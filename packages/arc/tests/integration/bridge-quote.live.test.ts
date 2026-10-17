@@ -18,14 +18,15 @@ describe("the quote against Circle's real estimator", () => {
     expect(quote.exact).toBe(true);
     expect(quote.amountReceivedMin).toBe(100_000_000n);
     expect(quote.totalDebit).toBeGreaterThan(100_000_000n);
-    expect(quote.totalDebit).toBeLessThan(100_100_000n);
+    // Circle sets the fee from the market, so the bound is half a percent rather than the fee seen on one day
+    expect(quote.totalDebit).toBeLessThan(100_500_000n);
   });
 
   it("falls back to destination-paid from Avalanche Fuji and says the figure is a floor", async () => {
     const quote = await ask("Avalanche_Fuji", "fast");
     expect(quote.exact).toBe(false);
     expect(quote.amountReceivedMin).toBeLessThan(100_000_000n);
-    expect(quote.amountReceivedMin).toBeGreaterThan(99_900_000n);
+    expect(quote.amountReceivedMin).toBeGreaterThan(99_500_000n);
   });
 
   it("charges more for fast than for slow where the fast fee is above zero", async () => {

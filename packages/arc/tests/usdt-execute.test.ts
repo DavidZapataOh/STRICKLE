@@ -40,11 +40,21 @@ describe("executeUsdtDeposit", () => {
   // the swap service and the chain are the two boundaries with no testnet counterpart: small stand-ins record what the executor does with them
   const world = (balance: bigint, credited = 99_400_000n) => {
     const calls: string[] = [];
+    const requests: unknown[] = [];
     const client = { readContract: async () => balance, waitForTransactionReceipt: async () => receipt(credited) };
-    const swapKit = { swap: async () => (calls.push("swap"), { txHash: `0x${"aa".repeat(32)}` }) };
+    const swapKit = { swap: async (request: unknown) => (calls.push("swap"), requests.push(request), { txHash: `0x${"aa".repeat(32)}` }) };
     const kit = { on: () => {}, estimate: async () => { throw new Error("estimator down"); }, bridge: async () => (calls.push("bridge"), { steps: [] }) };
-    return { calls, deps: { swapKit, kit, adapter: {}, client } as never };
+    return { calls, requests, deps: { swapKit, kit, adapter: {}, client } as never };
   };
+
+  it("gives the kit its stop limit as a decimal amount, which the kit scales itself, and no slippage that would override it", async () => {
+    const { requests, deps } = world(100_000_000n);
+    await executeUsdtDeposit(deps, quote, () => {}).catch(() => undefined);
+    const [request] = requests as { amountIn: string; config: Record<string, unknown> }[];
+    expect(request?.amountIn).toBe("100");
+    expect(request?.config.stopLimit).toBe("99.4");
+    expect(request?.config).not.toHaveProperty("slippageBps");
+  });
 
   it("refuses before any prompt when the wallet holds less USDT than the amount", async () => {
     const { calls, deps } = world(99_000_000n);
