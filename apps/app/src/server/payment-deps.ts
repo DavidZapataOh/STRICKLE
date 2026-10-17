@@ -8,6 +8,7 @@ import { createChainGuard } from "./chain-guard.ts";
 import { relayLimiter, sql } from "./db.ts";
 import { onrampConfig } from "../onramp/environment.ts";
 import type { CardDeps } from "./onramp.ts";
+import { sessionIdOf } from "./onramp-session.ts";
 import type { OwnerSessionDeps } from "./owner-session.ts";
 import type { PayDeps } from "./pay.ts";
 import type { ChainReader } from "./reconcile.ts";
@@ -86,7 +87,7 @@ export function cardDeps(): CardDeps | undefined {
       // stateless and cheap: built per call so a key change in the environment is picked up
       const kit = createOnrampServerKit({ apiKey: config.apiKey, baseUrl: config.apiBaseUrl, widgetBaseUrl: config.widgetBaseUrl, referrerDomain: config.referrerDomain });
       const session = await kit.createSession(params);
-      return { sessionId: session.sessionId, sessionToken: session.sessionToken, widgetUrl: session.widgetUrl, expiresAt: session.expiresAt, ...(session.destinationWallet ? { destinationWallet: session.destinationWallet } : {}) };
+      return { sessionId: sessionIdOf(session), sessionToken: session.sessionToken, widgetUrl: session.widgetUrl, expiresAt: session.expiresAt, ...(session.destinationWallet ? { destinationWallet: session.destinationWallet } : {}) };
     },
   };
 }

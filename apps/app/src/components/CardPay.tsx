@@ -68,7 +68,7 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
     widget.current = null;
     try {
       const response = await fetch(`/api/pay/${token}/card`, { method: "POST" });
-      const body = (await response.json()) as { status: string; session?: { sessionId: string; sessionToken: string; widgetUrl: string; expiresAt: string; destinationWallet?: string } };
+      const body = (await response.json()) as { status: string; session?: { sessionId: string; sessionToken: string; widgetUrl: string; expiresAt: string; destinationWallet?: string; widgetOrigin: string } };
       if (body.status === "closed") return void dispatch({ type: "closed" });
       if (body.status !== "session" || !body.session) return void dispatch({ type: "unavailable" });
       const session = body.session;
@@ -78,7 +78,7 @@ export function CardPay({ t, token, autostart = false, onPaid }: { t: PayText; t
       const container = document.getElementById("onramp-root");
       if (!container || !alive.current) return;
       const { createOnrampKit } = await import("@circle-fin/onramp-kit");
-      widget.current = createOnrampKit().mountIframe({
+      widget.current = createOnrampKit({ widgetBaseUrl: session.widgetOrigin }).mountIframe({
         session,
         container,
         onDepositSubmitted: () => {

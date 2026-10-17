@@ -11,6 +11,8 @@ export interface MintedSession {
   widgetUrl: string;
   expiresAt: string;
   destinationWallet?: string;
+  /** The configured widget origin, for the browser kit to check the session's URL against: it comes from this server's configuration, never from the session itself. */
+  widgetOrigin?: string;
 }
 
 export interface CardDeps extends PayDeps {
@@ -47,7 +49,7 @@ export async function handleCardSession(request: Request, token: string, deps: C
     rowId = await createOnrampSessionRow(deps.sql, { linkId: link.linkId, vault: link.vault, expiresAt: new Date(Date.now() + 1_800_000) });
     const minted = await deps.mint({ appUserId: rowId, destinationAddress: link.vault as Address, destinationChain: destinationChain(deps.network), assets: assetScope(deps.network) });
     await attachCircleSession(deps.sql, rowId, minted.sessionId);
-    return done({ status: "session", session: { sessionId: minted.sessionId, sessionToken: minted.sessionToken, widgetUrl: minted.widgetUrl, expiresAt: minted.expiresAt, ...(minted.destinationWallet ? { destinationWallet: minted.destinationWallet } : {}) } });
+    return done({ status: "session", session: { sessionId: minted.sessionId, sessionToken: minted.sessionToken, widgetUrl: minted.widgetUrl, expiresAt: minted.expiresAt, ...(minted.destinationWallet ? { destinationWallet: minted.destinationWallet } : {}), widgetOrigin: deps.onramp.widgetOrigin } });
   } catch {
     // no half-made session is left behind: a row without a Circle session would only be noise in the open list
     if (rowId) await deps.sql`delete from onramp_sessions where id = ${rowId} and circle_session_id is null`.catch(() => undefined);

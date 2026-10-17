@@ -39,7 +39,7 @@ describe("minting a card session for a link", () => {
     const created = await invoice();
     const result = await handleCardSession(post("10.1.0.1"), created.token, deps());
     expect(result.status).toBe(201);
-    expect(result.body).toMatchObject({ status: "session", session: { sessionId: expect.stringMatching(/^circle-/), widgetUrl: expect.stringContaining("onramp-sandbox.arc.io") } });
+    expect(result.body).toMatchObject({ status: "session", session: { sessionId: expect.stringMatching(/^circle-/), widgetUrl: expect.stringContaining("onramp-sandbox.arc.io"), widgetOrigin: "https://onramp-sandbox.arc.io" } });
     const call = asked.at(-1);
     expect(call).toMatchObject({ destinationAddress: getAddress(VAULT), destinationChain: "Arc_Testnet", assets: { pairs: [{ token: "USDC", chain: "Arc_Testnet" }] } });
     expect(call?.amount).toBeUndefined();
