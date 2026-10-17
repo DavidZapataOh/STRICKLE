@@ -23,7 +23,7 @@ describe("earnLines", () => {
   });
 
   it("writes a withdrawal and a hold in the language of the screen", () => {
-    expect(earnLines([at(back)], "en", en.boxes)[0]).toMatchObject({ kind: "earn-back", text: "Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho). It earned 12.50 USDC while it was there; the ten percent fee on that, 1.25 USDC, is shown here and is not charged on testnet." });
+    expect(earnLines([at(back)], "en", en.boxes)[0]).toMatchObject({ kind: "earn-back", text: "Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho). It earned 12.50 USDC while it was there; the yield fee on that, 1.25 USDC, is shown here and is not charged on testnet." });
     expect(earnLines([at(held)], "es", es.boxes)[0]?.text).toContain("está en pausa: el servicio de Circle no respondió");
     expect(earnLines([at(put)], "pt-br", ptBr.boxes)[0]?.text).toContain("ao ano");
   });
@@ -42,13 +42,13 @@ describe("earnLines", () => {
   });
 
   it("explains what the agent kept and put to work, and why it brought money back, with the date", () => {
-    expect(earnLines([at(plan)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-plan", text: "Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due within sixty days, and put 10,000.00 USDC to work. The rate changes and the value can go down." });
-    expect(earnLines([at(backNotice)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-back", text: "The agent asked the vault for 2,525.00 USDC back for your Payroll box because 3,000.00 USDC is due on Nov 4, 2026, so the money is ready five business days before." });
+    expect(earnLines([at(plan)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-plan", text: "Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due soon, and put 10,000.00 USDC to work. The rate changes and the value can go down." });
+    expect(earnLines([at(backNotice)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-back", text: "The agent asked the vault for 2,525.00 USDC back for your Payroll box because 3,000.00 USDC is due on Nov 4, 2026, so the money is ready in time." });
     expect(earnLines([at(backNotice)], "es", es.boxes)[0]?.text).toContain("4 nov 2026");
   });
 
   it("writes the invitation with the rate, in the language of the screen", () => {
-    expect(earnLines([at(invite)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-invite", text: "Your money can work while it waits: a vault pays about 4.2% a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need within sixty days is ever used." });
+    expect(earnLines([at(invite)], "en", en.boxes)[0]).toMatchObject({ kind: "yield-invite", text: "Your money can work while it waits: a vault pays about 4.2% a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need soon is ever used." });
     expect(earnLines([at(invite)], "es", es.boxes)[0]?.text).toContain("cerca de");
   });
 

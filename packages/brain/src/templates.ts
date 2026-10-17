@@ -318,9 +318,9 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     "pt-br": (v, l) => `Sua caixinha ${l("label")} colocou ${v("amount")} para trabalhar em ${l("vault")} (${l("protocol")}, ${v("apy")} ao ano no início). A taxa muda e o valor pode cair; você pode retirar quando quiser.`,
   },
   "earn-back": {
-    en: (v, l) => `Your ${l("label")} box took ${v("amount")} back from ${l("vault")} (${l("protocol")}). It earned ${v("gain")} while it was there; the ten percent fee on that, ${v("fee")}, is shown here and is not charged on testnet.`,
-    es: (v, l) => `Tu cajita ${l("label")} retiró ${v("amount")} de ${l("vault")} (${l("protocol")}). Ganó ${v("gain")} mientras estuvo ahí; la comisión del diez por ciento sobre eso, ${v("fee")}, se muestra aquí y no se cobra en testnet.`,
-    "pt-br": (v, l) => `Sua caixinha ${l("label")} retirou ${v("amount")} de ${l("vault")} (${l("protocol")}). Rendeu ${v("gain")} enquanto esteve lá; a taxa de dez por cento sobre isso, ${v("fee")}, é mostrada aqui e não é cobrada na testnet.`,
+    en: (v, l) => `Your ${l("label")} box took ${v("amount")} back from ${l("vault")} (${l("protocol")}). It earned ${v("gain")} while it was there; the yield fee on that, ${v("fee")}, is shown here and is not charged on testnet.`,
+    es: (v, l) => `Tu cajita ${l("label")} retiró ${v("amount")} de ${l("vault")} (${l("protocol")}). Ganó ${v("gain")} mientras estuvo ahí; la comisión por rendimiento sobre eso, ${v("fee")}, se muestra aquí y no se cobra en testnet.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} retirou ${v("amount")} de ${l("vault")} (${l("protocol")}). Rendeu ${v("gain")} enquanto esteve lá; a taxa de rendimento sobre isso, ${v("fee")}, é mostrada aqui e não é cobrada na testnet.`,
   },
   "earn-held": {
     en: (_v, l, lang) => `Your ${l("label")} box's move with ${l("vault")} is on hold: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays where it is and everything else keeps working.`,
@@ -333,19 +333,19 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     "pt-br": (_v, l, lang) => `O agente pediu a ${l("vault")} que devolva o dinheiro da sua caixinha ${l("label")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volta para a sua caixinha em dinheiro quando a retirada for concluída; para colocá-lo para trabalhar de novo, peça.`,
   },
   "yield-plan": {
-    en: (v, l) => `Your ${l("label")} box keeps ${v("kept")} in cash, ${v("needed")} of it for what is due within sixty days, and put ${v("amount")} to work. The rate changes and the value can go down.`,
-    es: (v, l) => `Tu cajita ${l("label")} guarda ${v("kept")} en efectivo, ${v("needed")} de eso para lo que vence en los próximos sesenta días, y puso ${v("amount")} a trabajar. La tasa cambia y el valor puede bajar.`,
-    "pt-br": (v, l) => `Sua caixinha ${l("label")} guarda ${v("kept")} em dinheiro, ${v("needed")} disso para o que vence nos próximos sessenta dias, e colocou ${v("amount")} para trabalhar. A taxa muda e o valor pode cair.`,
+    en: (v, l) => `Your ${l("label")} box keeps ${v("kept")} in cash, ${v("needed")} of it for what is due soon, and put ${v("amount")} to work. The rate changes and the value can go down.`,
+    es: (v, l) => `Tu cajita ${l("label")} guarda ${v("kept")} en efectivo, ${v("needed")} de eso para lo que vence pronto, y puso ${v("amount")} a trabajar. La tasa cambia y el valor puede bajar.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} guarda ${v("kept")} em dinheiro, ${v("needed")} disso para o que vence em breve, e colocou ${v("amount")} para trabalhar. A taxa muda e o valor pode cair.`,
   },
   "yield-back": {
-    en: (v, l) => `The agent asked the vault for ${v("amount")} back for your ${l("label")} box because ${v("payment")} is due on ${v("due")}, so the money is ready five business days before.`,
-    es: (v, l) => `El agente pidió a la vault ${v("amount")} de vuelta para tu cajita ${l("label")} porque ${v("payment")} vence el ${v("due")}, así el dinero queda listo cinco días hábiles antes.`,
-    "pt-br": (v, l) => `O agente pediu ao vault ${v("amount")} de volta para a sua caixinha ${l("label")} porque ${v("payment")} vence em ${v("due")}, assim o dinheiro fica pronto cinco dias úteis antes.`,
+    en: (v, l) => `The agent asked the vault for ${v("amount")} back for your ${l("label")} box because ${v("payment")} is due on ${v("due")}, so the money is ready in time.`,
+    es: (v, l) => `El agente pidió a la vault ${v("amount")} de vuelta para tu cajita ${l("label")} porque ${v("payment")} vence el ${v("due")}, así el dinero queda listo a tiempo.`,
+    "pt-br": (v, l) => `O agente pediu ao vault ${v("amount")} de volta para a sua caixinha ${l("label")} porque ${v("payment")} vence em ${v("due")}, assim o dinheiro fica pronto a tempo.`,
   },
   "yield-invite": {
-    en: (v) => `Your money can work while it waits: a vault pays about ${v("apy")} a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need within sixty days is ever used.`,
-    es: (v) => `Tu dinero puede trabajar mientras espera: una vault paga cerca de ${v("apy")} al año en este momento, y el valor también puede bajar. Si quieres, actívalo en Ajustes. Solo se usa el dinero que una cajita no necesitará en sesenta días.`,
-    "pt-br": (v) => `Seu dinheiro pode trabalhar enquanto espera: um vault paga cerca de ${v("apy")} ao ano neste momento, e o valor também pode cair. Se quiser, ligue em Ajustes. Só se usa o dinheiro que uma caixinha não vai precisar em sessenta dias.`,
+    en: (v) => `Your money can work while it waits: a vault pays about ${v("apy")} a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need soon is ever used.`,
+    es: (v) => `Tu dinero puede trabajar mientras espera: una vault paga cerca de ${v("apy")} al año en este momento, y el valor también puede bajar. Si quieres, actívalo en Ajustes. Solo se usa el dinero que una cajita no necesitará pronto.`,
+    "pt-br": (v) => `Seu dinheiro pode trabalhar enquanto espera: um vault paga cerca de ${v("apy")} ao ano neste momento, e o valor também pode cair. Se quiser, ligue em Ajustes. Só se usa o dinheiro que uma caixinha não vai precisar em breve.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,
