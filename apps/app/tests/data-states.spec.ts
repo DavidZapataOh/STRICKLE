@@ -7,6 +7,7 @@ import { SESSION_KEY } from "../src/account/session.ts";
 // The shared test vault: created by the current factory and holding real payments.
 const VAULT = process.env.E2E_VAULT ?? "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8";
 const OWNER = "0x00000000000000000000000000000000000000a1";
+type Rpc = { id: number; method: string };
 const fixture = (name: string) => JSON.parse(readFileSync(join(__dirname, "fixtures", name), "utf8"));
 
 test.describe("signed in, on a device that holds no reading key", () => {
@@ -17,6 +18,16 @@ test.describe("signed in, on a device that holds no reading key", () => {
     await page.route(/\/api\/logs\?/, async (route) => {
       const kind = new URL(route.request().url()).searchParams.get("kind");
       await route.fulfill({ json: kind === "allocated" ? fixture("allocated.json") : kind === "split" ? fixture("split.json") : kind === "private-spend" ? fixture("private-spend.json") : { logs: [], truncated: false } });
+    });
+    // The public node prunes old receipts, so the private spend's receipt is the explorer's record of that transaction.
+    await page.route(/rpc\./, async (route) => {
+      const sent = route.request().postDataJSON() as Rpc | Rpc[];
+      const calls = Array.isArray(sent) ? sent : [sent];
+      if (!calls.some((call) => call.method === "eth_getTransactionReceipt")) return route.fallback();
+      const rest = calls.filter((call) => call.method !== "eth_getTransactionReceipt");
+      const live = rest.length ? ((await (await route.fetch({ postData: JSON.stringify(rest) })).json()) as Rpc[]) : [];
+      const answers = calls.map((call) => (call.method === "eth_getTransactionReceipt" ? { jsonrpc: "2.0", id: call.id, result: fixture("private-spend-receipt.json") } : [live].flat().find((answer) => answer.id === call.id)));
+      await route.fulfill({ json: Array.isArray(sent) ? answers : answers[0] });
     });
   });
 
