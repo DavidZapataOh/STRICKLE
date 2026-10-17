@@ -799,5 +799,46 @@
     "pool": "The private mode is a contract that has not been audited. It runs on testnet only and is off on mainnet.",
     "tax": "Tax figures are estimates and reserves, not tax advice.",
     "freeze": "USDC is issued by Circle, which can freeze it."
+  },
+  "currency": {
+    "title": "Currency of each box",
+    "explain": "When you choose euros, the agent converts the dollars in that box into euros within the limits of your vault: it never accepts more than 1.5% below the market reference, never more than {cap} a day, and it shows each conversion in Activity.",
+    "usd": "Dollars",
+    "eur": "Euros",
+    "fixed": {
+      "salary": "Always dollars: your salary is paid in dollars.",
+      "taxes": "Always dollars: taxes leave in your local currency."
+    },
+    "status": {
+      "active": "Conversions are active.",
+      "pending": "Conversions will be active on {date}: your vault waits a day after the adapter is approved.",
+      "unavailable": "Not available on this account: it was created before conversions existed.",
+      "notAllowed": "Conversions are not allowed on this account yet.",
+      "paused": "Conversions are paused: {reason}."
+    },
+    "allow": "Allow conversions",
+    "allowing": "Waiting for your signature…",
+    "allowFailed": "That did not go through. Try again.",
+    "reason": {
+      "worse-than-reference": "the price offered was worse than the market reference",
+      "better-than-reference": "the price offered was too good to be true against the market reference",
+      "stale-feed": "the price feed is out of date",
+      "adapter-not-approved": "the conversion service is not active on your account yet",
+      "failures": "three attempts in a row failed",
+      "daily-cap": "today's conversion limit is used",
+      "invalid-quote": "the answer from the conversion service did not pass its checks",
+      "quote-unavailable": "the conversion service did not answer",
+      "vault-refused": "your vault refused the conversion under its own limits"
+    },
+    "heldIn": "Declared in euros: dollars that arrive here are converted.",
+    "inEuros": "{amount} in euros",
+    "total": "Total in dollars at the latest rate",
+    "errors": {
+      "box": "Only payroll, operating cash, the emergency fund and profit can be euros.",
+      "currency": "Choose dollars or euros."
+    },
+    "saved": "Saved. The agent starts converting within a day.",
+    "saving": "Saving…",
+    "activityTitle": "Conversions"
   }
 }

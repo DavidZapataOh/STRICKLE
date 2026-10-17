@@ -41,3 +41,16 @@ export function latestPlan(logs: RawLog[], key: NoticeKey, vault: Address): Plan
   const found = openedNotices(newest, key, vault).find((entry) => entry.notice.kind === "plan");
   return found && found.notice.kind === "plan" ? found.notice : null;
 }
+
+export type HeldNotice = Extract<Notice, { kind: "swap-held" }>["reason"];
+
+/** Why conversions are paused right now: the newest conversion notice among the twelve newest is a pause, not a conversion that went through. */
+export function latestHeld(logs: RawLog[], key: NoticeKey, vault: Address): HeldNotice | undefined {
+  const newest = logs
+    .map((log) => ({ log, id: log.topics[2] ? BigInt(log.topics[2]) : 0n }))
+    .sort(byIdDescending)
+    .slice(0, WINDOW)
+    .map((entry) => entry.log);
+  const latest = openedNotices(newest, key, vault).find((entry) => entry.notice.kind === "swap" || entry.notice.kind === "swap-held");
+  return latest && latest.notice.kind === "swap-held" ? latest.notice.reason : undefined;
+}

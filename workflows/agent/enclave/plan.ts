@@ -83,7 +83,7 @@ export function buildPlanNotice({ profile, books, today, vault, nowSeconds }: { 
     },
     events,
     targets: { taxes: profile.taxesDue, payroll: profile.payrollDue, salary: profile.salary.proposed, operating: String(BigInt(profile.targetDays) * dailySpend), emergency: profile.emergencyTarget },
-    rates: { taxBps: profile.taxRateBps },
+    rates: { taxBps: profile.taxRateBps, ...(BigInt(profile.rate.eurcUsd) > 0n ? { fx: profile.rate } : {}) },
     settings: {
       proposed: profile.salary.proposed,
       day: profile.salary.day,
@@ -94,6 +94,7 @@ export function buildPlanNotice({ profile, books, today, vault, nowSeconds }: { 
       targetDays: profile.targetDays,
       halted: profile.breaker.halted,
       haltCodes: profile.breaker.codes,
+      currencies: profile.currencies,
     },
   };
 }

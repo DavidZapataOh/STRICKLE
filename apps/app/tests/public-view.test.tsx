@@ -11,7 +11,7 @@ const vault: VaultState = {
     usdc: BigInt(id) * 1_000_000n, eurc: 0n, invested: 0n,
     rule: { delaySeconds: id === 1 ? 172_800 : 0, alwaysDelayed: id === 1, restricted: false, floor: 0n, lockedUntil: 0 },
   })),
-  unallocatedUsdc: 0n, agent: "0x00000000000000000000000000000000000000dd", agentPaused: false, now: 1_800_000_000,
+  unallocatedUsdc: 0n, agent: "0x00000000000000000000000000000000000000dd", agentPaused: false, now: 1_800_000_000, conversions: { supported: false },
 };
 const render = (state: Parameters<typeof PublicView>[0]["state"]) => renderToStaticMarkup(<PublicView lang="en" t={en} state={state} />);
 

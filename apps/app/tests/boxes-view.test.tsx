@@ -99,3 +99,37 @@ describe("BoxesView", () => {
     expect(out).toContain("US$ 270,00");
   });
 });
+
+describe("BoxesView with euros", () => {
+  const withEuros = (): Snapshot => {
+    const base = vaultState({ taxes: 270_000_000n, payroll: 100_000_000n, operating: 600_000_000n });
+    const vault = { ...base, boxes: base.boxes.map((box) => (box.kind === "payroll" ? { ...box, usdc: 0n, eurc: 800_000_000n } : box)) };
+    return snapshotOf({
+      vault,
+      plan: planNotice({
+        rates: { taxBps: 1800, fx: { usdcUsd: "100000000", eurcUsd: "112000000", at: 1_800_000_000 } },
+        settings: { ...planNotice().settings, currencies: { payroll: "EUR", operating: "USD", emergency: "USD", profit: "USD" } },
+      }),
+    });
+  };
+
+  it("shows euros as euros and the total in dollars at the latest rate", () => {
+    const out = view(withEuros());
+    expect(out).toContain("Also holds €800.00 in euro digital dollars");
+    expect(out).toContain("Total in dollars at the latest rate");
+    // 270 + 600 dollars plus 800 euros at 1.12
+    expect(out).toContain("US$1,766.00");
+  });
+
+  it("marks a box that is declared in euros", () => {
+    const out = view(withEuros());
+    expect(out).toContain("Declared in euros: dollars that arrive here are converted.");
+    expect(out.match(/Declared in euros/g)).toHaveLength(1);
+  });
+
+  it("shows no dollar equivalent without a rate, and no mark without a declaration", () => {
+    const out = view(snapshotOf({ vault: vaultState({ taxes: 1_000_000n }), plan: planNotice() }));
+    expect(out).not.toContain("Total in dollars at the latest rate");
+    expect(out).not.toContain("Declared in euros");
+  });
+});

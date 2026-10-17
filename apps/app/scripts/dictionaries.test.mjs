@@ -6,7 +6,7 @@ const load = (name) => JSON.parse(readFileSync(new URL(`../src/i18n/dictionaries
 const en = load("en");
 
 // Proper nouns that read the same in every language; anything else identical to English is an untranslated string.
-const IDENTICAL = new Set(["meta.title", "shell.brand", ...["Ethereum", "Base", "Avalanche", "Arbitrum", "Optimism", "Polygon"].map((chain) => `deposit.chains.${chain}`), "deposit.token.usdc", "deposit.token.usdt"]);
+const IDENTICAL = new Set(["meta.title", "shell.brand", "currency.eur", ...["Ethereum", "Base", "Avalanche", "Arbitrum", "Optimism", "Polygon"].map((chain) => `deposit.chains.${chain}`), "deposit.token.usdc", "deposit.token.usdt"]);
 
 const paths = (value, prefix = "") =>
   Object.entries(value).flatMap(([key, inner]) => (typeof inner === "object" && inner !== null ? paths(inner, `${prefix}${key}.`) : [`${prefix}${key}`]));

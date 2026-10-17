@@ -11,6 +11,8 @@ export interface ArcNetwork {
   readonly circleBlockchain: "ARC" | "ARC-TESTNET";
   readonly usdc: Address;
   readonly eurc: Address;
+  /** Circle's Adapter proxy: the only contract a vault may be told to swap through. */
+  readonly swapAdapter: Address;
 }
 
 // Arc silently drops transactions priced below this floor.
@@ -25,6 +27,7 @@ export const networks = {
     circleBlockchain: "ARC-TESTNET",
     usdc: "0x3600000000000000000000000000000000000000",
     eurc: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",
+    swapAdapter: "0xBBD70b01a1CAbc96d5b7b129Ae1AAabdf50dd40b",
   },
   mainnet: {
     name: "mainnet",
@@ -34,6 +37,7 @@ export const networks = {
     circleBlockchain: "ARC",
     usdc: "0x3600000000000000000000000000000000000000",
     eurc: "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1",
+    swapAdapter: "0x7FB8c7260b63934d8da38aF902f87ae6e284a845",
   },
 } as const satisfies Record<ArcNetworkName, ArcNetwork>;
 

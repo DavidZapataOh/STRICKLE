@@ -5,6 +5,7 @@ import type { Locale } from "@strickle/design/locale";
 import { useEffect, useRef, useState } from "react";
 import { type Doubt, correctionsOf, doubtsOf } from "@/activity/doubt";
 import { loadAnswered, saveAnswered } from "@/activity/doubt-store";
+import { conversionLines } from "@/activity/conversion";
 import { verifyKeyAgainstNotices } from "@/activity/key-check";
 import { useActivity } from "@/activity/use-activity";
 import type { Session } from "@/account/session";
@@ -105,6 +106,8 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
 
   const doubts = doubtsOf(activity.notices, answered);
   const corrections = correctionsOf(activity.notices);
+  const plan = [...activity.notices].reverse().find((notice) => notice.kind === "plan");
+  const conversions = conversionLines([...activity.notices].reverse(), lang, t.boxes, plan?.kind === "plan" ? (plan.settings.currencies ?? {}) : {});
   const pending = activity.proposals.filter((proposal) => proposal.state === "pending" || progress[proposal.proposalId]);
   return (
     <div className="activity">
@@ -176,6 +179,16 @@ export function SignedActivity({ session, lang, t }: { session: Session; lang: L
               phase={progress[correction.arrivalId]?.phase ?? "idle"}
               onUndo={() => void correct(correction.arrivalId, correction.from)}
             />
+          ))}
+        </section>
+      ) : null}
+      {conversions.length > 0 ? (
+        <section aria-labelledby="conversions-title">
+          <h2 id="conversions-title" className="section-title">{t.currency.activityTitle}</h2>
+          {conversions.slice(0, 10).map((line) => (
+            <p key={line.id} className="activity-note" data-kind={line.kind}>
+              {line.text}
+            </p>
           ))}
         </section>
       ) : null}
