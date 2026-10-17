@@ -109,6 +109,25 @@ The agent reads each deposit as it arrives and decides whether it is income (tax
 - **A declaration that is never used.** A declaration lasts two hours and cannot be revoked. If the person declares and then abandons the deposit, an unrelated income of a similar size inside that window is read as their own money and skips taxes; the doubt notice does not fire because the evidence was signed.
 - **Not yet remembered.** Only salary payments are recorded as outflows, so a refund from a supplier the agent paid in another way is income. Money the owner withdraws directly from the vault, without the agent, is not recorded either, so sending it back is income unless the address is already known. A follow-up can scan the vault's withdrawal events now that the log window is measured.
 
+## Euro boxes
+
+A person can declare payroll, operating, emergency or profit in euros. The agent then converts what that box holds from USDC to EURC (and back when the box is set to dollars) through Circle's swap adapter, one conversion per run. Taxes and salary stay in dollars: euros that land there (income paid in euros) are converted back, last.
+
+- **What the vault enforces.** Only the agent can swap. It may call one function (`execute`, selector `0xaa3e079c`) on one adapter the owner approved, and the approval takes effect after a day and can be revoked at once. The call carries no ETH. The output must be at least the feed-implied amount less the vault's slippage setting (at most 100 bps) and 50 bps of feed lag, rounded up, so the widest bound is 1.5%. Both feeds must be fresh. The approval for the adapter is reset to zero after every call, the ledger moves only by the balances actually received, and a box never falls below its floor. The swap counts against its own rolling cap.
+- **What the enclave adds.** It checks Circle's quote against the reference in both directions (a quote worse than the reference is refused; one much better is refused too, because it signals a mispriced pool), refuses a quote whose beneficiary, tokens or deadline differ from the instruction, caps conversions at US$5,000 a day and ignores boxes under US$25. A box changed today is not converted until tomorrow, so flipping a currency back and forth costs nothing. After three failures conversions stop until the owner changes a currency setting. Each hold is a notice with its reason, once per reason per day.
+- **What the person can do.** Tighten the slippage, revoke the adapter, pause the agent, or set the box back to dollars.
+- **Feeds.** On mainnet the vault reads Chainlink's USDC/USD and EURC/USD proxies (`0x84EA90AC252Dc437031461836DB5164219147905`, `0x361b95c10b76Ca3f35C686d423e43A951755Bf23`) and rejects an answer older than 26 hours. Testnet has no Chainlink feed for EURC, so the deploy creates two `ReferenceFeed` contracts the owner refreshes with `contracts/scripts/set-reference-rate.mjs` (the ECB rate) and accepts them for 30 days. Testnet also runs with `sandboxFx`: Circle's testnet pool quotes about 33% more euros than the market, so the "much better than reference" refusal is switched off there and only there (the configuration is rejected on chain 5042).
+- **Adapter.** The adapter is Circle's contract and its code can change, so the oracle bound is the protection, not the adapter. Replacing the approved adapter is a new approval and another day.
+- **Accounts.** A vault created before the redeploy cannot hold euros; it keeps working on the old contracts.
+- **Privacy.** The request to Circle's service names the vault, the tokens and the amount. It is the same data the swap publishes on chain moments later.
+
+Known limits:
+
+- The swap cap adds raw units of both assets, which have the same six decimals, so it is a count of units and not of dollars. The enclave's own daily cap is in dollars.
+- The vault's investment limit does not separate the two assets: a box holding euros counts against the same limit as dollars.
+- The sealed state records the intent and the counters, never balances. The executor's `Swapped` event reports the amount requested; only the vault's `Swapped` event reports what was received, so use that one to audit a conversion.
+- A conversion cannot be undone at the same price: setting the box back to dollars converts it again at that day's rate.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.
