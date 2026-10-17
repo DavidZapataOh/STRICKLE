@@ -8,6 +8,10 @@ export const vaultReadAbi = parseAbi([
   "function agent() view returns (address)",
   "function agentPaused() view returns (bool)",
   "function owner() view returns (address)",
+  "function swapAdapter() view returns (address)",
+  "function swapAdapterFrom() view returns (uint64)",
+  "function swapCap() view returns (uint128)",
+  "function swapWindow() view returns (uint32)",
 ]);
 
 export const events = {

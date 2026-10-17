@@ -3,7 +3,7 @@ import type { Action } from "@strickle/agent/signed";
 import { validateParameterProposal } from "@strickle/brain";
 import { isAddress, zeroAddress } from "viem";
 
-export type AdjustError = "day" | "amount" | "payee" | "floor" | "target" | "order";
+export type AdjustError = "day" | "amount" | "payee" | "floor" | "target" | "order" | "box" | "currency";
 export type AdjustAction = Extract<Action, { kind: "adjust" }>;
 export type AdjustResult = { ok: true; action: AdjustAction } | { ok: false; error: AdjustError };
 
@@ -34,6 +34,15 @@ export function salaryChange(input: { proposedDollars?: string; day?: string; pa
     changes.payee = input.payee;
   }
   return Object.keys(changes).length === 0 ? { ok: false, error: "amount" } : done(changes);
+}
+
+const EURO_BOXES = ["payroll", "operating", "emergency", "profit"] as const;
+
+/** Taxes and the salary are always dollars, so only four boxes can be declared in euros. */
+export function currencyChange(input: { box: (typeof EURO_BOXES)[number]; to: "USD" | "EUR" }): AdjustResult {
+  if (!EURO_BOXES.includes(input.box)) return { ok: false, error: "box" };
+  if (input.to !== "USD" && input.to !== "EUR") return { ok: false, error: "currency" };
+  return done({ currencies: { [input.box]: input.to } });
 }
 
 export function limitsChange(input: { thresholdDollars?: string; dailyCapDollars?: string }): AdjustResult {
@@ -90,6 +99,7 @@ export function settingsMatch(changes: AdjustAction["changes"], settings: PlanNo
     (changes.dailyCap === undefined || settings.dailyCap === changes.dailyCap) &&
     (changes.signatureThreshold === undefined || settings.signatureThreshold === changes.signatureThreshold) &&
     (changes.floorDays === undefined || settings.floorDays === changes.floorDays) &&
-    (changes.targetDays === undefined || settings.targetDays === changes.targetDays)
+    (changes.targetDays === undefined || settings.targetDays === changes.targetDays) &&
+    (changes.currencies === undefined || Object.entries(changes.currencies).every(([box, currency]) => settings.currencies?.[box as keyof NonNullable<typeof settings.currencies>] === currency))
   );
 }

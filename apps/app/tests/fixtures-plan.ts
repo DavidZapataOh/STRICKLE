@@ -10,6 +10,7 @@ export const vaultState = (balances: Partial<Record<(typeof BOX_KINDS)[number], 
   agent: "0x00000000000000000000000000000000000000f3",
   agentPaused: false,
   now: 1_800_000_000,
+  conversions: { supported: false },
   ...patch,
 });
 

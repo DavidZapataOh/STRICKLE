@@ -13,7 +13,7 @@ import { Skeleton } from "./Skeleton";
 
 export type SettingsState = { status: "loading" } | { status: "signedOut" } | { status: "error" } | { status: "ready"; model: SettingsModel };
 /** The interactive parts. The screen passes them in; the view itself is plain markup and renders on the server. */
-export type SettingsSlots = { agentEdit?: ReactNode; resume?: ReactNode; autonomy?: ReactNode; salary?: ReactNode; cushion?: ReactNode; rules?: ReactNode; accountant?: ReactNode; retry?: ReactNode };
+export type SettingsSlots = { agentEdit?: ReactNode; resume?: ReactNode; autonomy?: ReactNode; salary?: ReactNode; cushion?: ReactNode; rules?: ReactNode; currency?: ReactNode; accountant?: ReactNode; retry?: ReactNode };
 
 const STATE_KEY = { running: "running", paused: "paused", "halted-user": "haltedUser", "halted-safety": "haltedSafety", none: "none" } as const;
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -89,6 +89,13 @@ export function SettingsView({ lang, t, state, slots = {} }: { lang: Locale; t: 
           <h2 id="set-cushion">{s.cushion.title}</h2>
           <p>{fill(s.cushion.value, { floor: model.cushion.floorDays, target: model.cushion.targetDays })}</p>
           {slots.cushion}
+        </Card>
+      ) : null}
+
+      {slots.currency ? (
+        <Card as="section" aria-labelledby="set-currency">
+          <h2 id="set-currency">{t.currency.title}</h2>
+          {slots.currency}
         </Card>
       ) : null}
 

@@ -799,5 +799,46 @@
     "pool": "O modo privado é um contrato que não foi auditado. Funciona só na testnet e fica desligado na mainnet.",
     "tax": "Os valores de impostos são estimativas e reservas, não consultoria fiscal.",
     "freeze": "O USDC é emitido pela Circle, que pode congelá-lo."
+  },
+  "currency": {
+    "title": "Moeda de cada caixinha",
+    "explain": "Quando você escolhe euros, o agente converte os dólares dessa caixinha em euros dentro dos limites do seu vault: nunca aceita mais de 1,5% abaixo da referência do mercado, nunca mais de {cap} por dia, e mostra cada conversão em Atividade.",
+    "usd": "Dólares",
+    "eur": "Euros",
+    "fixed": {
+      "salary": "Sempre dólares: seu salário é pago em dólares.",
+      "taxes": "Sempre dólares: os impostos saem na sua moeda local."
+    },
+    "status": {
+      "active": "As conversões estão ativas.",
+      "pending": "As conversões estarão ativas em {date}: seu vault espera um dia depois de aprovar o adaptador.",
+      "unavailable": "Indisponível nesta conta: ela foi criada antes de existirem conversões.",
+      "notAllowed": "As conversões ainda não estão permitidas nesta conta.",
+      "paused": "As conversões estão pausadas: {reason}."
+    },
+    "allow": "Permitir conversões",
+    "allowing": "Aguardando sua assinatura…",
+    "allowFailed": "Não foi possível concluir. Tente de novo.",
+    "reason": {
+      "worse-than-reference": "o preço oferecido foi pior que a referência do mercado",
+      "better-than-reference": "o preço oferecido era bom demais frente à referência do mercado",
+      "stale-feed": "a fonte de preços está desatualizada",
+      "adapter-not-approved": "o serviço de conversão ainda não está ativo na sua conta",
+      "failures": "três tentativas seguidas falharam",
+      "daily-cap": "o limite de conversão de hoje já foi usado",
+      "invalid-quote": "a resposta do serviço de conversão não passou nas verificações",
+      "quote-unavailable": "o serviço de conversão não respondeu",
+      "vault-refused": "seu vault recusou a conversão pelos próprios limites"
+    },
+    "heldIn": "Declarada em euros: os dólares que chegam aqui são convertidos.",
+    "inEuros": "{amount} em euros",
+    "total": "Total em dólares na última taxa",
+    "errors": {
+      "box": "Apenas folha, caixa de operação, fundo de emergência e lucro podem ficar em euros.",
+      "currency": "Escolha dólares ou euros."
+    },
+    "saved": "Salvo. O agente começa a converter em menos de um dia.",
+    "saving": "Salvando…",
+    "activityTitle": "Conversões"
   }
 }

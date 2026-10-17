@@ -16,12 +16,16 @@ export interface BoxState {
   invested: bigint;
   rule: BoxRule;
 }
+/** What the vault says about conversions; a vault from before they existed has no such functions. */
+export type Conversions = { supported: false } | { supported: true; adapter: Address; from: number; cap: bigint; window: number };
+
 export interface VaultState {
   boxes: BoxState[];
   unallocatedUsdc: bigint;
   agent: Address;
   agentPaused: boolean;
   now: number;
+  conversions: Conversions;
 }
 
 /** What a box holds in US dollars including the part working in a vault; the money is the user's either way. */

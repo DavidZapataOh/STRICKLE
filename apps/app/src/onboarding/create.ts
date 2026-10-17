@@ -1,9 +1,11 @@
 import { type PlainDate, plainDate } from "@strickle/core";
 import { type Address, type Hex, bytesToHex, getAddress, zeroAddress } from "viem";
 import { saveSession } from "../account/session.ts";
+import { swapSetupCalls } from "../boxes/currency.ts";
 import { agentStateAbi, factoryAbi } from "../chain/abi.ts";
 import { getPublicClient } from "../chain/client.ts";
-import { agentDeploymentsFor, deploymentsFor } from "../config/network.ts";
+import { factoryCanSwap } from "../chain/vault.ts";
+import { agentDeploymentsFor, appNetwork, deploymentsFor, networkInfo } from "../config/network.ts";
 import { type NoticeKey, saveNoticeKey } from "../keys/notice-key.ts";
 import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { type PasskeyWallet, connectWallet } from "../wallet/passkey.ts";
@@ -79,8 +81,10 @@ export async function finishCreate(args: { connected: Connected; answers: Ready;
   args.onStep("sign");
   const profile = buildProfile({ answers: args.answers, diagnosis: args.diagnosis, owner, today: today(), userKey: bytesToHex(args.userKey.publicKey) });
   const sealed = sealProfile({ profile, vault, enclaveKey });
+  // a new vault starts the adapter's one-day wait at creation, so conversions can begin a day after the account exists; an implementation without swaps is left alone
+  const swapCalls = (await factoryCanSwap(deployed.BoxVaultFactory, chain)) ? swapSetupCalls(vault, networkInfo(appNetwork()).swapAdapter) : [];
   const txHash = await wallet.sendCalls(
-    onboardingCalls({ factory: deployed.BoxVaultFactory, executor: deployed.AgentExecutor, state: deployed.AgentState, vault, owner, capUnits: usd(args.answers.salaryGoalUsd), sealed, vaultExists: false }),
+    onboardingCalls({ factory: deployed.BoxVaultFactory, executor: deployed.AgentExecutor, state: deployed.AgentState, vault, owner, capUnits: usd(args.answers.salaryGoalUsd), sealed, vaultExists: false, swapCalls }),
   );
   args.onStep("agent");
   saveSession({ owner, vault, username, createdAt: Math.floor(Date.now() / 1000) });

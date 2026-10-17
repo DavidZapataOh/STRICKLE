@@ -13,6 +13,15 @@ describe("networks", () => {
     expect(getAddress(eurc)).toBe(eurc);
   });
 
+  it.each(Object.values(networks))("$name lists a checksummed swap adapter", ({ swapAdapter }) => {
+    expect(getAddress(swapAdapter)).toBe(swapAdapter);
+  });
+
+  it("uses a different swap adapter on each network", () => {
+    expect(networks.testnet.swapAdapter).toBe("0xBBD70b01a1CAbc96d5b7b129Ae1AAabdf50dd40b");
+    expect(networks.mainnet.swapAdapter).toBe("0x7FB8c7260b63934d8da38aF902f87ae6e284a845");
+  });
+
   it("shares the USDC address across networks but not EURC", () => {
     expect(networks.testnet.usdc).toBe(networks.mainnet.usdc);
     expect(networks.testnet.eurc).not.toBe(networks.mainnet.eurc);

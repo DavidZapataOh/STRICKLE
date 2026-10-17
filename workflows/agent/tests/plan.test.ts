@@ -60,6 +60,17 @@ describe("buildPlanNotice", () => {
     expect(notice.rates.taxBps).toBe(1800);
   });
 
+  it("carries the currency of each box and the last feed rate the agent used, so the app can show euros as euros", () => {
+    const notice = build(profile({ currencies: { payroll: "EUR", operating: "USD", emergency: "USD", profit: "EUR" }, rate: { usdcUsd: "99982900", eurcUsd: "112353511", at: 1_792_000_000 } }));
+    expect(planNoticeSchema.safeParse(notice).success).toBe(true);
+    expect(notice.settings.currencies).toEqual({ payroll: "EUR", operating: "USD", emergency: "USD", profit: "EUR" });
+    expect(notice.rates.fx).toEqual({ usdcUsd: "99982900", eurcUsd: "112353511", at: 1_792_000_000 });
+  });
+
+  it("leaves the rate out until the agent has read one", () => {
+    expect(build().rates.fx).toBeUndefined();
+  });
+
   it("derives the share above the floor from the real decision", () => {
     const notice = build();
     expect(notice.salary.aboveFloorBps).toBeGreaterThanOrEqual(0);
@@ -128,6 +139,7 @@ describe("buildPlanNotice", () => {
     expect(notice.settings).toEqual({
       proposed: "1000000", day: 1, payee: "0x00000000000000000000000000000000000000b2",
       dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [],
+      currencies: { payroll: "USD", operating: "USD", emergency: "USD", profit: "USD" },
     });
   });
 

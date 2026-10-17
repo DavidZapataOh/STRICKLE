@@ -4,14 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
 import { getPublicClient } from "@/chain/client";
 import { fetchLogs } from "@/chain/logs";
-import { latestPlan } from "@/chain/plan";
-import { type BoxState, readVault } from "@/chain/vault";
+import { latestHeld, latestPlan } from "@/chain/plan";
+import { type BoxState, type VaultState, readVault } from "@/chain/vault";
+import { conversionStatus, swapSetupCalls } from "@/boxes/currency";
+import { appNetwork } from "@/config/network";
+import { networks } from "@strickle/arc/networks";
 import type { Locale } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import type { SettingsText } from "@/i18n/slices";
 import { loadNoticeKey } from "@/keys/notice-key";
 import { usd } from "@/onboarding/answers";
-import { type AdjustError, type AdjustResult, cushionChange, cushionRanges, parseWholeDollars, presetChange, salaryChange, settingsMatch } from "@/settings/adjust";
+import { type AdjustError, type AdjustResult, currencyChange, cushionChange, cushionRanges, parseWholeDollars, presetChange, salaryChange, settingsMatch } from "@/settings/adjust";
 import type { Account } from "@/settings/account";
 import { type Call, approveRecipientCalls, setAgentCalls } from "@/settings/calls";
 import { type SettingsChain, approvalKey, approvalState, readSettingsChain } from "@/settings/chain";
@@ -21,6 +24,7 @@ import { type TxPhase, runTx } from "@/settings/tx";
 import { useAdjust } from "@/settings/use-adjust";
 import { isPasskeyCancelled } from "@/wallet/errors";
 import { AgentOnly } from "@/lib/agent-only";
+import { ALL_DOLLARS, CurrencyControl } from "./CurrencyControl";
 import { EditRow } from "./EditRow";
 import { RulesPanel } from "./RulesPanel";
 import { ShareLink } from "./ShareLink";
@@ -29,7 +33,7 @@ import { type SettingsState, SettingsView } from "./SettingsView";
 const dollars = (units: bigint): string => String(units / 1_000_000n);
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number };
+type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
 
 /** What is in force for a signed-in account, and the changes the person can make: the vault's own through the owner's transaction, the agent's through a signed request. */
 export function SettingsActive({ lang, t, account }: { lang: Locale; t: SettingsText; account: Account }) {
@@ -50,7 +54,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         const payees = plan ? [{ box: 3, who: plan.settings.payee as Address }] : [];
         const [chain, vaultState] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault)]);
         const now = Math.floor(Date.now() / 1000);
-        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now });
+        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
         setState({ status: "ready", model: settingsModel({ chain, plan, todayIso: new Date(now * 1000).toISOString().slice(0, 10), now }) });
       } catch {
         setState((current) => (current.status === "ready" ? current : { status: "error" }));
@@ -95,6 +99,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   const errorText = (error: AdjustError): string => {
     if (error === "floor") return fill(s.errors.floor, { min: ranges.floor[0], max: ranges.floor[1] });
     if (error === "target") return fill(s.errors.target, { min: ranges.target[0], max: ranges.target[1] });
+    if (error === "box" || error === "currency") return t.currency.errors[error];
     return s.errors[error];
   };
   const apply = async (result: AdjustResult): Promise<void> => {
@@ -213,6 +218,25 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         </EditRow>
       </AgentOnly>
     ) : null,
+    currency: (
+      <AgentOnly capability="agentSettings" t={t}>
+      <CurrencyControl
+        lang={lang}
+        t={t}
+        currencies={extras.currencies}
+        status={conversionStatus(extras.vault, networks[appNetwork()].swapAdapter, extras.held)}
+        working={working || txPhase === "signing" || txPhase === "confirming"}
+        message={status || undefined}
+        onChoose={(box, to) => void apply(currencyChange({ box, to })).catch(() => undefined)}
+        onAllow={() =>
+          void ownerTx(swapSetupCalls(vault, networks[appNetwork()].swapAdapter), async () => {
+            const read = await readVault(vault);
+            return read.conversions.supported && read.conversions.adapter.toLowerCase() === networks[appNetwork()].swapAdapter.toLowerCase();
+          })
+        }
+      />
+      </AgentOnly>
+    ),
     rules: (
       <RulesPanel
         lang={lang}

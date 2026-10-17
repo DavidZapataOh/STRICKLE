@@ -43,7 +43,7 @@ describe("the slice sent to the data screens", () => {
   it("holds what Home and Boxes read and nothing of the onboarding", async () => {
     const { dataText } = await import("../src/i18n/slices.ts");
     const slice = dataText(en);
-    expect(Object.keys(slice).sort()).toEqual(["boxes", "boxesPage", "home", "screens"]);
+    expect(Object.keys(slice).sort()).toEqual(["boxes", "boxesPage", "currency", "home", "screens"]);
     expect(JSON.stringify(slice).length).toBeLessThan(JSON.stringify(en).length / 2);
   });
 });

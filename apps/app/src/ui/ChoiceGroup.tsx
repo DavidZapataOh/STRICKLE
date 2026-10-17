@@ -1,8 +1,8 @@
 /** A real fieldset of radio inputs drawn as large tap targets; the selected state is a shape and a border, not a color alone. */
-export function ChoiceGroup<T extends string | number>({ name, legend, options, value, onChange, error }: { name: string; legend: string; options: { value: T; label: string; hint?: string }[]; value: T | null; onChange: (value: T) => void; error?: string }) {
+export function ChoiceGroup<T extends string | number>({ name, legend, options, value, onChange, error, disabled }: { name: string; legend: string; options: { value: T; label: string; hint?: string }[]; value: T | null; onChange: (value: T) => void; error?: string; disabled?: boolean }) {
   const errorId = `${name}-error`;
   return (
-    <fieldset className="choices" aria-describedby={error ? errorId : undefined}>
+    <fieldset className="choices" aria-describedby={error ? errorId : undefined} disabled={disabled}>
       <legend>{legend}</legend>
       {options.map((option) => (
         <label key={String(option.value)} className="choice" data-selected={value === option.value}>

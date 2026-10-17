@@ -1,8 +1,9 @@
 import { BOX_KINDS } from "@strickle/core";
-import type { Address, PublicClient } from "viem";
+import { type Address, type PublicClient, parseAbi } from "viem";
+import { factoryAbi } from "./abi.ts";
 import { getPublicClient } from "./client.ts";
 import { vaultReadAbi } from "./read-abi.ts";
-import type { BoxState, VaultState } from "./totals.ts";
+import type { BoxState, Conversions, VaultState } from "./totals.ts";
 
 export type { BoxRule, BoxState, VaultState } from "./totals.ts";
 
@@ -11,7 +12,7 @@ const EURC = 2;
 
 export async function readVault(vault: Address, client: PublicClient = getPublicClient()): Promise<VaultState> {
   const call = <T,>(functionName: string, args?: readonly unknown[]) => client.readContract({ address: vault, abi: vaultReadAbi, functionName, args } as never) as Promise<T>;
-  const [boxes, unallocatedUsdc, agent, agentPaused, block] = await Promise.all([
+  const [boxes, unallocatedUsdc, agent, agentPaused, block, conversions] = await Promise.all([
     Promise.all(
       BOX_KINDS.map(async (kind, index) => {
         const id = index + 1;
@@ -28,6 +29,30 @@ export async function readVault(vault: Address, client: PublicClient = getPublic
     call<Address>("agent"),
     call<boolean>("agentPaused"),
     client.getBlock(),
+    readConversions(call),
   ]);
-  return { boxes, unallocatedUsdc, agent, agentPaused, now: Number(block.timestamp) };
+  return { boxes, unallocatedUsdc, agent, agentPaused, now: Number(block.timestamp), conversions };
+}
+
+/** A vault created before conversions existed has no such functions: the call reverts, which means "not available", never a broken screen. */
+async function readConversions(call: <T>(functionName: string) => Promise<T>): Promise<Conversions> {
+  try {
+    const [adapter, from, cap, window] = await Promise.all([call<Address>("swapAdapter"), call<bigint>("swapAdapterFrom"), call<bigint>("swapCap"), call<number>("swapWindow")]);
+    return { supported: true, adapter, from: Number(from), cap, window: Number(window) };
+  } catch {
+    return { supported: false };
+  }
+}
+
+const swapProbeAbi = parseAbi(["function ADAPTER_EXECUTE() view returns (bytes4)"]);
+
+/** True when the factory's vault implementation can swap: a vault created from an older implementation would revert the whole creation batch on the two swap calls. */
+export async function factoryCanSwap(factory: Address, client: PublicClient = getPublicClient()): Promise<boolean> {
+  try {
+    const implementation = await client.readContract({ address: factory, abi: factoryAbi, functionName: "implementation" });
+    await client.readContract({ address: implementation, abi: swapProbeAbi, functionName: "ADAPTER_EXECUTE" });
+    return true;
+  } catch {
+    return false;
+  }
 }
