@@ -10,7 +10,7 @@ import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
 import { deliverEarn } from "./earn-deliver.ts";
 import { earnFor } from "./earn-run.ts";
-import { watchFor } from "./yield-run.ts";
+import { yieldRun } from "./yield-run.ts";
 import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
@@ -136,7 +136,7 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
       // the owner's requests to put money to work or take it back: one on-chain move per vault per run, after any conversion has had its turn
       if (conversion.kind === "none" || conversion.kind === "held") {
         // what the account holds in yield vaults is looked at first: a vault that misbehaves becomes withdrawals that this same run carries out
-        const watched = watchFor(runtime, { profile: conversion.next, vault, nowSeconds });
+        const watched = yieldRun(runtime, { profile: conversion.next, vault, usdc: readout ? readout.raw.usdc : current.books.boxes, invested: current.books.invested, today, nowSeconds });
         let ahead = conversion.next;
         if (JSON.stringify(watched.next) !== JSON.stringify(conversion.next)) {
           version += 1n;

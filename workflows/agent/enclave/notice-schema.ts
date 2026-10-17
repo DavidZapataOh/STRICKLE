@@ -48,6 +48,7 @@ export const planNoticeSchema = z
         halted: z.boolean(),
         haltCodes: z.array(z.string().max(32)).max(7),
         currencies: z.object({ payroll: z.enum(["USD", "EUR"]), operating: z.enum(["USD", "EUR"]), emergency: z.enum(["USD", "EUR"]), profit: z.enum(["USD", "EUR"]) }).strict().optional(),
+        yieldEnabled: z.boolean().optional(),
       })
       .strict(),
   })
@@ -66,6 +67,9 @@ export const noticeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("earn-held"), box: earnBox, deposit: z.boolean(), name: z.string().max(40), reason: z.enum(["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"]) }).strict(),
   // the agent took everything out of a vault that misbehaved, one notice per box
   z.object({ kind: z.literal("yield-exit"), box: earnBox, name: z.string().max(40), reason: z.enum(["price-drop", "rate-spike", "inactive", "illiquid"]) }).strict(),
+  // why the agent put money to work (what it kept and the part of that needed within 60 days), and why it brought some back (the payment and its date)
+  z.object({ kind: z.literal("yield-plan"), box: earnBox, amount: units, kept: units, needed: units }).strict(),
+  z.object({ kind: z.literal("yield-back"), box: earnBox, amount: units, payment: units, due: date }).strict(),
   planNoticeSchema,
 ]);
 

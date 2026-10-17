@@ -159,6 +159,7 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
         // a setting that changes nothing neither restarts the day's wait nor clears the failure count
         if (JSON.stringify(merged) !== JSON.stringify(next.currencies)) next = { ...next, currencies: merged, swap: { ...next.swap, since: day, failures: 0 } };
       }
+      if (changes.yieldEnabled !== undefined && changes.yieldEnabled !== next.yield.enabled) next = { ...next, yield: { ...next.yield, enabled: changes.yieldEnabled } };
       return { ok: true, next: refreshOwed(next, salaryBox), notices: [] };
     }
   }

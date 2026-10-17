@@ -10,6 +10,7 @@ const vaultAbi = parseAbi([
   "function swapAdapterFrom() view returns (uint64)",
   "function swapSlippageBps() view returns (uint16)",
 ]);
+const rulesAbi = parseAbi(["function maxInvestBps(uint8 box) view returns (uint16)", "function rules(uint8 box) view returns (uint32 delay, bool alwaysDelayed, bool restricted, uint128 floor, uint64 lockedUntil)"]);
 const yieldAbi = parseAbi(["function previewDeposit(uint256 assets) view returns (uint256)", "function previewRedeem(uint256 shares) view returns (uint256)"]);
 const USDC = 1;
 
@@ -68,4 +69,21 @@ export function decodeHoldings(answers: unknown[]): { shares: Partial<Record<(ty
     if (value > 0n) shares[kind] = value;
   });
   return { shares, price: decodeFunctionResult({ abi: yieldAbi, functionName: "previewRedeem", data: answers[HELD_BOXES.length] as `0x${string}` }) };
+}
+
+/** What the box vault itself lets the agent do with each box: the share it may put to work (maxInvestBps) and the floor it must keep. */
+export const rulesReads = (vault: Address): RpcRequest[] =>
+  HELD_BOXES.flatMap(([, id]) => [
+    callRequest(vault, encodeFunctionData({ abi: rulesAbi, functionName: "maxInvestBps", args: [id] }), "latest"),
+    callRequest(vault, encodeFunctionData({ abi: rulesAbi, functionName: "rules", args: [id] }), "latest"),
+  ]);
+
+export function decodeRules(answers: unknown[]): Record<(typeof HELD_BOXES)[number][0], { maxInvestBps: number; floor: bigint }> {
+  return Object.fromEntries(
+    HELD_BOXES.map(([kind], index) => {
+      const maxInvestBps = decodeFunctionResult({ abi: rulesAbi, functionName: "maxInvestBps", data: answers[index * 2] as `0x${string}` });
+      const [, , , floor] = decodeFunctionResult({ abi: rulesAbi, functionName: "rules", data: answers[index * 2 + 1] as `0x${string}` });
+      return [kind, { maxInvestBps, floor }];
+    }),
+  ) as Record<(typeof HELD_BOXES)[number][0], { maxInvestBps: number; floor: bigint }>;
 }

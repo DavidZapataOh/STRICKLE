@@ -98,6 +98,8 @@ export const profileSchema = z
       })
       .strict()
       .default({ pending: [], failures: 0, heldOn: "" }),
+    // Whether the owner wants idle money put to work (the owner's choice, written only by a signed request and seeded at onboarding) and the last day the agent looked for money to put to work.
+    yield: z.object({ enabled: z.boolean(), day: maybeDate }).strict().default({ enabled: false, day: "" }),
     // What the agent saw of each yield vault the account holds at its last look, so the next look can tell a vault that misbehaves: the share price (assets per 1e18 shares), the rate and whether it was open.
     yieldWatch: z
       .object({ at: z.number().int().min(0), vaults: z.array(z.object({ id: address, price: units, apyBps: bps(0, 100_000), active: z.boolean() }).strict()).max(4) })
@@ -157,7 +159,7 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
   // the agent owns these; a first submission cannot seed them
-  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, earn: { pending: [], failures: 0, heldOn: "" }, yieldWatch: { at: 0, vaults: [] }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, earn: { pending: [], failures: 0, heldOn: "" }, yield: { enabled: submitted.yield.enabled, day: "" }, yieldWatch: { at: 0, vaults: [] }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
@@ -166,6 +168,7 @@ export function mergeProfile(existing: Profile | undefined, submitted: Profile):
     taxCatchUp: existing.taxCatchUp,
     swap: existing.swap,
     earn: existing.earn,
+    yield: existing.yield,
     yieldWatch: existing.yieldWatch,
     rate: existing.rate,
     currencies: Object.values(existing.currencies).some((value) => value !== "USD") ? existing.currencies : submitted.currencies,

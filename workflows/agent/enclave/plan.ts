@@ -95,6 +95,7 @@ export function buildPlanNotice({ profile, books, today, vault, nowSeconds }: { 
       halted: profile.breaker.halted,
       haltCodes: profile.breaker.codes,
       currencies: profile.currencies,
+      yieldEnabled: profile.yield.enabled,
     },
   };
 }

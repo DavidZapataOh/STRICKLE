@@ -1,6 +1,6 @@
 import { encodeFunctionResult, parseAbi } from "viem";
 import { describe, expect, it } from "vitest";
-import { EARN_FIRST_READS, decodeEarnFirst, decodeEarnPreview, earnFirstReads, earnPreviewRead } from "../enclave/earn-reads.ts";
+import { EARN_FIRST_READS, decodeEarnFirst, decodeEarnPreview, decodeRules, earnFirstReads, earnPreviewRead, rulesReads } from "../enclave/earn-reads.ts";
 
 const VAULT = "0x00000000000000000000000000000000000000a1" as const;
 const EARN = "0xAabbeF1D3971c710276ed41eC791BbE14CdB8E88" as const;
@@ -44,3 +44,26 @@ describe("the reads for an Earn move", () => {
     expect(decodeEarnPreview(encodeFunctionResult({ abi, functionName: "previewRedeem", result: 3_003_174n }), false)).toBe(3_003_174n);
   });
 });
+
+describe("the reads of what the vault lets the agent do with a box", () => {
+  const rulesAbi = parseAbi(["function maxInvestBps(uint8 box) view returns (uint16)", "function rules(uint8 box) view returns (uint32 delay, bool alwaysDelayed, bool restricted, uint128 floor, uint64 lockedUntil)"]);
+
+  it("are two reads for each of the five boxes that may be put to work", () => {
+    expect(rulesReads(VAULT)).toHaveLength(10);
+  });
+
+  it("decode into the investable share and the floor of each box", () => {
+    const answers = [1, 2, 4, 5, 6].flatMap((box) => [
+      encodeFunctionResult({ abi: rulesAbi, functionName: "maxInvestBps", result: box === 1 ? 5_000 : box === 2 || box === 4 ? 0 : 10_000 }),
+      encodeFunctionResult({ abi: rulesAbi, functionName: "rules", result: [86_400, false, true, BigInt(box) * 1_000_000n, 0n] }),
+    ]);
+    expect(decodeRules(answers)).toEqual({
+      taxes: { maxInvestBps: 5_000, floor: 1_000_000n },
+      payroll: { maxInvestBps: 0, floor: 2_000_000n },
+      operating: { maxInvestBps: 0, floor: 4_000_000n },
+      emergency: { maxInvestBps: 10_000, floor: 5_000_000n },
+      profit: { maxInvestBps: 10_000, floor: 6_000_000n },
+    });
+  });
+});
+

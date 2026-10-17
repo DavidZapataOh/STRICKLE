@@ -32,6 +32,7 @@ export const actionSchema = z.discriminatedUnion("kind", [
           signatureThreshold: units.optional(),
           floorDays: z.number().int().optional(),
           targetDays: z.number().int().optional(),
+          yieldEnabled: z.boolean().optional(),
           // taxes and the salary are always dollars, so they are not keys here
           currencies: z
             .object({ payroll: z.enum(["USD", "EUR"]).optional(), operating: z.enum(["USD", "EUR"]).optional(), emergency: z.enum(["USD", "EUR"]).optional(), profit: z.enum(["USD", "EUR"]).optional() })

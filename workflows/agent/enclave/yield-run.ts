@@ -1,24 +1,32 @@
 import type { TeeRuntime } from "@chainlink/cre-sdk";
+import type { BoxKind, PlainDate } from "@strickle/core";
+import type { VaultView } from "@strickle/brain";
 import type { Address } from "viem";
 import type { Config } from "../config.ts";
 import { circleExplore } from "./earn-call.ts";
-import { decodeHoldings, holdingsReads } from "./earn-reads.ts";
+import { decodeHoldings, decodeRules, holdingsReads, rulesReads } from "./earn-reads.ts";
 import type { Notice } from "./notice-schema.ts";
 import type { Profile } from "./profile.ts";
 import { ethBatch } from "./read.ts";
 import { exitIntents } from "./yield-plan.ts";
+import { yieldIntents } from "./yield-policy.ts";
 import { observe, watchStep } from "./yield-watch.ts";
 
 const ONE_SHARE = 10n ** 18n;
 
-/** Looks at the yield vaults an account holds, once per run: records what it sees and turns a vault that misbehaves into withdrawals of everything held there. An account that holds nothing costs no request. */
-export function watchFor(runtime: TeeRuntime<Config>, input: { profile: Profile; vault: Address; nowSeconds: number }): { next: Profile; notices: Notice[] } {
+/**
+ * What the agent does about yield for one account in one run, read and decided in batches of their own so a vault or a service that cannot answer costs this look and never the tick:
+ * it looks at the vaults the account holds (a vault that misbehaves becomes withdrawals of everything held there), brings back money a payment will need, and, for an account
+ * that switched yield on, puts to work what no box needs in the next 60 days. An account that holds nothing and has yield off costs no request.
+ */
+export function yieldRun(runtime: TeeRuntime<Config>, input: { profile: Profile; vault: Address; usdc: Record<BoxKind, bigint>; invested: Record<BoxKind, bigint>; today: PlainDate; nowSeconds: number }): { next: Profile; notices: Notice[] } {
   const unchanged = { next: input.profile, notices: [] };
   try {
     const vaults = runtime.config.earn.vaults;
     const answers = ethBatch(runtime, vaults.flatMap((entry) => holdingsReads(input.vault, entry.address as Address)));
     const held = vaults.map((entry, index) => ({ entry, ...decodeHoldings(answers.slice(index * 6, index * 6 + 6)) }));
-    if (!held.some((row) => Object.keys(row.shares).length > 0)) return unchanged;
+    const holds = held.some((row) => Object.keys(row.shares).length > 0);
+    if (!holds && !input.profile.yield.enabled) return unchanged;
 
     const sharePrices = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), row.price]));
     const positions = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), (Object.values(row.shares).reduce((sum, shares) => sum + shares, 0n) * row.price) / ONE_SHARE]));
@@ -28,7 +36,8 @@ export function watchFor(runtime: TeeRuntime<Config>, input: { profile: Profile;
     } catch {
       // a list that is down is no observation this run; the chain's own share price still stands
     }
-    const watched = watchStep({ profile: input.profile, now: observe({ vaults, sharePrices, list }), positions, nowSeconds: input.nowSeconds });
+    const seen = observe({ vaults, sharePrices, list });
+    const watched = watchStep({ profile: input.profile, now: seen, positions, nowSeconds: input.nowSeconds });
     const exits = exitIntents({
       profile: watched.next,
       anomalies: watched.anomalies,
@@ -36,7 +45,14 @@ export function watchFor(runtime: TeeRuntime<Config>, input: { profile: Profile;
       vaults: Object.fromEntries(vaults.map((entry) => [entry.address.toLowerCase(), { address: entry.address, name: entry.name }])),
       now: input.nowSeconds,
     });
-    return { next: exits.next, notices: exits.notices };
+
+    // a vault that was just flagged gets no new money, and a vault the list did not carry cannot be judged
+    const flagged = new Set(watched.anomalies.map((entry) => entry.id));
+    const views: VaultView[] = seen.filter((entry) => !flagged.has(entry.id)).map((entry) => ({ id: entry.id, protocol: vaults.find((candidate) => candidate.address.toLowerCase() === entry.id)?.protocol ?? "", apyBps: entry.apyBps, active: entry.active, liquidity: entry.liquidity }));
+    const rules = decodeRules(ethBatch(runtime, rulesReads(input.vault)));
+    const holdings = Object.fromEntries(held.map((row) => [row.entry.address.toLowerCase(), Object.fromEntries(Object.entries(row.shares).map(([box, shares]) => [box, (shares * row.price) / ONE_SHARE]))]));
+    const decided = yieldIntents({ profile: exits.next, usdc: input.usdc, invested: input.invested, rules, holdings, views, vaults, today: input.today, now: input.nowSeconds, limits: runtime.config.earn.limits });
+    return { next: decided.next, notices: [...exits.notices, ...decided.notices] };
   } catch {
     return unchanged;
   }
