@@ -210,3 +210,33 @@ describe("conversions", () => {
     expect(template(held("stale-feed"), "en", "en-US")).toBe("Conversions to euros for your Payroll box are paused: the price feed is out of date. Your money stays in dollars and everything else keeps working.");
   });
 });
+
+describe("yield moves", () => {
+  const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
+  const earnFacts = (apy = 420): Facts => ({ kind: "earn", values: { amount: usdc(500_000_000n), apy: { type: "bps", value: apy } }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
+  const backFacts = (): Facts => ({ kind: "earn-back", values: { amount: usdc(500_000_000n) }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
+  it("keeps the English wording of a deposit and of a withdrawal", () => {
+    expect(template(earnFacts(), "en", "en-US")).toBe("Your Profit box put 500.00 USDC to work in EarnKit USDC Vault (Morpho, 4.2% a year when it started). The rate changes and the value can go down; you can take it back at any time.");
+    expect(template(backFacts(), "en", "en-US")).toBe("Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho).");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names the vault, the protocol and the rate in %s and leaves no placeholder", (lang) => {
+    for (const facts of [earnFacts(), backFacts()]) {
+      const text = template(facts, lang, "es-CO");
+      expect(text).not.toMatch(/[{}]|undefined/);
+      for (const part of ["EarnKit USDC Vault", "Morpho", "500,00 USDC"]) expect(text).toContain(part);
+    }
+    expect(template(earnFacts(), lang, "es-CO")).toContain("4,2%");
+  });
+  it("writes the rate with the number style", () => {
+    expect(template(earnFacts(1_005), "en", "en-US")).toContain("10.05%");
+    expect(template(earnFacts(0), "en", "en-US")).toContain("0%");
+  });
+  const held = (reason: string): Facts => ({ kind: "earn-held", values: {}, labels: { label: "Profit", vault: "EarnKit USDC Vault", reason } });
+  const reasons = ["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"];
+  it.each(["en", "es", "pt-br"] as const)("a hold gives its reason and says the money stays put in %s", (lang) => {
+    const texts = reasons.map((reason) => template(held(reason), lang, "en-US"));
+    for (const text of texts) expect(text).not.toMatch(/[{}]|adapter-not-approved|invalid-bundle|vault-refused/);
+    expect(new Set(texts).size).toBe(reasons.length);
+    expect(template(held("quote-unavailable"), "en", "en-US")).toBe("Your Profit box's move with EarnKit USDC Vault is on hold: Circle's service did not answer. Your money stays where it is and everything else keeps working.");
+  });
+});

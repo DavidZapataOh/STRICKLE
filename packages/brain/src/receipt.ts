@@ -48,6 +48,9 @@ const IRREVERSIBLE: Partial<Record<ReceiptKind, string>> = {
   "income-doubt": "There is nothing to undo; you can mark it as your own money.",
   swap: "The conversion was made at that day's rate; to change it, set the box back to dollars and it converts back at the rate of that moment.",
   "swap-held": "There is nothing to undo; this only says why conversions paused.",
+  earn: "The move was made at that moment's share price; to reverse it, take the money back out.",
+  "earn-back": "The money is back in your box; to reverse it, put it to work again.",
+  "earn-held": "There is nothing to undo; this only says why the move is on hold.",
   split: "The money now sits in its boxes under their locks; it can be adjusted by moving between boxes, and the locks apply.",
 };
 

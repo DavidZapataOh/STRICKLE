@@ -9,7 +9,8 @@ export type ReceiptKind =
   | "move" | "proposal-cancelled"
   | "early-payment" | "early-payment-proposal"
   | "income-doubt" | "reclassified"
-  | "swap" | "swap-held";
+  | "swap" | "swap-held"
+  | "earn" | "earn-back" | "earn-held";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -115,6 +116,9 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   reclassified: { values: ["amount"], labels: ["from", "to"] },
   swap: { values: ["amount", "expectedOut", "minOut", "reference", "deviation", "fee"], labels: ["label", "direction"] },
   "swap-held": { values: [], labels: ["label", "currency", "reason"] },
+  earn: { values: ["amount", "apy"], labels: ["label", "vault", "protocol"] },
+  "earn-back": { values: ["amount"], labels: ["label", "vault", "protocol"] },
+  "earn-held": { values: [], labels: ["label", "vault", "reason"] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -159,6 +163,17 @@ const SWAP_REASONS: Record<string, Record<Lang, string>> = {
   "invalid-quote": { en: "the answer from the conversion service did not pass its checks", es: "la respuesta del servicio de conversión no pasó sus verificaciones", "pt-br": "a resposta do serviço de conversão não passou nas verificações" },
   "vault-refused": { en: "your vault refused the conversion under its own limits", es: "tu vault rechazó la conversión según sus propios límites", "pt-br": "seu vault recusou a conversão pelos próprios limites" },
   "quote-unavailable": { en: "the conversion service did not answer", es: "el servicio de conversión no respondió", "pt-br": "o serviço de conversão não respondeu" },
+};
+
+const EARN_REASONS: Record<string, Record<Lang, string>> = {
+  "adapter-not-approved": { en: "the agent's service is not active on your account yet, which takes a day after you approve it", es: "el servicio del agente aún no está activo en tu cuenta, lo cual tarda un día tras aprobarlo", "pt-br": "o serviço do agente ainda não está ativo na sua conta, o que leva um dia após você aprovar" },
+  "vault-not-approved": { en: "this vault is not approved on your account yet, which takes a day after you approve it", es: "esta vault aún no está aprobada en tu cuenta, lo cual tarda un día tras aprobarla", "pt-br": "esta vault ainda não está aprovada na sua conta, o que leva um dia após você aprovar" },
+  "quote-unavailable": { en: "Circle's service did not answer", es: "el servicio de Circle no respondió", "pt-br": "o serviço da Circle não respondeu" },
+  "invalid-bundle": { en: "Circle's answer did not match what was asked, so the agent refused it", es: "la respuesta de Circle no coincidía con lo pedido, así que el agente la rechazó", "pt-br": "a resposta da Circle não correspondia ao pedido, então o agente a recusou" },
+  "vault-refused": { en: "your vault refused it under its own limits", es: "tu vault lo rechazó según sus propios límites", "pt-br": "seu vault recusou conforme seus próprios limites" },
+  failures: { en: "it failed three times in a row, so ask again when you want to retry", es: "falló tres veces seguidas, así que vuelve a pedirlo cuando quieras reintentar", "pt-br": "falhou três vezes seguidas, então peça de novo quando quiser tentar outra vez" },
+  insufficient: { en: "the box does not hold that much", es: "la cajita no tiene tanto", "pt-br": "a caixinha não tem tanto" },
+  expired: { en: "it was not carried out within a day", es: "no se llevó a cabo en un día", "pt-br": "não foi executado em um dia" },
 };
 
 const CURRENCY_NAMES: Record<string, Record<Lang, string>> = {
@@ -285,6 +300,21 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l, lang) => `Conversions to ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} for your ${l("label")} box are paused: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays in ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} and everything else keeps working.`,
     es: (_v, l, lang) => `Las conversiones a ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} para tu cajita ${l("label")} están en pausa: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda en ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} y todo lo demás sigue funcionando.`,
     "pt-br": (_v, l, lang) => `As conversões para ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} da sua caixinha ${l("label")} estão pausadas: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica em ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} e todo o resto continua funcionando.`,
+  },
+  earn: {
+    en: (v, l) => `Your ${l("label")} box put ${v("amount")} to work in ${l("vault")} (${l("protocol")}, ${v("apy")} a year when it started). The rate changes and the value can go down; you can take it back at any time.`,
+    es: (v, l) => `Tu cajita ${l("label")} puso ${v("amount")} a trabajar en ${l("vault")} (${l("protocol")}, ${v("apy")} al año al empezar). La tasa cambia y el valor puede bajar; puedes retirarlo cuando quieras.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} colocou ${v("amount")} para trabalhar em ${l("vault")} (${l("protocol")}, ${v("apy")} ao ano no início). A taxa muda e o valor pode cair; você pode retirar quando quiser.`,
+  },
+  "earn-back": {
+    en: (v, l) => `Your ${l("label")} box took ${v("amount")} back from ${l("vault")} (${l("protocol")}).`,
+    es: (v, l) => `Tu cajita ${l("label")} retiró ${v("amount")} de ${l("vault")} (${l("protocol")}).`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} retirou ${v("amount")} de ${l("vault")} (${l("protocol")}).`,
+  },
+  "earn-held": {
+    en: (_v, l, lang) => `Your ${l("label")} box's move with ${l("vault")} is on hold: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays where it is and everything else keeps working.`,
+    es: (_v, l, lang) => `El movimiento de tu cajita ${l("label")} con ${l("vault")} está en pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda donde está y todo lo demás sigue funcionando.`,
+    "pt-br": (_v, l, lang) => `O movimento da sua caixinha ${l("label")} com ${l("vault")} está em pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica onde está e todo o resto continua funcionando.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,
