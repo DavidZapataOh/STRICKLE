@@ -1,10 +1,13 @@
 import "server-only";
 import { type Address, type Hex, type PublicClient, parseAbi, parseAbiItem } from "viem";
+import { createOnrampServerKit } from "@circle-fin/onramp-kit/server";
 import { invoiceKeys } from "@strickle/db/invoice-keys";
 import { getPublicClient } from "../chain/client.ts";
 import { agentDeploymentsFor, appNetwork, networkInfo } from "../config/network.ts";
 import { createChainGuard } from "./chain-guard.ts";
 import { relayLimiter, sql } from "./db.ts";
+import { onrampConfig } from "../onramp/environment.ts";
+import type { CardDeps } from "./onramp.ts";
 import type { OwnerSessionDeps } from "./owner-session.ts";
 import type { PayDeps } from "./pay.ts";
 import type { ChainReader } from "./reconcile.ts";
@@ -48,7 +51,7 @@ export function paymentDeps(): PayDeps | undefined {
   }
   const info = networkInfo();
   reader ??= chainReader(getPublicClient(), info.usdc);
-  return { env: process.env, sql: sql(), keys, limiter, chain: reader, network: appNetwork(), chainId: info.chain.id, usdc: info.usdc };
+  return { env: process.env, sql: sql(), keys, limiter, chain: reader, network: appNetwork(), chainId: info.chain.id, usdc: info.usdc, onramp: onrampConfig(process.env, appNetwork()) };
 }
 
 export function ownerSessionDeps(): OwnerSessionDeps | undefined {
@@ -66,6 +69,24 @@ export function ownerSessionDeps(): OwnerSessionDeps | undefined {
       registered: async (vault) => (await vaults.vault(vault)).registered,
       ownerOf: (vault) => client.readContract({ address: vault, abi: ownerAbi, functionName: "owner" }),
       accepts: (owner, digest, signature) => client.verifyHash({ address: owner, hash: digest, signature }),
+    },
+  };
+}
+
+/** The card option: absent (and every card route answers unavailable) unless the key and the embedding domain are set for this network's environment. */
+export function cardDeps(): CardDeps | undefined {
+  const deps = paymentDeps();
+  if (!deps) return undefined;
+  const config = onrampConfig(process.env, appNetwork());
+  return {
+    ...deps,
+    onramp: config,
+    mint: async (params) => {
+      if (!config) throw new Error("card payments are not configured");
+      // stateless and cheap: built per call so a key change in the environment is picked up
+      const kit = createOnrampServerKit({ apiKey: config.apiKey, baseUrl: config.apiBaseUrl, widgetBaseUrl: config.widgetBaseUrl, referrerDomain: config.referrerDomain });
+      const session = await kit.createSession(params);
+      return { sessionId: session.sessionId, sessionToken: session.sessionToken, widgetUrl: session.widgetUrl, expiresAt: session.expiresAt, ...(session.destinationWallet ? { destinationWallet: session.destinationWallet } : {}) };
     },
   };
 }

@@ -10,7 +10,7 @@ import type { PublicInvoice } from "../src/server/pay.ts";
 import { renderWithAppCss } from "./support/render-audit.ts";
 
 const dictionaries = { en, es, "pt-br": pt } as const;
-const open: PublicInvoice = { label: "Website redesign", payeeName: "Ana Studio", note: "October", amount: "100000000", paid: "0", remaining: "100000000", status: "open", expiresAt: null, expired: false, closed: false, vault: "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8", memoId: `0x${"ab".repeat(32)}`, chainId: 5042002, usdc: "0x3600000000000000000000000000000000000000" };
+const open: PublicInvoice = { label: "Website redesign", payeeName: "Ana Studio", note: "October", amount: "100000000", paid: "0", remaining: "100000000", status: "open", expiresAt: null, expired: false, closed: false, vault: "0x8AB41267Adc223EF245c46537870Ae8744b9b3F8", memoId: `0x${"ab".repeat(32)}`, chainId: 5042002, usdc: "0x3600000000000000000000000000000000000000", cardAvailable: false };
 const long: PublicInvoice = { ...open, payeeName: "P".repeat(60), note: "n".repeat(300), label: "L".repeat(40), amount: "1000000000000", remaining: "1000000000000" };
 const states: Record<string, PublicInvoice> = {
   open,
