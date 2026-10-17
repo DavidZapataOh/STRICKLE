@@ -62,15 +62,15 @@
       "create2": true
     },
     "BoxVault": {
-      "address": "0xf137f25470a828DA7e3cdC235e7975229abCF2b1",
-      "txHash": "0x56ef8f728977c07ad883ffdf4a885a8cff83321ab31767635778a732b6696bff",
-      "blockNumber": 67324329,
+      "address": "0xd230cC8a0F39db9C5CAA8466A7195e2C328384a3",
+      "txHash": "0x145d4490e48f87222f23f8619afdbe6e6e1247a12b703f8b40e10bd438e66fa7",
+      "blockNumber": 67720252,
       "create2": true
     },
     "BoxVaultFactory": {
-      "address": "0xec5F22F869F2fcbF9fFb26cb40c30Db2521bDa80",
-      "txHash": "0x0397c3caaf55964a127a9087cfa3e6d5f9166102646d8fd71d954767bf494efa",
-      "blockNumber": 67324330,
+      "address": "0x515EDF42f25af87ae7d806197232048D4A212100",
+      "txHash": "0x713541f7849bd355882d98a53861ca5bea8bce08f8d1b30ec49cc79754d98daf",
+      "blockNumber": 67720253,
       "create2": true
     },
     "AgentHeartbeat": {
@@ -86,10 +86,22 @@
       "create2": true
     },
     "AgentExecutor": {
-      "address": "0xB4FcFEfcDA83D274Aa466eacDB44095C50665262",
-      "txHash": "0x8fe883df02e874b270e6201a21d1325acaec935f67255fa2f09377ae7a3209d4",
-      "blockNumber": 67413447,
+      "address": "0xA302dDdAbEaF908efc81d915419c2cBD0373C533",
+      "txHash": "0x3c51b937158916cd3e52c1e3d6667782aec67abc4b53857301b8455d70e1e4a4",
+      "blockNumber": 67720861,
       "create2": true
+    },
+    "ReferenceFeed": {
+      "address": "0x16e39cCC0c0F489477EDA348C17eD84103351318",
+      "txHash": "0x6255d9f0847b881ba0b2a138d6accce41ca6f65ef95289d3739232e91fc0a81e",
+      "blockNumber": 67717601,
+      "create2": false
+    },
+    "ReferenceFeed#2": {
+      "address": "0xee2013E4D05A8d6630C83Fd889866008068C0Ad9",
+      "txHash": "0x3d00f52e836d8bb5886a06a83e49f590e6de2fd3989bbd068d941fe7f0260072",
+      "blockNumber": 67717601,
+      "create2": false
     }
   }
 }
