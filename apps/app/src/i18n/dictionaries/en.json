@@ -954,5 +954,37 @@
       "reproduce": "To recompute the workflow ID from the published source, run:",
       "note": "This is the chain of custody after the enclave. It does not show the hardware quote."
     }
+  },
+  "sandbox": {
+    "title": "Test mode",
+    "note": "This network uses test money with no value. Move your account's date forward to watch a month go by.",
+    "date": "The account's date: {date}",
+    "day": "+1 day",
+    "week": "+1 week",
+    "month": "+1 month",
+    "failed": "The date did not move. Try again.",
+    "faucet": "Get test USDC",
+    "faucetNote": "Opens Circle's public faucet in a new tab. Choose Arc Testnet."
+  },
+  "judges": {
+    "title": "Three ways in",
+    "intro": "Look at a real account, use the product with test money, or check the system without trusting it.",
+    "maria": {
+      "title": "Explore as María",
+      "body": "A real account the team runs on the test network, open read-only. You see its boxes, its rules and every payment, and you cannot change anything.",
+      "open": "Open María's account",
+      "unavailable": "The demo account is not available right now.",
+      "checking": "Checking the demo account…"
+    },
+    "try": {
+      "title": "Try it yourself",
+      "body": "Create your own account on the test network. The money is test money with no value, the settings screen has a faucet, and you can move your account's date forward to watch a month go by.",
+      "open": "Start"
+    },
+    "check": {
+      "title": "Check it",
+      "body": "Every contract with its address and whether its source is verified, the rules each one enforces and whether the agent is running the published code.",
+      "open": "Open the proof page"
+    }
   }
 }

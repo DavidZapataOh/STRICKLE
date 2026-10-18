@@ -99,7 +99,7 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
     return done;
   }
 
-  const result = applyAction(profile, request.action, { now, today, books, earnVaults: runtime.config.earn.vaults.map((entry) => entry.address) });
+  const result = applyAction(profile, request.action, { now, today, books, earnVaults: runtime.config.earn.vaults.map((entry) => entry.address), sandboxClock: runtime.config.sandboxClock });
   if (!result.ok) return done;
 
   const stored = { ...result.next, nonce: request.nonce };
@@ -123,8 +123,9 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
       : encodeTickReport({ vault, next, ciphertext }),
   );
 
-  // an adjust is confirmed by what is now in force: the app reads it from this fresh plan
-  const notices = request.action.kind === "adjust" ? [...result.notices, buildPlanNotice({ profile: stored, books, today, vault, nowSeconds: now })] : result.notices;
+  // an adjust is confirmed by what is now in force, an advance by the date the account now lives in: the app reads it from this fresh plan
+  const planToday = request.action.kind === "advance" ? todayOf(runtime.now(), stored.clockOffsetDays) : today;
+  const notices = request.action.kind === "adjust" || request.action.kind === "advance" ? [...result.notices, buildPlanNotice({ profile: stored, books, today: planToday, vault, nowSeconds: now })] : result.notices;
   sealNotices(runtime, { executor, master, vault, profile, count: noticeCount, notices });
   return done;
 };

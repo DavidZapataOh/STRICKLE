@@ -954,5 +954,37 @@
       "reproduce": "Para recalcular o ID do workflow a partir do código publicado, execute:",
       "note": "Esta é a cadeia de custódia depois do enclave. Não mostra a cotação do hardware."
     }
+  },
+  "sandbox": {
+    "title": "Modo de teste",
+    "note": "Esta rede usa dinheiro de teste sem valor. Avance a data da sua conta para ver um mês passar.",
+    "date": "A data da conta: {date}",
+    "day": "+1 dia",
+    "week": "+1 semana",
+    "month": "+1 mês",
+    "failed": "A data não avançou. Tente novamente.",
+    "faucet": "Obter USDC de teste",
+    "faucetNote": "Abre o faucet público da Circle em uma nova aba. Escolha Arc Testnet."
+  },
+  "judges": {
+    "title": "Três formas de entrar",
+    "intro": "Veja uma conta real, use o produto com dinheiro de teste ou confira o sistema sem confiar nele.",
+    "maria": {
+      "title": "Explorar como María",
+      "body": "Uma conta real que a equipe opera na rede de testes, aberta em modo leitura. Você vê suas caixas, suas regras e cada pagamento, e não pode mudar nada.",
+      "open": "Abrir a conta da María",
+      "unavailable": "A conta de demonstração não está disponível agora.",
+      "checking": "Verificando a conta de demonstração…"
+    },
+    "try": {
+      "title": "Experimente você mesmo",
+      "body": "Crie sua própria conta na rede de testes. O dinheiro é de teste e não vale nada, a tela de configurações tem um faucet e você pode avançar a data da sua conta para ver um mês passar.",
+      "open": "Começar"
+    },
+    "check": {
+      "title": "Confira",
+      "body": "Cada contrato com seu endereço e se o código-fonte está verificado, as regras que cada um faz valer e se o agente roda o código publicado.",
+      "open": "Abrir a página de provas"
+    }
   }
 }

@@ -15,6 +15,7 @@ export type ApplyResult =
 
 const MAX_DECLARED = 10n ** 15n;
 const MAX_EXPECTATIONS = 4;
+const MAX_CLOCK_OFFSET = 3650;
 const MAX_OWNERS = 8;
 const MAX_PENDING = 4;
 // a capital letter marks a part that had its tax set aside before it was corrected to not-income, so correcting it back owes nothing
@@ -33,8 +34,8 @@ const refreshOwed = (profile: Profile, salaryBox: bigint): Profile => ({
   salaryOwed: String(cascadeSalaryOwed(BigInt(profile.salary.proposed) + BigInt(profile.salary.pending), salaryBox)),
 });
 
-export function applyAction(profile: Profile, action: Action, context: { now: number; today: PlainDate; books: TickBooks; earnVaults?: readonly string[] }): ApplyResult {
-  const { now, today, books } = context;
+export function applyAction(profile: Profile, action: Action, context: { now: number; today: PlainDate; books: TickBooks; earnVaults?: readonly string[]; sandboxClock: boolean }): ApplyResult {
+  const { now, today, books, sandboxClock } = context;
   const day = formatPlainDate(today);
   const salaryBox = books.boxes.salary;
 
@@ -48,6 +49,13 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
       if (!profile.breaker.halted) return fail("not-paused");
       if (profile.breaker.codes.length !== 1 || profile.breaker.codes[0] !== "user-pause") return fail("halted-by-invariants");
       return { ok: true, next: { ...profile, breaker: { halted: false, since: "", codes: [] } }, notices: [] };
+    }
+    case "advance": {
+      // only a sandbox account may move its own date, and never past the offset the profile can hold
+      if (!sandboxClock) return fail("clock-off");
+      const clockOffsetDays = profile.clockOffsetDays + action.days;
+      if (clockOffsetDays > MAX_CLOCK_OFFSET) return fail("clock-limit");
+      return { ok: true, next: { ...profile, clockOffsetDays }, notices: [] };
     }
     case "reject": {
       const index = profile.proposals.findIndex((proposal) => proposal.id === action.proposalId);

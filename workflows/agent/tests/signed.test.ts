@@ -168,3 +168,10 @@ describe("the declaration and correction actions", () => {
     expect(actionHash(a)).toBe(actionHash(b));
   });
 });
+
+describe("advance action", () => {
+  it("takes whole days from 1 to 31 and nothing else", () => {
+    for (const days of [1, 7, 31]) expect(actionSchema.safeParse({ kind: "advance", days }).success).toBe(true);
+    for (const bad of [{ days: 0 }, { days: 32 }, { days: 1.5 }, { days: "1" }, { days: 1, extra: true }]) expect(actionSchema.safeParse({ kind: "advance", ...bad }).success).toBe(false);
+  });
+});

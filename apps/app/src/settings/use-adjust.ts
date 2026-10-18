@@ -12,7 +12,7 @@ import { isPasskeyCancelled } from "../wallet/errors.ts";
 import { connectWallet } from "../wallet/passkey.ts";
 import type { Account } from "./account.ts";
 
-type Request = Extract<Action, { kind: "adjust" | "resume" }>;
+type Request = Extract<Action, { kind: "adjust" | "resume" | "advance" }>;
 
 /**
  * Signs the request with the passkey, sends it through the relay and waits for a plan notice written after the send that shows the change in force.

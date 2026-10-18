@@ -13,7 +13,7 @@ import { Skeleton } from "./Skeleton";
 
 export type SettingsState = { status: "loading" } | { status: "signedOut" } | { status: "error" } | { status: "ready"; model: SettingsModel };
 /** The interactive parts. The screen passes them in; the view itself is plain markup and renders on the server. */
-export type SettingsSlots = { agentEdit?: ReactNode; resume?: ReactNode; autonomy?: ReactNode; salary?: ReactNode; cushion?: ReactNode; rules?: ReactNode; currency?: ReactNode; earn?: ReactNode; accountant?: ReactNode; retry?: ReactNode };
+export type SettingsSlots = { agentEdit?: ReactNode; resume?: ReactNode; autonomy?: ReactNode; salary?: ReactNode; cushion?: ReactNode; rules?: ReactNode; currency?: ReactNode; earn?: ReactNode; accountant?: ReactNode; retry?: ReactNode; sandbox?: ReactNode };
 
 const STATE_KEY = { running: "running", paused: "paused", "halted-user": "haltedUser", "halted-safety": "haltedSafety", none: "none" } as const;
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -120,6 +120,8 @@ export function SettingsView({ lang, t, state, slots = {} }: { lang: Locale; t: 
           {slots.accountant}
         </Card>
       ) : null}
+
+      {slots.sandbox}
     </div>
   );
 }
