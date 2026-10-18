@@ -1,7 +1,7 @@
 In Athens, the misthos was the wage that let a rowing hand live from their work. Strickle proposes that pay follow the work: when a freelancer's work arrives in bursts, their agent turns irregular income into a steady salary, with taxes set aside and the cushion protected, all in private.
 
 <p align="center">
-  <img src="apps/landing/public/favicon.svg" alt="Strickle" width="96" />
+  <img src="docs/strickle-symbol.svg" alt="Strickle" width="96" />
 </p>
 
 <h1 align="center">Strickle</h1>
