@@ -1,0 +1,31 @@
+import { type Asset, type BoxKind } from "@strickle/core";
+export declare const DOMAIN: {
+    readonly PK: 1n;
+    readonly NK: 2n;
+    readonly NOTE: 3n;
+    readonly NULLIFIER: 4n;
+    readonly POLICY: 5n;
+    readonly AGENT: 6n;
+    readonly LABEL: 7n;
+    readonly RECIPIENT: 8n;
+    readonly AUTH: 9n;
+    readonly TEMPLATE: 10n;
+    readonly DELIVERY_KEY: 11n;
+    readonly DELIVERY_SALT: 12n;
+    readonly DELIVERY_PAD: 13n;
+};
+export declare const TREE_DEPTH = 24;
+export declare const ALLOWLIST_DEPTH = 10;
+export declare const ASSOCIATION_DEPTH = 20;
+export declare const TEMPLATE_DEPTH = 3;
+export declare const ASSET_ID: Record<Asset, number>;
+export declare const FLAG_RELEASED = 1;
+export declare const AGENT_ACTION: {
+    readonly SPLIT: 1;
+    readonly SWEEP: 2;
+    readonly REDEEM: 4;
+    readonly PAY_ALLOWLISTED: 8;
+};
+export declare function boxId(box: BoxKind): number;
+export declare function boxFromId(id: number): BoxKind;
+export declare function assetFromId(id: number): Asset;

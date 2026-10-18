@@ -172,6 +172,9 @@ The proof page checks the chain of custody after the enclave. Chainlink's Workfl
 3. The command a verifier runs to recompute the workflow ID from the published source: `cre workflow hash ./workflows/agent --public_key <workflow owner>`.
 
 Not checked: the hardware attestation itself. If the Ethereum registry cannot be read the check says it could not be made, never a pass. The Ethereum read uses `ETHEREUM_RPC_URL` (a public RPC, read-only, with a timeout). After a redeploy the old reports carry the old workflow ID and are shown as such until the next report arrives. Refresh the fixtures with `node scripts/capture-attestation.ts` from `apps/app`.
+## Documentation
+
+The product documentation is served at `/[lang]/docs` and `/[lang]/docs/[topic]` in English, Spanish and Brazilian Portuguese. Its content is typed modules in `apps/app/src/docs/content` (one file per topic, the three languages side by side); search is a plain `GET ?q=` handled on the server over the same modules, so it ships no JavaScript. Every section lists `sources`, repository paths that a test resolves: renaming a file a section rests on fails the build. To add a topic, create its module, add it to `apps/app/src/docs/topics.ts` and write all three languages with the same section ids; the parity test enforces both.
 
 ## What to tell people
 
