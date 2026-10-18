@@ -12,6 +12,10 @@ export const vaultReadAbi = parseAbi([
   "function swapAdapterFrom() view returns (uint64)",
   "function swapCap() view returns (uint128)",
   "function swapWindow() view returns (uint32)",
+  "function EARN_VERSION() view returns (uint8)",
+  "function vaultApprovedFrom(address vault) view returns (uint64)",
+  "function sharesOf(address vault, uint8 box) view returns (uint256)",
+  "function maxInvestBps(uint8 box) view returns (uint16)",
 ]);
 
 export const events = {

@@ -8,6 +8,9 @@ import { SWAP_READS_PER_VAULT, type SwapReadout, decodeDelegated, decodeHead, de
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf, windowSeed } from "./clock.ts";
 import { deliver } from "./deliver.ts";
+import { deliverEarn } from "./earn-deliver.ts";
+import { earnFor } from "./earn-run.ts";
+import { yieldRun } from "./yield-run.ts";
 import { decodeRate, feedRequests, storedRate } from "./fx.ts";
 import { decryptState, encryptState, parseMaster } from "./keys.ts";
 import { sealNotice } from "./notices.ts";
@@ -128,6 +131,26 @@ export const onDailyTick = (runtime: TeeRuntime<Config>): string => {
             notices.push(...conversion.failed.notices);
           }
         }
+      }
+
+      // the owner's requests to put money to work or take it back: one on-chain move per vault per run, after any conversion has had its turn
+      if (conversion.kind === "none" || conversion.kind === "held") {
+        // what the account holds in yield vaults is looked at first: a vault that misbehaves becomes withdrawals that this same run carries out
+        const watched = yieldRun(runtime, { profile: conversion.next, vault, usdc: readout ? readout.raw.usdc : current.books.boxes, invested: current.books.invested, today, nowSeconds });
+        let ahead = conversion.next;
+        if (JSON.stringify(watched.next) !== JSON.stringify(conversion.next)) {
+          try {
+            deliver(runtime, executor, encodeTickReport({ vault, next: version + 1n, ciphertext: seal(watched.next, version + 1n) }));
+            version += 1n;
+            notices.push(...watched.notices);
+            ahead = watched.next;
+          } catch {
+            // the look at the yield vaults is repeated next run; what the tick already decided is not lost
+          }
+        }
+        const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: ahead, vault, books: tickBooks, today, nowSeconds }), seal });
+        version = moved.version;
+        notices.push(...moved.notices);
       }
 
       if (profile.userKey !== ZERO_KEY && notices.length > 0) {

@@ -5,7 +5,7 @@ export const SALARY_BOX = 3;
 export const AGENT_WINDOW_SECONDS = 86_400;
 
 /** One user operation: every call runs as the owner's smart account, in order, and either all succeed or none. */
-export function onboardingCalls(args: { factory: Address; executor: Address; state: Address; vault: Address; owner: Address; capUnits: bigint; sealed: Hex; vaultExists: boolean; swapCalls?: { to: Address; data: Hex }[] }): { to: Address; data: Hex }[] {
+export function onboardingCalls(args: { factory: Address; executor: Address; state: Address; vault: Address; owner: Address; capUnits: bigint; sealed: Hex; vaultExists: boolean; swapCalls?: { to: Address; data: Hex }[]; earnCalls?: { to: Address; data: Hex }[] }): { to: Address; data: Hex }[] {
   const calls: { to: Address; data: Hex }[] = [];
   if (!args.vaultExists) calls.push({ to: args.factory, data: encodeFunctionData({ abi: factoryAbi, functionName: "create", args: [args.owner] }) });
   calls.push(
@@ -16,5 +16,7 @@ export function onboardingCalls(args: { factory: Address; executor: Address; sta
   );
   // the adapter's one-day wait starts at creation, so conversions can begin a day after the account exists
   if (args.swapCalls) calls.push(...args.swapCalls);
+  // the yield vault's wait starts the same way; the adapter it goes through is the one the swap calls just approved
+  if (args.earnCalls) calls.push(...args.earnCalls);
   return calls;
 }

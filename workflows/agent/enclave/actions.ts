@@ -15,7 +15,9 @@ export type ApplyResult =
 
 const MAX_DECLARED = 10n ** 15n;
 const MAX_EXPECTATIONS = 4;
+const MAX_CLOCK_OFFSET = 3650;
 const MAX_OWNERS = 8;
+const MAX_PENDING = 4;
 // a capital letter marks a part that had its tax set aside before it was corrected to not-income, so correcting it back owes nothing
 const CLASS_CODE = { income: "i", "own-transfer": "o", refund: "r" } as const;
 const TAXED_CODE = { income: "i", "own-transfer": "O", refund: "R" } as const;
@@ -32,8 +34,8 @@ const refreshOwed = (profile: Profile, salaryBox: bigint): Profile => ({
   salaryOwed: String(cascadeSalaryOwed(BigInt(profile.salary.proposed) + BigInt(profile.salary.pending), salaryBox)),
 });
 
-export function applyAction(profile: Profile, action: Action, context: { now: number; today: PlainDate; books: TickBooks }): ApplyResult {
-  const { now, today, books } = context;
+export function applyAction(profile: Profile, action: Action, context: { now: number; today: PlainDate; books: TickBooks; earnVaults?: readonly string[]; sandboxClock: boolean }): ApplyResult {
+  const { now, today, books, sandboxClock } = context;
   const day = formatPlainDate(today);
   const salaryBox = books.boxes.salary;
 
@@ -47,6 +49,13 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
       if (!profile.breaker.halted) return fail("not-paused");
       if (profile.breaker.codes.length !== 1 || profile.breaker.codes[0] !== "user-pause") return fail("halted-by-invariants");
       return { ok: true, next: { ...profile, breaker: { halted: false, since: "", codes: [] } }, notices: [] };
+    }
+    case "advance": {
+      // only a sandbox account may move its own date, and never past the offset the profile can hold
+      if (!sandboxClock) return fail("clock-off");
+      const clockOffsetDays = profile.clockOffsetDays + action.days;
+      if (clockOffsetDays > MAX_CLOCK_OFFSET) return fail("clock-limit");
+      return { ok: true, next: { ...profile, clockOffsetDays }, notices: [] };
     }
     case "reject": {
       const index = profile.proposals.findIndex((proposal) => proposal.id === action.proposalId);
@@ -87,6 +96,19 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
     }
     case "pay":
       return fail("not-applicable");
+    case "invest":
+    case "divest": {
+      if (profile.breaker.halted) return fail("halted");
+      if (!(context.earnVaults ?? []).some((vault) => vault.toLowerCase() === action.vault.toLowerCase())) return fail("unknown-vault");
+      if (BigInt(action.amount) > MAX_DECLARED) return fail("amount-too-large");
+      const deposit = action.kind === "invest";
+      const same = (entry: Profile["earn"]["pending"][number]) => entry.box === action.box && entry.vault.toLowerCase() === action.vault.toLowerCase() && entry.deposit === deposit;
+      const kept = profile.earn.pending.filter((entry) => !same(entry));
+      if (kept.length >= MAX_PENDING) return fail("too-many-pending");
+      const pending = [...kept, { id: `${action.kind[0]}${now.toString(36)}`, box: action.box, vault: action.vault, amount: action.amount, deposit, at: now }];
+      // the owner asking again is the owner switching the breaker back on
+      return { ok: true, next: { ...profile, earn: { ...profile.earn, pending, failures: 0 } }, notices: [] };
+    }
     case "expect": {
       const live = profile.flow.expect.filter((entry) => entry.expiresAt > now);
       if (BigInt(action.min) > BigInt(action.max)) return fail("inverted-window");
@@ -145,6 +167,7 @@ export function applyAction(profile: Profile, action: Action, context: { now: nu
         // a setting that changes nothing neither restarts the day's wait nor clears the failure count
         if (JSON.stringify(merged) !== JSON.stringify(next.currencies)) next = { ...next, currencies: merged, swap: { ...next.swap, since: day, failures: 0 } };
       }
+      if (changes.yieldEnabled !== undefined && changes.yieldEnabled !== next.yield.enabled) next = { ...next, yield: { ...next.yield, enabled: changes.yieldEnabled } };
       return { ok: true, next: refreshOwed(next, salaryBox), notices: [] };
     }
   }

@@ -146,6 +146,13 @@ describe("receipts of income doubts and corrections", () => {
     expect(undoSummary("income-doubt")).toMatchObject({ undoable: false });
     expect(undoSummary("swap")).toEqual({ undoable: false, reason: "The conversion was made at that day's rate; to change it, set the box back to dollars and it converts back at the rate of that moment." });
     expect(undoSummary("swap-held")).toMatchObject({ undoable: false });
+    expect(undoSummary("earn")).toEqual({ undoable: false, reason: "The move was made at that moment's share price; to reverse it, take the money back out." });
+    expect(undoSummary("earn-back")).toMatchObject({ undoable: false });
+    expect(undoSummary("earn-held")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-plan")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-invite")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-back")).toMatchObject({ undoable: false });
+    expect(undoSummary("yield-exit")).toEqual({ undoable: false, reason: "The withdrawal is asked for, not done yet; once it goes through the money is back in your box, and to put it to work again, ask for it." });
     expect(UNDO_KIND.reclassified).toBe("reclassified");
   });
   it("an undo of a correction is itself not undoable", () => {

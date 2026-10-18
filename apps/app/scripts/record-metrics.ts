@@ -26,6 +26,7 @@ try {
     fromBlock: BigInt(factory.blockNumber),
     teamAddresses: loadTeam(),
     limits,
+    executor: manifest.AgentExecutor?.address as `0x${string}` | undefined,
     previous,
   });
   await saveSnapshot(sql, { network, asOfBlock: BigInt(metrics.asOfBlock), payload: metrics, state });

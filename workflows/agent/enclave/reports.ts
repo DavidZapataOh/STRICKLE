@@ -4,6 +4,8 @@ import { type Address, type Hex, encodeAbiParameters } from "viem";
 const PAY_SALARY = 2;
 const TICK = 3;
 const SWAP = 6;
+const EARN_IN = 7;
+const EARN_OUT = 8;
 const wrap = (action: number, args: Hex): Hex => encodeAbiParameters([{ type: "uint8" }, { type: "bytes" }], [action, args]);
 
 export const encodeSalaryReport = (input: { vault: Address; asset: number; payee: Address; amount: bigint; seen: bigint; next: bigint; ciphertext: Hex }): Hex =>
@@ -35,3 +37,25 @@ export const encodeSwapReport = (input: { vault: Address; box: number; assetIn: 
       [input.vault, input.box, input.assetIn, input.amountIn, input.minOut, input.seen, input.data, input.next, input.ciphertext],
     ),
   );
+
+const earnReport = {
+  type: "tuple",
+  components: [
+    { name: "vault", type: "address" },
+    { name: "asset", type: "uint8" },
+    { name: "box", type: "uint8" },
+    { name: "earnVault", type: "address" },
+    { name: "amount", type: "uint256" },
+    { name: "minOut", type: "uint256" },
+    { name: "seen", type: "uint256" },
+    { name: "data", type: "bytes" },
+    { name: "next", type: "uint64" },
+    { name: "ciphertext", type: "bytes" },
+  ],
+} as const;
+
+/** `amount` is the assets of a deposit or the shares of a withdrawal, as the executor's EarnReport reads it. */
+export const encodeEarnReport = (input: { deposit: boolean; vault: Address; asset: number; box: number; earnVault: Address; amount: bigint; minOut: bigint; seen: bigint; data: Hex; next: bigint; ciphertext: Hex }): Hex => {
+  const { deposit, ...report } = input;
+  return wrap(deposit ? EARN_IN : EARN_OUT, encodeAbiParameters([earnReport], [report]));
+};

@@ -96,3 +96,12 @@ describe("sealProfile", () => {
     expect(open(hexToBytes(sealed), key.secret, key.publicKey, profileAad(getAddress("0x00000000000000000000000000000000000000a2")))).toBeUndefined();
   });
 });
+
+describe("yield at the start", () => {
+  it("is on for people who already get paid in digital dollars and off for everyone else, which they can change later", () => {
+    const common = { diagnosis, owner, today, userKey };
+    expect(buildProfile({ ...common, answers: { ...answers, collection: "stablecoin" } }).yield.enabled).toBe(true);
+    expect(buildProfile({ ...common, answers: { ...answers, collection: "bank" } }).yield.enabled).toBe(false);
+  });
+});
+

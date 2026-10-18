@@ -1,0 +1,32 @@
+{
+  "data": {
+    "execId": "01a14b84-3aac-7b21-9418-b58e3bb1f114",
+    "signature": "0x87282c63d6b610dcf896498da379da03738348a88619e09b385d1d5ec22e9cbb544117b1310eba8b21eb99871ddab6a6c58bfb479ef0bcaf8fe7dca5013f9d9c1c",
+    "executionParams": {
+      "execId": "0x01a14b843aac7b219418b58e3bb1f114",
+      "deadline": "1792268919",
+      "metadata": "0x",
+      "tokens": [
+        {
+          "token": "0x3600000000000000000000000000000000000000",
+          "beneficiary": "0x5bb738955aa5e5cac67bf7c074c23dce7a8b1bb4"
+        },
+        {
+          "token": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+          "beneficiary": "0x5bb738955aa5e5cac67bf7c074c23dce7a8b1bb4"
+        }
+      ],
+      "instructions": [
+        {
+          "target": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+          "data": "0x6e553f6500000000000000000000000000000000000000000000000000000000000f4240000000000000000000000000bbd70b01a1cabc96d5b7b129ae1aaabdf50dd40b",
+          "value": "0",
+          "tokenIn": "0x3600000000000000000000000000000000000000",
+          "amountToApprove": "1000000",
+          "tokenOut": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+          "minTokenOut": "993948402590059677"
+        }
+      ]
+    }
+  }
+}

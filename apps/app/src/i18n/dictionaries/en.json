@@ -42,8 +42,15 @@
     },
     "docs": {
       "title": "Docs",
-      "emptyTitle": "Documentation is not published yet",
-      "emptyBody": "When it is, this page links to it. Until then, each rule the agent applies is shown next to the number it produces."
+      "intro": "How Strickle works, what each rule does and where it stops. Every section links to the file that enforces it.",
+      "searchLabel": "Search the docs",
+      "searchButton": "Search",
+      "topics": "Topics",
+      "results": "{count} results for “{query}”",
+      "nothing": "Nothing found for “{query}”. These are the topics:",
+      "sources": "Where this is enforced",
+      "back": "All docs",
+      "open": "Read"
     },
     "deposit": {
       "title": "Add money"
@@ -768,7 +775,19 @@
       "yield": "Yield",
       "earlyPayments": "Early payments",
       "invariantBreaches": "Safety checks that failed"
-    }
+    },
+    "moved": {
+      "title": "What the agent moved",
+      "total": "Everything the agent moved",
+      "kinds": {
+        "split": "Income split into boxes",
+        "salary": "Salary paid",
+        "swap": "Currency conversions",
+        "earn": "Money put to work and taken back"
+      },
+      "private": "Private payments are not counted: their amounts are hidden on purpose."
+    },
+    "rule": "The team is the addresses we list plus anyone they funded directly; everyone else counts as organic. On testnet the amounts are test USDC."
   },
   "agent": {
     "modes": {
@@ -840,5 +859,132 @@
     "saved": "Saved. The agent starts converting within a day.",
     "saving": "Saving…",
     "activityTitle": "Conversions"
+  },
+  "earn": {
+    "title": "Put money to work",
+    "activityTitle": "Money at work",
+    "explain": "A box can earn in a yield vault. The rate changes, the value can go down, and you can take your money back at any time. The agent only moves what you ask, inside your vault's limits, and shows each move in Activity.",
+    "rate": "Rate now: {apy} a year, as published by the vault.",
+    "rateDown": "The rate is not available right now.",
+    "position": "In the vault: {amount}",
+    "positionNone": "Nothing in the vault yet.",
+    "invest": "Put to work",
+    "divest": "Take back",
+    "amount": "Amount in dollars",
+    "limit": {
+      "share": "Up to {share} of this box can be put to work.",
+      "none": "This box is not set to put money to work."
+    },
+    "status": {
+      "active": "Ready.",
+      "pending": "Ready on {date}: your vault waits a day after you approve it.",
+      "unavailable": "Not available on this account: it was created before this existed.",
+      "notAllowed": "Not allowed on this account yet.",
+      "unreadable": "This account could not be read right now. Try again in a moment."
+    },
+    "allow": "Allow putting money to work",
+    "allowing": "Waiting for your signature…",
+    "requested": "Requested. The agent carries it out right away; the result is in Activity.",
+    "errors": {
+      "amount": "Enter an amount above zero, with up to six decimals.",
+      "box": "This box cannot earn.",
+      "vault": "That vault is not available.",
+      "tooMuch": "The box holds less than that.",
+      "limit": "That is more than this box lets the agent put to work right now."
+    },
+    "auto": {
+      "title": "Let the agent put idle money to work",
+      "explain": "When this is on, the agent only puts to work what a box does not need within sixty days, takes it back five business days before a payment, and never puts more than half of the taxes box to work. Rates change and the value can go down.",
+      "on": "On",
+      "off": "Off"
+    },
+    "totals": {
+      "line": "Earned so far: {gain}. Fee on that, shown and not charged on testnet: {fee}.",
+      "none": "Nothing earned yet."
+    }
+  },
+  "proof": {
+    "title": "Proof, without trusting us",
+    "intro": "Everything here is read from the chain, the explorer or the recorded numbers when you open the page. If a source is down, that part says so and the rest stays.",
+    "unreadable": "This part could not be read right now.",
+    "contracts": {
+      "title": "The contracts",
+      "name": "Contract",
+      "deployed": "Code deployed",
+      "notDeployed": "Not deployed here",
+      "verified": "Source verified",
+      "notVerified": "Source not verified",
+      "unknown": "Could not check"
+    },
+    "guarantees": {
+      "title": "What the contracts enforce",
+      "intro": "In plain words, with the function that does it and the test that pins it.",
+      "function": "Function",
+      "test": "Test"
+    },
+    "agent": {
+      "title": "The agent",
+      "last": "The agent last wrote to the chain {when}.",
+      "none": "No activity yet.",
+      "tx": "Transaction"
+    },
+    "honest": {
+      "title": "What this page does not prove",
+      "body": "These contracts are not audited and run on testnet, where the money is test USDC. The page shows that the code is deployed, whether its source is verified and what it enforces; it does not show that the code has no bugs. Private amounts stay private."
+    },
+    "attestation": {
+      "title": "Is the agent running the published code?",
+      "explain": "The confidential workflow network verifies the enclave's attestation before it signs a report, and this page does not show the hardware quote. What it checks itself is what happens after: which workflow the contracts accept, and who signed the newest report and for which workflow.",
+      "contracts": "The workflow the contracts accept",
+      "status": {
+        "consistent": "The contracts accept the same workflow.",
+        "mismatch": "The contracts do not accept the same workflow.",
+        "unbound": "A contract is not bound to a workflow yet.",
+        "unreadable": "Could not read the workflow from a contract."
+      },
+      "report": {
+        "title": "The newest report",
+        "ok": "It was signed by {valid} of the DON's authorized nodes (needed: {threshold}) and carries that workflow, {when}.",
+        "few": "Only {valid} valid signatures of the {threshold} needed.",
+        "different": "It carries a different workflow than the contracts accept.",
+        "none": "No report has been delivered yet.",
+        "unreadable": "Could not be checked right now.",
+        "tx": "Transaction"
+      },
+      "reproduce": "To recompute the workflow ID from the published source, run:",
+      "note": "This is the chain of custody after the enclave. It does not show the hardware quote."
+    }
+  },
+  "sandbox": {
+    "title": "Test mode",
+    "note": "This network uses test money with no value. Move your account's date forward to watch a month go by.",
+    "date": "The account's date: {date}",
+    "day": "+1 day",
+    "week": "+1 week",
+    "month": "+1 month",
+    "failed": "The date did not move. Try again.",
+    "faucet": "Get test USDC",
+    "faucetNote": "Opens Circle's public faucet in a new tab. Choose Arc Testnet."
+  },
+  "judges": {
+    "title": "Three ways in",
+    "intro": "Look at a real account, use the product with test money, or check the system without trusting it.",
+    "maria": {
+      "title": "Explore as María",
+      "body": "A real account the team runs on the test network, open read-only. You see its boxes, its rules and every payment, and you cannot change anything.",
+      "open": "Open María's account",
+      "unavailable": "The demo account is not available right now.",
+      "checking": "Checking the demo account…"
+    },
+    "try": {
+      "title": "Try it yourself",
+      "body": "Create your own account on the test network. The money is test money with no value, the settings screen has a faucet, and you can move your account's date forward to watch a month go by.",
+      "open": "Start"
+    },
+    "check": {
+      "title": "Check it",
+      "body": "Every contract with its address and whether its source is verified, the rules each one enforces and whether the agent is running the published code.",
+      "open": "Open the proof page"
+    }
   }
 }

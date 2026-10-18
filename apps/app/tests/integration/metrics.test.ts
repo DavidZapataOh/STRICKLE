@@ -11,7 +11,7 @@ const fromBlock = BigInt(manifest.BoxVaultFactory.blockNumber);
 
 describe("collecting from the real testnet factory", () => {
   it("counts the vaults that exist, adds up and agrees with direct reads", async () => {
-    const { metrics } = await collect({ client, network: "testnet", factory, fromBlock, teamAddresses: [] });
+    const { metrics } = await collect({ client, network: "testnet", factory, fromBlock, teamAddresses: [], executor: manifest.AgentExecutor?.address });
     expect(metrics.vaults.total).toBeGreaterThanOrEqual(1);
     expect(metrics.vaults.team).toBe(0);
     expect(BigInt(metrics.usdcHeld.team) + BigInt(metrics.usdcHeld.organic)).toBe(BigInt(metrics.usdcHeld.total));
@@ -25,7 +25,23 @@ describe("collecting from the real testnet factory", () => {
     expect(metrics.vaults.total).toBe(created.length);
     const balances = await Promise.all(created.map((log) => client.readContract({ address: networks.testnet.usdc, abi: erc20Abi, functionName: "balanceOf", args: [log.args.vault as `0x${string}`], blockNumber: BigInt(metrics.asOfBlock) })));
     expect(BigInt(metrics.usdcHeld.total)).toBe(balances.reduce((sum, balance) => sum + balance, 0n));
-  }, 120_000);
+
+    // what the agent moved: the same events summed straight from the chain, vault by vault
+    const walk = async <T,>(read: (from: bigint, to: bigint) => Promise<T[]>): Promise<T[]> => {
+      const all: T[] = [];
+      for (let from = fromBlock; from <= BigInt(metrics.asOfBlock); from += 50_000n) all.push(...(await read(from, from + 49_999n < BigInt(metrics.asOfBlock) ? from + 49_999n : BigInt(metrics.asOfBlock))));
+      return all;
+    };
+    const vaults = created.map((log) => log.args.vault as `0x${string}`);
+    const allocated = await walk((from, to) => client.getLogs({ address: vaults, event: parseAbiItem("event Allocated(uint8 indexed asset, uint8 indexed box, uint256 amount, uint256 newBalance)"), args: { asset: 1 }, fromBlock: from, toBlock: to }));
+    expect(BigInt(metrics.agentMoved.byKind.split.total)).toBe(allocated.reduce((sum, log) => sum + (log.args.amount as bigint), 0n));
+    const swaps = await walk((from, to) => client.getLogs({ address: vaults, event: parseAbiItem("event Swapped(uint8 indexed box, uint8 indexed assetIn, uint256 amountIn, uint256 received)"), fromBlock: from, toBlock: to }));
+    expect(BigInt(metrics.agentMoved.byKind.swap.total)).toBe(swaps.reduce((sum, log) => sum + (Number(log.args.assetIn) === 1 ? (log.args.amountIn as bigint) : (log.args.received as bigint)), 0n));
+    const earns = await walk((from, to) => client.getLogs({ address: vaults, event: parseAbiItem("event Earned(uint8 indexed asset, uint8 indexed box, address indexed vault, bool deposit, uint256 amountIn, uint256 received)"), args: { asset: 1 }, fromBlock: from, toBlock: to }));
+    expect(BigInt(metrics.agentMoved.byKind.earn.total)).toBe(earns.reduce((sum, log) => sum + (log.args.deposit ? (log.args.amountIn as bigint) : (log.args.received as bigint)), 0n));
+    const kinds = Object.values(metrics.agentMoved.byKind);
+    expect(kinds.reduce((sum, entry) => sum + BigInt(entry.total), 0n)).toBe(BigInt(metrics.agentMoved.total.total));
+  }, 180_000);
 
   it("gives the same answer when it resumes from a snapshot taken a few thousand blocks earlier", async () => {
     const head = await client.getBlockNumber();

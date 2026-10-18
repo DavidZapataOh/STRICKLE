@@ -76,6 +76,8 @@ function scriptedClient(chain: { created: { block: bigint; owner: `0x${string}`;
         return chain.transfers.filter((log) => inside(log.block) && senders.has(log.from.toLowerCase())).map((log) => ({ address: "0xtoken", args: { from: log.from, to: log.to } }));
       }
       if (args.event.name === "VaultCreated") return chain.created.filter((log) => inside(log.block)).map((log) => ({ address: "0xfactory", args: { owner: log.owner, vault: log.vault } }));
+      // the agent's other events are placed by `withMoves`; this chain carries none
+      if (args.event.name !== "Allocated") return [];
       const wanted = new Set((Array.isArray(args.address) ? args.address : [args.address]).map((a) => a.toLowerCase()));
       return chain.allocated.filter((log) => inside(log.block) && wanted.has(log.vault.toLowerCase())).map((log) => ({ address: log.vault, args: { amount: log.amount } }));
     },
@@ -195,5 +197,102 @@ describe("collect: who the team funded counts as the team", () => {
     const { metrics } = await collect({ ...base, client, teamAddresses: [] });
     expect(metrics.vaults.team).toBe(0);
     expect(ranges.length).toBeGreaterThan(0);
+  });
+});
+
+// Events of the agent's own transactions, placed on a scripted chain on top of the one above.
+type Move =
+  | { kind: "salary"; block: bigint; vault: `0x${string}`; amount: bigint; asset?: number }
+  | { kind: "swap"; block: bigint; vault: `0x${string}`; assetIn: number; amountIn: bigint; received: bigint }
+  | { kind: "earn"; block: bigint; vault: `0x${string}`; deposit: boolean; amountIn: bigint; received: bigint; asset?: number };
+
+function withMoves(base: ReturnType<typeof scriptedClient>["client"], moves: Move[]) {
+  const inner = base as unknown as { getLogs: (args: never) => Promise<unknown[]> };
+  return {
+    ...(base as object),
+    getLogs: async (args: { event: { name: string }; fromBlock: bigint; toBlock: bigint; address: `0x${string}` | `0x${string}`[]; args?: { vault?: `0x${string}`[]; asset?: number } }) => {
+      const inside = (block: bigint) => block >= args.fromBlock && block <= args.toBlock;
+      const wanted = new Set((Array.isArray(args.address) ? args.address : [args.address]).map((a) => a.toLowerCase()));
+      if (args.event.name === "SalaryPaid") {
+        const vaultsAsked = new Set((args.args?.vault ?? []).map((a) => a.toLowerCase()));
+        return moves.flatMap((move) => (move.kind === "salary" && inside(move.block) && vaultsAsked.has(move.vault.toLowerCase()) && (move.asset ?? 1) === args.args?.asset ? [{ address: "0xexecutor", args: { vault: move.vault, amount: move.amount } }] : []));
+      }
+      if (args.event.name === "Swapped") return moves.flatMap((move) => (move.kind === "swap" && inside(move.block) && wanted.has(move.vault.toLowerCase()) ? [{ address: move.vault, args: { assetIn: move.assetIn, amountIn: move.amountIn, received: move.received } }] : []));
+      if (args.event.name === "Earned") return moves.flatMap((move) => (move.kind === "earn" && inside(move.block) && wanted.has(move.vault.toLowerCase()) && (move.asset ?? 1) === args.args?.asset ? [{ address: move.vault, args: { deposit: move.deposit, amountIn: move.amountIn, received: move.received } }] : []));
+      return inner.getLogs(args as never);
+    },
+  } as never;
+}
+
+describe("collect: what the agent moved", () => {
+  const factory = v(0xfa);
+  const executor = v(0xee);
+  const world = {
+    created: [{ block: 10n, owner: v(0xa1), vault: v(0xb0) }, { block: 30n, owner: v(0xa2), vault: v(0xb1) }],
+    allocated: [{ block: 11n, vault: v(0xb0), amount: 100n }, { block: 31n, vault: v(0xb1), amount: 40n }],
+    transfers: [],
+    balances: { [v(0xb0)]: 60n, [v(0xb1)]: 40n },
+    head: 50n,
+  };
+  const moves: Move[] = [
+    { kind: "salary", block: 12n, vault: v(0xb0), amount: 30n },
+    { kind: "salary", block: 33n, vault: v(0xb1), amount: 20n },
+    { kind: "swap", block: 13n, vault: v(0xb0), assetIn: 1, amountIn: 50n, received: 44n },
+    { kind: "swap", block: 34n, vault: v(0xb1), assetIn: 2, amountIn: 44n, received: 49n },
+    { kind: "earn", block: 14n, vault: v(0xb0), deposit: true, amountIn: 25n, received: 24n },
+    { kind: "earn", block: 35n, vault: v(0xb1), deposit: false, amountIn: 10n ** 18n, received: 11n },
+  ];
+  const base = { network: "testnet" as const, factory, executor, fromBlock: 1n, teamAddresses: [v(0xa1)], step: 20n, wait: async () => undefined };
+  const run = (chain = world, list = moves, over: Record<string, unknown> = {}) => collect({ ...base, client: withMoves(scriptedClient(chain).client, list), ...over });
+
+  it("sums each kind apart, in USDC, and splits it between the team and everyone else", async () => {
+    const { metrics } = await run();
+    expect(metrics.agentMoved.byKind.split).toEqual({ total: "140", team: "100", organic: "40" });
+    expect(metrics.agentMoved.byKind.salary).toEqual({ total: "50", team: "30", organic: "20" });
+    // a swap counts the dollars on its USDC side: what went in, or what came out
+    expect(metrics.agentMoved.byKind.swap).toEqual({ total: "99", team: "50", organic: "49" });
+    // a yield move counts the assets: what went in for a deposit, what came out for a withdrawal
+    expect(metrics.agentMoved.byKind.earn).toEqual({ total: "36", team: "25", organic: "11" });
+    expect(metrics.agentMoved.total).toEqual({ total: "325", team: "205", organic: "120" });
+  });
+
+  it("adds up: the kinds make the total and the team plus everyone else make each of them", async () => {
+    const { metrics } = await run();
+    const kinds = Object.values(metrics.agentMoved.byKind);
+    expect(kinds.reduce((sum, entry) => sum + BigInt(entry.total), 0n)).toBe(BigInt(metrics.agentMoved.total.total));
+    for (const entry of [...kinds, metrics.agentMoved.total]) expect(BigInt(entry.team) + BigInt(entry.organic)).toBe(BigInt(entry.total));
+  });
+
+  it("gets exactly the same answer resuming as reading everything, and never counts a block twice", async () => {
+    const first = await collect({ ...base, client: withMoves(scriptedClient({ ...world, head: 32n }).client, moves), toBlock: 32n });
+    const incremental = await run(world, moves, { previous: first.state });
+    const full = await run();
+    expect(incremental.metrics).toEqual(full.metrics);
+    expect(incremental.state).toEqual(full.state);
+  });
+
+  it("keeps amounts above 2^53 exact", async () => {
+    const huge = 2n ** 62n + 7n;
+    const { metrics } = await run(world, [{ kind: "salary", block: 12n, vault: v(0xb1), amount: huge }]);
+    expect(metrics.agentMoved.byKind.salary.total).toBe(huge.toString());
+  });
+
+  it("adds nothing for a vault that never moved, and counts only USDC legs of the other asset's events", async () => {
+    const { metrics } = await run(world, [{ kind: "salary", block: 12n, vault: v(0xb0), amount: 9n, asset: 2 }, { kind: "earn", block: 14n, vault: v(0xb0), deposit: true, amountIn: 5n, received: 5n, asset: 2 }]);
+    expect(metrics.agentMoved.byKind.salary.total).toBe("0");
+    expect(metrics.agentMoved.byKind.earn.total).toBe("0");
+  });
+
+  it("rescans from the start when the saved state predates these counts", async () => {
+    const first = await run();
+    const old = { ...first.state } as Record<string, unknown>;
+    old.moved = undefined;
+    const again = await run(world, moves, { previous: old as never });
+    expect(again.metrics).toEqual(first.metrics);
+  });
+
+  it("skips the executor's events when no executor is configured, and says nothing is lost", async () => {
+    const { metrics } = await collect({ ...base, executor: undefined, client: withMoves(scriptedClient(world).client, moves) });
+    expect(metrics.agentMoved.byKind.salary.total).toBe("0");
   });
 });

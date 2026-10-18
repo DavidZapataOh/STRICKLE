@@ -45,6 +45,9 @@ export function currencyChange(input: { box: (typeof EURO_BOXES)[number]; to: "U
   return done({ currencies: { [input.box]: input.to } });
 }
 
+/** Whether the agent may put money no box needs soon to work; the owner's choice, in force once the agent's own plan says so. */
+export const yieldChange = (enabled: boolean): AdjustResult => done({ yieldEnabled: enabled });
+
 export function limitsChange(input: { thresholdDollars?: string; dailyCapDollars?: string }): AdjustResult {
   const changes: AdjustAction["changes"] = {};
   if (input.thresholdDollars !== undefined) {
@@ -100,6 +103,7 @@ export function settingsMatch(changes: AdjustAction["changes"], settings: PlanNo
     (changes.signatureThreshold === undefined || settings.signatureThreshold === changes.signatureThreshold) &&
     (changes.floorDays === undefined || settings.floorDays === changes.floorDays) &&
     (changes.targetDays === undefined || settings.targetDays === changes.targetDays) &&
+    (changes.yieldEnabled === undefined || (settings.yieldEnabled ?? false) === changes.yieldEnabled) &&
     (changes.currencies === undefined || Object.entries(changes.currencies).every(([box, currency]) => settings.currencies?.[box as keyof NonNullable<typeof settings.currencies>] === currency))
   );
 }

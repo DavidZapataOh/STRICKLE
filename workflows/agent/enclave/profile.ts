@@ -87,6 +87,25 @@ export const profileSchema = z
       .object({ day: maybeDate, spent: units, failures: bps(0, 9), since: maybeDate, heldOn: maybeDate })
       .strict()
       .default({ day: "", spent: "0", failures: 0, since: "", heldOn: "" }),
+    // Money the owner asked to put to work or take back, waiting for the next tick, and the agent's own breaker for it: only intent and counters, never balances.
+    earn: z
+      .object({
+        pending: z
+          .array(z.object({ id: z.string().regex(/^[a-z0-9-]{1,24}$/), box: z.enum(["taxes", "payroll", "operating", "emergency", "profit"]), vault: address, amount: units, deposit: z.boolean(), at: z.number().int().min(0), auto: z.boolean().optional() }).strict())
+          .max(5),
+        failures: bps(0, 9),
+        heldOn: maybeDate,
+      })
+      .strict()
+      .default({ pending: [], failures: 0, heldOn: "" }),
+    // Whether the owner wants idle money put to work (the owner's choice, written only by a signed request and seeded at onboarding) and the last day the agent looked for money to put to work.
+    // `realized` and `fee` are running totals of the gain the withdrawals brought back and the ten percent fee on it (base units); `invitedOn` is the day the one invitation to switch yield on was raised.
+    yield: z.object({ enabled: z.boolean(), day: maybeDate, realized: units.default("0"), fee: units.default("0"), invitedOn: maybeDate.default("") }).strict().default({ enabled: false, day: "", realized: "0", fee: "0", invitedOn: "" }),
+    // What the agent saw of each yield vault the account holds at its last look, so the next look can tell a vault that misbehaves: the share price (assets per 1e18 shares), the rate and whether it was open.
+    yieldWatch: z
+      .object({ at: z.number().int().min(0), vaults: z.array(z.object({ id: address, price: units, apyBps: bps(0, 100_000), active: z.boolean() }).strict()).max(4) })
+      .strict()
+      .default({ at: 0, vaults: [] }),
     // The last feed answers the agent used (eight decimals), so the app can show them and a restart does not lose them.
     rate: z
       .object({ usdcUsd: units, eurcUsd: units, at: z.number().int().min(0) })
@@ -141,7 +160,7 @@ export function decodeProfile(bytes: Uint8Array): Profile {
 
 export function mergeProfile(existing: Profile | undefined, submitted: Profile): Profile {
   // the agent owns these; a first submission cannot seed them
-  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
+  if (!existing) return { ...submitted, flow: { checkpoint: "", owners: [], expect: [], sent: [] }, arrivals: [], taxCatchUp: "0", swap: { day: "", spent: "0", failures: 0, since: "", heldOn: "" }, earn: { pending: [], failures: 0, heldOn: "" }, yield: { enabled: submitted.yield.enabled, day: "", realized: "0", fee: "0", invitedOn: "" }, yieldWatch: { at: 0, vaults: [] }, rate: { usdcUsd: "0", eurcUsd: "0", at: 0 } };
   return {
     ...submitted,
     history: existing.history.length > 0 ? existing.history : submitted.history,
@@ -149,6 +168,9 @@ export function mergeProfile(existing: Profile | undefined, submitted: Profile):
     arrivals: existing.arrivals,
     taxCatchUp: existing.taxCatchUp,
     swap: existing.swap,
+    earn: existing.earn,
+    yield: existing.yield,
+    yieldWatch: existing.yieldWatch,
     rate: existing.rate,
     currencies: Object.values(existing.currencies).some((value) => value !== "USD") ? existing.currencies : submitted.currencies,
     tick: existing.tick,

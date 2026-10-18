@@ -1,0 +1,39 @@
+{
+  "data": {
+    "vaultAddress": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+    "vaultName": "EarnKit USDC Vault (Arc Testnet)",
+    "asset": "USDC",
+    "withdrawAmount": {
+      "raw": "2000000",
+      "decimals": 6
+    },
+    "sharesToRedeem": {
+      "raw": "1997885511423141916",
+      "decimals": 18
+    },
+    "sharePrice": "1.001058",
+    "maxWithdrawable": {
+      "raw": "1999999",
+      "decimals": 6
+    },
+    "fees": [],
+    "gasFees": [
+      {
+        "name": "Approve",
+        "fees": {
+          "gas": "52000",
+          "gasPrice": "25000000000",
+          "fee": "1300000000000000"
+        }
+      },
+      {
+        "name": "Withdraw",
+        "fees": {
+          "gas": "371262",
+          "gasPrice": "25000000000",
+          "fee": "9281550000000000"
+        }
+      }
+    ]
+  }
+}

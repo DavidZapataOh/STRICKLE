@@ -5,6 +5,7 @@
     "AgentState": "0xc8224D78e864476258785646a93a6884967b3973",
     "AgentExecutor": "0xA302dDdAbEaF908efc81d915419c2cBD0373C533",
     "PolicyPool": "0x20a16Ea01dC22D834CcC4962BB9153eeBa733D9F",
+    "AgentHeartbeat": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
     "blocks": {
       "AgentState": 67397658,
       "AgentExecutor": 67720861

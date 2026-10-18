@@ -210,3 +210,76 @@ describe("conversions", () => {
     expect(template(held("stale-feed"), "en", "en-US")).toBe("Conversions to euros for your Payroll box are paused: the price feed is out of date. Your money stays in dollars and everything else keeps working.");
   });
 });
+
+describe("yield moves", () => {
+  const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
+  const earnFacts = (apy = 420): Facts => ({ kind: "earn", values: { amount: usdc(500_000_000n), apy: { type: "bps", value: apy } }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
+  const backFacts = (): Facts => ({ kind: "earn-back", values: { amount: usdc(500_000_000n), gain: usdc(12_500_000n), fee: usdc(1_250_000n) }, labels: { label: "Profit", vault: "EarnKit USDC Vault", protocol: "Morpho" } });
+  it("keeps the English wording of a deposit and of a withdrawal", () => {
+    expect(template(earnFacts(), "en", "en-US")).toBe("Your Profit box put 500.00 USDC to work in EarnKit USDC Vault (Morpho, 4.2% a year when it started). The rate changes and the value can go down; you can take it back at any time.");
+    expect(template(backFacts(), "en", "en-US")).toBe("Your Profit box took 500.00 USDC back from EarnKit USDC Vault (Morpho). It earned 12.50 USDC while it was there; the yield fee on that, 1.25 USDC, is shown here and is not charged on testnet.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names the vault, the protocol and the rate in %s and leaves no placeholder", (lang) => {
+    for (const facts of [earnFacts(), backFacts()]) {
+      const text = template(facts, lang, "es-CO");
+      expect(text).not.toMatch(/[{}]|undefined/);
+      for (const part of ["EarnKit USDC Vault", "Morpho", "500,00 USDC"]) expect(text).toContain(part);
+    }
+    expect(template(earnFacts(), lang, "es-CO")).toContain("4,2%");
+  });
+  it("writes the rate with the number style", () => {
+    expect(template(earnFacts(1_005), "en", "en-US")).toContain("10.05%");
+    expect(template(earnFacts(0), "en", "en-US")).toContain("0%");
+  });
+  const held = (reason: string): Facts => ({ kind: "earn-held", values: {}, labels: { label: "Profit", vault: "EarnKit USDC Vault", reason } });
+  const reasons = ["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"];
+  it.each(["en", "es", "pt-br"] as const)("a hold gives its reason and says the money stays put in %s", (lang) => {
+    const texts = reasons.map((reason) => template(held(reason), lang, "en-US"));
+    for (const text of texts) expect(text).not.toMatch(/[{}]|adapter-not-approved|invalid-bundle|vault-refused/);
+    expect(new Set(texts).size).toBe(reasons.length);
+    expect(template(held("quote-unavailable"), "en", "en-US")).toBe("Your Profit box's move with EarnKit USDC Vault is on hold: Circle's service did not answer. Your money stays where it is and everything else keeps working.");
+  });
+});
+
+describe("a vault that was left", () => {
+  const exit = (reason: string): Facts => ({ kind: "yield-exit", values: {}, labels: { label: "Profit", vault: "EarnKit USDC Vault", reason } });
+  const reasons = ["price-drop", "rate-spike", "inactive", "illiquid"];
+  it("keeps the English wording and names the reason", () => {
+    expect(template(exit("price-drop"), "en", "en-US")).toBe("The agent asked EarnKit USDC Vault to give back your Profit box's money because its share price fell. It returns to your box as cash when the withdrawal goes through; to put it to work again, ask for it.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("gives each reason its own sentence in %s and leaves no placeholder", (lang) => {
+    const texts = reasons.map((reason) => template(exit(reason), lang, "en-US"));
+    for (const text of texts) expect(text).not.toMatch(/[{}]|price-drop|rate-spike|illiquid/);
+    expect(new Set(texts).size).toBe(reasons.length);
+  });
+});
+
+describe("why the agent moved money", () => {
+  const usdc = (units: bigint): FactValue => ({ type: "amount", units, decimals: 6, symbol: "USDC" });
+  const plan = (): Facts => ({ kind: "yield-plan", values: { amount: usdc(10_000_000_000n), kept: usdc(1_500_000_000n), needed: usdc(1_200_000_000n) }, labels: { label: "Profit" } });
+  const back = (): Facts => ({ kind: "yield-back", values: { amount: usdc(2_525_000_000n), payment: usdc(3_000_000_000n), due: { type: "date", value: { year: 2026, month: 11, day: 4 } } }, labels: { label: "Payroll" } });
+  it("keeps the English wording and states what was kept, what it covers and what went to work", () => {
+    expect(template(plan(), "en", "en-US")).toBe("Your Profit box keeps 1,500.00 USDC in cash, 1,200.00 USDC of it for what is due soon, and put 10,000.00 USDC to work. The rate changes and the value can go down.");
+    expect(template(back(), "en", "en-US")).toBe("The agent asked the vault for 2,525.00 USDC back for your Payroll box because 3,000.00 USDC is due on Nov 4, 2026, so the money is ready in time.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names every number and leaves no placeholder in %s", (lang) => {
+    for (const [facts, parts] of [[plan(), ["1,500.00 USDC", "1,200.00 USDC", "10,000.00 USDC"]], [back(), ["2,525.00 USDC", "3,000.00 USDC"]]] as const) {
+      const text = template(facts, lang, "en-US");
+      expect(text).not.toMatch(/[{}]|undefined/);
+      for (const part of parts) expect(text).toContain(part);
+    }
+  });
+});
+
+describe("the invitation to switch yield on", () => {
+  const invite = (apy = 420): Facts => ({ kind: "yield-invite", values: { apy: { type: "bps", value: apy } }, labels: {} });
+  it("keeps the English wording and quotes the rate", () => {
+    expect(template(invite(), "en", "en-US")).toBe("Your money can work while it waits: a vault pays about 4.2% a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need soon is ever used.");
+  });
+  it.each(["en", "es", "pt-br"] as const)("names the rate, warns the value can go down and leaves no placeholder in %s", (lang) => {
+    const text = template(invite(), lang, "en-US");
+    expect(text).not.toMatch(/[{}]|undefined/);
+    expect(text).toContain("4.2%");
+  });
+});
+
