@@ -20,7 +20,7 @@ const base: Profile = profileSchema.parse({
   limits: { dailyCap: "100000000", signatureThreshold: "10" },
   proposals: [pending],
 });
-const run = (action: Parameters<typeof applyAction>[1], profile = base, salary = 1_000_000n) => applyAction(profile, action, { now: NOW, today, books: books(salary) });
+const run = (action: Parameters<typeof applyAction>[1], profile = base, salary = 1_000_000n) => applyAction(profile, action, { now: NOW, today, books: books(salary), sandboxClock: false });
 
 describe("approve", () => {
   const approve = { kind: "approve" as const, proposalId: pending.id, digest };
@@ -44,7 +44,7 @@ describe("approve", () => {
 
   it("refuses an unknown, expired, decided or executed proposal", () => {
     expect(run({ ...approve, proposalId: "nope" })).toEqual({ ok: false, reason: "unknown-proposal" });
-    expect(applyAction(base, approve, { now: pending.expiresAt + 1, today, books: books() })).toEqual({ ok: false, reason: "expired" });
+    expect(applyAction(base, approve, { now: pending.expiresAt + 1, today, books: books(), sandboxClock: false })).toEqual({ ok: false, reason: "expired" });
     expect(run(approve, { ...base, proposals: [{ ...pending, status: "rejected", decidedAt: NOW }] })).toEqual({ ok: false, reason: "already-decided" });
     expect(run(approve, { ...base, proposals: [{ ...pending, status: "executed", decidedAt: NOW }] })).toEqual({ ok: false, reason: "already-decided" });
   });
@@ -156,7 +156,7 @@ describe("adjust", () => {
 });
 
 const ME = "0x00000000000000000000000000000000000000a1";
-const ctx = { now: NOW, today, books: books() }; // the helpers this file already defines
+const ctx = { now: NOW, today, books: books(), sandboxClock: false }; // the helpers this file already defines
 
 describe("expect", () => {
   it("adds a declaration that expires, and learns the sender address as the user's own", () => {
@@ -270,5 +270,27 @@ describe("outflows are remembered, so money that comes back is recognised", () =
     const after = run(approve, stale);
     if (!after.ok) throw new Error(after.reason);
     expect(after.next.flow.sent.map((entry) => entry[2])).toEqual(["1000000"]);
+  });
+});
+
+describe("advance", () => {
+  const advance = (days: number, over: { offset?: number; sandboxClock?: boolean } = {}) =>
+    applyAction({ ...base, clockOffsetDays: over.offset ?? 0 }, { kind: "advance", days }, { now: NOW, today, books: books(), sandboxClock: over.sandboxClock ?? true });
+
+  it("adds the days to the sandbox clock and nothing else", () => {
+    const result = advance(7, { offset: 3 });
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.next).toEqual({ ...base, clockOffsetDays: 10 });
+    expect(result.notices).toEqual([]);
+  });
+
+  it("is refused when the clock is off", () => {
+    expect(advance(7, { sandboxClock: false })).toEqual({ ok: false, reason: "clock-off" });
+  });
+
+  it("is refused past the largest offset the profile holds and leaves it as it was", () => {
+    expect(advance(5, { offset: 3649 })).toEqual({ ok: false, reason: "clock-limit" });
+    const exact = advance(1, { offset: 3649 });
+    expect(exact.ok && exact.next.clockOffsetDays).toBe(3650);
   });
 });

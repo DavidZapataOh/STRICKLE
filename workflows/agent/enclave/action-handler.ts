@@ -96,7 +96,7 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
     return done;
   }
 
-  const result = applyAction(profile, request.action, { now, today, books });
+  const result = applyAction(profile, request.action, { now, today, books, sandboxClock: runtime.config.sandboxClock });
   if (!result.ok) return done;
 
   const next = version + 1n;
@@ -110,8 +110,9 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
       : encodeTickReport({ vault, next, ciphertext }),
   );
 
-  // an adjust is confirmed by what is now in force: the app reads it from this fresh plan
-  const notices = request.action.kind === "adjust" ? [...result.notices, buildPlanNotice({ profile: stored, books, today, vault, nowSeconds: now })] : result.notices;
+  // an adjust is confirmed by what is now in force, an advance by the date the account now lives in: the app reads it from this fresh plan
+  const planToday = request.action.kind === "advance" ? todayOf(runtime.now(), stored.clockOffsetDays) : today;
+  const notices = request.action.kind === "adjust" || request.action.kind === "advance" ? [...result.notices, buildPlanNotice({ profile: stored, books, today: planToday, vault, nowSeconds: now })] : result.notices;
   if (profile.userKey !== ZERO_KEY && notices.length > 0) {
     const userKey = hexToBytes(profile.userKey as Hex);
     notices.forEach((notice, index) => {

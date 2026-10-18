@@ -10,6 +10,7 @@ const hash32 = z.string().regex(/^0x[0-9a-f]{64}$/);
 export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pause") }).strict(),
   z.object({ kind: z.literal("resume") }).strict(),
+  z.object({ kind: z.literal("advance"), days: z.number().int().min(1).max(31) }).strict(),
   z.object({ kind: z.literal("approve"), proposalId: z.string().max(24), digest: hash32 }).strict(),
   z.object({ kind: z.literal("reject"), proposalId: z.string().max(24) }).strict(),
   z.object({ kind: z.literal("expect"), id: z.string().regex(/^[a-z0-9-]{1,12}$/), asset: z.enum(["USDC", "EURC"]), min: units, max: units, expiresInSeconds: z.number().int().min(60).max(86_400), from: address.optional() }).strict(),
