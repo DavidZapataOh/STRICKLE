@@ -17,6 +17,12 @@ const receipt = JSON.parse(readFileSync(new URL("../../../../packages/arc/tests/
 const network = networks.testnet;
 const [real] = readMemoPayments(receipt, network.usdc);
 if (!real) throw new Error("the fixture holds no payment");
+// The public node prunes old receipts, so the payment's own receipt is the one captured from the explorer; every other read goes to the network.
+const REAL_BLOCK = 67470102n;
+const withKnownReceipt = (reader: ReturnType<typeof chainReader>): ReturnType<typeof chainReader> => ({
+  ...reader,
+  receipt: async (hash) => (hash.toLowerCase() === receipt.hash.toLowerCase() ? { status: receipt.status, logs: receipt.logs, blockNumber: REAL_BLOCK } : reader.receipt(hash)),
+});
 const keys = invoiceKeys(randomBytes(32).toString("base64"));
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let deps: PayDeps;
@@ -25,7 +31,7 @@ beforeAll(async () => {
   await migrate(db.sql);
   // the chain is read for real: the transaction below is a real payment on Arc testnet
   const client = createPublicClient({ chain: network.chain, transport: http(network.rpcUrl) });
-  deps = { env: { RELAY_IP_PEPPER: "p".repeat(32) }, sql: db.sql, keys, limiter: createLimiter(db.sql), chain: chainReader(client as never, network.usdc), network: "testnet", chainId: network.chain.id, usdc: network.usdc };
+  deps = { env: { RELAY_IP_PEPPER: "p".repeat(32) }, sql: db.sql, keys, limiter: createLimiter(db.sql), chain: withKnownReceipt(chainReader(client as never, network.usdc)), network: "testnet", chainId: network.chain.id, usdc: network.usdc };
 });
 afterAll(async () => db.drop());
 
