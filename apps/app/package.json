@@ -24,6 +24,7 @@
     "@circle-fin/onramp-kit": "1.0.4",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",
+    "@reclaimprotocol/js-sdk": "^5.8.3",
     "@strickle/agent": "*",
     "@strickle/arc": "*",
     "@strickle/brain": "*",
