@@ -1,6 +1,5 @@
 import { checkProof, isPlatform } from "@/server/reclaim";
 
-export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { platform?: unknown; proof?: unknown } | null;
