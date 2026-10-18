@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -25,7 +26,8 @@ test("a packed kit holds its build and its data and nothing else", () => {
 });
 
 for (const kit of ["@strickle/tax-engine", "@strickle/pool"]) {
-  test(`${kit} installs from its tarballs in an empty directory and runs its example`, { timeout: 600_000 }, () => {
+  const needsCircuits = kit === "@strickle/pool" && !existsSync(fileURLToPath(new URL("../circuits/target", import.meta.url)));
+  test(`${kit} installs from its tarballs in an empty directory and runs its example`, { timeout: 600_000, skip: needsCircuits && "the compiled circuits are built by the circuits job" }, () => {
     const out = mkdtempSync(join(tmpdir(), "kit-"));
     const tarballs = packKit(kit, out);
     const dir = mkdtempSync(join(tmpdir(), "install-"));
