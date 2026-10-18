@@ -146,6 +146,9 @@ jobs:
       - run: npm run test:responsive -w apps/landing
       - run: npm run test:perf -w apps/landing
       - run: npm run test:responsive -w app
+      # the quote spec calls Circle's live quote service and has failed there while the app was unchanged: it reports and does not block
+      - run: npm run test:quote -w app
+        continue-on-error: true
       - run: npm run test:perf -w app
       - if: always()
         uses: actions/upload-artifact@v7
