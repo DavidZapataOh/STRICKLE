@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "vitest": "^5.0.4",
-    "fast-check": "^4.10.2"
+    "fast-check": "^4.10.2",
+    "@circle-fin/earn-kit": "1.9.0"
   },
   "exports": {
     "./profile": "./enclave/profile.ts",

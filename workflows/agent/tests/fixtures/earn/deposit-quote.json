@@ -1,0 +1,36 @@
+{
+  "data": {
+    "vaultAddress": "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88",
+    "vaultName": "EarnKit USDC Vault (Arc Testnet)",
+    "asset": "USDC",
+    "depositAmount": {
+      "raw": "1000000",
+      "decimals": 6
+    },
+    "expectedShares": {
+      "raw": "998943118180964500",
+      "decimals": 18
+    },
+    "sharePrice": "1.001058",
+    "currentApy": 0.042,
+    "fees": [],
+    "gasFees": [
+      {
+        "name": "Approve",
+        "fees": {
+          "gas": "52000",
+          "gasPrice": "25000000000",
+          "fee": "1300000000000000"
+        }
+      },
+      {
+        "name": "Deposit",
+        "fees": {
+          "gas": "399614",
+          "gasPrice": "25000000000",
+          "fee": "9990350000000000"
+        }
+      }
+    ]
+  }
+}

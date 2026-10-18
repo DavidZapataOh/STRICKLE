@@ -145,8 +145,8 @@ contract AgentExecutorSwapTest is Test {
     }
 
     function test_anUnknownActionStillReverts() public {
-        vm.expectRevert(abi.encodeWithSelector(AgentExecutor.UnknownAction.selector, uint8(7)));
-        deliver(7, hex"");
+        vm.expectRevert(abi.encodeWithSelector(AgentExecutor.UnknownAction.selector, uint8(9)));
+        deliver(9, hex"");
     }
 
     function test_theExecutorsOwnOverheadIsSmall() public {

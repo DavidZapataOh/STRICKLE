@@ -768,7 +768,19 @@
       "yield": "Rendimento",
       "earlyPayments": "Pagamentos antecipados",
       "invariantBreaches": "Verificações de segurança que falharam"
-    }
+    },
+    "moved": {
+      "title": "O que o agente movimentou",
+      "total": "Tudo o que o agente movimentou",
+      "kinds": {
+        "split": "Renda dividida em caixinhas",
+        "salary": "Salário pago",
+        "swap": "Conversões de moeda",
+        "earn": "Dinheiro colocado para trabalhar e retirado"
+      },
+      "private": "Pagamentos privados não são contados: seus valores são ocultos de propósito."
+    },
+    "rule": "A equipe são os endereços que listamos mais quem eles financiaram diretamente; todos os demais contam como orgânicos. Na testnet os valores são USDC de teste."
   },
   "agent": {
     "modes": {
@@ -840,5 +852,100 @@
     "saved": "Salvo. O agente começa a converter em menos de um dia.",
     "saving": "Salvando…",
     "activityTitle": "Conversões"
+  },
+  "earn": {
+    "title": "Coloque seu dinheiro para trabalhar",
+    "activityTitle": "Dinheiro trabalhando",
+    "explain": "Uma caixinha pode render em um vault de rendimento. A taxa muda, o valor pode cair e você pode retirar seu dinheiro quando quiser. O agente só move o que você pede, dentro dos limites do seu vault, e mostra cada movimento em Atividade.",
+    "rate": "Taxa agora: {apy} ao ano, conforme publicada pelo vault.",
+    "rateDown": "A taxa não está disponível agora.",
+    "position": "No vault: {amount}",
+    "positionNone": "Ainda não há nada no vault.",
+    "invest": "Colocar para trabalhar",
+    "divest": "Retirar",
+    "amount": "Valor em dólares",
+    "limit": {
+      "share": "Até {share} desta caixinha pode ser colocado para trabalhar.",
+      "none": "Esta caixinha não está configurada para colocar dinheiro para trabalhar."
+    },
+    "status": {
+      "active": "Pronto.",
+      "pending": "Pronto em {date}: seu vault espera um dia depois que você aprova.",
+      "unavailable": "Indisponível nesta conta: ela foi criada antes disso existir.",
+      "notAllowed": "Ainda não permitido nesta conta.",
+      "unreadable": "Não foi possível ler esta conta agora. Tente de novo em instantes."
+    },
+    "allow": "Permitir colocar dinheiro para trabalhar",
+    "allowing": "Aguardando sua assinatura…",
+    "requested": "Solicitado. O agente executa na hora; o resultado está em Atividade.",
+    "errors": {
+      "amount": "Digite um valor maior que zero, com até seis casas decimais.",
+      "box": "Esta caixinha não pode render.",
+      "vault": "Esse vault não está disponível.",
+      "tooMuch": "A caixinha tem menos que isso.",
+      "limit": "Isso é mais do que esta caixinha deixa o agente colocar para trabalhar agora."
+    },
+    "auto": {
+      "title": "Deixe o agente colocar o dinheiro parado para trabalhar",
+      "explain": "Quando isto está ligado, o agente só coloca para trabalhar o que uma caixinha não precisa em sessenta dias, traz de volta cinco dias úteis antes de um pagamento e nunca coloca mais da metade da caixinha de impostos para trabalhar. As taxas mudam e o valor pode cair.",
+      "on": "Ligado",
+      "off": "Desligado"
+    },
+    "totals": {
+      "line": "Rendido até agora: {gain}. Taxa sobre isso, mostrada e não cobrada na testnet: {fee}.",
+      "none": "Ainda não rendeu nada."
+    }
+  },
+  "proof": {
+    "title": "Provas, sem confiar em nós",
+    "intro": "Tudo aqui é lido da cadeia, do explorador ou dos números registrados quando você abre a página. Se uma fonte não responde, essa parte avisa e o resto continua.",
+    "unreadable": "Esta parte não pôde ser lida agora.",
+    "contracts": {
+      "title": "Os contratos",
+      "name": "Contrato",
+      "deployed": "Código implantado",
+      "notDeployed": "Não implantado aqui",
+      "verified": "Código-fonte verificado",
+      "notVerified": "Código-fonte não verificado",
+      "unknown": "Não foi possível verificar"
+    },
+    "guarantees": {
+      "title": "O que os contratos impõem",
+      "intro": "Em palavras simples, com a função que faz isso e o teste que a fixa.",
+      "function": "Função",
+      "test": "Teste"
+    },
+    "agent": {
+      "title": "O agente",
+      "last": "O agente escreveu na cadeia pela última vez {when}.",
+      "none": "Ainda não há atividade.",
+      "tx": "Transação"
+    },
+    "honest": {
+      "title": "O que esta página não prova",
+      "body": "Estes contratos não são auditados e rodam na testnet, onde o dinheiro é USDC de teste. A página mostra que o código está implantado, se o código-fonte está verificado e o que ele impõe; não mostra que o código não tem erros. Os valores privados continuam privados."
+    },
+    "attestation": {
+      "title": "O agente executa o código publicado?",
+      "explain": "A rede de workflows confidenciais verifica a atestação do enclave antes de assinar um relatório, e esta página não mostra a cotação do hardware. O que ela verifica por conta própria é o que vem depois: qual workflow os contratos aceitam e quem assinou o relatório mais recente e para qual workflow.",
+      "contracts": "O workflow que os contratos aceitam",
+      "status": {
+        "consistent": "Os contratos aceitam o mesmo workflow.",
+        "mismatch": "Os contratos não aceitam o mesmo workflow.",
+        "unbound": "Um contrato ainda não está vinculado a um workflow.",
+        "unreadable": "Não foi possível ler o workflow de um contrato."
+      },
+      "report": {
+        "title": "O relatório mais recente",
+        "ok": "Foi assinado por {valid} dos nós autorizados da DON (eram necessários {threshold}) e leva esse workflow, {when}.",
+        "few": "Apenas {valid} assinaturas válidas das {threshold} necessárias.",
+        "different": "Leva um workflow diferente do que os contratos aceitam.",
+        "none": "Nenhum relatório foi entregue ainda.",
+        "unreadable": "Não foi possível verificar agora.",
+        "tx": "Transação"
+      },
+      "reproduce": "Para recalcular o ID do workflow a partir do código publicado, execute:",
+      "note": "Esta é a cadeia de custódia depois do enclave. Não mostra a cotação do hardware."
+    }
   }
 }

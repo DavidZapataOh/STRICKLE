@@ -83,3 +83,24 @@ describe("the conversion notices", () => {
     expect(noticeSchema.safeParse({ ...swap, extra: 1 }).success).toBe(false);
   });
 });
+
+describe("the earn notices", () => {
+  const earn = { kind: "earn", box: "profit", deposit: true, name: "EarnKit USDC Vault", protocol: "Morpho", vault: "0xAabbeF1D3971c710276ed41eC791BbE14CdB8E88", amount: "500000000", counter: "498000000000000000000", apyBps: 420 };
+  const held = { kind: "earn-held", box: "profit", deposit: true, name: "EarnKit USDC Vault", reason: "quote-unavailable" };
+
+  it("accepts a move and a hold for the boxes that can be invested", () => {
+    expect(noticeSchema.safeParse(earn).success).toBe(true);
+    expect(noticeSchema.safeParse({ ...earn, deposit: false, apyBps: 0 }).success).toBe(true);
+    for (const reason of ["adapter-not-approved", "vault-not-approved", "quote-unavailable", "invalid-bundle", "vault-refused", "failures", "insufficient", "expired"]) {
+      expect(noticeSchema.safeParse({ ...held, reason }).success).toBe(true);
+    }
+  });
+
+  it("refuses the salary box, an unknown reason, a negative yield and unknown fields", () => {
+    expect(noticeSchema.safeParse({ ...earn, box: "salary" }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...held, reason: "bored" }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...earn, apyBps: -1 }).success).toBe(false);
+    expect(noticeSchema.safeParse({ ...earn, extra: 1 }).success).toBe(false);
+  });
+});
+

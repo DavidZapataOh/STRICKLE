@@ -14,6 +14,9 @@ export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("reject"), proposalId: z.string().max(24) }).strict(),
   z.object({ kind: z.literal("expect"), id: z.string().regex(/^[a-z0-9-]{1,12}$/), asset: z.enum(["USDC", "EURC"]), min: units, max: units, expiresInSeconds: z.number().int().min(60).max(86_400), from: address.optional() }).strict(),
   z.object({ kind: z.literal("reclassify"), arrivalId: z.string().regex(/^[0-9a-f]{10}(-[0-9]{1,2})?$/), to: z.enum(["income", "own-transfer", "refund"]), learn: address.optional() }).strict(),
+  // the salary box is paid every month and stays liquid, so it is not a key here
+  z.object({ kind: z.literal("invest"), box: z.enum(["taxes", "payroll", "operating", "emergency", "profit"]), vault: address, amount: units.refine((value) => BigInt(value) > 0n) }).strict(),
+  z.object({ kind: z.literal("divest"), box: z.enum(["taxes", "payroll", "operating", "emergency", "profit"]), vault: address, amount: units.refine((value) => BigInt(value) > 0n) }).strict(),
   z
     .object({ kind: z.literal("pay"), box: z.enum(["taxes", "payroll", "salary", "operating", "emergency", "profit"]), to: address, amount: units.refine((value) => BigInt(value) > 0n) })
     .strict(),
@@ -29,6 +32,7 @@ export const actionSchema = z.discriminatedUnion("kind", [
           signatureThreshold: units.optional(),
           floorDays: z.number().int().optional(),
           targetDays: z.number().int().optional(),
+          yieldEnabled: z.boolean().optional(),
           // taxes and the salary are always dollars, so they are not keys here
           currencies: z
             .object({ payroll: z.enum(["USD", "EUR"]).optional(), operating: z.enum(["USD", "EUR"]).optional(), emergency: z.enum(["USD", "EUR"]).optional(), profit: z.enum(["USD", "EUR"]).optional() })

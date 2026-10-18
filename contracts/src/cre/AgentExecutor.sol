@@ -14,6 +14,11 @@ interface IVault {
     function boxBalance(uint8 asset, uint8 box) external view returns (uint256);
     function payAllowlisted(uint8 asset, uint8 box, address to, uint256 amount) external;
     function swapBox(uint8 box, uint8 assetIn, uint256 amountIn, uint256 minOut, bytes calldata data) external;
+    function sharesOf(address earnVault, uint8 box) external view returns (uint256);
+    function earnIn(uint8 asset, uint8 box, address earnVault, uint256 amount, uint256 minOut, bytes calldata data)
+        external;
+    function earnOut(uint8 asset, uint8 box, address earnVault, uint256 shares, uint256 minOut, bytes calldata data)
+        external;
 }
 
 interface IFactory {
@@ -106,10 +111,27 @@ contract AgentExecutor is CreReceiver {
     uint8 public constant NOTICE = 4;
     uint8 public constant PRIVATE_SPEND = 5;
     uint8 public constant SWAP = 6;
+    uint8 public constant EARN_IN = 7;
+    uint8 public constant EARN_OUT = 8;
     uint8 public constant SALARY_BOX = 3;
 
     event SalaryPaid(address indexed vault, uint8 indexed asset, address indexed payee, uint256 amount);
     event Swapped(address indexed vault, uint8 indexed box, uint8 indexed assetIn, uint256 amountIn);
+    event EarnForwarded(address indexed vault, uint8 indexed box, bool deposit, uint256 amount);
+
+    /// @dev `amount` is USDC (or EURC) for a deposit and yield-vault shares for a withdrawal; `seen` is the live value the enclave read for the same thing.
+    struct EarnReport {
+        address vault;
+        uint8 asset;
+        uint8 box;
+        address earnVault;
+        uint256 amount;
+        uint256 minOut;
+        uint256 seen;
+        bytes data;
+        uint64 next;
+        bytes ciphertext;
+    }
 
     /// @notice Up to `maxHits` active delegations, scanning the registry in a circle from `seed % count` (see `pending`).
     function delegated(uint256 seed, uint256 maxHits) external view returns (address[] memory out) {
@@ -136,6 +158,7 @@ contract AgentExecutor is CreReceiver {
         else if (action == NOTICE) _notice(args);
         else if (action == PRIVATE_SPEND) _privateSpend(args);
         else if (action == SWAP) _swap(args);
+        else if (action == EARN_IN || action == EARN_OUT) _earn(args, action == EARN_IN);
         else revert UnknownAction(action);
     }
 
@@ -201,6 +224,22 @@ contract AgentExecutor is CreReceiver {
         IVault(vault).swapBox(box, assetIn, amountIn, minOut, data);
         state.store(vault, next, ciphertext);
         emit Swapped(vault, box, assetIn, amountIn);
+    }
+
+    function _earn(bytes memory args, bool deposit) private {
+        EarnReport memory report = abi.decode(args, (EarnReport));
+        _requireActive(report.vault);
+        IVault vault = IVault(report.vault);
+        uint256 live =
+            deposit ? vault.boxBalance(report.asset, report.box) : vault.sharesOf(report.earnVault, report.box);
+        if (live != report.seen) revert Stale(report.seen, live);
+        if (deposit) {
+            vault.earnIn(report.asset, report.box, report.earnVault, report.amount, report.minOut, report.data);
+        } else {
+            vault.earnOut(report.asset, report.box, report.earnVault, report.amount, report.minOut, report.data);
+        }
+        state.store(report.vault, report.next, report.ciphertext);
+        emit EarnForwarded(report.vault, report.box, deposit, report.amount);
     }
 
     function _tick(bytes memory args) private {

@@ -140,6 +140,7 @@ describe("buildPlanNotice", () => {
       proposed: "1000000", day: 1, payee: "0x00000000000000000000000000000000000000b2",
       dailyCap: "100000000", signatureThreshold: "0", floorDays: 14, targetDays: 42, halted: false, haltCodes: [],
       currencies: { payroll: "USD", operating: "USD", emergency: "USD", profit: "USD" },
+      yieldEnabled: false,
     });
   });
 

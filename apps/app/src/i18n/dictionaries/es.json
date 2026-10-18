@@ -768,7 +768,19 @@
       "yield": "Rendimiento",
       "earlyPayments": "Pagos anticipados",
       "invariantBreaches": "Revisiones de seguridad que fallaron"
-    }
+    },
+    "moved": {
+      "title": "Lo que movió el agente",
+      "total": "Todo lo que movió el agente",
+      "kinds": {
+        "split": "Ingresos repartidos en cajitas",
+        "salary": "Sueldo pagado",
+        "swap": "Conversiones de moneda",
+        "earn": "Dinero puesto a trabajar y retirado"
+      },
+      "private": "Los pagos privados no se cuentan: sus montos están ocultos a propósito."
+    },
+    "rule": "El equipo son las direcciones que listamos más quienes ellas financiaron directamente; todos los demás cuentan como orgánicos. En testnet los montos son USDC de prueba."
   },
   "agent": {
     "modes": {
@@ -840,5 +852,100 @@
     "saved": "Guardado. El agente empieza a convertir en menos de un día.",
     "saving": "Guardando…",
     "activityTitle": "Conversiones"
+  },
+  "earn": {
+    "title": "Pon tu dinero a trabajar",
+    "activityTitle": "Dinero a trabajar",
+    "explain": "Una cajita puede rendir en una vault de rendimiento. La tasa cambia, el valor puede bajar y puedes retirar tu dinero cuando quieras. El agente solo mueve lo que pides, dentro de los límites de tu vault, y muestra cada movimiento en Actividad.",
+    "rate": "Tasa ahora: {apy} al año, según publica la vault.",
+    "rateDown": "La tasa no está disponible ahora.",
+    "position": "En la vault: {amount}",
+    "positionNone": "Todavía no hay nada en la vault.",
+    "invest": "Poner a trabajar",
+    "divest": "Retirar",
+    "amount": "Monto en dólares",
+    "limit": {
+      "share": "Hasta {share} de esta cajita puede ponerse a trabajar.",
+      "none": "Esta cajita no está configurada para poner dinero a trabajar."
+    },
+    "status": {
+      "active": "Listo.",
+      "pending": "Listo el {date}: tu vault espera un día después de que la apruebas.",
+      "unavailable": "No disponible en esta cuenta: se creó antes de que esto existiera.",
+      "notAllowed": "Todavía no está permitido en esta cuenta.",
+      "unreadable": "No se pudo leer esta cuenta ahora. Inténtalo de nuevo en un momento."
+    },
+    "allow": "Permitir poner dinero a trabajar",
+    "allowing": "Esperando tu firma…",
+    "requested": "Solicitado. El agente lo ejecuta enseguida; el resultado está en Actividad.",
+    "errors": {
+      "amount": "Escribe un monto mayor que cero, con hasta seis decimales.",
+      "box": "Esta cajita no puede rendir.",
+      "vault": "Esa vault no está disponible.",
+      "tooMuch": "La cajita tiene menos que eso.",
+      "limit": "Eso es más de lo que esta cajita deja que el agente ponga a trabajar ahora."
+    },
+    "auto": {
+      "title": "Deja que el agente ponga a trabajar el dinero ocioso",
+      "explain": "Cuando esto está activado, el agente solo pone a trabajar lo que una cajita no necesita en sesenta días, lo trae de vuelta cinco días hábiles antes de un pago y nunca pone a trabajar más de la mitad de la cajita de impuestos. Las tasas cambian y el valor puede bajar.",
+      "on": "Activado",
+      "off": "Desactivado"
+    },
+    "totals": {
+      "line": "Ganado hasta ahora: {gain}. Comisión sobre eso, mostrada y no cobrada en testnet: {fee}.",
+      "none": "Todavía no se ha ganado nada."
+    }
+  },
+  "proof": {
+    "title": "Pruebas, sin confiar en nosotros",
+    "intro": "Todo lo de aquí se lee de la cadena, del explorador o de los números registrados al abrir la página. Si una fuente no responde, esa parte lo dice y el resto sigue.",
+    "unreadable": "Esta parte no se pudo leer ahora.",
+    "contracts": {
+      "title": "Los contratos",
+      "name": "Contrato",
+      "deployed": "Código desplegado",
+      "notDeployed": "No desplegado aquí",
+      "verified": "Fuente verificada",
+      "notVerified": "Fuente no verificada",
+      "unknown": "No se pudo comprobar"
+    },
+    "guarantees": {
+      "title": "Lo que imponen los contratos",
+      "intro": "En palabras simples, con la función que lo hace y la prueba que lo fija.",
+      "function": "Función",
+      "test": "Prueba"
+    },
+    "agent": {
+      "title": "El agente",
+      "last": "El agente escribió en la cadena por última vez {when}.",
+      "none": "Todavía no hay actividad.",
+      "tx": "Transacción"
+    },
+    "honest": {
+      "title": "Lo que esta página no demuestra",
+      "body": "Estos contratos no están auditados y corren en testnet, donde el dinero es USDC de prueba. La página muestra que el código está desplegado, si su fuente está verificada y lo que impone; no muestra que el código no tenga errores. Los montos privados siguen siendo privados."
+    },
+    "attestation": {
+      "title": "¿El agente corre el código publicado?",
+      "explain": "La red de workflows confidenciales verifica la atestación del enclave antes de firmar un informe, y esta página no muestra la cita del hardware. Lo que comprueba por sí misma es lo que viene después: qué workflow aceptan los contratos y quién firmó el último informe y para qué workflow.",
+      "contracts": "El workflow que aceptan los contratos",
+      "status": {
+        "consistent": "Los contratos aceptan el mismo workflow.",
+        "mismatch": "Los contratos no aceptan el mismo workflow.",
+        "unbound": "Un contrato todavía no está enlazado a un workflow.",
+        "unreadable": "No se pudo leer el workflow de un contrato."
+      },
+      "report": {
+        "title": "El último informe",
+        "ok": "Lo firmaron {valid} de los nodos autorizados de la DON (hacían falta {threshold}) y lleva ese workflow, {when}.",
+        "few": "Solo {valid} firmas válidas de las {threshold} necesarias.",
+        "different": "Lleva un workflow distinto del que aceptan los contratos.",
+        "none": "Todavía no se ha entregado ningún informe.",
+        "unreadable": "No se pudo comprobar ahora.",
+        "tx": "Transacción"
+      },
+      "reproduce": "Para recalcular el ID del workflow desde el código publicado, ejecuta:",
+      "note": "Esta es la cadena de custodia después del enclave. No muestra la cita del hardware."
+    }
   }
 }

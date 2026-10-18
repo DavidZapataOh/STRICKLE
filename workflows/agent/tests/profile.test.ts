@@ -1,5 +1,6 @@
 // workflows/agent/tests/profile.test.ts
 import { describe, expect, it } from "vitest";
+import { profileOf } from "./support.ts";
 import { MAX_STATE_PLAINTEXT, MAX_SUBMITTED_BYTES, ZERO_ADDRESS, ZERO_KEY, decodeProfile, encodeProfile, mergeProfile, profileSchema } from "../enclave/profile.ts";
 
 const valid = {
@@ -297,6 +298,38 @@ describe("currencies, swap and rate", () => {
     expect(merged.swap).toEqual(stored.swap);
     expect(merged.rate).toEqual(stored.rate);
     expect(merged.currencies.payroll).toBe("EUR");
+  });
+});
+
+describe("the yield watch in the profile", () => {
+  const watch = { at: 1_790_000_000, vaults: [{ id: "0xaabbef1d3971c710276ed41ec791bbe14cdb8e88", price: "1001058", apyBps: 420, active: true }] };
+
+  it("starts empty, round-trips, and is the agent's: a submission cannot seed or overwrite it", () => {
+    expect(profileOf().yieldWatch).toEqual({ at: 0, vaults: [] });
+    const stored = profileOf({ yieldWatch: watch });
+    expect(decodeProfile(encodeProfile(stored)).yieldWatch).toEqual(watch);
+    expect(mergeProfile(stored, profileOf()).yieldWatch).toEqual(watch);
+    expect(mergeProfile(undefined, stored).yieldWatch).toEqual({ at: 0, vaults: [] });
+  });
+
+  it("holds at most four vaults and refuses malformed ones", () => {
+    const row = watch.vaults[0];
+    expect(() => profileOf({ yieldWatch: { at: 0, vaults: [row, row, row, row, row] } })).toThrow();
+    expect(() => profileOf({ yieldWatch: { at: 0, vaults: [{ ...row, price: "-1" }] } })).toThrow();
+  });
+});
+
+describe("the yield state in the profile", () => {
+  it("starts off, empty and not invited, round-trips and keeps the owner's choice and the agent's totals", () => {
+    expect(profileOf().yield).toEqual({ enabled: false, day: "", realized: "0", fee: "0", invitedOn: "" });
+    const stored = profileOf({ yield: { enabled: true, day: "2026-11-02", realized: "2114", fee: "211", invitedOn: "" } });
+    expect(decodeProfile(encodeProfile(stored)).yield).toEqual(stored.yield);
+    expect(mergeProfile(stored, profileOf()).yield).toEqual(stored.yield);
+  });
+
+  it("takes the owner's first choice from the submission and nothing else", () => {
+    const submitted = profileOf({ yield: { enabled: true, day: "2026-11-02", realized: "999", fee: "99", invitedOn: "2026-11-01" } });
+    expect(mergeProfile(undefined, submitted).yield).toEqual({ enabled: true, day: "", realized: "0", fee: "0", invitedOn: "" });
   });
 });
 

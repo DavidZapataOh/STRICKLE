@@ -22,4 +22,12 @@ describe("onboardingCalls", () => {
     expect(calls).toHaveLength(4);
     expect(calls[0]!.to).toBe(a(4));
   });
+
+  it("appends the swap setup and then the yield vault approval, so both waits start at creation", () => {
+    const swap = [{ to: a(4), data: "0x01" as const }];
+    const earn = [{ to: a(4), data: "0x02" as const }];
+    const calls = onboardingCalls({ ...args, vaultExists: false, swapCalls: swap, earnCalls: earn });
+    expect(calls.slice(-2)).toEqual([swap[0], earn[0]]);
+    expect(onboardingCalls({ ...args, vaultExists: false, earnCalls: earn }).slice(-1)).toEqual(earn);
+  });
 });

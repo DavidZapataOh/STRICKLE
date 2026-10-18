@@ -128,6 +128,51 @@ Known limits:
 - The sealed state records the intent and the counters, never balances. The executor's `Swapped` event reports the amount requested; only the vault's `Swapped` event reports what was received, so use that one to audit a conversion.
 - A conversion cannot be undone at the same price: setting the box back to dollars converts it again at that day's rate.
 
+## Yield
+
+A person can put part of a box to work in a Morpho vault listed by Circle's Earn Kit and take it back. Nothing is promised: the rate changes and the value can go down, and the app says so beside every number.
+
+- **What the vault enforces.** Only the agent puts money in, through the one approved Circle adapter (the same one swaps use, so its approval covers both) and one of the vaults the owner approved, which takes a day to take effect. The output must be at least the yield vault's own preview of the shares or assets, less the vault's slippage setting (at most 100 bps, the same setting that bounds swaps). The ledger moves only by balances the vault measured, the approval is zero after every call, a deposit cannot pass the box's investable share or take it under its floor, and a deposit that returns no shares fails. The salary box is never offered.
+- **Getting money out.** The owner can always take a box's money out, with or without the agent and with no vault approval, so revoking a vault or pausing the agent never traps it. If the adapter is revoked, the older direct `redeem` remains.
+- **What the agent adds.** It checks every bundle Circle returns before it signs: the target is the yield vault, the function is `deposit` or `redeem`, the adapter is both receiver and owner, every beneficiary is the box vault, the amounts match, the deadline is two to sixty minutes away. A withdrawal must redeem within 1% of the shares the amount needs. A request waits at most a day; three failures in a row clear the requests and tell the owner; a hold is told once a day.
+- **Limits and exits.** When the agent spreads money over several vaults the limits are written in code: at most 60% of the money in vaults in one vault and 80% in one protocol (each enforced only when two or more are eligible; with one, the box's investable share bounds the exposure), a position never above 20% of the vault's available liquidity, and no vault paying under 0.5% a year. The agent looks at each vault an account holds every run and takes everything out of one that shows a share price down by more than 1%, a rate that tripled above 25%, a status that is not active, or less liquidity than the position; the owner is told in Activity and nothing waits for them. The first look at a vault only records it. A flagged vault keeps its last good observation, so it stays flagged on every run (and gets no new money) until it recovers; its exits are asked for in every box that holds shares, are never expired, are never pushed out by other requests, and are tried again at most once a day if they keep failing. The exit notices say the withdrawal was asked for: the money is back in the box when it goes through.
+- **Just in time.** For an account that switched yield on (the owner's choice, made with a signed setting; people who already get paid in digital dollars start with it on), the agent looks once a day for money to put to work: a box keeps its floor and everything that falls due within sixty days (payrolls, the next tax date) in cash, never puts more than the share the vault allows (the taxes box defaults to half), and never touches the salary box. Every run, whether yield is on or off, it brings money back for a payment inside the lead window: five business days before the due date, or at once when it is already due, the shortfall plus one percent. Business days are Monday to Friday and no holiday calendar is used, so a due date after a holiday is simply earlier in practice. A payment that slipped by less than a week still counts; nothing in the profile marks a payment as settled, so older dates are taken as done. Each decision is told in Activity with its numbers: what was kept and why, or which payment and which date.
+- **Defaults and the fee.** An account created by someone who already gets paid in digital dollars starts with yield on; every other account starts with it off, and after twenty-eight days of history, once, the agent quotes the best open vault's rate and says the value can also go down; the person switches it on in Settings. The ten percent fee is calculated on the gain of each withdrawal (what the shares come back worth above the same share of the principal that went in, never below zero), rounded down, shown in Activity and in a running total, and **not charged**: collecting it needs a recipient the owner approves and the guarantee fund it partly feeds is not part of this build. The screens say so.
+- **Vaults.** The app and the agent list the same vault (`EarnKit USDC Vault`, Morpho, on Arc testnet); a test fails if the two lists differ. Mainnet lists none.
+- **Accounts.** A vault created before the redeploy has no `EARN_VERSION` and shows "not available"; an account whose read failed shows "could not be read", not that.
+- **Known limits.** `invested` (the principal) is kept per box, not per yield vault, so with two vaults in one box a full withdrawal from one wipes the other's principal and loosens the investable-share check. The app offers one vault per box today. The contract has about 60 bytes of runtime size left, so anything new goes into a library or a new implementation. The agent's request to Circle names the box vault, the yield vault and the amount, which the move publishes on chain a moment later.
+
+## Traction
+
+The public page `/metrics` and `node scripts/traction-report.mjs --url https://<the app>/api/metrics` show what the metrics collector read from the chain, with the team apart from everyone else.
+
+- **Businesses onboarded.** The vaults the factory created. A vault is the team's when its owner is on the team list (`apps/app/src/config`) or was funded directly by a team address; everyone else is organic.
+- **Value the agent moved.** USDC, summed by kind, from the events the agent's own transactions cause: income split into boxes, salary paid, currency conversions (the USDC side of each swap) and money put to work or taken back (the assets). Private payments are not counted, because their amounts are hidden by design. On testnet it is test USDC and the page says so.
+- **Reconciled.** A test sums the same events straight from the chain and compares. A snapshot recorded before the agent's moves were counted shows no such card, and the report says "not measured in this snapshot" instead of a zero.
+- **The daily update.** Run the report and paste its paragraph into `arc-canteen update traction`, which is interactive and belongs to the account owner. Every number in the paragraph is in the snapshot.
+
+## Proof page
+
+`/[lang]/proof` is the public page for checking the system without trusting it. It reads, when it is opened and never while the app is built:
+
+- **The numbers.** The latest recorded snapshot (the same one `/metrics` shows).
+- **The contracts.** For the factory, the state, the executor and the pool: whether code is deployed at the address (`eth_getCode`) and whether the explorer holds verified source (Blockscout `is_verified`). A contract with no code is shown as not deployed and never as verified; an explorer that does not answer is "could not check", not a guess.
+- **What each contract enforces.** A list kept in `apps/app/src/config/guarantees.ts`, each entry tied to the function that enforces it and the test that pins it, linked on GitHub. A test fails when a named function or test stops existing.
+- **The agent.** The time of the newest update of the state contract in the last 50,000 blocks, or "no activity yet".
+- **What it does not prove.** The contracts are unaudited and run on testnet; the page shows deployment, verification and what is enforced, not that the code has no bugs.
+
+If one source is down that part says so and the rest of the page stays. The page does not use the words safe, audited or insured, and a dictionary test keeps it that way.
+
+## Attestation
+
+The proof page checks the chain of custody after the enclave. Chainlink's Workflow DON verifies the enclave's attestation before it signs a report; the quote itself is not exposed to developers, so the page does not show one. What it checks itself:
+
+1. The workflow ID that `AgentExecutor`, `AgentState` and `AgentHeartbeat` accept (`expectedWorkflowId()`): consistent, different, not bound yet, or unreadable.
+2. The newest forwarder report delivered to them: the 109-byte header is parsed, its workflow ID is compared with the contracts', and the DON signatures are verified as documented (`keccak256(keccak256(report) || context)`, at least `f + 1` distinct signers from the Capability Registry on Ethereum).
+3. The command a verifier runs to recompute the workflow ID from the published source: `cre workflow hash ./workflows/agent --public_key <workflow owner>`.
+
+Not checked: the hardware attestation itself. If the Ethereum registry cannot be read the check says it could not be made, never a pass. The Ethereum read uses `ETHEREUM_RPC_URL` (a public RPC, read-only, with a timeout). After a redeploy the old reports carry the old workflow ID and are shown as such until the next report arrives. Refresh the fixtures with `node scripts/capture-attestation.ts` from `apps/app`.
+
 ## What to tell people
 
 The app shows its disclosures to everyone who enters: the limits are low, the private mode is an unaudited contract that is off on mainnet, tax figures are estimates, and USDC can be frozen by its issuer. On testnet the first line says that the money has no real value and nobody compensates losses.

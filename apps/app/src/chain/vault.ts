@@ -2,6 +2,9 @@ import { BOX_KINDS } from "@strickle/core";
 import { type Address, type PublicClient, parseAbi } from "viem";
 import { factoryAbi } from "./abi.ts";
 import { getPublicClient } from "./client.ts";
+import { earnVaultsFor } from "../config/earn.ts";
+import { appNetwork } from "../config/network.ts";
+import { readEarn } from "./earn.ts";
 import { vaultReadAbi } from "./read-abi.ts";
 import type { BoxState, Conversions, VaultState } from "./totals.ts";
 
@@ -12,7 +15,7 @@ const EURC = 2;
 
 export async function readVault(vault: Address, client: PublicClient = getPublicClient()): Promise<VaultState> {
   const call = <T,>(functionName: string, args?: readonly unknown[]) => client.readContract({ address: vault, abi: vaultReadAbi, functionName, args } as never) as Promise<T>;
-  const [boxes, unallocatedUsdc, agent, agentPaused, block, conversions] = await Promise.all([
+  const [boxes, unallocatedUsdc, agent, agentPaused, block, conversions, earn] = await Promise.all([
     Promise.all(
       BOX_KINDS.map(async (kind, index) => {
         const id = index + 1;
@@ -30,8 +33,9 @@ export async function readVault(vault: Address, client: PublicClient = getPublic
     call<boolean>("agentPaused"),
     client.getBlock(),
     readConversions(call),
+    readEarn(vault, earnVaultsFor(appNetwork()), client),
   ]);
-  return { boxes, unallocatedUsdc, agent, agentPaused, now: Number(block.timestamp), conversions };
+  return { boxes, unallocatedUsdc, agent, agentPaused, now: Number(block.timestamp), conversions, earn };
 }
 
 /** A vault created before conversions existed has no such functions: the call reverts, which means "not available", never a broken screen. */

@@ -10,11 +10,14 @@ import { decodeStateLog, decodeTickBooks, stateLogRequest, tickRequests } from "
 import { ASSET_ID } from "./cascade.ts";
 import { todayOf } from "./clock.ts";
 import { deliver } from "./deliver.ts";
+import { deliverEarn } from "./earn-deliver.ts";
+import { earnFor } from "./earn-run.ts";
 import { decryptState, deriveSealKey, encryptState, parseMaster } from "./keys.ts";
+import type { Notice } from "./notice-schema.ts";
 import { sealNotice } from "./notices.ts";
 import { acceptSpend, planPrivatePay } from "./private-pay.ts";
 import { buildPlanNotice } from "./plan.ts";
-import { ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
+import { type Profile, ZERO_KEY, decodeProfile, encodeProfile } from "./profile.ts";
 import { proveSpec, resolveLeaf } from "./prover-call.ts";
 import { ethBatch } from "./read.ts";
 import { encodeNoticeReport, encodePrivateSpendReport, encodeSalaryReport, encodeTickReport } from "./reports.ts";
@@ -96,11 +99,21 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
     return done;
   }
 
-  const result = applyAction(profile, request.action, { now, today, books });
+  const result = applyAction(profile, request.action, { now, today, books, earnVaults: runtime.config.earn.vaults.map((entry) => entry.address) });
   if (!result.ok) return done;
 
-  const next = version + 1n;
   const stored = { ...result.next, nonce: request.nonce };
+  // putting money to work or taking it back is carried out as soon as it is signed, so the person sees it happen; a move that cannot run now stays pending for the next tick
+  if (request.action.kind === "invest" || request.action.kind === "divest") {
+    const seal = (sealed: typeof stored, at: bigint) => bytesToHex(encryptState(master, vault, at, encodeProfile(sealed)));
+    const moved = deliverEarn(runtime, { executor, vault, version, outcome: earnFor(runtime, { profile: stored, vault, books, today, nowSeconds: now }), seal });
+    if (moved.version !== version) {
+      sealNotices(runtime, { executor, master, vault, profile, count: noticeCount, notices: moved.notices });
+      return done;
+    }
+  }
+
+  const next = version + 1n;
   const ciphertext = bytesToHex(encryptState(master, vault, next, encodeProfile(stored)));
   deliver(
     runtime,
@@ -112,12 +125,15 @@ export const onUserAction = (runtime: TeeRuntime<Config>, payload: HTTPPayload):
 
   // an adjust is confirmed by what is now in force: the app reads it from this fresh plan
   const notices = request.action.kind === "adjust" ? [...result.notices, buildPlanNotice({ profile: stored, books, today, vault, nowSeconds: now })] : result.notices;
-  if (profile.userKey !== ZERO_KEY && notices.length > 0) {
-    const userKey = hexToBytes(profile.userKey as Hex);
-    notices.forEach((notice, index) => {
-      const id = noticeCount + BigInt(index) + 1n;
-      deliver(runtime, executor, encodeNoticeReport({ vault, id, sealed: bytesToHex(sealNotice(master, userKey, vault, id, notice)) }));
-    });
-  }
+  sealNotices(runtime, { executor, master, vault, profile, count: noticeCount, notices });
   return done;
 };
+
+function sealNotices(runtime: TeeRuntime<Config>, input: { executor: Address; master: Parameters<typeof sealNotice>[0]; vault: Address; profile: Profile; count: bigint; notices: Notice[] }): void {
+  if (input.profile.userKey === ZERO_KEY || input.notices.length === 0) return;
+  const userKey = hexToBytes(input.profile.userKey as Hex);
+  input.notices.forEach((notice, index) => {
+    const id = input.count + BigInt(index) + 1n;
+    deliver(runtime, input.executor, encodeNoticeReport({ vault: input.vault, id, sealed: bytesToHex(sealNotice(input.master, userKey, input.vault, id, notice)) }));
+  });
+}

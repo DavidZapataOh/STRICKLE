@@ -1,0 +1,31 @@
+export interface Guarantee {
+  id: string;
+  /** The contract file that holds the function and the test file that pins it, relative to the repository root. */
+  source: string;
+  function: string;
+  test: string;
+  testName: string;
+  text: { en: string; es: string; "pt-br": string };
+}
+
+const VAULT = "contracts/src/vault/BoxVault.sol";
+const AGENT_TESTS = "contracts/test/vault/BoxVaultAgent.t.sol";
+const SWAP_TESTS = "contracts/test/vault/BoxVaultSwap.t.sol";
+const EARN_TESTS = "contracts/test/vault/BoxVaultEarn.t.sol";
+
+/** What each contract enforces, in plain words, tied to the function that enforces it and the test that pins it. A test fails if either name stops existing. */
+export const GUARANTEES: readonly Guarantee[] = [
+  { id: "owner-takes-money-out", source: VAULT, function: "earnOut", test: EARN_TESTS, testName: "test_TheOwnerCanWithdrawWithoutTheAgentAndWhileItIsPaused", text: { en: "You can always take a box's money out of a yield vault yourself, with no help from the agent and even while the agent is paused.", es: "Siempre puedes sacar tú mismo el dinero de una cajita de una vault de rendimiento, sin ayuda del agente y aunque el agente esté en pausa.", "pt-br": "Você sempre pode retirar o dinheiro de uma caixinha de um vault de rendimento por conta própria, sem ajuda do agente e mesmo com o agente em pausa." } },
+  { id: "pays-approved-only", source: VAULT, function: "payAllowlisted", test: AGENT_TESTS, testName: "test_TheAgentNeverPaysAnUnapprovedOrNotYetApprovedAddress", text: { en: "The agent can only pay addresses you approved, and an approval only counts after its waiting time.", es: "El agente solo puede pagar a direcciones que tú aprobaste, y una aprobación solo cuenta después de su tiempo de espera.", "pt-br": "O agente só pode pagar a endereços que você aprovou, e uma aprovação só vale depois do seu tempo de espera." } },
+  { id: "rolling-cap", source: VAULT, function: "payAllowlisted", test: AGENT_TESTS, testName: "test_TheCapIsRollingPerWindow", text: { en: "No payment, and no run of payments inside the window, can pass the cap you set for the agent.", es: "Ningún pago, ni una serie de pagos dentro de la ventana, puede pasar el tope que fijaste para el agente.", "pt-br": "Nenhum pagamento, nem uma série de pagamentos dentro da janela, pode passar do teto que você definiu para o agente." } },
+  { id: "box-floor", source: VAULT, function: "payAllowlisted", test: AGENT_TESTS, testName: "test_TheAgentNeverLeavesABoxBelowItsFloor", text: { en: "The agent never takes a box below the floor you set for it.", es: "El agente nunca deja una cajita por debajo del piso que fijaste.", "pt-br": "O agente nunca deixa uma caixinha abaixo do piso que você definiu." } },
+  { id: "pause-at-once", source: VAULT, function: "pauseAgent", test: AGENT_TESTS, testName: "test_PausingStopsEveryAgentActionAtOnce", text: { en: "One transaction from you pauses the agent, and every one of its actions stops at once.", es: "Una transacción tuya pausa al agente, y todas sus acciones se detienen de inmediato.", "pt-br": "Uma transação sua pausa o agente, e todas as ações dele param na hora." } },
+  { id: "swap-oracle-bound", source: VAULT, function: "swapBox", test: SWAP_TESTS, testName: "test_TheMinimumIsBoundedByTheFeedsPlusTheLagAllowance", text: { en: "A currency conversion cannot give back less than the price feeds imply, less a small slippage that you can tighten.", es: "Una conversión de moneda no puede devolver menos de lo que implican los precios de referencia, menos un pequeño margen que puedes reducir.", "pt-br": "Uma conversão de moeda não pode devolver menos do que os preços de referência indicam, menos uma pequena folga que você pode reduzir." } },
+  { id: "adapter-waits-a-day", source: VAULT, function: "approveSwapAdapter", test: SWAP_TESTS, testName: "test_ANewAdapterWaitsADayAndAPausedAgentCannotSwap", text: { en: "A new conversion or yield service that you approve only takes effect after a day, so you can look at it and revoke it first.", es: "Un servicio nuevo de conversión o de rendimiento que apruebas solo se activa después de un día, así que puedes revisarlo y revocarlo antes.", "pt-br": "Um novo serviço de conversão ou de rendimento que você aprova só entra em vigor depois de um dia, então você pode revisá-lo e revogá-lo antes." } },
+  { id: "yield-share-price-bound", source: VAULT, function: "earnIn", test: EARN_TESTS, testName: "test_RevertsBelowTheShareBound", text: { en: "Money put to work must be worth at least the yield vault's own price for it, less the same small slippage.", es: "El dinero puesto a trabajar debe valer al menos lo que la propia vault de rendimiento le asigna, menos el mismo pequeño margen.", "pt-br": "O dinheiro colocado para trabalhar deve valer pelo menos o que o próprio vault de rendimento lhe atribui, menos a mesma pequena folga." } },
+  { id: "ledger-by-balances", source: VAULT, function: "earnIn", test: "contracts/test/vault/BoxVaultEarnInvariant.t.sol", testName: "invariant_TheVaultAlwaysHoldsWhatItOwes", text: { en: "The vault records a box's money only by what its own balances show arrived, never by what a service says it sent.", es: "El vault registra el dinero de una cajita solo por lo que sus propios saldos muestran que llegó, nunca por lo que un servicio dice haber enviado.", "pt-br": "O vault registra o dinheiro de uma caixinha apenas pelo que os seus próprios saldos mostram que chegou, nunca pelo que um serviço diz ter enviado." } },
+  { id: "invest-limits", source: VAULT, function: "sweepToVault", test: AGENT_TESTS, testName: "test_TaxesCanInvestAtMostHalfAndPayrollAndOperatingNothing", text: { en: "Only part of a box can be put to work: taxes at most half, and payroll and operating cash nothing unless you allow it.", es: "Solo una parte de una cajita puede ponerse a trabajar: impuestos como máximo la mitad, y nómina y operación nada salvo que lo permitas.", "pt-br": "Só uma parte de uma caixinha pode ser colocada para trabalhar: impostos no máximo metade, e folha e operação nada, a menos que você permita." } },
+];
+
+/** The public repository the guarantees link into. */
+export const REPO_URL = "https://github.com/DavidZapataOh/STRICKLE";

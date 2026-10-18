@@ -9,7 +9,8 @@ export type ReceiptKind =
   | "move" | "proposal-cancelled"
   | "early-payment" | "early-payment-proposal"
   | "income-doubt" | "reclassified"
-  | "swap" | "swap-held";
+  | "swap" | "swap-held"
+  | "earn" | "earn-back" | "earn-held" | "yield-exit" | "yield-plan" | "yield-back" | "yield-invite";
 
 export type FactValue =
   | { type: "amount"; units: bigint; decimals: number; symbol: string }
@@ -115,6 +116,13 @@ export const TEMPLATE_KEYS: Record<ReceiptKind, { values: string[]; labels: stri
   reclassified: { values: ["amount"], labels: ["from", "to"] },
   swap: { values: ["amount", "expectedOut", "minOut", "reference", "deviation", "fee"], labels: ["label", "direction"] },
   "swap-held": { values: [], labels: ["label", "currency", "reason"] },
+  earn: { values: ["amount", "apy"], labels: ["label", "vault", "protocol"] },
+  "earn-back": { values: ["amount", "gain", "fee"], labels: ["label", "vault", "protocol"] },
+  "earn-held": { values: [], labels: ["label", "vault", "reason"] },
+  "yield-exit": { values: [], labels: ["label", "vault", "reason"] },
+  "yield-plan": { values: ["amount", "kept", "needed"], labels: ["label"] },
+  "yield-back": { values: ["amount", "payment", "due"], labels: ["label"] },
+  "yield-invite": { values: ["apy"], labels: [] },
 };
 
 const REASONS: Record<string, Record<Lang, string>> = {
@@ -159,6 +167,24 @@ const SWAP_REASONS: Record<string, Record<Lang, string>> = {
   "invalid-quote": { en: "the answer from the conversion service did not pass its checks", es: "la respuesta del servicio de conversión no pasó sus verificaciones", "pt-br": "a resposta do serviço de conversão não passou nas verificações" },
   "vault-refused": { en: "your vault refused the conversion under its own limits", es: "tu vault rechazó la conversión según sus propios límites", "pt-br": "seu vault recusou a conversão pelos próprios limites" },
   "quote-unavailable": { en: "the conversion service did not answer", es: "el servicio de conversión no respondió", "pt-br": "o serviço de conversão não respondeu" },
+};
+
+const EARN_REASONS: Record<string, Record<Lang, string>> = {
+  "adapter-not-approved": { en: "the agent's service is not active on your account yet, which takes a day after you approve it", es: "el servicio del agente aún no está activo en tu cuenta, lo cual tarda un día tras aprobarlo", "pt-br": "o serviço do agente ainda não está ativo na sua conta, o que leva um dia após você aprovar" },
+  "vault-not-approved": { en: "this vault is not approved on your account yet, which takes a day after you approve it", es: "esta vault aún no está aprobada en tu cuenta, lo cual tarda un día tras aprobarla", "pt-br": "este vault ainda não está aprovado na sua conta, o que leva um dia após você aprovar" },
+  "quote-unavailable": { en: "Circle's service did not answer", es: "el servicio de Circle no respondió", "pt-br": "o serviço da Circle não respondeu" },
+  "invalid-bundle": { en: "Circle's answer did not match what was asked, so the agent refused it", es: "la respuesta de Circle no coincidía con lo pedido, así que el agente la rechazó", "pt-br": "a resposta da Circle não correspondia ao pedido, então o agente a recusou" },
+  "vault-refused": { en: "your vault refused it under its own limits", es: "tu vault lo rechazó según sus propios límites", "pt-br": "seu vault recusou conforme seus próprios limites" },
+  failures: { en: "it failed three times in a row, so ask again when you want to retry", es: "falló tres veces seguidas, así que vuelve a pedirlo cuando quieras reintentar", "pt-br": "falhou três vezes seguidas, então peça de novo quando quiser tentar outra vez" },
+  insufficient: { en: "the box does not hold that much", es: "la cajita no tiene tanto", "pt-br": "a caixinha não tem tanto" },
+  expired: { en: "it was not carried out within a day", es: "no se llevó a cabo en un día", "pt-br": "não foi executado em um dia" },
+};
+
+const EXIT_REASONS: Record<string, Record<Lang, string>> = {
+  "price-drop": { en: "its share price fell", es: "el precio de su participación bajó", "pt-br": "o preço da sua cota caiu" },
+  "rate-spike": { en: "its rate jumped to an unusual level", es: "su tasa saltó a un nivel inusual", "pt-br": "sua taxa saltou para um nível incomum" },
+  inactive: { en: "it stopped accepting money", es: "dejó de aceptar dinero", "pt-br": "deixou de aceitar dinheiro" },
+  illiquid: { en: "it no longer holds enough to pay everyone back at once", es: "ya no tiene lo suficiente para devolver a todos a la vez", "pt-br": "não tem mais o suficiente para devolver a todos de uma vez" },
 };
 
 const CURRENCY_NAMES: Record<string, Record<Lang, string>> = {
@@ -285,6 +311,41 @@ const SENTENCES: Record<ReceiptKind, Record<Lang, Maker>> = {
     en: (_v, l, lang) => `Conversions to ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} for your ${l("label")} box are paused: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays in ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} and everything else keeps working.`,
     es: (_v, l, lang) => `Las conversiones a ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} para tu cajita ${l("label")} están en pausa: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda en ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} y todo lo demás sigue funcionando.`,
     "pt-br": (_v, l, lang) => `As conversões para ${CURRENCY_NAMES[l("currency")]?.[lang] ?? l("currency")} da sua caixinha ${l("label")} estão pausadas: ${SWAP_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica em ${CURRENCY_NAMES[l("currency") === "EUR" ? "USD" : "EUR"]?.[lang]} e todo o resto continua funcionando.`,
+  },
+  earn: {
+    en: (v, l) => `Your ${l("label")} box put ${v("amount")} to work in ${l("vault")} (${l("protocol")}, ${v("apy")} a year when it started). The rate changes and the value can go down; you can take it back at any time.`,
+    es: (v, l) => `Tu cajita ${l("label")} puso ${v("amount")} a trabajar en ${l("vault")} (${l("protocol")}, ${v("apy")} al año al empezar). La tasa cambia y el valor puede bajar; puedes retirarlo cuando quieras.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} colocou ${v("amount")} para trabalhar em ${l("vault")} (${l("protocol")}, ${v("apy")} ao ano no início). A taxa muda e o valor pode cair; você pode retirar quando quiser.`,
+  },
+  "earn-back": {
+    en: (v, l) => `Your ${l("label")} box took ${v("amount")} back from ${l("vault")} (${l("protocol")}). It earned ${v("gain")} while it was there; the yield fee on that, ${v("fee")}, is shown here and is not charged on testnet.`,
+    es: (v, l) => `Tu cajita ${l("label")} retiró ${v("amount")} de ${l("vault")} (${l("protocol")}). Ganó ${v("gain")} mientras estuvo ahí; la comisión por rendimiento sobre eso, ${v("fee")}, se muestra aquí y no se cobra en testnet.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} retirou ${v("amount")} de ${l("vault")} (${l("protocol")}). Rendeu ${v("gain")} enquanto esteve lá; a taxa de rendimento sobre isso, ${v("fee")}, é mostrada aqui e não é cobrada na testnet.`,
+  },
+  "earn-held": {
+    en: (_v, l, lang) => `Your ${l("label")} box's move with ${l("vault")} is on hold: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Your money stays where it is and everything else keeps working.`,
+    es: (_v, l, lang) => `El movimiento de tu cajita ${l("label")} con ${l("vault")} está en pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Tu dinero se queda donde está y todo lo demás sigue funcionando.`,
+    "pt-br": (_v, l, lang) => `O movimento da sua caixinha ${l("label")} com ${l("vault")} está em pausa: ${EARN_REASONS[l("reason")]?.[lang] ?? l("reason")}. Seu dinheiro fica onde está e todo o resto continua funcionando.`,
+  },
+  "yield-exit": {
+    en: (_v, l, lang) => `The agent asked ${l("vault")} to give back your ${l("label")} box's money because ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. It returns to your box as cash when the withdrawal goes through; to put it to work again, ask for it.`,
+    es: (_v, l, lang) => `El agente pidió a ${l("vault")} que devuelva el dinero de tu cajita ${l("label")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Vuelve a tu cajita como efectivo cuando el retiro se complete; para ponerlo a trabajar otra vez, pídelo.`,
+    "pt-br": (_v, l, lang) => `O agente pediu a ${l("vault")} que devolva o dinheiro da sua caixinha ${l("label")} porque ${EXIT_REASONS[l("reason")]?.[lang] ?? l("reason")}. Volta para a sua caixinha em dinheiro quando a retirada for concluída; para colocá-lo para trabalhar de novo, peça.`,
+  },
+  "yield-plan": {
+    en: (v, l) => `Your ${l("label")} box keeps ${v("kept")} in cash, ${v("needed")} of it for what is due soon, and put ${v("amount")} to work. The rate changes and the value can go down.`,
+    es: (v, l) => `Tu cajita ${l("label")} guarda ${v("kept")} en efectivo, ${v("needed")} de eso para lo que vence pronto, y puso ${v("amount")} a trabajar. La tasa cambia y el valor puede bajar.`,
+    "pt-br": (v, l) => `Sua caixinha ${l("label")} guarda ${v("kept")} em dinheiro, ${v("needed")} disso para o que vence em breve, e colocou ${v("amount")} para trabalhar. A taxa muda e o valor pode cair.`,
+  },
+  "yield-back": {
+    en: (v, l) => `The agent asked the vault for ${v("amount")} back for your ${l("label")} box because ${v("payment")} is due on ${v("due")}, so the money is ready in time.`,
+    es: (v, l) => `El agente pidió a la vault ${v("amount")} de vuelta para tu cajita ${l("label")} porque ${v("payment")} vence el ${v("due")}, así el dinero queda listo a tiempo.`,
+    "pt-br": (v, l) => `O agente pediu ao vault ${v("amount")} de volta para a sua caixinha ${l("label")} porque ${v("payment")} vence em ${v("due")}, assim o dinheiro fica pronto a tempo.`,
+  },
+  "yield-invite": {
+    en: (v) => `Your money can work while it waits: a vault pays about ${v("apy")} a year at the moment, and the value can also go down. If you want, turn it on in Settings. Only money a box will not need soon is ever used.`,
+    es: (v) => `Tu dinero puede trabajar mientras espera: una vault paga cerca de ${v("apy")} al año en este momento, y el valor también puede bajar. Si quieres, actívalo en Ajustes. Solo se usa el dinero que una cajita no necesitará pronto.`,
+    "pt-br": (v) => `Seu dinheiro pode trabalhar enquanto espera: um vault paga cerca de ${v("apy")} ao ano neste momento, e o valor também pode cair. Se quiser, ligue em Ajustes. Só se usa o dinheiro que uma caixinha não vai precisar em breve.`,
   },
   "breaker-reset": {
     en: (_v, l) => `${l("actor")} confirmed the safety check and I resumed.`,
