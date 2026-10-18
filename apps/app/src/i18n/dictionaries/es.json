@@ -851,5 +851,26 @@
     "failed": "La fecha no avanzó. Inténtalo de nuevo.",
     "faucet": "Conseguir USDC de prueba",
     "faucetNote": "Abre el faucet público de Circle en una pestaña nueva. Elige Arc Testnet."
+  },
+  "judges": {
+    "title": "Tres formas de entrar",
+    "intro": "Mira una cuenta real, usa el producto con dinero de prueba o comprueba el sistema sin confiar en él.",
+    "maria": {
+      "title": "Explorar como María",
+      "body": "Una cuenta real que el equipo maneja en la red de pruebas, abierta en modo lectura. Ves sus cajas, sus reglas y cada pago, y no puedes cambiar nada.",
+      "open": "Abrir la cuenta de María",
+      "unavailable": "La cuenta de demostración no está disponible ahora.",
+      "checking": "Comprobando la cuenta de demostración…"
+    },
+    "try": {
+      "title": "Pruébalo tú",
+      "body": "Crea tu propia cuenta en la red de pruebas. El dinero es de prueba y no vale nada, la pantalla de ajustes tiene un faucet y puedes adelantar la fecha de tu cuenta para ver pasar un mes.",
+      "open": "Empezar"
+    },
+    "check": {
+      "title": "Compruébalo",
+      "body": "Cada contrato con su dirección y si su código fuente está verificado, las reglas que hace cumplir cada uno y si el agente corre el código publicado.",
+      "open": "Abrir la página de pruebas"
+    }
   }
 }
