@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { ProofData } from "@aztec/bb.js";
 import type { InputMap } from "@noir-lang/noir_js";
 import { createProver } from "@strickle/prover";
@@ -8,8 +10,12 @@ import { type SpendSpec, buildShieldInputs, buildSpendInputs } from "./witness.t
 
 export type CircuitName = "shield" | "spend";
 
+const packaged = new URL("../circuits/", import.meta.url);
+/** The circuits ship inside the published package; in the repository they are the compiled workspace output. */
+const circuits = existsSync(fileURLToPath(packaged)) ? packaged : new URL("../../../circuits/target/", import.meta.url);
+
 const prover = createProver({
-  loadCircuit: nodeCircuitLoader(new URL("../../../circuits/target/", import.meta.url)),
+  loadCircuit: nodeCircuitLoader(circuits),
   backend: { threads: 1 },
 });
 
