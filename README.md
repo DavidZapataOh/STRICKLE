@@ -1,8 +1,12 @@
 In Athens, the misthos was the wage that let a rowing hand live from their work. Strickle proposes that pay follow the work: when a freelancer's work arrives in bursts, their agent turns irregular income into a steady salary, with taxes set aside and the cushion protected, all in private.
 
-# Strickle
+<p align="center">
+  <img src="apps/landing/public/favicon.svg" alt="Strickle" width="96" />
+</p>
 
-**Irregular income. Regular life.**
+<h1 align="center">Strickle</h1>
+
+<p align="center"><strong>Irregular income. Regular life.</strong></p>
 
 An AI agent for people paid from abroad in dollars. It splits every payment into boxes inside a vault you own, sets taxes aside under your country's rules, and pays you the same salary on the same day each month. It cannot take your money: only you can withdraw, and everything the agent may do is bounded by limits the contract itself enforces.
 
