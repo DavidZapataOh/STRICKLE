@@ -60,7 +60,7 @@ async function ProofContent({ lang, t }: { lang: Locale; t: Awaited<ReturnType<t
   const [contracts, activity, snapshot, attestation] = await Promise.all([
     contractsReport({ manifest, client, explorer: (address) => explorerVerified(explorer, address) }).catch(() => null),
     state ? agentActivity(client, state).catch(() => null) : Promise.resolve({ lastWriteAt: null, lastTx: null }),
-    latestSnapshot<Metrics>(sql(), network).catch(() => null),
+    Promise.resolve().then(() => latestSnapshot<Metrics>(sql(), network)).catch(() => null),
     state
       ? attestationReport({
           expected: () => Promise.all([workflowOf("AgentExecutor", executor), workflowOf("AgentState", state), workflowOf("AgentHeartbeat", heartbeat)]),
