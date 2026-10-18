@@ -1,14 +1,14 @@
 {
   "testnet": {
     "chainId": 5042002,
-    "BoxVaultFactory": "0x515EDF42f25af87aE7d806197232048D4A212100",
+    "BoxVaultFactory": "0x55418C284B92a7E5AC369E1f8FB8b5446737AC8f",
     "AgentState": "0xc8224D78e864476258785646a93a6884967b3973",
-    "AgentExecutor": "0xA302dDdAbEaF908efc81d915419c2cBD0373C533",
+    "AgentExecutor": "0x22f24aD5A88B12fbd49D71616d685DCce38805a4",
     "PolicyPool": "0x20a16Ea01dC22D834CcC4962BB9153eeBa733D9F",
     "AgentHeartbeat": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
     "blocks": {
       "AgentState": 67397658,
-      "AgentExecutor": 67720861
+      "AgentExecutor": 67776510
     }
   },
   "mainnet": null

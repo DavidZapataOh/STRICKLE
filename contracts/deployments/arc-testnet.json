@@ -62,16 +62,16 @@
       "create2": true
     },
     "BoxVault": {
-      "address": "0xd230cC8a0F39db9C5CAA8466A7195e2C328384a3",
-      "txHash": "0x145d4490e48f87222f23f8619afdbe6e6e1247a12b703f8b40e10bd438e66fa7",
-      "blockNumber": 67720252,
-      "create2": true
+      "address": "0xd2A7cF1581cd68413bC14Df7e0D79059ccD6DB4A",
+      "txHash": "0x2f5a0a75e1003b593ea27fbdf7f4f561f0609896dede3ee76755683191a42bb3",
+      "blockNumber": 67776503,
+      "create2": false
     },
     "BoxVaultFactory": {
-      "address": "0x515EDF42f25af87aE7d806197232048D4A212100",
-      "txHash": "0x713541f7849bd355882d98a53861ca5bea8bce08f8d1b30ec49cc79754d98daf",
-      "blockNumber": 67720253,
-      "create2": true
+      "address": "0x55418C284B92a7E5AC369E1f8FB8b5446737AC8f",
+      "txHash": "0xf46ed26a650c50e5bb597ac1d30b0cdaf556ae52bef22583666e09e387a406d5",
+      "blockNumber": 67776507,
+      "create2": false
     },
     "AgentHeartbeat": {
       "address": "0xf70A7B7F3980ad337a11096e28f7ADa73Eb91ef9",
@@ -86,10 +86,10 @@
       "create2": true
     },
     "AgentExecutor": {
-      "address": "0xA302dDdAbEaF908efc81d915419c2cBD0373C533",
-      "txHash": "0x3c51b937158916cd3e52c1e3d6667782aec67abc4b53857301b8455d70e1e4a4",
-      "blockNumber": 67720861,
-      "create2": true
+      "address": "0x22f24aD5A88B12fbd49D71616d685DCce38805a4",
+      "txHash": "0x3bd35064e998e5102dc9c5239cbd9d5070f53e2563e03203048859eef16a5be9",
+      "blockNumber": 67776510,
+      "create2": false
     },
     "ReferenceFeed": {
       "address": "0x16e39cCC0c0F489477EDA348C17eD84103351318",
