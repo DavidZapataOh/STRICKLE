@@ -840,5 +840,16 @@
     "saved": "Saved. The agent starts converting within a day.",
     "saving": "Saving…",
     "activityTitle": "Conversions"
+  },
+  "sandbox": {
+    "title": "Test mode",
+    "note": "This network uses test money with no value. Move your account's date forward to watch a month go by.",
+    "date": "The account's date: {date}",
+    "day": "+1 day",
+    "week": "+1 week",
+    "month": "+1 month",
+    "failed": "The date did not move. Try again.",
+    "faucet": "Get test USDC",
+    "faucetNote": "Opens Circle's public faucet in a new tab. Choose Arc Testnet."
   }
 }

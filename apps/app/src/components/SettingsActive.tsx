@@ -19,6 +19,7 @@ import type { Account } from "@/settings/account";
 import { type Call, approveRecipientCalls, setAgentCalls } from "@/settings/calls";
 import { type SettingsChain, approvalKey, approvalState, readSettingsChain } from "@/settings/chain";
 import { settingsModel } from "@/settings/model";
+import { advanceChange, sandboxEnabled } from "@/sandbox/advance";
 import { sendOwnerCalls } from "@/settings/send";
 import { type TxPhase, runTx } from "@/settings/tx";
 import { useAdjust } from "@/settings/use-adjust";
@@ -27,13 +28,14 @@ import { AgentOnly } from "@/lib/agent-only";
 import { ALL_DOLLARS, CurrencyControl } from "./CurrencyControl";
 import { EditRow } from "./EditRow";
 import { RulesPanel } from "./RulesPanel";
+import { SandboxControls } from "./SandboxControls";
 import { ShareLink } from "./ShareLink";
 import { type SettingsState, SettingsView } from "./SettingsView";
 
 const dollars = (units: bigint): string => String(units / 1_000_000n);
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; held: ReturnType<typeof latestHeld> };
+type Extras = { agent: Address; boxes: BoxState[]; pending: SettingsChain["pending"]; now: number; vault: VaultState; currencies: typeof ALL_DOLLARS; asOf: string | null; held: ReturnType<typeof latestHeld> };
 
 /** What is in force for a signed-in account, and the changes the person can make: the vault's own through the owner's transaction, the agent's through a signed request. */
 export function SettingsActive({ lang, t, account }: { lang: Locale; t: SettingsText; account: Account }) {
@@ -42,6 +44,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   const [extras, setExtras] = useState<Extras | null>(null);
   const [txPhase, setTxPhase] = useState<TxPhase>("idle");
   const [round, setRound] = useState(0);
+  const [advanceFailed, setAdvanceFailed] = useState(false);
   const adjust = useAdjust(account);
   const { vault } = account;
 
@@ -54,7 +57,7 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
         const payees = plan ? [{ box: 3, who: plan.settings.payee as Address }] : [];
         const [chain, vaultState] = await Promise.all([readSettingsChain(getPublicClient(), vault, payees), readVault(vault)]);
         const now = Math.floor(Date.now() / 1000);
-        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, held: key && logs ? latestHeld(logs, key, vault) : undefined });
+        setExtras({ agent: chain.limits.agent, boxes: vaultState.boxes, pending: chain.pending, now, vault: vaultState, currencies: plan?.settings.currencies ?? ALL_DOLLARS, asOf: plan?.asOf ?? null, held: key && logs ? latestHeld(logs, key, vault) : undefined });
         setState({ status: "ready", model: settingsModel({ chain, plan, todayIso: new Date(now * 1000).toISOString().slice(0, 10), now }) });
       } catch {
         setState((current) => (current.status === "ready" ? current : { status: "error" }));
@@ -111,6 +114,24 @@ export function SettingsActive({ lang, t, account }: { lang: Locale; t: Settings
   const working = adjust.phase === "signing" || adjust.phase === "sending" || adjust.phase === "busy" || adjust.phase === "waiting";
 
   const slots = {
+    sandbox: sandboxEnabled(appNetwork()) ? (
+      <AgentOnly capability="agentSettings" t={t}>
+        <SandboxControls
+          t={t}
+          date={extras?.asOf ?? null}
+          busy={working}
+          failed={advanceFailed}
+          onAdvance={(days) => {
+            setAdvanceFailed(false);
+            const before = extras?.asOf ?? "";
+            void adjust.run(advanceChange(days), (plan) => plan.asOf > before).then((outcome) => {
+              if (outcome.phase === "failed") setAdvanceFailed(true);
+              else reload();
+            });
+          }}
+        />
+      </AgentOnly>
+    ) : null,
     resume: (
       <AgentOnly capability="agentSettings" t={t}>
         <button type="button" className="btn" data-variant="primary" disabled={working} onClick={() => void adjust.run({ kind: "resume" }, (plan) => !plan.settings.halted)}>
