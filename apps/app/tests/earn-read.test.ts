@@ -54,7 +54,7 @@ describe("reading what a vault has put to work", () => {
 });
 
 describe("whether a factory makes vaults that can earn", () => {
-  const factory = "0x515EDF42f25af87aE7d806197232048D4A212100" as const;
+  const factory = "0x55418C284B92a7E5AC369E1f8FB8b5446737AC8f" as const;
   const implementation = "0xd230cC8a0F39db9C5CAA8466A7195e2C328384a3" as const;
   const asking = (earnVersion: "ok" | "missing" | "factory-down") =>
     ({
