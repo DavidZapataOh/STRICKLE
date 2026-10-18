@@ -70,6 +70,7 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       BLOCKSCOUT_API_KEY: ${{ secrets.BLOCKSCOUT_API_KEY }}
       REQUIRE_CIRCLE: "1"
+      E2E_VAULT: "0x06DC99D565930B0184D094F9F284671d963c4618"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
